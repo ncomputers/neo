@@ -191,6 +191,7 @@ class CartItem(BaseModel):
     price: float
     quantity: int
     guest_id: Optional[str] = None
+    status: str = "pending"
 
 
 class UpdateQuantity(BaseModel):
@@ -347,6 +348,19 @@ def _table_state(table_id: str) -> Dict[str, List[CartItem]]:
 # Table Operations
 
 
+@app.get("/tables")
+async def list_tables() -> dict[str, list[dict[str, str]]]:
+    """Return all tables and their statuses."""
+
+    with SessionLocal() as session:
+        records = session.query(Table).all()
+        data = [
+            {"id": str(t.id), "name": t.name, "status": t.status.value}
+            for t in records
+        ]
+    return {"tables": data}
+
+
 @app.post("/tables/{table_id}/cart")
 async def add_to_cart(table_id: str, item: CartItem) -> dict[str, List[CartItem]]:
     """Add an item to a table's cart.
@@ -405,6 +419,47 @@ async def staff_place_order(
     table["orders"].append(CartItem(**item.model_dump()))
     await _broadcast(table_id, {"status": "staff_order"})
     return {"orders": table["orders"]}
+
+
+@app.get("/orders")
+async def list_orders() -> dict[str, list[dict]]:
+    """Return all orders across tables for staff views."""
+
+    data: list[dict] = []
+    for table_id, state in tables.items():
+        for idx, item in enumerate(state["orders"]):
+            entry = item.model_dump()
+            entry.update({"table_id": table_id, "index": idx})
+            data.append(entry)
+    return {"orders": data}
+
+
+@app.post("/orders/{table_id}/{index}/accept")
+async def accept_order(table_id: str, index: int) -> dict[str, str]:
+    """Mark an order line as accepted."""
+
+    table = _table_state(table_id)
+    try:
+        order_item = table["orders"][index]
+    except IndexError as exc:
+        raise HTTPException(status_code=404, detail="Order item not found") from exc
+    order_item.status = "accepted"
+    await _broadcast(table_id, {"status": "accepted", "index": index})
+    return {"status": "accepted"}
+
+
+@app.post("/orders/{table_id}/{index}/reject")
+async def reject_order(table_id: str, index: int) -> dict[str, str]:
+    """Mark an order line as rejected."""
+
+    table = _table_state(table_id)
+    try:
+        order_item = table["orders"][index]
+    except IndexError as exc:
+        raise HTTPException(status_code=404, detail="Order item not found") from exc
+    order_item.status = "rejected"
+    await _broadcast(table_id, {"status": "rejected", "index": index})
+    return {"status": "rejected"}
 
 
 # Billing

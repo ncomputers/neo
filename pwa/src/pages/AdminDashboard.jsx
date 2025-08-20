@@ -1,11 +1,44 @@
+import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 
 export default function AdminDashboard() {
   const { logo } = useTheme()
+  const [tables, setTables] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    fetch('http://localhost:4000/tables')
+      .then((res) => res.json())
+      .then((data) => setTables(data.tables || []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div className="p-4">
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
-      <h2 className="text-xl font-bold">Admin Dashboard</h2>
+      <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
+      {loading && <p>Loading...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+      {!loading && !error && (
+        <table className="w-full border">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="p-2 border">Name</th>
+              <th className="p-2 border">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tables.map((t) => (
+              <tr key={t.id}>
+                <td className="p-2 border">{t.name}</td>
+                <td className="p-2 border capitalize">{t.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }
