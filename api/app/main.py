@@ -32,9 +32,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from pydantic import BaseModel
 from redis.asyncio import from_url
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from .db import SessionLocal
 
 from config import get_settings
 from .auth import (
@@ -58,7 +56,7 @@ from .events import (
 )
 
 from .utils import PrepTimeTracker
-from .models import Base, Table, TableStatus
+from .models import Table, TableStatus
 
 
 
@@ -107,13 +105,6 @@ redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 prep_trackers: dict[str, PrepTimeTracker] = {}
 
 
-engine = create_engine(
-    "sqlite://",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-Base.metadata.create_all(bind=engine)
 
 
 @app.on_event("startup")
