@@ -20,6 +20,9 @@ from .utils.responses import ok
 
 router = APIRouter()
 
+_categories: dict[uuid.UUID, Category] = {}
+_items: dict[uuid.UUID, Item] = {}
+
 
 def _category_to_schema(cat: CategoryModel) -> Category:
     return Category(id=cat.id, name=cat.name)
