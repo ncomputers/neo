@@ -11,7 +11,9 @@ from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
+from redis.asyncio import from_url
 
+from config import get_settings
 from .auth import (
     Token,
     User,
@@ -21,10 +23,14 @@ from .auth import (
     role_required,
 )
 from .menu import router as menu_router
+from .middleware import RateLimitMiddleware
 from .models import TableStatus
 
 
+settings = get_settings()
 app = FastAPI()
+app.state.redis = from_url(settings.redis_url, decode_responses=True)
+app.add_middleware(RateLimitMiddleware, limit=3)
 app.include_router(menu_router, prefix="/menu")
 
 
