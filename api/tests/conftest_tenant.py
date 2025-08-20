@@ -3,6 +3,7 @@ from __future__ import annotations
 """Test fixtures for tenant database setup."""
 
 import os
+
 from uuid import uuid4
 
 import pytest
@@ -10,11 +11,13 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.db.tenant import get_engine
+
 from scripts.tenant_create_db import run_tenant_migrations as _run_tenant_migrations
 
 
 async def run_tenant_migrations(tenant_id: str) -> None:
     """Run migrations for a tenant using its identifier."""
+
     engine = get_engine(tenant_id)
     try:
         await _run_tenant_migrations(engine)
@@ -44,3 +47,4 @@ async def tenant_session() -> AsyncSession:
             async with engine.begin() as conn:
                 await conn.execute(text(f'DROP SCHEMA IF EXISTS "{tenant_id}" CASCADE'))
             await engine.dispose()
+
