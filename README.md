@@ -63,6 +63,16 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema.
 
+## Audit Logging
+
+Login attempts, order edits and payments write to SQLite-backed audit tables.
+Run the cleanup helper to purge entries older than the configured retention
+period:
+
+```bash
+python api/app/audit.py
+```
+
 ## Development Notes
 
 Every Python module begins with a filename comment followed by a concise module

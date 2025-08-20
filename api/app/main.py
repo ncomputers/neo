@@ -12,6 +12,9 @@ from typing import Dict, List, Optional
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from redis.asyncio import from_url
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from config import get_settings
 from .auth import (
@@ -22,9 +25,12 @@ from .auth import (
     create_access_token,
     role_required,
 )
+from .audit import log_event
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .models import TableStatus
+from .models import Base, Table, TableStatus
+
 
 
 settings = get_settings()
@@ -32,6 +38,15 @@ app = FastAPI()
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.include_router(menu_router, prefix="/menu")
+
+
+engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base.metadata.create_all(bind=engine)
 
 
 # Auth Routes
@@ -61,6 +76,7 @@ async def email_login(credentials: EmailLogin) -> Token:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    log_event(user.username, "login", "user", master=True)
     return Token(access_token=token, role=user.role)
 
 
@@ -74,6 +90,7 @@ async def pin_login(credentials: PinLogin) -> Token:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    log_event(user.username, "login", "user", master=True)
     return Token(access_token=token, role=user.role)
 
 
@@ -257,6 +274,7 @@ async def update_order(
     if payload.quantity != 0:
         raise HTTPException(status_code=400, detail="Only soft-cancel allowed")
     order_item.quantity = 0  # mark as cancelled but retain entry for audit
+    log_event("system", "order_update", table_id)
     return {"orders": table["orders"]}
 
 
@@ -290,6 +308,7 @@ async def pay_now(table_id: str) -> dict[str, float]:
     table = _table_state(table_id)
     total = sum(i.price * i.quantity for i in table["orders"] if i.quantity > 0)
     table["orders"] = []  # clearing orders resets table state for next guests
+    log_event("system", "payment", table_id)
     return {"total": total}
 
 
@@ -310,13 +329,33 @@ async def call_staff(table_id: str, action: str) -> dict[str, str]:
 async def lock_table(table_id: str) -> dict[str, str]:
     """Lock a table after settlement until cleaned."""
 
-    # Real logic would update the table status in the database.
-    return {"table_id": table_id, "status": TableStatus.LOCKED.value}
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:  # pragma: no cover - simple validation
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.status = TableStatus.LOCKED
+        session.commit()
+        session.refresh(table)
+        return {"table_id": table_id, "status": table.status.value}
 
 
 @app.post("/tables/{table_id}/mark-clean")
 async def mark_clean(table_id: str) -> dict[str, str]:
     """Mark a table as cleaned and ready for new guests."""
 
-    # Real logic would update the table status in the database.
-    return {"table_id": table_id, "status": TableStatus.AVAILABLE.value}
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:  # pragma: no cover - simple validation
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.status = TableStatus.AVAILABLE
+        session.commit()
+        session.refresh(table)
+        return {"table_id": table_id, "status": table.status.value}
