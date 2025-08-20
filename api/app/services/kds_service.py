@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Callable, Dict, Iterable, List, Protocol
 
-from ..models_tenant import OrderStatus
+from ..domain import OrderStatus
 
 
 class OrderRepo(Protocol):
