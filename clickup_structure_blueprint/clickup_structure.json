@@ -1,1 +1,76 @@
-
+{
+  "space": {
+    "name": "QR SaaS",
+    "color": "#6A5ACD",
+    "multiple_assignees": true,
+    "features": {
+      "due_dates": true,
+      "time_tracking": false,
+      "tags": true
+    },
+    "statuses": [
+      {
+        "status": "To do",
+        "type": "open"
+      },
+      {
+        "status": "In progress",
+        "type": "in progress"
+      },
+      {
+        "status": "Blocked",
+        "type": "in progress"
+      },
+      {
+        "status": "In review",
+        "type": "in progress"
+      },
+      {
+        "status": "Done",
+        "type": "closed"
+      }
+    ]
+  },
+  "folders": [
+    {
+      "name": "MVP Epics",
+      "lists": [
+        "E1 Foundation & Architecture",
+        "E2 Auth & RBAC (Email/Password + PIN)",
+        "E3 Multi-Tenant DB (Master + Per-Outlet)",
+        "E4 Onboarding & Provisioning",
+        "E5 Menu Management (Excel, Photos, FSSAI)",
+        "E6 QR Guest PWA (Menu→Order→Status→Bill)",
+        "E7 KDS (Kitchen Display System)",
+        "E8 Billing & Invoicing (GST/80mm/PDF)",
+        "E9 Payments (UPI + Cash)",
+        "E10 Subscription & Licensing (Per Table/Month)",
+        "E11 Offline/Hybrid Sync & Local Node",
+        "E12 Alerts, Heartbeat & Rules",
+        "E13 Reporting & Z-Report",
+        "E14 Backups & Restore",
+        "E15 Security, Rate-Limit & Audit",
+        "E16 DevOps & Deployment",
+        "E17 QA, E2E & UAT"
+      ]
+    },
+    {
+      "name": "Sprints",
+      "lists": [
+        "Sprint 1 - Foundation",
+        "Sprint 2 - Ordering & KDS",
+        "Sprint 3 - Billing & Ops",
+        "Sprint 4 - Offline & Polish"
+      ]
+    },
+    {
+      "name": "Operations",
+      "lists": [
+        "Onboarding Ops",
+        "Support",
+        "Bugs",
+        "UAT & Releases"
+      ]
+    }
+  ]
+}
