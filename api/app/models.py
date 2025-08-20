@@ -123,10 +123,24 @@ class TableSession(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class SyncOutbox(Base):
+    """Events queued for sync when the cloud API is unreachable."""
+
+    __tablename__ = "sync_outbox"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_type = Column(String, nullable=False)
+    payload = Column(JSON, nullable=False)
+    retries = Column(Integer, nullable=False, default=0)
+    last_error = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 __all__ = [
     "Base",
     "Tenant",
     "Table",
     "TableSession",
     "TableStatus",
+    "SyncOutbox",
 ]

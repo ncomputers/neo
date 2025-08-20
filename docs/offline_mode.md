@@ -31,3 +31,17 @@ Run `ops/scripts/heartbeat_monitor.sh` on a schedule to check critical services 
 
 Adjust `ALERT_COMMAND` to integrate with your alerting system.
 
+## Event Outbox & Sync Worker
+
+Tenant databases maintain a `sync_outbox` table that collects events when the
+cloud API cannot be reached. Run `ops/scripts/sync_worker.py` in the background
+to push queued events to `CLOUD_API_URL` once connectivity is restored.
+
+```bash
+POSTGRES_URL=postgresql://user:pass@localhost/tenant_db \
+CLOUD_API_URL=https://api.example.com/sync ops/scripts/sync_worker.py
+```
+
+The worker retries failed events, incrementing their `retries` count until they
+are successfully delivered.
+
