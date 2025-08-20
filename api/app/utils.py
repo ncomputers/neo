@@ -1,3 +1,6 @@
+# utils.py
+"""Utility helpers for menu and SLA calculations."""
+
 from __future__ import annotations
 
 from typing import Iterable
