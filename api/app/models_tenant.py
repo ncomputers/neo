@@ -181,6 +181,16 @@ class AuditTenant(Base):
     meta = Column(JSON, nullable=True)
 
 
+class InvoiceCounter(Base):
+    """Counters for generating sequential invoice numbers."""
+
+    __tablename__ = "invoice_counters"
+
+    id = Column(Integer, primary_key=True)
+    series = Column(String, nullable=False, unique=True)
+    current = Column(Integer, nullable=False, default=0)
+
+
 __all__ = [
     "Base",
     "Category",
@@ -195,4 +205,5 @@ __all__ = [
     "Customer",
     "EMAStat",
     "AuditTenant",
+    "InvoiceCounter",
 ]
