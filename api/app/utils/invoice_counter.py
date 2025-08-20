@@ -1,20 +1,25 @@
-from __future__ import annotations
+"""Utilities for managing invoice counters."""
 
-"""Helpers to generate sequential invoice numbers."""
-
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models_tenant import Invoice
 
+async def next_invoice_number(session: AsyncSession, series: str = "INV") -> str:
+    """Return the next invoice number for ``series``.
 
-async def next_invoice_number(session: AsyncSession) -> str:
-    """Return the next invoice number as a string.
-
-    The number is derived by taking the maximum existing invoice number and
-    incrementing it by one. This assumes invoice numbers are numeric strings.
+    The counter is created if missing and atomically incremented.
+    The resulting invoice number is formatted as ``SERIES/000001``.
     """
-
-    result = await session.execute(select(func.max(cast(Invoice.number, Integer))))
-    current = result.scalar() or 0
-    return str(current + 1)
+    stmt = text(
+        """
+        INSERT INTO invoice_counters (series, current)
+        VALUES (:series, 1)
+        ON CONFLICT (series)
+        DO UPDATE SET current = invoice_counters.current + 1
+        RETURNING current
+        """
+    )
+    result = await session.execute(stmt, {"series": series})
+    current = result.scalar_one()
+    await session.commit()
+    return f"{series}/{current:06d}"
