@@ -4,8 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from .models_master import Base as MasterBase
-from .models_tenant import Base as TenantBase
+from ..models_master import Base as MasterBase
+from ..models_tenant import Base as TenantBase
 
 # Shared database engine and session factory for the application.
 engine = create_engine(
