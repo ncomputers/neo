@@ -15,8 +15,15 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
+    @classmethod
+    def customise_sources(cls, init_settings, env_settings, file_secret_settings):
+        return env_settings, cls.json_config_settings, init_settings, file_secret_settings
+
+    @classmethod
+    def json_config_settings(cls, settings):
+        config_path = Path(__file__).with_name("config.json")
+        return json.loads(config_path.read_text())
+
 @lru_cache
 def get_settings() -> Settings:
-    config_path = Path(__file__).with_name("config.json")
-    data = json.loads(config_path.read_text())
-    return Settings(**data)
+    return Settings()
