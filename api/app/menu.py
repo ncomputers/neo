@@ -1,24 +1,41 @@
 # menu.py
 
-"""In-memory menu management with import/export helpers."""
+"""Database-backed menu management with import/export helpers."""
 
 from __future__ import annotations
 
 import os
 import uuid
 from io import BytesIO
-from typing import Dict
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook, load_workbook
+from sqlalchemy import select
 
+from .db import SessionLocal
+from .models import Category as CategoryModel, MenuItem as MenuItemModel
 from .schemas import Category, CategoryIn, Item, ItemIn
 
 router = APIRouter()
 
-_categories: Dict[uuid.UUID, Category] = {}
-_items: Dict[uuid.UUID, Item] = {}
+
+def _category_to_schema(cat: CategoryModel) -> Category:
+    return Category(id=cat.id, name=cat.name)
+
+
+def _item_to_schema(item: MenuItemModel) -> Item:
+    return Item(
+        id=item.id,
+        name=item.name,
+        price=item.price,
+        category_id=item.category_id,
+        in_stock=item.in_stock,
+        show_fssai_icon=item.show_fssai_icon,
+        image_url=item.image_url,
+        pending_price=item.pending_price,
+    )
+
 
 IMAGE_DIR = os.path.join(os.path.dirname(__file__), "static", "images")
 os.makedirs(IMAGE_DIR, exist_ok=True)
@@ -31,24 +48,32 @@ os.makedirs(IMAGE_DIR, exist_ok=True)
 def create_category(data: CategoryIn) -> Category:
     """Create a new category and return it."""
 
-    cid = uuid.uuid4()
-    category = Category(id=cid, **data.model_dump())
-    _categories[cid] = category
-    return category
+    with SessionLocal() as session:
+        category = CategoryModel(name=data.name)
+        session.add(category)
+        session.commit()
+        session.refresh(category)
+        return _category_to_schema(category)
 
 
 @router.get("/categories", response_model=list[Category])
 def list_categories() -> list[Category]:
     """Return all categories."""
 
-    return list(_categories.values())
+    with SessionLocal() as session:
+        categories = session.scalars(select(CategoryModel)).all()
+        return [_category_to_schema(c) for c in categories]
 
 
 @router.delete("/categories/{category_id}")
 def delete_category(category_id: uuid.UUID) -> None:
     """Delete a category if it exists."""
 
-    _categories.pop(category_id, None)
+    with SessionLocal() as session:
+        category = session.get(CategoryModel, category_id)
+        if category:
+            session.delete(category)
+            session.commit()
 
 
 # Menu Items
@@ -58,20 +83,24 @@ def delete_category(category_id: uuid.UUID) -> None:
 def create_item(data: ItemIn) -> Item:
     """Create a menu item."""
 
-    iid = uuid.uuid4()
-    item = Item(id=iid, **data.model_dump())
-    _items[iid] = item
-    return item
+    with SessionLocal() as session:
+        item = MenuItemModel(**data.model_dump())
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return _item_to_schema(item)
 
 
 @router.get("/items", response_model=list[Item])
 def list_items(include_out_of_stock: bool = False) -> list[Item]:
     """List items, optionally including out-of-stock ones."""
 
-    values = _items.values()
-    if not include_out_of_stock:
-        values = [i for i in values if i.in_stock]
-    return list(values)
+    with SessionLocal() as session:
+        query = select(MenuItemModel)
+        if not include_out_of_stock:
+            query = query.where(MenuItemModel.in_stock.is_(True))
+        items = session.scalars(query).all()
+        return [_item_to_schema(i) for i in items]
 
 
 # Import/Export
@@ -80,21 +109,24 @@ def list_items(include_out_of_stock: bool = False) -> list[Item]:
 @router.get("/items/export")
 def export_items() -> StreamingResponse:
     """Export current items to an Excel sheet."""
-
     wb = Workbook()
     ws = wb.active
     ws.append(["name", "price", "category", "in_stock", "show_fssai_icon"])
-    for item in _items.values():
-        cat = _categories.get(item.category_id)
-        ws.append(
-            [
-                item.name,
-                item.price,
-                cat.name if cat else None,
-                item.in_stock,
-                item.show_fssai_icon,
-            ]
+    with SessionLocal() as session:
+        stmt = (
+            select(MenuItemModel, CategoryModel)
+            .join(CategoryModel, MenuItemModel.category_id == CategoryModel.id, isouter=True)
         )
+        for item, cat in session.execute(stmt):
+            ws.append(
+                [
+                    item.name,
+                    item.price,
+                    cat.name if cat else None,
+                    item.in_stock,
+                    item.show_fssai_icon,
+                ]
+            )
     buffer = BytesIO()
     wb.save(buffer)
     buffer.seek(0)
@@ -109,69 +141,83 @@ def export_items() -> StreamingResponse:
 @router.post("/items/import")
 def import_items(file: UploadFile = File(...)) -> int:
     """Import items from an uploaded Excel sheet."""
-
     wb = load_workbook(file.file)
     ws = wb.active
     count = 0
-    for name, price, category_name in ws.iter_rows(min_row=2, values_only=True):
-        # iterate over rows creating categories/items as needed
-        cid = None
-        if category_name:
-            cid = next(
-                (c.id for c in _categories.values() if c.name == category_name),
-                None,
-            )
-            if cid is None:
-                cid = uuid.uuid4()
-                _categories[cid] = Category(id=cid, name=category_name)
-        iid = uuid.uuid4()
-        item = Item(id=iid, name=name, price=price, category_id=cid)
-        _items[iid] = item
-        count += 1
+    with SessionLocal() as session:
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            name, price, category_name, *_ = row
+            try:
+                price = int(price)
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="Invalid price")
+            cid = None
+            if category_name:
+                cat = session.scalar(
+                    select(CategoryModel).where(CategoryModel.name == category_name)
+                )
+                if not cat:
+                    cat = CategoryModel(name=category_name)
+                    session.add(cat)
+                    session.flush()
+                cid = cat.id
+            item = MenuItemModel(name=name, price=price, category_id=cid)
+            session.add(item)
+            count += 1
+        session.commit()
     return count
 
 
 @router.get("/items/{item_id}", response_model=Item)
 def get_item(item_id: uuid.UUID) -> Item:
     """Fetch a single item by ID."""
-
-    item = _items.get(item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item
+    with SessionLocal() as session:
+        item = session.get(MenuItemModel, item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return _item_to_schema(item)
 
 
 @router.put("/items/{item_id}", response_model=Item)
 def update_item(item_id: uuid.UUID, data: ItemIn) -> Item:
     """Update an item; price changes are staged as pending."""
-
-    stored = _items.get(item_id)
-    if not stored:
-        raise HTTPException(status_code=404, detail="Item not found")
-    update = data.model_dump()
-    if update["price"] != stored.price:
-        stored.pending_price = update["price"]  # pending price update
-        update.pop("price")
-    for key, value in update.items():
-        setattr(stored, key, value)
-    return stored
+    with SessionLocal() as session:
+        item = session.get(MenuItemModel, item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        update = data.model_dump()
+        if update["price"] != item.price:
+            item.pending_price = update["price"]
+            update.pop("price")
+        for key, value in update.items():
+            setattr(item, key, value)
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return _item_to_schema(item)
 
 
 @router.post("/items/apply-pending")
 def apply_pending_prices() -> None:
     """Apply any staged price updates."""
-
-    for item in _items.values():
-        if item.pending_price is not None:
+    with SessionLocal() as session:
+        items = session.scalars(
+            select(MenuItemModel).where(MenuItemModel.pending_price.is_not(None))
+        ).all()
+        for item in items:
             item.price = item.pending_price
             item.pending_price = None
+        session.commit()
 
 
 @router.delete("/items/{item_id}")
 def delete_item(item_id: uuid.UUID) -> None:
     """Remove an item if present."""
-
-    _items.pop(item_id, None)
+    with SessionLocal() as session:
+        item = session.get(MenuItemModel, item_id)
+        if item:
+            session.delete(item)
+            session.commit()
 
 
 # Images
@@ -180,13 +226,16 @@ def delete_item(item_id: uuid.UUID) -> None:
 @router.post("/items/{item_id}/image", response_model=Item)
 def upload_image(item_id: uuid.UUID, file: UploadFile = File(...)) -> Item:
     """Attach an image to an item by saving the uploaded file."""
-
-    item = _items.get(item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    filename = f"{item_id}_{file.filename}"
-    path = os.path.join(IMAGE_DIR, filename)
-    with open(path, "wb") as f:
-        f.write(file.file.read())
-    item.image_url = path
-    return item
+    with SessionLocal() as session:
+        item = session.get(MenuItemModel, item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        filename = f"{item_id}_{file.filename}"
+        path = os.path.join(IMAGE_DIR, filename)
+        with open(path, "wb") as f:
+            f.write(file.file.read())
+        item.image_url = path
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return _item_to_schema(item)
