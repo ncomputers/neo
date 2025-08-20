@@ -2,7 +2,7 @@
 
 This repository contains three main services:
 
-- `api/` – FastAPI application with a `/health` endpoint and Alembic migrations.
+- `api/` – FastAPI application with a `/health` endpoint, Alembic migrations, and service helpers such as EMA-based ETA utilities.
 - `pwa/` – React + Tailwind front end with a placeholder home page.
 - `ops/` – Docker Compose for local development.
 
