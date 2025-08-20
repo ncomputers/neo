@@ -1,4 +1,3 @@
-# qr.py
 """Utility helpers to generate static QR codes for tables."""
 from __future__ import annotations
 

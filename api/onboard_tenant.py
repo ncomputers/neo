@@ -1,5 +1,9 @@
-# onboard_tenant.py
-"""Utilities for provisioning new tenants in the demo environment."""
+"""Utilities for onboarding new tenants.
+
+The :func:`create_tenant` helper provisions a new tenant database, applies the
+current Alembic migrations and records tenant metadata in the master database.
+This script is intended for internal staff use during the onboarding process.
+"""
 
 from __future__ import annotations
 
