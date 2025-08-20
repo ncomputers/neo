@@ -35,7 +35,7 @@ pip install -r api/requirements.txt python-dotenv
 python start_app.py
 ```
 
-The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini`, and starts the application via `uvicorn api.app.main:app`.
+The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini` via `python -m alembic`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r api/requirements.txt`.
 
 ### Real-time Updates
 
