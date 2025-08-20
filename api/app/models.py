@@ -50,6 +50,8 @@ class Tenant(Base):
     invoice_prefix = Column(String, nullable=True)
     ema_window = Column(Integer, nullable=True)
     license_limits = Column(JSON, nullable=True)
+    subscription_expires_at = Column(DateTime, nullable=True)
+    grace_period_days = Column(Integer, nullable=False, default=7)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
