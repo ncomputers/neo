@@ -3,7 +3,7 @@ services:
   api:
     build: ../api
     env_file:
-      - ../api/.env
+      - ../.env
     ports:
       - '8000:8000'
     depends_on:
