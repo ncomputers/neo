@@ -12,9 +12,14 @@ create an :class:`~sqlalchemy.ext.asyncio.AsyncEngine` for it.
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import os
+from pathlib import Path
 from typing import Final
 
+from alembic import command
+from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 TEMPLATE_ENV: Final[str] = "POSTGRES_TENANT_DSN_TEMPLATE"
@@ -48,4 +53,35 @@ def get_engine(tenant_id: str) -> AsyncEngine:
     return create_async_engine(dsn)
 
 
-__all__ = ["build_dsn", "get_engine"]
+async def run_tenant_migrations(tenant_id: str) -> None:
+    """Run Alembic migrations for ``tenant_id``.
+
+    This uses the programmatic Alembic API mirroring the
+    ``scripts/tenant_migrate.py`` helper.
+    """
+
+    logger = logging.getLogger(__name__)
+
+    engine: AsyncEngine | None = None
+    try:
+        dsn = build_dsn(tenant_id)
+        engine = create_async_engine(dsn)
+
+        cfg = Config()
+        cfg.set_main_option(
+            "script_location",
+            str(Path(__file__).resolve().parents[2] / "alembic_tenant"),
+        )
+        cfg.set_main_option("sqlalchemy.url", dsn)
+        cfg.attributes["engine"] = engine
+
+        await asyncio.to_thread(command.upgrade, cfg, "head")
+    except Exception as exc:  # pragma: no cover - runtime errors
+        logger.error("Failed to run migrations for %s: %s", tenant_id, exc)
+        raise
+    finally:
+        if engine is not None:
+            await engine.dispose()
+
+
+__all__ = ["build_dsn", "get_engine", "run_tenant_migrations"]
