@@ -23,6 +23,7 @@ from .auth import (
     create_access_token,
     role_required,
 )
+from .audit import log_event
 from .menu import router as menu_router
 from .models import Base, Table, TableStatus
 
@@ -67,6 +68,7 @@ async def email_login(credentials: EmailLogin) -> Token:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    log_event(user.username, "login", "user", master=True)
     return Token(access_token=token, role=user.role)
 
 
@@ -80,6 +82,7 @@ async def pin_login(credentials: PinLogin) -> Token:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    log_event(user.username, "login", "user", master=True)
     return Token(access_token=token, role=user.role)
 
 
@@ -263,6 +266,7 @@ async def update_order(
     if payload.quantity != 0:
         raise HTTPException(status_code=400, detail="Only soft-cancel allowed")
     order_item.quantity = 0  # mark as cancelled but retain entry for audit
+    log_event("system", "order_update", table_id)
     return {"orders": table["orders"]}
 
 
@@ -296,6 +300,7 @@ async def pay_now(table_id: str) -> dict[str, float]:
     table = _table_state(table_id)
     total = sum(i.price * i.quantity for i in table["orders"] if i.quantity > 0)
     table["orders"] = []  # clearing orders resets table state for next guests
+    log_event("system", "payment", table_id)
     return {"total": total}
 
 
