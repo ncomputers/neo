@@ -3,7 +3,15 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
+from enum import Enum
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class AcceptanceMode(str, Enum):
+    """Modes for accepting orders."""
+
+    ITEM = "item"
+    ORDER = "order"
 
 
 class Settings(BaseSettings):
@@ -14,6 +22,11 @@ class Settings(BaseSettings):
     redis_url: str
     minio_url: str
     proxy_url: str
+    acceptance_mode: AcceptanceMode = AcceptanceMode.ITEM
+    ema_window: int = 10
+    sla_sound_alert: bool = False
+    sla_color_alert: bool = False
+    hide_out_of_stock_items: bool = True
 
 
 @lru_cache
