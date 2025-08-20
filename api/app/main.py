@@ -11,10 +11,12 @@ from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
+from redis.asyncio import from_url
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from config import get_settings
 from .auth import (
     Token,
     User,
@@ -25,10 +27,16 @@ from .auth import (
 )
 from .audit import log_event
 from .menu import router as menu_router
+from .middleware import RateLimitMiddleware
+from .models import TableStatus
 from .models import Base, Table, TableStatus
 
 
+
+settings = get_settings()
 app = FastAPI()
+app.state.redis = from_url(settings.redis_url, decode_responses=True)
+app.add_middleware(RateLimitMiddleware, limit=3)
 app.include_router(menu_router, prefix="/menu")
 
 

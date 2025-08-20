@@ -7,11 +7,16 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 import uuid
 
 from fastapi.testclient import TestClient
+import fakeredis.aioredis
 
 from api.app.main import SessionLocal, app
 from api.app.models import Table, TableStatus
 
 client = TestClient(app)
+
+
+def setup_module():
+    app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
 def test_cart_and_soft_cancel():

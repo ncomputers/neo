@@ -10,6 +10,9 @@ pydantic-settings
 openpyxl
 python-multipart
 qrcode
+redis
+fakeredis
+
 httpx
 
 

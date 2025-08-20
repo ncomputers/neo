@@ -26,6 +26,8 @@ uvicorn app.main:app --reload
 
 Visit <http://localhost:8000/health> to verify the service.
 
+The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
+
 ## PWA
 
 ```bash
