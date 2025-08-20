@@ -20,7 +20,7 @@ fileConfig(config.config_file_name)
 settings = get_settings()
 DB_URLS = {
     "master": settings.postgres_master_url,
-    "tenant": settings.postgres_tenant_url,
+    "tenant": settings.postgres_tenant_dsn_template.format(tenant_id="tenant"),
 }
 
 target_metadata = models.Base.metadata

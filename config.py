@@ -35,8 +35,11 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    postgres_master_url: str
-    postgres_tenant_url: str
+    postgres_master_url: str = "sqlite+aiosqlite:///./dev_master.db"
+    postgres_tenant_dsn_template: str = (
+        "sqlite+aiosqlite:///./tenant_{tenant_id}.db"
+    )
+    postgres_super_url: str | None = None
     redis_url: str
     minio_url: str
     proxy_url: str

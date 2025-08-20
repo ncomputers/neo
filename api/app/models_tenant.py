@@ -63,6 +63,16 @@ class TableStatus(enum.Enum):
     LOCKED = "locked"
 
 
+class OrderStatus(enum.Enum):
+    """Possible states for an order."""
+
+    NEW = "new"
+    CONFIRMED = "confirmed"
+    PREPARING = "preparing"
+    READY = "ready"
+    SERVED = "served"
+
+
 class Table(Base):
     """Dining tables mapped to QR tokens."""
 
@@ -87,7 +97,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True)
     table_id = Column(Integer, ForeignKey("tables.id"), nullable=False)
-    status = Column(String, nullable=False)
+    status = Column(Enum(OrderStatus), nullable=False)
     placed_at = Column(DateTime(timezone=True), nullable=True)
     accepted_at = Column(DateTime(timezone=True), nullable=True)
     ready_at = Column(DateTime(timezone=True), nullable=True)
@@ -186,6 +196,7 @@ __all__ = [
     "Category",
     "MenuItem",
     "TableStatus",
+    "OrderStatus",
     "Table",
     "Order",
     "OrderItem",
