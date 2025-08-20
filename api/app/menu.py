@@ -1,25 +1,42 @@
 # menu.py
 
-"""In-memory menu management with import/export helpers."""
+"""Database-backed menu management with import/export helpers."""
 
 from __future__ import annotations
 
 import os
 import uuid
 from io import BytesIO
-from typing import Dict
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook, load_workbook
+from sqlalchemy import select
 
+from .db import SessionLocal
+from .models import Category as CategoryModel, MenuItem as MenuItemModel
 from .schemas import Category, CategoryIn, Item, ItemIn
 from .utils.responses import ok
 
 router = APIRouter()
 
-_categories: Dict[uuid.UUID, Category] = {}
-_items: Dict[uuid.UUID, Item] = {}
+
+def _category_to_schema(cat: CategoryModel) -> Category:
+    return Category(id=cat.id, name=cat.name)
+
+
+def _item_to_schema(item: MenuItemModel) -> Item:
+    return Item(
+        id=item.id,
+        name=item.name,
+        price=item.price,
+        category_id=item.category_id,
+        in_stock=item.in_stock,
+        show_fssai_icon=item.show_fssai_icon,
+        image_url=item.image_url,
+        pending_price=item.pending_price,
+    )
+
 
 IMAGE_DIR = os.path.join(os.path.dirname(__file__), "static", "images")
 os.makedirs(IMAGE_DIR, exist_ok=True)
@@ -38,11 +55,13 @@ def create_category(data: CategoryIn) -> dict:
     return ok(category)
 
 
+
 @router.get("/categories")
 def list_categories() -> dict:
     """Return all categories."""
 
     return ok(list(_categories.values()))
+
 
 
 @router.delete("/categories/{category_id}")
@@ -82,21 +101,24 @@ def list_items(include_out_of_stock: bool = False) -> dict:
 @router.get("/items/export")
 def export_items() -> StreamingResponse:
     """Export current items to an Excel sheet."""
-
     wb = Workbook()
     ws = wb.active
     ws.append(["name", "price", "category", "in_stock", "show_fssai_icon"])
-    for item in _items.values():
-        cat = _categories.get(item.category_id)
-        ws.append(
-            [
-                item.name,
-                item.price,
-                cat.name if cat else None,
-                item.in_stock,
-                item.show_fssai_icon,
-            ]
+    with SessionLocal() as session:
+        stmt = (
+            select(MenuItemModel, CategoryModel)
+            .join(CategoryModel, MenuItemModel.category_id == CategoryModel.id, isouter=True)
         )
+        for item, cat in session.execute(stmt):
+            ws.append(
+                [
+                    item.name,
+                    item.price,
+                    cat.name if cat else None,
+                    item.in_stock,
+                    item.show_fssai_icon,
+                ]
+            )
     buffer = BytesIO()
     wb.save(buffer)
     buffer.seek(0)
@@ -111,7 +133,6 @@ def export_items() -> StreamingResponse:
 @router.post("/items/import")
 def import_items(file: UploadFile = File(...)) -> dict:
     """Import items from an uploaded Excel sheet."""
-
     wb = load_workbook(file.file)
     ws = wb.active
     count = 0
@@ -133,6 +154,7 @@ def import_items(file: UploadFile = File(...)) -> dict:
     return ok(count)
 
 
+
 @router.get("/items/{item_id}")
 def get_item(item_id: uuid.UUID) -> dict:
     """Fetch a single item by ID."""
@@ -141,6 +163,7 @@ def get_item(item_id: uuid.UUID) -> dict:
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return ok(item)
+
 
 
 @router.put("/items/{item_id}")
@@ -159,15 +182,19 @@ def update_item(item_id: uuid.UUID, data: ItemIn) -> dict:
     return ok(stored)
 
 
+
 @router.post("/items/apply-pending")
 def apply_pending_prices() -> dict:
     """Apply any staged price updates."""
-
-    for item in _items.values():
-        if item.pending_price is not None:
+    with SessionLocal() as session:
+        items = session.scalars(
+            select(MenuItemModel).where(MenuItemModel.pending_price.is_not(None))
+        ).all()
+        for item in items:
             item.price = item.pending_price
             item.pending_price = None
     return ok(None)
+
 
 
 @router.delete("/items/{item_id}")
@@ -176,6 +203,7 @@ def delete_item(item_id: uuid.UUID) -> dict:
 
     _items.pop(item_id, None)
     return ok(None)
+
 
 
 # Images
@@ -194,3 +222,4 @@ def upload_image(item_id: uuid.UUID, file: UploadFile = File(...)) -> dict:
         f.write(file.file.read())
     item.image_url = path
     return ok(item)
+

@@ -11,6 +11,8 @@ from openpyxl import Workbook
 import fakeredis.aioredis
 
 from api.app.main import app
+from api.app.db import SessionLocal
+from api.app.models import Category as CategoryModel, MenuItem as MenuItemModel
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -19,8 +21,16 @@ def setup_module():
     app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
+def setup_function() -> None:
+    with SessionLocal() as session:
+        session.query(MenuItemModel).delete()
+        session.query(CategoryModel).delete()
+        session.commit()
+
+
 def test_category_and_item_crud():
     cat = client.post("/menu/categories", json={"name": "Drinks"}).json()["data"]
+
     item = client.post(
         "/menu/items",
         json={"name": "Tea", "price": 10, "category_id": cat["id"]},
@@ -33,6 +43,7 @@ def test_category_and_item_crud():
     assert upd["pending_price"] == 12
     client.post("/menu/items/apply-pending")
     assert client.get(f"/menu/items/{item['id']}").json()["data"]["price"] == 12
+
 
 
 def test_image_upload_and_export_import():
@@ -65,6 +76,7 @@ def test_image_upload_and_export_import():
         ).status_code
         == 200
     )
+    assert any(i["name"] == "Cookie" for i in client.get("/menu/items").json())
     # invalid row
     wb2 = Workbook()
     ws2 = wb2.active
