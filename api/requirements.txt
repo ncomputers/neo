@@ -10,5 +10,6 @@ pydantic-settings
 openpyxl
 python-multipart
 qrcode
+httpx
 
 
