@@ -1,0 +1,308 @@
+
+# QR SaaS — Consolidated Q&A Requirements Digest
+**Date:** 2025-08-20  
+This document compiles every clarifying **question** I asked and the **answers/decisions** you gave. It includes brief interpretation notes so developers have clear context.
+
+---
+
+## Legend
+- **Q** = Question I asked (one‑liner)
+- **A** = Your answer (summarized from chat)
+- **Decision** = What we will implement
+- **Notes** = Extra context, toggles, or “configure at onboarding”
+
+---
+
+## 1) Ordering & Table Session
+1. **Q:** Is this for ordering, payments, reservations?  
+   **A:** Unique QR per table; shows menu; kitchen accepts; ETA updates; dine‑in only.  
+   **Decision:** QR menu + dine‑in ordering with live ETA; no reservations.  
+   **Notes:** Immediate serving; ETA = prep time, not delivery time.
+
+2. **Q:** Include payment + delivery time tracking in same flow?  
+   **A:** Yes, payment simple via UPI; show prep/delivery time for dine‑in.  
+   **Decision:** Payment + ETA in same flow (ETA = kitchen prep).
+
+3. **Q:** Upfront pay per order or consolidated bill?  
+   **A:** Multi‑round orders; one consolidated bill; “pay now” button available; admin can settle.  
+   **Decision:** One running bill per table; pay anytime or at end.
+
+4. **Q:** Kitchen + admin in same panel or separate?  
+   **A:** Same panel UI; access differs by role; super admin exists.  
+   **Decision:** Single web app; RBAC‑gated views.
+
+5. **Q:** Paper KOT needed?  
+   **A:** Paperless; tablets with swipe to accept.  
+   **Decision:** No printing by default (optional later).
+
+6. **Q:** Item modifiers/time-based?  
+   **A:** Simple menu; admin may adjust qty if needed.  
+   **Decision:** No complex modifiers in MVP.
+
+7. **Q:** Single restaurant or SaaS?  
+   **A:** SaaS for many restaurants/branches.  
+   **Decision:** Multi‑tenant product.
+
+8. **Q:** White‑label on subdomain/custom domain?  
+   **A:** Yes; optional custom domain mapping; logo/colors set during onboarding.  
+   **Decision:** Per‑outlet branding; custom domain optional (free SSL).
+
+9. **Q:** Onboarding self‑service or manual?  
+   **A:** Manual by our team; demo after setup; users can extend subscription duration.  
+   **Decision:** Internal onboarding wizard; demo presets.
+
+10. **Q:** Order history visible to guests?  
+    **A:** Only for bill generation; otherwise not needed.  
+    **Decision:** No guest order history; show invoice when requested.
+
+11. **Q:** Multi‑guest adding to same bill?  
+    **A:** One table, one bill; multiple can add items, one person places final order after preview.  
+    **Decision:** Shared cart per table; single placer confirms.
+
+12. **Q:** PWA or native apps?  
+    **A:** PWA now; native later.  
+    **Decision:** Responsive PWA for guest + staff.
+
+13. **Q:** Order edits/cancel rules?  
+    **A:** Guest locked after placing; admin can set item qty=0 (cancel); guests can add more rounds; bill updates.  
+    **Decision:** No guest edits; admin soft‑cancel; multi‑round allowed.
+
+14. **Q:** Fixed QR vs rotating token?  
+    **A:** Fixed QR per table.  
+    **Decision:** Static per‑table QR.
+
+15. **Q:** Table transfer/merge?  
+    **A:** Avoid complexity; handle via cash for now; moving possible later.  
+    **Decision:** No merge; transfer deferred (not in MVP UI).
+
+16. **Q:** Table unlock behavior after settlement?  
+    **A:** Locked until cleaner marks “Cleaned & Ready”.  
+    **Decision:** Cleaner‑driven unlock flow.
+
+---
+
+## 2) Payments, Billing & Taxes
+17. **Q:** Include payment + tracking?  
+    **A:** Yes; simple UPI (deep‑link + static QR) and Cash; Card optional.  
+    **Decision:** UPI & Cash default; Card optional.
+
+18. **Q:** Payment verification method?  
+    **A:** Guest: show UPI options; cashier can verify & settle; auto‑collect UTR if available.  
+    **Decision:** Manual cashier verify first; optional auto‑verify per outlet later.
+
+19. **Q:** Screenshot uploads?  
+    **A:** For **subscription renewals only**; not for guest bills.  
+    **Decision:** Screenshot upload in Super‑Admin subscription flow only.
+
+20. **Q:** Split payments?  
+    **A:** Yes (UPI + Cash / multiple txns) with cashier verification.  
+    **Decision:** Split payments allowed.
+
+21. **Q:** GST compliance & print?  
+    **A:** Yes; depends on outlet registration (Unregistered/Composition/Regular GST).  
+    **Decision:** GST features toggled at onboarding; 80 mm + A4/PDF.
+
+22. **Q:** Tax inclusive/exclusive & rounding?  
+    **A:** Set during onboarding; no GST shown for unregistered.  
+    **Decision:** Config per outlet; rounding applied.
+
+23. **Q:** B2B invoices?  
+    **A:** Mostly B2C; optional B2B module (enter buyer GSTIN/name if enabled).  
+    **Decision:** B2B toggle at onboarding.
+
+24. **Q:** Invoice numbering scheme?  
+    **A:** Configure during onboarding (prefix/reset).  
+    **Decision:** Per‑outlet sequence; reset policy selectable.
+
+25. **Q:** Tips, discounts, service charge, coupons?  
+    **A:** Yes; tips optional; coupons generated by admin.  
+    **Decision:** All supported; policies set at onboarding.
+
+26. **Q:** Price changes mid‑session?  
+    **A:** Never during active session; apply next scan.  
+    **Decision:** Lock price at add‑time/session version.
+
+---
+
+## 3) Kitchen & ETA
+27. **Q:** KDS acceptance mode?  
+    **A:** Item‑level and/or whole‑order; configurable.  
+    **Decision:** Both modes supported; choose at onboarding.
+
+28. **Q:** Sounds/colors for SLA breach?  
+    **A:** Yes (optional).  
+    **Decision:** Optional alerts on KDS.
+
+29. **Q:** Multi‑station routing (bar/tandoor)?  
+    **A:** Not yet; future.  
+    **Decision:** Defer.
+
+30. **Q:** EMA prep time model?  
+    **A:** Outlet‑wide EMA using last 10 or 20 orders; window set at onboarding.  
+    **Decision:** EMA (N=10/20 selectable).
+
+31. **Q:** Stock control?  
+    **A:** Yes, “Out of stock” hides items.  
+    **Decision:** Simple stock toggle.
+
+---
+
+## 4) Notifications & Identity
+32. **Q:** WhatsApp/SMS notifications?  
+    **A:** Optional per outlet.  
+    **Decision:** Channel rules configured at onboarding.
+
+33. **Q:** Web‑push if page closed?  
+    **A:** No; updates only while page open.  
+    **Decision:** No push in MVP.
+
+34. **Q:** Customer identity (phone/email)?  
+    **A:** Optional; collect when invoice/WhatsApp/email is desired; keep ordering simple.  
+    **Decision:** Identity optional, configurable per outlet.
+
+35. **Q:** Re‑engagement contact retention?  
+    **A:** Keep or purge based on outlet policy; retention set at onboarding.  
+    **Decision:** Retention window configurable.
+
+---
+
+## 5) Roles, Access & UX
+36. **Q:** Roles & staff login?  
+    **A:** Roles: Super‑Admin, Outlet Admin/Manager, Cashier, Kitchen, Cleaner. Staff via 4–6 digit PIN.  
+    **Decision:** Email/password for admins; PIN for staff. RBAC enforced.
+
+37. **Q:** Table UI: list or floor map?  
+    **A:** Floor map is nice‑to‑have; optional later.  
+    **Decision:** Start with table list; simple map optional.
+
+38. **Q:** Table‑side “Call Waiter/Water/Get Bill”?  
+    **A:** Yes, desired.  
+    **Decision:** Include buttons with staff alerts.
+
+39. **Q:** Staff placing orders for guests without phones?  
+    **A:** Yes; system allows staff to place like guests.  
+    **Decision:** Staff can start/submit orders.
+
+40. **Q:** Table sections (Patio/AC)?  
+    **A:** Not needed now.  
+    **Decision:** Defer.
+
+---
+
+## 6) Subscription & Licensing
+41. **Q:** Pricing model?  
+    **A:** Per table / month.  
+    **Decision:** License per table.
+
+42. **Q:** Grace & expiry behavior?  
+    **A:** 7‑day grace with warnings; block new orders after expiry.  
+    **Decision:** Block at Day 8; renewal flow present.
+
+43. **Q:** Over‑license usage?  
+    **A:** Warn; require QR issuance for extra tables; without QR no orders.  
+    **Decision:** Enforce licensed count; grace warnings.
+
+44. **Q:** Subscription payment method?  
+    **A:** Simple UPI/QR; upload screenshot; team verifies and extends.  
+    **Decision:** Manual verification in Super‑Admin.
+
+---
+
+## 7) Offline/Hybrid & Infra
+45. **Q:** Offline strategy?  
+    **A:** Online/offline/hybrid supported; local LAN server; sync when online.  
+    **Decision:** Local node + cloud; queued sync.
+
+46. **Q:** QR link fallback?  
+    **A:** If internet down, base URL switches to local.  
+    **Decision:** Cloud + LAN fallback.
+
+47. **Q:** Local server hardware?  
+    **A:** Linux tiny PC / Raspberry Pi / Windows PC—all acceptable.  
+    **Decision:** Support all; prefer Linux.
+
+48. **Q:** Hosting choice?  
+    **A:** Self‑host on Linux.  
+    **Decision:** Self‑host default; containers.
+
+49. **Q:** Backups? Destination?  
+    **A:** Nightly encrypted; local + S3/MinIO.  
+    **Decision:** Dual‑dest backups; retention per policy.
+
+50. **Q:** Heartbeat & alerts?  
+    **A:** Rule‑based alerts configured during onboarding.  
+    **Decision:** Heartbeat + rule engine.
+
+---
+
+## 8) Security, Data & Policies
+51. **Q:** Abuse prevention (where orders come from)?  
+    **A:** Block IP after 3 rejected orders; rate‑limit; future geofence.  
+    **Decision:** Rate‑limit + auto‑block list.
+
+52. **Q:** Admin auth method?  
+    **A:** Email/phone + password (no OTP for now).  
+    **Decision:** Credentials + Argon2 hashing.
+
+53. **Q:** Multi‑tenant data model?  
+    **A:** Separate DB per outlet; master DB for platform.  
+    **Decision:** Per‑outlet Postgres + master Postgres.
+
+54. **Q:** Audit logging & retention?  
+    **A:** Yes; retention “defined at onboarding”.  
+    **Decision:** Full audit; retention configurable.
+
+55. **Q:** Defaults (country/currency/tz)?  
+    **A:** India / INR / IST (UTC+5:30).  
+    **Decision:** Set defaults; per‑outlet override.
+
+56. **Q:** Realtime transport?  
+    **A:** WebSockets/SSE (instant) preferred.  
+    **Decision:** WS/SSE with Redis pub/sub.
+
+---
+
+## 9) Menu & Compliance
+57. **Q:** Menu import & assets?  
+    **A:** Excel import; item photos; FSSAI icons optional; upload FSSAI license doc.  
+    **Decision:** Excel template import + photo upload; FSSAI toggle per item.
+
+58. **Q:** UPI settlement to which VPA?  
+    **A:** Either outlet’s VPA or central VPA with EOD settlement—choose at onboarding.  
+    **Decision:** Both modes supported.
+
+59. **Q:** EMA scope per item or outlet?  
+    **A:** Outlet‑wide now; per‑item later.  
+    **Decision:** Outlet‑wide EMA for MVP.
+
+60. **Q:** Reservations/waitlist?  
+    **A:** Skip for now.  
+    **Decision:** Out of scope.
+
+---
+
+## 10) Open Items / To Set During Onboarding
+- Invoice numbering **reset rule** (monthly/yearly/never) per outlet.
+- **Audit retention** days (90/180/365).  
+- **WhatsApp/SMS** channel enable + provider (later).  
+- **EMA window** (10 vs 20).  
+- **Rounding** (nearest ₹1/₹0.50).  
+- **Customer data retention** duration.  
+- **KDS mode** (item vs order).  
+- **B2B mode** enable/disable.  
+- **VPA mode** (Outlet vs Central).  
+- **UPI verification** (manual vs auto via webhook—future).
+
+---
+
+## 11) Final Summary (What to build)
+- **QR PWA** for guests + staff (RBAC; PIN for staff).  
+- **Orders** with statuses and live ETA via EMA.  
+- **Billing/Invoices** with GST modes, discounts/tips/coupons; 80 mm/A4 PDFs.  
+- **Payments** UPI & Cash (split allowed); cashier verification; UTR capture.  
+- **KDS** item/whole‑order modes; sound/color timers (optional).  
+- **Reports** incl. daily Z‑report (email/CSV).  
+- **Subscriptions** per table/month; 7‑day grace; block new orders after expiry.  
+- **Offline/Hybrid** local node + cloud sync; LAN fallback URL.  
+- **Security** rate‑limit + IP block; full audit; per‑outlet DB; backups to local+S3.
+
