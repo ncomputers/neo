@@ -1,40 +1,44 @@
 from __future__ import annotations
 
-import os
 from logging.config import fileConfig
+from pathlib import Path
+import sys
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from config import get_settings  # type: ignore
+
 config = context.config
 fileConfig(config.config_file_name)
 
+settings = get_settings()
+DB_URLS = {
+    "master": settings.postgres_master_url,
+    "tenant": settings.postgres_tenant_url,
+}
+
 target_metadata = None
 
+def _get_url() -> str:
+    return DB_URLS[context.get_x_argument(as_dictionary=True).get("db", "master")]
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
-    url = os.getenv("DATABASE_URL")
+    url = _get_url()
     context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
-
     with context.begin_transaction():
         context.run_migrations()
 
-
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-    configuration = {"sqlalchemy.url": os.getenv("DATABASE_URL")}
+    configuration = {"sqlalchemy.url": _get_url()}
     connectable = engine_from_config(
         configuration, prefix="sqlalchemy.", poolclass=pool.NullPool
     )
-
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
-
 
 if context.is_offline_mode():
     run_migrations_offline()
