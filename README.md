@@ -116,6 +116,12 @@ python scripts/tenant_create_db.py --tenant TENANT_ID
 
 The script will print `READY` once the database is available.
 
+To apply migrations for an existing tenant database, run:
+
+```bash
+python scripts/tenant_migrate.py --tenant TENANT_ID
+```
+
 ## Audit Logging
 
 Login attempts, order edits and payments write to SQLite-backed audit tables.
