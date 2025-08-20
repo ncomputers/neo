@@ -1,6 +1,10 @@
-from __future__ import annotations
+"""Tenant-specific database models.
 
-"""Tenant-specific database models such as menu and ordering tables."""
+These models describe the per-tenant schema used by the application. They are
+kept isolated from any application wiring so that they can be used in tests or
+migrations independently."""
+
+from __future__ import annotations
 
 import enum
 import uuid
@@ -13,37 +17,41 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 
+
 Base = declarative_base()
 
 
 class Category(Base):
-    """Menu item categories."""
+    """Categories for menu items."""
 
-    __tablename__ = "categories"
+    __tablename__ = "menu_categories"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False, unique=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    sort = Column(Integer, nullable=False)
 
 
 class MenuItem(Base):
-    """Individual menu items."""
+    """Tenant-specific menu items."""
 
     __tablename__ = "menu_items"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, ForeignKey("menu_categories.id"), nullable=False)
     name = Column(String, nullable=False)
-    price = Column(Integer, nullable=False)
-    pending_price = Column(Integer, nullable=True)
-    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
-    in_stock = Column(Boolean, nullable=False, default=True)
-    show_fssai_icon = Column(Boolean, nullable=False, default=False)
-    image_url = Column(String, nullable=True)
+    price = Column(Numeric(10, 2), nullable=False)
+    is_veg = Column(Boolean, nullable=False, default=False)
+    gst_rate = Column(Numeric(5, 2), nullable=True)
+    hsn_sac = Column(String, nullable=True)
+    show_fssai = Column(Boolean, nullable=False, default=False)
+    out_of_stock = Column(Boolean, nullable=False, default=False)
 
 
 class TableStatus(enum.Enum):
@@ -56,55 +64,34 @@ class TableStatus(enum.Enum):
 
 
 class Table(Base):
-    """Physical dining table mapped to a static QR code."""
+    """Dining tables mapped to QR tokens."""
 
     __tablename__ = "tables"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), nullable=False)
     name = Column(String, nullable=False)
-    qr_code = Column(String, nullable=True)
-    status = Column(Enum(TableStatus), default=TableStatus.AVAILABLE, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
-
-class TableSession(Base):
-    """Session model allowing a shared cart per table."""
-
-    __tablename__ = "table_sessions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    table_id = Column(UUID(as_uuid=True), ForeignKey("tables.id"), nullable=False)
-    cart = Column(JSON, nullable=True)
-    started_at = Column(DateTime, server_default=func.now())
-    settled_at = Column(DateTime, nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-    call_waiter = Column(Boolean, default=False, nullable=False)
-    call_water = Column(Boolean, default=False, nullable=False)
-    call_bill = Column(Boolean, default=False, nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
-
-class OrderStatus(enum.Enum):
-    """States for an order lifecycle."""
-
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
+    code = Column(String, unique=True, nullable=True)
+    qr_token = Column(String, unique=True, nullable=True)
+    status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class Order(Base):
-    """Customer order placed for a table session."""
+    """Orders placed from a table."""
 
     __tablename__ = "orders"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("table_sessions.id"), nullable=False)
-    status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    id = Column(Integer, primary_key=True)
+    table_id = Column(Integer, ForeignKey("tables.id"), nullable=False)
+    status = Column(String, nullable=False)
+    placed_at = Column(DateTime(timezone=True), nullable=True)
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
+    ready_at = Column(DateTime(timezone=True), nullable=True)
+    served_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class OrderItem(Base):
@@ -112,36 +99,86 @@ class OrderItem(Base):
 
     __tablename__ = "order_items"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
-    menu_item_id = Column(UUID(as_uuid=True), ForeignKey("menu_items.id"), nullable=False)
-    quantity = Column(Integer, nullable=False, default=1)
-    price = Column(Integer, nullable=False)
+    id = Column(Integer, primary_key=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=False)
+    name_snapshot = Column(String, nullable=False)
+    price_snapshot = Column(Numeric(10, 2), nullable=False)
+    qty = Column(Integer, nullable=False)
+    status = Column(String, nullable=False)
 
 
 class Invoice(Base):
-    """Generated invoice for a completed order."""
+    """Invoices generated for groups of orders."""
 
     __tablename__ = "invoices"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
-    number = Column(String, nullable=False)
-    total = Column(Integer, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
+    id = Column(Integer, primary_key=True)
+    order_group_id = Column(Integer, nullable=False)
+    number = Column(String, unique=True, nullable=False)
+    bill_json = Column(JSON, nullable=False)
+    gst_breakup = Column(JSON, nullable=True)
+    total = Column(Numeric(10, 2), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-class InvoiceItem(Base):
-    """Line items belonging to an invoice."""
+class Payment(Base):
+    """Payments received for invoices."""
 
-    __tablename__ = "invoice_items"
+    __tablename__ = "payments"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
+    id = Column(Integer, primary_key=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False)
+    mode = Column(String, nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    utr = Column(String, nullable=True)
+    verified = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Coupon(Base):
+    """Discount coupons."""
+
+    __tablename__ = "coupons"
+
+    id = Column(Integer, primary_key=True)
+    code = Column(String, unique=True, nullable=False)
+    percent = Column(Numeric(5, 2), nullable=True)
+    flat = Column(Numeric(10, 2), nullable=True)
+    active = Column(Boolean, nullable=False, default=True)
+
+
+class Customer(Base):
+    """End customers."""
+
+    __tablename__ = "customers"
+
+    id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    quantity = Column(Integer, nullable=False)
-    price = Column(Integer, nullable=False)
-    gst_rate = Column(Integer, nullable=True)
+    phone = Column(String, nullable=False)
+
+
+class EMAStat(Base):
+    """Stores exponential moving average stats for alerts."""
+
+    __tablename__ = "ema_stats"
+
+    id = Column(Integer, primary_key=True)
+    window_n = Column(Integer, nullable=False)
+    ema_seconds = Column(Numeric(10, 4), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AuditTenant(Base):
+    """Audit log for tenant actions."""
+
+    __tablename__ = "audit_tenant"
+
+    id = Column(Integer, primary_key=True)
+    at = Column(DateTime(timezone=True), server_default=func.now())
+    actor = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    meta = Column(JSON, nullable=True)
 
 
 __all__ = [
@@ -150,10 +187,12 @@ __all__ = [
     "MenuItem",
     "TableStatus",
     "Table",
-    "TableSession",
-    "OrderStatus",
     "Order",
     "OrderItem",
     "Invoice",
-    "InvoiceItem",
+    "Payment",
+    "Coupon",
+    "Customer",
+    "EMAStat",
+    "AuditTenant",
 ]
