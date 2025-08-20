@@ -18,7 +18,7 @@ from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import Session
 
 from config import get_settings
-from app.models import Tenant
+from app.models_master import Tenant
 
 
 def create_tenant(

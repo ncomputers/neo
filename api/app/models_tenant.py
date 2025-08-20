@@ -1,8 +1,6 @@
-# models.py
-
-"""Database models for the master schema."""
-
 from __future__ import annotations
+
+"""Tenant-specific database models such as menu and ordering tables."""
 
 import enum
 import uuid
@@ -21,39 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 
-from config import AcceptanceMode
-
-
 Base = declarative_base()
-
-
-class Tenant(Base):
-    """Tenant metadata stored in the master database.
-
-    The table stores basic branding information, domain mappings and a set of
-    configurable settings used during onboarding. ``license_limits`` can be
-    utilised by application logic to enforce per-table licensing counts.
-    """
-
-    __tablename__ = "tenants"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False, unique=True)
-    domain = Column(String, unique=True)
-    logo_url = Column(String, nullable=True)
-    primary_color = Column(String, nullable=True)
-    gst_mode = Column(Boolean, nullable=False, default=False)
-    invoice_prefix = Column(String, nullable=True)
-    ema_window = Column(Integer, nullable=True)
-    acceptance_mode = Column(String, nullable=False, default=AcceptanceMode.ITEM.value)
-    sla_sound_alert = Column(Boolean, nullable=False, default=False)
-    sla_color_alert = Column(Boolean, nullable=False, default=False)
-    hide_out_of_stock_items = Column(Boolean, nullable=False, default=True)
-    license_limits = Column(JSON, nullable=True)
-    subscription_expires_at = Column(DateTime, nullable=True)
-    grace_period_days = Column(Integer, nullable=False, default=7)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class Category(Base):
@@ -80,9 +46,6 @@ class MenuItem(Base):
     image_url = Column(String, nullable=True)
 
 
-__all__ = ["Base", "Tenant", "Category", "MenuItem"]
-
-
 class TableStatus(enum.Enum):
     """Lifecycle states for a dining table."""
 
@@ -98,7 +61,7 @@ class Table(Base):
     __tablename__ = "tables"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
+    tenant_id = Column(UUID(as_uuid=True), nullable=False)
     name = Column(String, nullable=False)
     qr_code = Column(String, nullable=True)
     status = Column(Enum(TableStatus), default=TableStatus.AVAILABLE, nullable=False)
@@ -123,24 +86,74 @@ class TableSession(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
-class SyncOutbox(Base):
-    """Events queued for sync when the cloud API is unreachable."""
+class OrderStatus(enum.Enum):
+    """States for an order lifecycle."""
 
-    __tablename__ = "sync_outbox"
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    CANCELLED = "cancelled"
+    COMPLETED = "completed"
+
+
+class Order(Base):
+    """Customer order placed for a table session."""
+
+    __tablename__ = "orders"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    event_type = Column(String, nullable=False)
-    payload = Column(JSON, nullable=False)
-    retries = Column(Integer, nullable=False, default=0)
-    last_error = Column(String, nullable=True)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("table_sessions.id"), nullable=False)
+    status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class OrderItem(Base):
+    """Line items belonging to an order."""
+
+    __tablename__ = "order_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
+    menu_item_id = Column(UUID(as_uuid=True), ForeignKey("menu_items.id"), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    price = Column(Integer, nullable=False)
+
+
+class Invoice(Base):
+    """Generated invoice for a completed order."""
+
+    __tablename__ = "invoices"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
+    number = Column(String, nullable=False)
+    total = Column(Integer, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class InvoiceItem(Base):
+    """Line items belonging to an invoice."""
+
+    __tablename__ = "invoice_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
+    name = Column(String, nullable=False)
+    quantity = Column(Integer, nullable=False)
+    price = Column(Integer, nullable=False)
+    gst_rate = Column(Integer, nullable=True)
 
 
 __all__ = [
     "Base",
-    "Tenant",
+    "Category",
+    "MenuItem",
+    "TableStatus",
     "Table",
     "TableSession",
-    "TableStatus",
-    "SyncOutbox",
+    "OrderStatus",
+    "Order",
+    "OrderItem",
+    "Invoice",
+    "InvoiceItem",
 ]

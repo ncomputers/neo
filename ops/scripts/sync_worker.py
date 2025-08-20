@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 BASE_DIR = Path(__file__).resolve().parents[2]
 sys.path.append(str(BASE_DIR / "api"))
 
-from app.models import SyncOutbox  # type: ignore  # noqa: E402
+from app.models_master import SyncOutbox  # type: ignore  # noqa: E402
 
 
 def process_once(engine, api_url: str) -> None:

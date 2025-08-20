@@ -14,7 +14,7 @@ from openpyxl import Workbook, load_workbook
 from sqlalchemy import select
 
 from .db import SessionLocal
-from .models import Category as CategoryModel, MenuItem as MenuItemModel
+from .models_tenant import Category as CategoryModel, MenuItem as MenuItemModel
 from .schemas import Category, CategoryIn, Item, ItemIn
 from .utils.responses import ok
 

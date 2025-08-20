@@ -56,7 +56,7 @@ from .events import (
 )
 
 from .utils import PrepTimeTracker
-from .models import Table, TableStatus
+from .models_tenant import Table, TableStatus
 
 
 

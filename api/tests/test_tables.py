@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 import fakeredis.aioredis
 
 from api.app.main import SessionLocal, app
-from api.app.models import Table, TableStatus
+from api.app.models_tenant import Table, TableStatus
 
 client = TestClient(app)
 
