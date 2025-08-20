@@ -20,6 +20,9 @@ from .utils.responses import ok
 
 router = APIRouter()
 
+_categories: dict[uuid.UUID, Category] = {}
+_items: dict[uuid.UUID, Item] = {}
+
 
 def _category_to_schema(cat: CategoryModel) -> Category:
     return Category(id=cat.id, name=cat.name)
@@ -191,6 +194,10 @@ def apply_pending_prices() -> dict:
             select(MenuItemModel).where(MenuItemModel.pending_price.is_not(None))
         ).all()
         for item in items:
+            item.price = item.pending_price
+            item.pending_price = None
+    for item in _items.values():
+        if item.pending_price is not None:
             item.price = item.pending_price
             item.pending_price = None
     return ok(None)
