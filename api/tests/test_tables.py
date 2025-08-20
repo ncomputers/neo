@@ -4,9 +4,12 @@ import sys
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
+import uuid
+
 from fastapi.testclient import TestClient
 
-from api.app.main import app
+from api.app.main import SessionLocal, app
+from api.app.models import Table, TableStatus
 
 client = TestClient(app)
 
@@ -32,3 +35,22 @@ def test_update_order_invalid_index():
         ).status_code
         == 404
     )
+
+
+def test_lock_and_clean_persist():
+    table_id = uuid.uuid4()
+    with SessionLocal() as session:
+        session.add(Table(id=table_id, tenant_id=uuid.uuid4(), name="T1"))
+        session.commit()
+
+    resp = client.post(f"/tables/{table_id}/lock")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == TableStatus.LOCKED.value
+
+    resp = client.post(f"/tables/{table_id}/mark-clean")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == TableStatus.AVAILABLE.value
+
+    with SessionLocal() as session:
+        table = session.get(Table, table_id)
+        assert table.status == TableStatus.AVAILABLE

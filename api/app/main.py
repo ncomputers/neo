@@ -11,6 +11,9 @@ from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from .auth import (
     Token,
@@ -21,11 +24,20 @@ from .auth import (
     role_required,
 )
 from .menu import router as menu_router
-from .models import TableStatus
+from .models import Base, Table, TableStatus
 
 
 app = FastAPI()
 app.include_router(menu_router, prefix="/menu")
+
+
+engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base.metadata.create_all(bind=engine)
 
 
 # Auth Routes
@@ -304,13 +316,33 @@ async def call_staff(table_id: str, action: str) -> dict[str, str]:
 async def lock_table(table_id: str) -> dict[str, str]:
     """Lock a table after settlement until cleaned."""
 
-    # Real logic would update the table status in the database.
-    return {"table_id": table_id, "status": TableStatus.LOCKED.value}
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:  # pragma: no cover - simple validation
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.status = TableStatus.LOCKED
+        session.commit()
+        session.refresh(table)
+        return {"table_id": table_id, "status": table.status.value}
 
 
 @app.post("/tables/{table_id}/mark-clean")
 async def mark_clean(table_id: str) -> dict[str, str]:
     """Mark a table as cleaned and ready for new guests."""
 
-    # Real logic would update the table status in the database.
-    return {"table_id": table_id, "status": TableStatus.AVAILABLE.value}
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:  # pragma: no cover - simple validation
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.status = TableStatus.AVAILABLE
+        session.commit()
+        session.refresh(table)
+        return {"table_id": table_id, "status": table.status.value}
