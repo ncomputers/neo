@@ -8,6 +8,7 @@ requests
 argon2-cffi
 python-jose[cryptography]
 pydantic-settings
+python-dotenv
 openpyxl
 python-multipart
 qrcode
