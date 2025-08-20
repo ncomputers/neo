@@ -1,19 +1,11 @@
-"""Database models for the master schema.
+# models.py
 
-This module currently defines the :class:`Tenant` model used to track
-metadata for each onboarded tenant. Additional models may be added as the
-project grows.
-"""
+"""Database models for the master schema."""
 
 from __future__ import annotations
 
-import uuid
-
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, func
-
-from config import AcceptanceMode
-
 import enum
+import uuid
 
 from sqlalchemy import (
     JSON,
@@ -21,7 +13,6 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
-
     ForeignKey,
     Integer,
     String,
@@ -29,6 +20,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
+
+from config import AcceptanceMode
 
 
 Base = declarative_base()
@@ -88,6 +81,8 @@ class MenuItem(Base):
 
 
 __all__ = ["Base", "Tenant", "Category", "MenuItem"]
+
+
 class TableStatus(enum.Enum):
     """Lifecycle states for a dining table."""
 

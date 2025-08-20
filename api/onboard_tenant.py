@@ -1,8 +1,10 @@
-"""Utilities for onboarding new tenants.
+# onboard_tenant.py
 
-The :func:`create_tenant` helper provisions a new tenant database, applies the
-current Alembic migrations and records tenant metadata in the master database.
-This script is intended for internal staff use during the onboarding process.
+"""Helper utilities for provisioning a new tenant database.
+
+The :func:`create_tenant` function creates a dedicated PostgreSQL database,
+runs Alembic migrations and records basic tenant metadata in the master
+database.
 """
 
 from __future__ import annotations
@@ -32,12 +34,28 @@ def create_tenant(
 ) -> URL:
     """Provision a new tenant database and record its metadata.
 
-    Returns the SQLAlchemy :class:`~sqlalchemy.engine.URL` for the new tenant
-    database. The function assumes the configured master user has privileges to
-    create databases and that Alembic is available on the PATH.
+    Parameters
+    ----------
+    name, domain:
+        Basic tenant identifiers.
+    logo_url, primary_color, gst_mode, invoice_prefix, ema_window,
+    license_limits:
+        Optional branding and configuration overrides stored alongside the
+        tenant record.
+
+    Returns
+    -------
+    URL
+        SQLAlchemy URL for the newly created tenant database.
+
+    Raises
+    ------
+    subprocess.CalledProcessError
+        If Alembic migrations fail.
     """
 
     settings = get_settings()
+    # Use AUTOCOMMIT so CREATE DATABASE can run outside a transaction
     master_engine = create_engine(
         settings.postgres_master_url, isolation_level="AUTOCOMMIT"
     )
@@ -46,9 +64,11 @@ def create_tenant(
     tenant_url = make_url(settings.postgres_tenant_url).set(database=tenant_db_name)
 
     with master_engine.connect() as conn:
+        # Create the isolated tenant database
         conn.execute(text(f'CREATE DATABASE "{tenant_db_name}"'))
 
     alembic_cfg = Path(__file__).with_name("alembic.ini")
+    # Apply migrations so the new database has the latest schema
     subprocess.run(
         [
             "alembic",
@@ -63,6 +83,7 @@ def create_tenant(
     )
 
     with Session(master_engine) as session:
+        # Persist tenant metadata in master DB
         tenant = Tenant(
             name=name,
             domain=domain,

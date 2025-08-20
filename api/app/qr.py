@@ -1,4 +1,7 @@
+# qr.py
+
 """Utility helpers to generate static QR codes for tables."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,7 +9,9 @@ from pathlib import Path
 import qrcode
 
 
-def generate_table_qr(table_id: str, base_url: str, output_dir: str = "static/qr") -> str:
+def generate_table_qr(
+    table_id: str, base_url: str, output_dir: str = "static/qr"
+) -> str:
     """Generate a PNG QR code for a table and return the file path.
 
     Parameters
