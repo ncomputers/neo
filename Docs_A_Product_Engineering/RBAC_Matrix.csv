@@ -1,7 +1,0 @@
-Role,Scope,Permissions
-Super-Admin,System,"Create/Update/Delete outlets, subscriptions, domains/SSL, view health & backups"
-Outlet Admin/Manager,Outlet,"Manage menu, stock, coupons, settings, staff PINs; run billing; reports; day close"
-Cashier,Outlet,"Generate invoice, apply discounts/tips/coupons, mark payments, settle, reprint"
-Kitchen,Outlet,"View KDS, accept/progress/ready/serve, toggle Out of Stock"
-Cleaner,Outlet,Mark table cleaned & ready (unlock)
-Guest,Outlet,"Browse menu, place orders, view live status, request bill, pay UPI/Cash"
