@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi.testclient import TestClient
+import fakeredis.aioredis
 
 from api.app import audit
 from api.app.main import app
@@ -17,8 +18,9 @@ client = TestClient(app)
 
 
 def setup_module() -> None:
-    """Reset audit tables before running tests."""
+    """Reset audit tables and configure a fake Redis instance."""
 
+    app.state.redis = fakeredis.aioredis.FakeRedis()
     audit.Base.metadata.drop_all(bind=audit.engine)
     audit.Base.metadata.create_all(bind=audit.engine)
 

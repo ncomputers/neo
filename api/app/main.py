@@ -433,15 +433,12 @@ async def lock_table(table_id: str) -> dict[str, str]:
 @app.post("/tables/{table_id}/mark-clean")
 async def mark_clean(table_id: str) -> dict[str, str]:
     """Mark a table as cleaned and ready for new guests."""
-
-    # Real logic would update the table status in the database.
     await event_bus.publish("table.cleaned", {"table_id": table_id})
-    return {"table_id": table_id, "status": TableStatus.AVAILABLE.value}
-
     try:
         tid = uuid.UUID(table_id)
-    except ValueError as exc:  # pragma: no cover - simple validation
-        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    except ValueError:  # non-UUID ids are allowed but skip DB update
+        return {"table_id": table_id, "status": TableStatus.AVAILABLE.value}
+
     with SessionLocal() as session:
         table = session.get(Table, tid)
         if table is None:

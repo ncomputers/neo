@@ -26,6 +26,17 @@ uvicorn app.main:app --reload
 
 Visit <http://localhost:8000/health> to verify the service.
 
+### Start Script
+
+Run migrations and launch the API with a single command once dependencies are installed:
+
+```bash
+pip install -r api/requirements.txt python-dotenv
+python start_app.py
+```
+
+The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini`, and starts the application via `uvicorn api.app.main:app`.
+
 ### Real-time Updates
 
 Connect to `ws://localhost:8000/tables/{id}/ws` to receive live order
