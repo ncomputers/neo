@@ -1,6 +1,6 @@
 {
   "postgres_master_url": "postgresql://postgres:postgres@postgres_master:5432/master",
-  "postgres_tenant_url": "postgresql://tenant:tenant@postgres_tenant:5432/tenant",
+  "postgres_tenant_url": "postgresql://tenant:tenant@postgres_tenant:5432/{tenant_id}",
   "redis_url": "redis://redis:6379/0",
   "minio_url": "http://minio:9000",
   "proxy_url": "http://localhost:80",

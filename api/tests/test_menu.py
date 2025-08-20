@@ -11,7 +11,7 @@ from openpyxl import Workbook
 import fakeredis.aioredis
 
 from api.app.main import app
-from api.app.db import SessionLocal
+from api.app.db.master import SessionLocal
 from api.app.models import Category as CategoryModel, MenuItem as MenuItemModel
 
 client = TestClient(app, raise_server_exceptions=False)
@@ -76,7 +76,7 @@ def test_image_upload_and_export_import():
         ).status_code
         == 200
     )
-    assert any(i["name"] == "Cookie" for i in client.get("/menu/items").json())
+    assert any(i["name"] == "Cookie" for i in client.get("/menu/items").json()["data"])
     # invalid row
     wb2 = Workbook()
     ws2 = wb2.active

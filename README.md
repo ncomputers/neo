@@ -77,14 +77,23 @@ make down
 ## Tenant Onboarding
 
 Use the helper script to provision a new tenant database and register its
-metadata:
+metadata. The ``POSTGRES_TENANT_URL`` setting must contain a ``{tenant_id}``
+placeholder which is replaced for each outlet:
 
 ```bash
 python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', 'demo.local')"
 ```
 
-The function creates a dedicated Postgres database, applies migrations, and
-records branding and configuration details in the master schema.
+The function creates a dedicated Postgres database, applies migrations from
+``api/alembic_tenant`` and records branding and configuration details in the
+master schema.
+
+## Menu Storage
+
+Menu categories and items are persisted in the master Postgres database
+referenced by ``POSTGRES_MASTER_URL``. CRUD operations under ``/menu`` use
+SQLAlchemy sessions rather than in-memory structures, and the import/export
+helpers operate directly on the database tables.
 
 ## Audit Logging
 

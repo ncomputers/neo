@@ -14,7 +14,9 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import asyncio
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+import subprocess
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
 from fastapi import (
     Depends,
     FastAPI,
@@ -32,7 +34,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from pydantic import BaseModel
 from redis.asyncio import from_url
-from .db import SessionLocal
+from .db.master import SessionLocal
+from .models import Tenant
 
 from config import get_settings
 from .auth import (
@@ -237,8 +240,54 @@ class OrderRequest(BaseModel):
     open_tables: int
 
 
+class TenantCreate(BaseModel):
+    name: str
+    domain: str
+
+
 TENANTS: dict[str, dict] = {}  # tenant_id -> tenant info
 PAYMENTS: dict[str, dict] = {}  # payment_id -> payment metadata
+
+
+@app.post("/api/super/tenants")
+def provision_tenant(data: TenantCreate) -> dict:
+    """Provision a new tenant database and record metadata."""
+    settings = get_settings()
+    tenant_id = uuid.uuid4()
+    with SessionLocal() as session:
+        tenant = Tenant(id=tenant_id, name=data.name, domain=data.domain)
+        session.add(tenant)
+        session.commit()
+
+    tenant_db = f"tenant_{tenant_id.hex[:8]}"
+    tenant_url = settings.postgres_tenant_url.format(tenant_id=tenant_db)
+
+    master_engine = create_engine(
+        settings.postgres_master_url, isolation_level="AUTOCOMMIT"
+    )
+    url = make_url(tenant_url)
+    if url.get_backend_name() != "sqlite":
+        with master_engine.connect() as conn:
+            conn.execute(text(f'CREATE DATABASE "{url.database}"'))
+
+    alembic_cfg = Path(__file__).resolve().parents[1] / "alembic_tenant.ini"
+    try:
+        subprocess.run(
+            [
+                "alembic",
+                "-c",
+                str(alembic_cfg),
+                "-x",
+                f"db_url={tenant_url}",
+                "upgrade",
+                "head",
+            ],
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise HTTPException(status_code=500, detail="Migration failed") from exc
+
+    return ok({"tenant_id": str(tenant_id), "db_url": tenant_url})
 
 
 @app.post("/tenants")
