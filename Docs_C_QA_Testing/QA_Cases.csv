@@ -1,9 +1,0 @@
-Area,Steps,Expected,Result
-QR→Order→Bill,"Scan QR, add items, place, bill",Order shown in KDS; invoice generated,Pass/Fail
-KDS Accept/Serve,Accept & serve items,Guest status updates live,Pass/Fail
-UPI Payment,Deep-link & static QR,Opens PSP; cashier marks verified,Pass/Fail
-Cash Split,Cash + UPI split,Invoice settled; audit entry,Pass/Fail
-GST Modes,Registered/unregistered,Correct tax breakup & rounding,Pass/Fail
-Subscription Block,Past grace,Block new orders,Pass/Fail
-Offline Sync,WAN down then up,Orders sync without conflicts,Pass/Fail
-Cleaner Unlock,After settlement,Table locks then unlocks on clean,Pass/Fail
