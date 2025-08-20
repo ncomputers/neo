@@ -32,6 +32,8 @@ Connect to `ws://localhost:8000/tables/{id}/ws` to receive live order
 notifications. Messages are fanned out via Redis channels named
 `rt:update:{table_code}` and include an `eta` field derived from an
 exponential moving average of preparation times.
+The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
+
 
 ## PWA
 
@@ -67,6 +69,16 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema.
+
+## Audit Logging
+
+Login attempts, order edits and payments write to SQLite-backed audit tables.
+Run the cleanup helper to purge entries older than the configured retention
+period:
+
+```bash
+python api/app/audit.py
+```
 
 ## Development Notes
 

@@ -8,10 +8,15 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi.testclient import TestClient
 from openpyxl import Workbook
+import fakeredis.aioredis
 
 from api.app.main import app
 
 client = TestClient(app, raise_server_exceptions=False)
+
+
+def setup_module():
+    app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
 def test_category_and_item_crud():

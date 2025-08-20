@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     sla_sound_alert: bool = False
     sla_color_alert: bool = False
     hide_out_of_stock_items: bool = True
+    audit_retention_days: int = 30
 
 
 # Cached singleton to avoid repeated file reads
