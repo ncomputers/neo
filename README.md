@@ -26,7 +26,14 @@ uvicorn app.main:app --reload
 
 Visit <http://localhost:8000/health> to verify the service.
 
+### Real-time Updates
+
+Connect to `ws://localhost:8000/tables/{id}/ws` to receive live order
+notifications. Messages are fanned out via Redis channels named
+`rt:update:{table_code}` and include an `eta` field derived from an
+exponential moving average of preparation times.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
+
 
 ## PWA
 
