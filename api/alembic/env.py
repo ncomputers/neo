@@ -7,8 +7,12 @@ import sys
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-sys.path.append(str(Path(__file__).resolve().parents[2]))
-from config import get_settings  # type: ignore
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
+sys.path.append(str(BASE_DIR.parent))
+
+from config import get_settings  # type: ignore  # noqa: E402
+from app import models  # type: ignore  # noqa: E402
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -19,16 +23,22 @@ DB_URLS = {
     "tenant": settings.postgres_tenant_url,
 }
 
-target_metadata = None
+target_metadata = models.Base.metadata
+
 
 def _get_url() -> str:
-    return DB_URLS[context.get_x_argument(as_dictionary=True).get("db", "master")]
+    x_args = context.get_x_argument(as_dictionary=True)
+    if "db_url" in x_args:
+        return x_args["db_url"]
+    return DB_URLS[x_args.get("db", "master")]
+
 
 def run_migrations_offline() -> None:
     url = _get_url()
     context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_migrations_online() -> None:
     configuration = {"sqlalchemy.url": _get_url()}
@@ -39,6 +49,7 @@ def run_migrations_online() -> None:
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

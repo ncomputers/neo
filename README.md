@@ -42,3 +42,15 @@ docker-compose up --build
 ```
 
 This stack launches FastAPI, two Postgres databases (master and tenant), Redis, MinIO for S3-compatible storage, and an Nginx reverse proxy.
+
+## Tenant Onboarding
+
+Use the helper script to provision a new tenant database and register its
+metadata:
+
+```bash
+python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', 'demo.local')"
+```
+
+The function creates a dedicated Postgres database, applies migrations, and
+records branding and configuration details in the master schema.
