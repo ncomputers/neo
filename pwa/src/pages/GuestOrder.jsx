@@ -1,0 +1,16 @@
+import { useTheme } from '../contexts/ThemeContext'
+import { useOrderStatus } from '../hooks/useOrderStatus'
+
+export default function GuestOrder() {
+  const { logo } = useTheme()
+  const { status, eta } = useOrderStatus('order-1')
+
+  return (
+    <div className="p-4">
+      {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
+      <h2 className="text-xl font-bold">Guest Ordering</h2>
+      <p className="mt-2">Status: {status}</p>
+      <p className="mt-1">ETA: {eta}</p>
+    </div>
+  )
+}
