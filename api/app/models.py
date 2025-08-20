@@ -10,6 +10,8 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, func
+
+from config import AcceptanceMode
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 
@@ -35,6 +37,10 @@ class Tenant(Base):
     gst_mode = Column(Boolean, nullable=False, default=False)
     invoice_prefix = Column(String, nullable=True)
     ema_window = Column(Integer, nullable=True)
+    acceptance_mode = Column(String, nullable=False, default=AcceptanceMode.ITEM.value)
+    sla_sound_alert = Column(Boolean, nullable=False, default=False)
+    sla_color_alert = Column(Boolean, nullable=False, default=False)
+    hide_out_of_stock_items = Column(Boolean, nullable=False, default=True)
     license_limits = Column(JSON, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

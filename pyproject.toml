@@ -4,6 +4,7 @@ target-version = ['py311']
 
 [tool.ruff]
 line-length = 88
+exclude = ["clickup_structure_blueprint"]
 
 [tool.ruff.lint]
 select = ["E", "F"]
