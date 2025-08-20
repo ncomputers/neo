@@ -1,3 +1,7 @@
+# utils.py
+
+"""Utility helpers for item filtering and SLA checks."""
+
 from __future__ import annotations
 
 from typing import Iterable
@@ -20,6 +24,8 @@ class PrepTimeTracker:
         return self._ema
 
     def add_prep_time(self, prep_time: float) -> float:
+        """Update the moving average with ``prep_time`` and return the new EMA."""
+
         alpha = 2 / (self.window + 1)
         self._ema = (
             prep_time
@@ -30,7 +36,16 @@ class PrepTimeTracker:
 
 
 def accepted_items(items: Iterable[dict], mode: AcceptanceMode) -> list[dict]:
-    """Return accepted items based on the provided mode."""
+    """Filter accepted items based on the provided mode.
+
+    Parameters
+    ----------
+    items:
+        Iterable of item dicts containing an ``accepted`` key.
+    mode:
+        Determines whether all items must be accepted (``ORDER``) or individual
+        acceptance is sufficient (``ITEM``).
+    """
 
     item_list = list(items)
     if mode is AcceptanceMode.ORDER:
