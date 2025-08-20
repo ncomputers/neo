@@ -1,67 +1,54 @@
+# main.py
+
+"""In-memory FastAPI application for demo guest ordering and billing."""
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-
-from fastapi import File, FastAPI, HTTPException, UploadFile
-from pydantic import BaseModel
-
-"""Minimal API endpoints for guest ordering and billing.
-
-This module now provides a very small in-memory implementation of a dine-in
-ordering flow.  It supports the following operations:
-
-* Multiple guests can add items to a shared cart per table.
-* Orders are placed per table and become read-only for guests afterwards.
-* Admin users may "soft cancel" an order line by setting its quantity to ``0``.
-* Staff are able to place orders on behalf of guests without phones.
-* A running bill is maintained for each table and can be settled at any time.
-
-The data model is intentionally simplistic and entirely in-memory to keep the
-example self-contained.  It is **not** intended for production use.
-"""
-
-from __future__ import annotations
-
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
 from .auth import (
     Token,
+    User,
     authenticate_pin,
     authenticate_user,
     create_access_token,
     role_required,
-    User,
 )
-
-
 from .menu import router as menu_router
-
+from .models import TableStatus
 
 
 app = FastAPI()
 app.include_router(menu_router, prefix="/menu")
 
 
+# Auth Routes
+
+
 class EmailLogin(BaseModel):
+    """Email/password login payload."""
+
     username: str
     password: str
 
 
 class PinLogin(BaseModel):
+    """PIN login payload."""
+
     username: str
     pin: str
 
 
 @app.post("/login/email", response_model=Token)
 async def email_login(credentials: EmailLogin) -> Token:
+    """Authenticate using username/password and return a JWT."""
+
     user = authenticate_user(credentials.username, credentials.password)
     if not user:
         raise HTTPException(
@@ -73,6 +60,8 @@ async def email_login(credentials: EmailLogin) -> Token:
 
 @app.post("/login/pin", response_model=Token)
 async def pin_login(credentials: PinLogin) -> Token:
+    """Authenticate using a short numeric PIN."""
+
     user = authenticate_pin(credentials.username, credentials.pin)
     if not user:
         raise HTTPException(
@@ -89,6 +78,8 @@ async def pin_login(credentials: PinLogin) -> Token:
 async def admin_area(
     user: User = Depends(role_required("super_admin", "outlet_admin", "manager"))
 ):
+    """Endpoint accessible to high-privilege roles only."""
+
     return {"message": f"Welcome {user.username}"}
 
 
@@ -98,6 +89,8 @@ async def admin_area(
 async def staff_area(
     user: User = Depends(role_required("cashier", "kitchen", "cleaner"))
 ):
+    """Endpoint for general staff roles."""
+
     return {"message": f"Hello {user.username}"}
 
 
@@ -129,7 +122,7 @@ class StaffOrder(BaseModel):
     quantity: int
 
 
-tables: Dict[str, Dict[str, List[CartItem]]] = {}
+tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
 
 
 class OrderRequest(BaseModel):
@@ -137,8 +130,8 @@ class OrderRequest(BaseModel):
     open_tables: int
 
 
-TENANTS: dict[str, dict] = {}
-PAYMENTS: dict[str, dict] = {}
+TENANTS: dict[str, dict] = {}  # tenant_id -> tenant info
+PAYMENTS: dict[str, dict] = {}  # payment_id -> payment metadata
 
 
 @app.post("/tenants")
@@ -169,7 +162,9 @@ async def create_order(request: OrderRequest) -> dict[str, str]:
 
 
 @app.post("/tenants/{tenant_id}/subscription/renew")
-async def renew_subscription(tenant_id: str, screenshot: UploadFile = File(...)) -> dict[str, str]:
+async def renew_subscription(
+    tenant_id: str, screenshot: UploadFile = File(...)
+) -> dict[str, str]:
     if tenant_id not in TENANTS:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
@@ -189,7 +184,9 @@ async def renew_subscription(tenant_id: str, screenshot: UploadFile = File(...))
 
 
 @app.post("/tenants/{tenant_id}/subscription/payments/{payment_id}/verify")
-async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> dict[str, str]:
+async def verify_payment(
+    tenant_id: str, payment_id: str, months: int = 1
+) -> dict[str, str]:
     payment = PAYMENTS.get(payment_id)
     if payment is None or payment["tenant_id"] != tenant_id:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -213,6 +210,9 @@ def _table_state(table_id: str) -> Dict[str, List[CartItem]]:
     return tables.setdefault(table_id, {"cart": [], "orders": []})
 
 
+# Table Operations
+
+
 @app.post("/tables/{table_id}/cart")
 async def add_to_cart(table_id: str, item: CartItem) -> dict[str, List[CartItem]]:
     """Add an item to a table's cart.
@@ -231,7 +231,7 @@ async def place_order(table_id: str) -> dict[str, List[CartItem]]:
 
     table = _table_state(table_id)
     table["orders"].extend(table["cart"])
-    table["cart"] = []
+    table["cart"] = []  # cart is cleared so guests cannot modify placed items
     return {"orders": table["orders"]}
 
 
@@ -250,7 +250,7 @@ async def update_order(
         raise HTTPException(status_code=403, detail="Edits restricted")
     if payload.quantity != 0:
         raise HTTPException(status_code=400, detail="Only soft-cancel allowed")
-    order_item.quantity = 0
+    order_item.quantity = 0  # mark as cancelled but retain entry for audit
     return {"orders": table["orders"]}
 
 
@@ -263,6 +263,9 @@ async def staff_place_order(
     table = _table_state(table_id)
     table["orders"].append(CartItem(**item.model_dump()))
     return {"orders": table["orders"]}
+
+
+# Billing
 
 
 @app.get("/tables/{table_id}/bill")
@@ -280,8 +283,10 @@ async def pay_now(table_id: str) -> dict[str, float]:
 
     table = _table_state(table_id)
     total = sum(i.price * i.quantity for i in table["orders"] if i.quantity > 0)
-    table["orders"] = []
+    table["orders"] = []  # clearing orders resets table state for next guests
     return {"total": total}
+
+
 VALID_ACTIONS = {"waiter", "water", "bill"}
 
 

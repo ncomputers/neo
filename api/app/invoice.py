@@ -1,3 +1,7 @@
+"""Invoice data structures and rendering helpers."""
+
+# invoice.py
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
