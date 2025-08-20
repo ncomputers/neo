@@ -4,14 +4,31 @@
 
 from __future__ import annotations
 
+import json
+import os
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+import redis.asyncio as redis
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from pydantic import BaseModel
+from redis.asyncio import from_url
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from config import get_settings
 from .auth import (
     Token,
     User,
@@ -20,12 +37,33 @@ from .auth import (
     create_access_token,
     role_required,
 )
+from .audit import log_event
 from .menu import router as menu_router
+from .middleware import RateLimitMiddleware
 from .models import TableStatus
+from .utils import PrepTimeTracker
+from .models import Base, Table, TableStatus
 
 
+
+settings = get_settings()
 app = FastAPI()
+app.state.redis = from_url(settings.redis_url, decode_responses=True)
+app.add_middleware(RateLimitMiddleware, limit=3)
 app.include_router(menu_router, prefix="/menu")
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
+redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+prep_trackers: dict[str, PrepTimeTracker] = {}
+
+
+engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base.metadata.create_all(bind=engine)
 
 
 # Auth Routes
@@ -55,6 +93,7 @@ async def email_login(credentials: EmailLogin) -> Token:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    log_event(user.username, "login", "user", master=True)
     return Token(access_token=token, role=user.role)
 
 
@@ -68,6 +107,7 @@ async def pin_login(credentials: PinLogin) -> Token:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    log_event(user.username, "login", "user", master=True)
     return Token(access_token=token, role=user.role)
 
 
@@ -123,6 +163,22 @@ class StaffOrder(BaseModel):
 
 
 tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
+
+
+def _tracker(table_code: str) -> PrepTimeTracker:
+    """Return the EMA tracker for ``table_code``."""
+
+    return prep_trackers.setdefault(table_code, PrepTimeTracker(window=10))
+
+
+async def _broadcast(table_code: str, data: dict) -> None:
+    """Publish ``data`` to the table's update channel."""
+
+    channel = f"rt:update:{table_code}"
+    try:
+        await redis_client.publish(channel, json.dumps(data))
+    except Exception:  # pragma: no cover - best effort only
+        pass
 
 
 class OrderRequest(BaseModel):
@@ -204,6 +260,31 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.websocket("/tables/{table_code}/ws")
+async def table_ws(websocket: WebSocket, table_code: str) -> None:
+    """Stream order status updates for ``table_code``."""
+
+    await websocket.accept()
+    channel = f"rt:update:{table_code}"
+    pubsub = redis_client.pubsub()
+    await pubsub.subscribe(channel)
+    tracker = _tracker(table_code)
+    try:
+        async for message in pubsub.listen():
+            if message["type"] != "message":
+                continue
+            data = json.loads(message["data"])
+            prep_time = data.get("prep_time")
+            if prep_time is not None:
+                data["eta"] = tracker.add_prep_time(float(prep_time))
+            await websocket.send_json(data)
+    except WebSocketDisconnect:  # pragma: no cover - network disconnect
+        pass
+    finally:
+        await pubsub.unsubscribe(channel)
+        await pubsub.close()
+
+
 def _table_state(table_id: str) -> Dict[str, List[CartItem]]:
     """Return the mutable state dictionary for a table."""
 
@@ -222,6 +303,7 @@ async def add_to_cart(table_id: str, item: CartItem) -> dict[str, List[CartItem]
 
     table = _table_state(table_id)
     table["cart"].append(item)
+    await _broadcast(table_id, {"status": "cart"})
     return {"cart": table["cart"]}
 
 
@@ -232,6 +314,7 @@ async def place_order(table_id: str) -> dict[str, List[CartItem]]:
     table = _table_state(table_id)
     table["orders"].extend(table["cart"])
     table["cart"] = []  # cart is cleared so guests cannot modify placed items
+    await _broadcast(table_id, {"status": "placed"})
     return {"orders": table["orders"]}
 
 
@@ -251,6 +334,9 @@ async def update_order(
     if payload.quantity != 0:
         raise HTTPException(status_code=400, detail="Only soft-cancel allowed")
     order_item.quantity = 0  # mark as cancelled but retain entry for audit
+    await _broadcast(table_id, {"status": "updated"})
+    log_event("system", "order_update", table_id)
+
     return {"orders": table["orders"]}
 
 
@@ -262,6 +348,7 @@ async def staff_place_order(
 
     table = _table_state(table_id)
     table["orders"].append(CartItem(**item.model_dump()))
+    await _broadcast(table_id, {"status": "staff_order"})
     return {"orders": table["orders"]}
 
 
@@ -284,6 +371,7 @@ async def pay_now(table_id: str) -> dict[str, float]:
     table = _table_state(table_id)
     total = sum(i.price * i.quantity for i in table["orders"] if i.quantity > 0)
     table["orders"] = []  # clearing orders resets table state for next guests
+    log_event("system", "payment", table_id)
     return {"total": total}
 
 
@@ -304,13 +392,33 @@ async def call_staff(table_id: str, action: str) -> dict[str, str]:
 async def lock_table(table_id: str) -> dict[str, str]:
     """Lock a table after settlement until cleaned."""
 
-    # Real logic would update the table status in the database.
-    return {"table_id": table_id, "status": TableStatus.LOCKED.value}
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:  # pragma: no cover - simple validation
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.status = TableStatus.LOCKED
+        session.commit()
+        session.refresh(table)
+        return {"table_id": table_id, "status": table.status.value}
 
 
 @app.post("/tables/{table_id}/mark-clean")
 async def mark_clean(table_id: str) -> dict[str, str]:
     """Mark a table as cleaned and ready for new guests."""
 
-    # Real logic would update the table status in the database.
-    return {"table_id": table_id, "status": TableStatus.AVAILABLE.value}
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:  # pragma: no cover - simple validation
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.status = TableStatus.AVAILABLE
+        session.commit()
+        session.refresh(table)
+        return {"table_id": table_id, "status": table.status.value}

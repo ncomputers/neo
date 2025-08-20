@@ -12,5 +12,8 @@ openpyxl
 python-multipart
 qrcode
 responses
-
+httpx
+redis
+fakeredis
+redis
 
