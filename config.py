@@ -33,7 +33,7 @@ class AcceptanceMode(str, Enum):
 class Settings(BaseSettings):
     """Application settings merged from JSON and environment variables."""
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     postgres_master_url: str
     postgres_tenant_url: str
