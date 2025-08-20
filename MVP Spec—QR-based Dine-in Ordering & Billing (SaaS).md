@@ -5,7 +5,7 @@ QR menu & ordering (one table → one running bill; multiple rounds allowed).
 
 Statuses: Placed → Accepted → In-Progress → Ready → Served → Cancelled (+ optional Rejected, Hold).
 
-Live status on guest page (while open). No web-push.
+Live status on guest page (while open); no push notifications when the page is closed.
 
 Simple UPI (deep-link intent + static QR) and Cash; Card optional.
 
@@ -24,6 +24,12 @@ Takeaway/Counter mode (simple).
 Discounts/Service charge/Tips, Coupons.
 
 Daily closing report + email/WhatsApp + CSV/Excel export.
+
+Per-outlet configurable WhatsApp/SMS notifications.
+
+Collect guest phone/email only when invoice or messaging is requested.
+
+Outlet-defined contact retention periods.
 
 Multi-tenant SaaS: one master DB + separate DB per outlet.
 
