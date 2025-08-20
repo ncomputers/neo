@@ -16,6 +16,19 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
+## Quickstart
+
+The following commands install dependencies, set up the environment, apply
+database migrations for both the master schema and an example tenant, and run
+the test suite:
+
+```bash
+pip install -r api/requirements.txt
+python run_all.py --env --install
+alembic upgrade head
+pytest -q
+```
+
 ## API
 
 ```bash
@@ -44,6 +57,14 @@ notifications. Messages are fanned out via Redis channels named
 `rt:update:{table_code}` and include an `eta` field derived from an
 exponential moving average of preparation times.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
+
+
+### Observability
+
+Each request is tagged with a `correlation_id` that appears in the JSON logs.
+All HTTP responses follow a simple envelope structure of
+`{"ok": true, "data": ...}` for success or
+`{"ok": false, "error": {"code": ..., "message": ...}}` for failures.
 
 
 ## PWA
