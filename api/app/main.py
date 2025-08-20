@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import asyncio
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
@@ -22,10 +23,25 @@ from .auth import (
 )
 from .menu import router as menu_router
 from .models import TableStatus
+from .events import (
+    alerts_sender,
+    ema_updater,
+    event_bus,
+    report_aggregator,
+)
 
 
 app = FastAPI()
 app.include_router(menu_router, prefix="/menu")
+
+
+@app.on_event("startup")
+async def start_event_consumers() -> None:
+    """Launch background tasks for event processing."""
+
+    asyncio.create_task(alerts_sender(event_bus.subscribe("order.placed")))
+    asyncio.create_task(ema_updater(event_bus.subscribe("payment.verified")))
+    asyncio.create_task(report_aggregator(event_bus.subscribe("table.cleaned")))
 
 
 # Auth Routes
@@ -196,6 +212,9 @@ async def verify_payment(
     tenant["subscription_expires_at"] = tenant["subscription_expires_at"] + timedelta(
         days=30 * months
     )
+    await event_bus.publish(
+        "payment.verified", {"tenant_id": tenant_id, "payment_id": payment_id}
+    )
     return {"status": "verified"}
 
 
@@ -232,6 +251,7 @@ async def place_order(table_id: str) -> dict[str, List[CartItem]]:
     table = _table_state(table_id)
     table["orders"].extend(table["cart"])
     table["cart"] = []  # cart is cleared so guests cannot modify placed items
+    await event_bus.publish("order.placed", {"table_id": table_id})
     return {"orders": table["orders"]}
 
 
@@ -313,4 +333,5 @@ async def mark_clean(table_id: str) -> dict[str, str]:
     """Mark a table as cleaned and ready for new guests."""
 
     # Real logic would update the table status in the database.
+    await event_bus.publish("table.cleaned", {"table_id": table_id})
     return {"table_id": table_id, "status": TableStatus.AVAILABLE.value}
