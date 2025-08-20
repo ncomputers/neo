@@ -1,6 +1,3 @@
-﻿# invoice.py
-"""Dataclasses and helpers for building and rendering invoices."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field

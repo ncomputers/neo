@@ -1,60 +1,67 @@
-# main.py
-"""Minimal API endpoints for guest ordering and billing.
-
-The API demonstrates a simple in-memory implementation of a dine-in ordering
-flow used throughout the tests. It is intentionally lightweight and omits any
-database integration.
-"""
-
 from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+
+from fastapi import File, FastAPI, HTTPException, UploadFile
+from pydantic import BaseModel
+
+"""Minimal API endpoints for guest ordering and billing.
+
+This module now provides a very small in-memory implementation of a dine-in
+ordering flow.  It supports the following operations:
+
+* Multiple guests can add items to a shared cart per table.
+* Orders are placed per table and become read-only for guests afterwards.
+* Admin users may "soft cancel" an order line by setting its quantity to ``0``.
+* Staff are able to place orders on behalf of guests without phones.
+* A running bill is maintained for each table and can be settled at any time.
+
+The data model is intentionally simplistic and entirely in-memory to keep the
+example self-contained.  It is **not** intended for production use.
+"""
+
+from __future__ import annotations
+
 from typing import Dict, List, Optional
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+from fastapi import Depends, FastAPI, HTTPException, status
 from pydantic import BaseModel
 
 from .auth import (
     Token,
-    User,
     authenticate_pin,
     authenticate_user,
     create_access_token,
     role_required,
+    User,
 )
+
+
 from .menu import router as menu_router
-from .models import TableStatus
+
 
 
 app = FastAPI()
 app.include_router(menu_router, prefix="/menu")
 
 
-# ---------------------------------------------------------------------------
-# Auth Routes
-# ---------------------------------------------------------------------------
-
-
 class EmailLogin(BaseModel):
-    """Payload for the email/password login endpoint."""
-
     username: str
     password: str
 
 
 class PinLogin(BaseModel):
-    """Payload for the PIN-based login endpoint."""
-
     username: str
     pin: str
 
 
 @app.post("/login/email", response_model=Token)
 async def email_login(credentials: EmailLogin) -> Token:
-    """Authenticate via email/password and return a JWT."""
-
     user = authenticate_user(credentials.username, credentials.password)
     if not user:
         raise HTTPException(
@@ -66,8 +73,6 @@ async def email_login(credentials: EmailLogin) -> Token:
 
 @app.post("/login/pin", response_model=Token)
 async def pin_login(credentials: PinLogin) -> Token:
-    """Authenticate using a numeric PIN and return a JWT."""
-
     user = authenticate_pin(credentials.username, credentials.pin)
     if not user:
         raise HTTPException(
@@ -83,9 +88,7 @@ async def pin_login(credentials: PinLogin) -> Token:
 )
 async def admin_area(
     user: User = Depends(role_required("super_admin", "outlet_admin", "manager"))
-) -> dict[str, str]:
-    """Endpoint restricted to admin roles."""
-
+):
     return {"message": f"Welcome {user.username}"}
 
 
@@ -94,15 +97,8 @@ async def admin_area(
 )
 async def staff_area(
     user: User = Depends(role_required("cashier", "kitchen", "cleaner"))
-) -> dict[str, str]:
-    """Endpoint restricted to staff roles."""
-
+):
     return {"message": f"Hello {user.username}"}
-
-
-# ---------------------------------------------------------------------------
-# Table and Billing Operations
-# ---------------------------------------------------------------------------
 
 
 class CartItem(BaseModel):
@@ -133,26 +129,20 @@ class StaffOrder(BaseModel):
     quantity: int
 
 
-# Mutable in-memory table state: {table_id: {"cart": [...], "orders": [...]}}
 tables: Dict[str, Dict[str, List[CartItem]]] = {}
 
 
 class OrderRequest(BaseModel):
-    """Minimal request body used when creating orders."""
-
     tenant_id: str
     open_tables: int
 
 
-# In-memory tenant and payment registries used by billing endpoints
 TENANTS: dict[str, dict] = {}
 PAYMENTS: dict[str, dict] = {}
 
 
 @app.post("/tenants")
 async def create_tenant(name: str, licensed_tables: int) -> dict[str, str]:
-    """Create a tenant record in the in-memory registry."""
-
     tenant_id = str(uuid.uuid4())
     TENANTS[tenant_id] = {
         "name": name,
@@ -164,8 +154,6 @@ async def create_tenant(name: str, licensed_tables: int) -> dict[str, str]:
 
 @app.post("/orders")
 async def create_order(request: OrderRequest) -> dict[str, str]:
-    """Validate tenant and table counts before accepting an order."""
-
     tenant = TENANTS.get(request.tenant_id)
     if tenant is None:
         raise HTTPException(status_code=404, detail="Tenant not found")
@@ -182,8 +170,6 @@ async def create_order(request: OrderRequest) -> dict[str, str]:
 
 @app.post("/tenants/{tenant_id}/subscription/renew")
 async def renew_subscription(tenant_id: str, screenshot: UploadFile = File(...)) -> dict[str, str]:
-    """Upload a payment proof and record it for later verification."""
-
     if tenant_id not in TENANTS:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
@@ -204,8 +190,6 @@ async def renew_subscription(tenant_id: str, screenshot: UploadFile = File(...))
 
 @app.post("/tenants/{tenant_id}/subscription/payments/{payment_id}/verify")
 async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> dict[str, str]:
-    """Mark a payment as verified and extend the tenant subscription."""
-
     payment = PAYMENTS.get(payment_id)
     if payment is None or payment["tenant_id"] != tenant_id:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -220,8 +204,6 @@ async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> di
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    """Simple liveness probe endpoint."""
-
     return {"status": "ok"}
 
 
@@ -268,7 +250,7 @@ async def update_order(
         raise HTTPException(status_code=403, detail="Edits restricted")
     if payload.quantity != 0:
         raise HTTPException(status_code=400, detail="Only soft-cancel allowed")
-    order_item.quantity = 0  # Soft-cancel by zeroing out quantity
+    order_item.quantity = 0
     return {"orders": table["orders"]}
 
 
@@ -298,7 +280,7 @@ async def pay_now(table_id: str) -> dict[str, float]:
 
     table = _table_state(table_id)
     total = sum(i.price * i.quantity for i in table["orders"] if i.quantity > 0)
-    table["orders"] = []  # Clear order list after payment
+    table["orders"] = []
     return {"total": total}
 VALID_ACTIONS = {"waiter", "water", "bill"}
 
