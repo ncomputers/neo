@@ -1,19 +1,14 @@
+# models.py
 """Database models for the master schema.
 
-This module currently defines the :class:`Tenant` model used to track
-metadata for each onboarded tenant. Additional models may be added as the
-project grows.
+Defines SQLAlchemy models used in the master database, including tenants,
+tables and sessions. Only a subset required for tests is implemented.
 """
 
 from __future__ import annotations
 
-import uuid
-
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, func
-
-from config import AcceptanceMode
-
 import enum
+import uuid
 
 from sqlalchemy import (
     JSON,
@@ -21,7 +16,6 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
-
     ForeignKey,
     Integer,
     String,
@@ -29,6 +23,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
+
+from config import AcceptanceMode
 
 
 Base = declarative_base()
@@ -86,8 +82,6 @@ class MenuItem(Base):
     show_fssai_icon = Column(Boolean, nullable=False, default=False)
     image_url = Column(String, nullable=True)
 
-
-__all__ = ["Base", "Tenant", "Category", "MenuItem"]
 class TableStatus(enum.Enum):
     """Lifecycle states for a dining table."""
 
@@ -131,6 +125,8 @@ class TableSession(Base):
 __all__ = [
     "Base",
     "Tenant",
+    "Category",
+    "MenuItem",
     "Table",
     "TableSession",
     "TableStatus",

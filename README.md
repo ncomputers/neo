@@ -54,3 +54,17 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema.
+
+## Testing
+
+Run the full test suite with:
+
+```bash
+pytest
+```
+
+## Documentation Conventions
+
+Source files begin with a filename comment followed by a module docstring. Each
+function and class includes a brief docstring, and inline comments clarify any
+non-obvious logic.
