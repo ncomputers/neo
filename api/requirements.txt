@@ -3,6 +3,7 @@ uvicorn[standard]
 alembic
 sqlalchemy
 psycopg2-binary
+requests
 
 argon2-cffi
 python-jose[cryptography]
@@ -10,5 +11,9 @@ pydantic-settings
 openpyxl
 python-multipart
 qrcode
-
+responses
+httpx
+redis
+fakeredis
+redis
 

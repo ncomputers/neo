@@ -7,11 +7,16 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi.testclient import TestClient
 from jose import JWTError, jwt
+import fakeredis.aioredis
 
 from api.app.auth import ALGORITHM, SECRET_KEY, create_access_token
 from api.app.main import app
 
 client = TestClient(app)
+
+
+def setup_module():
+    app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
 def test_password_login_success():
