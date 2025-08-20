@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import uuid
 
+=======
 import enum
 
 from sqlalchemy import (
@@ -17,6 +18,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
+
     ForeignKey,
     Integer,
     String,
@@ -52,6 +54,31 @@ class Tenant(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class Category(Base):
+    """Menu item categories."""
+
+    __tablename__ = "categories"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False, unique=True)
+
+
+class MenuItem(Base):
+    """Individual menu items."""
+
+    __tablename__ = "menu_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False)
+    price = Column(Integer, nullable=False)
+    pending_price = Column(Integer, nullable=True)
+    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
+    in_stock = Column(Boolean, nullable=False, default=True)
+    show_fssai_icon = Column(Boolean, nullable=False, default=False)
+    image_url = Column(String, nullable=True)
+
+
+__all__ = ["Base", "Tenant", "Category", "MenuItem"]
 class TableStatus(enum.Enum):
     """Lifecycle states for a dining table."""
 
