@@ -26,6 +26,11 @@ uvicorn app.main:app --reload
 
 Visit <http://localhost:8000/health> to verify the service.
 
+All API responses use a standard envelope:
+
+- Success: `{ "ok": true, "data": ... }`
+- Error: `{ "ok": false, "error": { "code": ..., "message": ... } }`
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:
