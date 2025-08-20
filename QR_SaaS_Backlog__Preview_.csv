@@ -1,0 +1,137 @@
+Issue Type,Epic Name,Summary,Description,Acceptance Criteria,Priority,Component,Labels,Sprint,Story Points,Status
+Epic,E1 Foundation & Architecture,E1 Foundation & Architecture,Epic 1 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e1",Sprint 1 - Foundation,,To Do
+Epic,E2 Auth & RBAC (Email/Password + PIN),E2 Auth & RBAC (Email/Password + PIN),Epic 2 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e2",Sprint 1 - Foundation,,To Do
+Epic,E3 Multi‑Tenant DB (Master + Per‑Outlet),E3 Multi‑Tenant DB (Master + Per‑Outlet),Epic 3 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e3",Sprint 1 - Foundation,,To Do
+Epic,E4 Onboarding & Provisioning,E4 Onboarding & Provisioning,Epic 4 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e4",Sprint 1 - Foundation,,To Do
+Epic,"E5 Menu Management (Excel, Photos, FSSAI)","E5 Menu Management (Excel, Photos, FSSAI)",Epic 5 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e5",Sprint 1 - Foundation,,To Do
+Epic,E6 QR Guest PWA (Menu→Order→Status→Bill),E6 QR Guest PWA (Menu→Order→Status→Bill),Epic 6 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e6",Sprint 1 - Foundation,,To Do
+Epic,E7 KDS (Kitchen Display System),E7 KDS (Kitchen Display System),Epic 7 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e7",Sprint 1 - Foundation,,To Do
+Epic,E8 Billing & Invoicing (GST/80mm/PDF),E8 Billing & Invoicing (GST/80mm/PDF),Epic 8 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e8",Sprint 1 - Foundation,,To Do
+Epic,E9 Payments (UPI + Cash),E9 Payments (UPI + Cash),Epic 9 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e9",Sprint 1 - Foundation,,To Do
+Epic,E10 Subscription & Licensing (Per Table/Month),E10 Subscription & Licensing (Per Table/Month),Epic 10 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e10",Sprint 1 - Foundation,,To Do
+Epic,E11 Offline/Hybrid Sync & Local Node,E11 Offline/Hybrid Sync & Local Node,Epic 11 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e11",Sprint 1 - Foundation,,To Do
+Epic,"E12 Alerts, Heartbeat & Rules","E12 Alerts, Heartbeat & Rules",Epic 12 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e12",Sprint 1 - Foundation,,To Do
+Epic,E13 Reporting & Z‑Report,E13 Reporting & Z‑Report,Epic 13 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e13",Sprint 1 - Foundation,,To Do
+Epic,E14 Backups & Restore,E14 Backups & Restore,Epic 14 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e14",Sprint 1 - Foundation,,To Do
+Epic,"E15 Security, Rate‑Limit & Audit","E15 Security, Rate‑Limit & Audit",Epic 15 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e15",Sprint 1 - Foundation,,To Do
+Epic,E16 DevOps & Deployment,E16 DevOps & Deployment,Epic 16 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e16",Sprint 1 - Foundation,,To Do
+Epic,"E17 QA, E2E & UAT","E17 QA, E2E & UAT",Epic 17 for MVP QR-based dine-in SaaS. See spec; scope limited to MVP features under this theme.,,High,General,"mvp,e17",Sprint 1 - Foundation,,To Do
+Story,E1 Foundation & Architecture,Monorepo scaffold: FastAPI + Postgres + Redis + MinIO + Caddy in Docker Compose,,"GIVEN repo cloned WHEN docker compose up THEN all services start without errors
+AND /health returns 200 for API
+AND Caddy terminates TLS for local dev (self-signed)",High,DevOps,"mvp,devops",Sprint 1 - Foundation,5,To Do
+Story,E1 Foundation & Architecture,Base project structure & coding standards,,"PEP8 linting and pre-commit hooks enabled
+Typed FastAPI with pydantic models
+Centralized settings via env with .env.example",High,API,"mvp,backend",Sprint 1 - Foundation,3,To Do
+Story,E1 Foundation & Architecture,Realtime channel setup (SSE/WebSocket) stubs,,"WS/SSE endpoints exist and broadcast a dummy message to connected clients
+Backed by Redis pub/sub",High,API,"mvp,realtime",Sprint 1 - Foundation,3,To Do
+Story,E2 Auth & RBAC (Email/Password + PIN),Email+Password login for outlet admins/managers,,"POST /auth/login returns JWT for valid creds
+Password hashed with Argon2
+Lock account after 5 failed attempts with cooldown",High,API,"auth,security",Sprint 1 - Foundation,3,To Do
+Story,E2 Auth & RBAC (Email/Password + PIN),Staff PIN auth (cashier/kitchen/cleaner) with role scopes,,"POST /auth/pin returns short-lived token for valid PIN
+PINs stored salted+hashed
+RBAC enforced on protected endpoints",High,API,"auth,rbac",Sprint 1 - Foundation,5,To Do
+Story,E2 Auth & RBAC (Email/Password + PIN),RBAC middleware & test users,,"Routes annotated with roles
+Forbidden routes return 403 for insufficient role
+Seed script creates demo users and PINs",High,API,"auth,rbac",Sprint 1 - Foundation,2,To Do
+Story,E3 Multi‑Tenant DB (Master + Per‑Outlet),Master DB schema & migrator,,"Master DB tables: tenants, outlets, subscriptions, staff, alerts_rules, backups_policy, audit_master
+Alembic migrations in place",High,DB-Master,"db,multi-tenant",Sprint 1 - Foundation,5,To Do
+Story,E3 Multi‑Tenant DB (Master + Per‑Outlet),Per‑outlet DB schema & migrator,,"Tenant DB tables: menu, tables, orders, order_items, invoices, payments, coupons, customers, audit
+Migrations generated & applied programmatically",High,DB-Tenant,"db,tenant",Sprint 1 - Foundation,8,To Do
+Story,E3 Multi‑Tenant DB (Master + Per‑Outlet),Tenant DB provisioning API,,"Creating an outlet provisions a new Postgres DB/schema
+Credentials stored securely
+Smoke test ensures connectivity",High,API,"db,provisioning",Sprint 2 - Ordering & KDS,5,To Do
+Story,E4 Onboarding & Provisioning,Onboarding wizard (Super‑Admin) UI & API,,"Create outlet with name, domain/subdomain, GST mode, rounding, languages, EMA window, KDS mode
+Set VPA mode/value
+Generate staff PINs",High,SuperAdmin,"onboarding,superadmin",Sprint 2 - Ordering & KDS,5,To Do
+Story,E4 Onboarding & Provisioning,Domain & free SSL automation (Caddy),,"Subdomain mapping works
+Let's Encrypt certificate auto-provisions & renews
+Health URL reachable via HTTPS",High,DevOps,"ssl,devops",Sprint 4 - Offline & Polish,5,To Do
+Story,E4 Onboarding & Provisioning,Alert rules configuration per outlet,,"Admin can enable channels (email/WhatsApp) per event
+Rules stored and retrievable
+Email channel functional; WhatsApp stubbed",High,API,alerts,Sprint 3 - Billing & Ops,3,To Do
+Story,"E5 Menu Management (Excel, Photos, FSSAI)",Excel template import for categories/items,,"Upload Excel → categories & items created
+Validation errors reported clearly
+GST/HSN and FSSAI flags stored",High,API,"menu,import",Sprint 1 - Foundation,5,To Do
+Story,"E5 Menu Management (Excel, Photos, FSSAI)",Item photos upload & serving from MinIO,,"Upload photos and map by filename
+Public CDN-style URL served via Caddy",High,API,"menu,photos",Sprint 2 - Ordering & KDS,3,To Do
+Story,"E5 Menu Management (Excel, Photos, FSSAI)",Stock toggle & visibility control,,"Admin/Kitchen can mark item Out of Stock
+Guests can’t add OOS items
+Changes broadcast via WS/SSE",High,API,"menu,stock",Sprint 3 - Billing & Ops,3,To Do
+Story,E6 QR Guest PWA (Menu→Order→Status→Bill),Guest PWA shell (responsive),,"Lighthouse PWA baseline > 90
+Add to Home prompt working
+Works on mobile & desktop",High,PWA-Guest,"pwa,frontend",Sprint 1 - Foundation,5,To Do
+Story,E6 QR Guest PWA (Menu→Order→Status→Bill),"Menu browse & cart (veg filter, photos)",,"Fetch menu via /g/{token}/menu
+Add/update/remove items in cart (Redis)
+Veg filter works",High,PWA-Guest,"pwa,menu",Sprint 2 - Ordering & KDS,5,To Do
+Story,E6 QR Guest PWA (Menu→Order→Status→Bill),Place Order & live status (WS/SSE),,"POST /g/{token}/order locks cart and creates order
+Status updates appear live while page open
+No edits allowed after place",High,PWA-Guest,"pwa,realtime",Sprint 2 - Ordering & KDS,5,To Do
+Story,E6 QR Guest PWA (Menu→Order→Status→Bill),Get Bill & rating flow,,"Guests can request bill and see invoice preview
+Post-payment rating widget available",High,PWA-Guest,"pwa,billing",Sprint 3 - Billing & Ops,3,To Do
+Story,E7 KDS (Kitchen Display System),KDS queue UI (order list + color timers + sound),,"New orders appear instantly
+Timers change color on SLA breach
+Optional audible alert",High,PWA-Staff,kds,Sprint 2 - Ordering & KDS,5,To Do
+Story,E7 KDS (Kitchen Display System),Accept/bump per item or whole order (config),,"Toggle KDS mode per outlet
+Actions update order/item status with audit",High,API,"kds,api",Sprint 2 - Ordering & KDS,5,To Do
+Story,E7 KDS (Kitchen Display System),EMA prep-time display & countdown,,"EMA seconds computed from last N served
+Guest & KDS see ETA countdown",High,API,"kds,analytics",Sprint 3 - Billing & Ops,3,To Do
+Story,E8 Billing & Invoicing (GST/80mm/PDF),"Invoice engine (GST modes, rounding)",,"Unregistered/Composition/Registered modes implemented
+CGST/SGST breakup when applicable
+Rounding rules applied",High,Billing,"billing,gst",Sprint 3 - Billing & Ops,8,To Do
+Story,E8 Billing & Invoicing (GST/80mm/PDF),Invoice PDF (80mm & A4) with logo,,"Generate PDF for invoice with proper layout
+Print to 80mm thermal works
+Supports B2B fields when enabled",High,Billing,"billing,pdf",Sprint 3 - Billing & Ops,5,To Do
+Story,E8 Billing & Invoicing (GST/80mm/PDF),Invoice numbering per outlet (sequence + reset options),,"Per-outlet sequence with yearly/monthly reset option
+Gap-free and thread-safe",High,Billing,"billing,sequence",Sprint 3 - Billing & Ops,5,To Do
+Story,E9 Payments (UPI + Cash),UPI deep-link intent + static QR with prefilled amount,,"Deep-link opens major PSPs
+Static QR contains UPI payload with amount and note
+Fallback if deep-link not supported",High,API,"payments,upi",Sprint 3 - Billing & Ops,5,To Do
+Story,E9 Payments (UPI + Cash),Cash payment & split payments handling,,"Cashier can mark cash received
+Split across UPI+cash supported
+Audit entry recorded",High,Billing,"payments,cash",Sprint 3 - Billing & Ops,3,To Do
+Story,E9 Payments (UPI + Cash),Manual UPI verification (UTR entry),,"Cashier can record UTR and mark verified
+Prevent duplicate UTR for same outlet",High,Billing,"payments,verification",Sprint 3 - Billing & Ops,3,To Do
+Story,E10 Subscription & Licensing (Per Table/Month),Plan & license model (per table/month) with 7‑day grace,,"Subscription status drives access controls
+Grace period enforced; day 8 blocks new orders",High,SuperAdmin,subscription,Sprint 4 - Offline & Polish,5,To Do
+Story,E10 Subscription & Licensing (Per Table/Month),License quota enforcement by table count,,"Block orders for tables beyond licensed count
+UI warning and upgrade prompt",High,API,"subscription,licensing",Sprint 4 - Offline & Polish,3,To Do
+Story,E10 Subscription & Licensing (Per Table/Month),Payment proof upload & manual verification (subscription),,"Admin uploads screenshot; team verifies and extends plan
+Audit trail captured",High,SuperAdmin,"subscription,ops",Sprint 4 - Offline & Polish,3,To Do
+Story,E11 Offline/Hybrid Sync & Local Node,Local node (Docker) with API+Redis+Tenant Postgres,,"Local-only mode serves guest/KDS on LAN
+LAN DNS alias accessible (e.g., kds.local)",High,DevOps,"offline,docker",Sprint 4 - Offline & Polish,8,To Do
+Story,E11 Offline/Hybrid Sync & Local Node,Outbox/Inbox sync with idempotent upserts,,"Orders created offline sync to cloud
+Conflict resolution defined and tested",High,API,"offline,sync",Sprint 4 - Offline & Polish,8,To Do
+Story,E11 Offline/Hybrid Sync & Local Node,QR fallback to local base URL when internet down,,"Guest page automatically switches to local base URL
+Reverts to cloud when online",High,PWA-Guest,"offline,pwa",Sprint 4 - Offline & Polish,5,To Do
+Story,"E12 Alerts, Heartbeat & Rules","Event bus & alerts sender (email now, WhatsApp later)",,"Events emitted for key actions
+Email alerts sent per rules
+Channel toggles respected",High,API,alerts,Sprint 3 - Billing & Ops,5,To Do
+Story,"E12 Alerts, Heartbeat & Rules",Device heartbeat & offline alerts,,"Local node tablets send heartbeats
+Alert when node offline beyond threshold",High,API,"heartbeat,monitoring",Sprint 4 - Offline & Polish,3,To Do
+Story,E13 Reporting & Z‑Report,Sales dashboard (today/7d) + CSV/Excel export,,"Daily, weekly revenue and payment mix
+Export CSV/Excel",High,Reports,reports,Sprint 4 - Offline & Polish,5,To Do
+Story,E13 Reporting & Z‑Report,Z‑report generation + email/WhatsApp share,,"End of day totals with GST breakup
+Auto-email to owner",High,Reports,"reports,zreport",Sprint 4 - Offline & Polish,5,To Do
+Story,E14 Backups & Restore,Nightly encrypted backups (tenant+master) to local disk + S3/MinIO,,"Backups scheduled and stored in both destinations
+Retention per policy",High,DevOps,backups,Sprint 4 - Offline & Polish,5,To Do
+Story,E14 Backups & Restore,One-click restore flow with confirmations,,"Restore selected backup into staging DB
+Promote to prod after confirm",High,DevOps,restore,Sprint 4 - Offline & Polish,5,To Do
+Story,"E15 Security, Rate‑Limit & Audit",IP rate-limit & auto-block after 3 rejections,,"Sliding window rate-limit on guest APIs
+IP added to blocklist after 3 rejected orders in window",High,Security,"security,ratelimit",Sprint 3 - Billing & Ops,5,To Do
+Story,"E15 Security, Rate‑Limit & Audit",Audit log for all mutations with CSV export,,"Create/read audit entries with actor, role, diff
+Export CSV within date range",High,Security,"security,audit",Sprint 3 - Billing & Ops,5,To Do
+Story,"E15 Security, Rate‑Limit & Audit",PIN brute-force protection & lockout policy,,"Throttle repeated PIN attempts
+Temporary lockout after threshold",High,Security,security,Sprint 3 - Billing & Ops,3,To Do
+Story,E16 DevOps & Deployment,"CI/CD pipeline (lint, tests, docker build, push)",,"Git action builds containers on main
+Unit tests run and must pass",High,DevOps,"ci,cd",Sprint 2 - Ordering & KDS,3,To Do
+Story,E16 DevOps & Deployment,Environment configs & secrets management,,".env.example documented
+Secrets injected at runtime, not baked into images",High,DevOps,"devops,security",Sprint 1 - Foundation,2,To Do
+Story,E16 DevOps & Deployment,"Observability: logs, metrics, dashboards",,"Structured JSON logs
+Basic metrics exported (Prometheus)
+Minimal dashboard for key health",High,DevOps,monitoring,Sprint 4 - Offline & Polish,5,To Do
+Story,"E17 QA, E2E & UAT",Unit & API tests for core flows,,"Auth, menu import, order placement, KDS transitions, invoice generation covered
+Coverage > 70% for core modules",High,QA,"qa,tests",Sprint 3 - Billing & Ops,5,To Do
+Story,"E17 QA, E2E & UAT",E2E tests (Playwright) for guest & staff happy paths,,"Guest QR → order → status → bill → pay (cash) passes
+Staff KDS accept/serve flow passes",High,QA,"e2e,playwright",Sprint 3 - Billing & Ops,5,To Do
+Story,"E17 QA, E2E & UAT",UAT checklist & sign‑off template,,"Checklist document produced
+Sign‑off criteria agreed",High,QA,uat,Sprint 4 - Offline & Polish,2,To Do
