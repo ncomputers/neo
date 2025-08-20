@@ -36,12 +36,18 @@ npm run dev
 
 ## Docker Compose
 
+From the `ops` directory you can launch the full development stack:
+
 ```bash
 cd ops
-docker-compose up --build
+make up
 ```
 
-This stack launches FastAPI, two Postgres databases (master and tenant), Redis, MinIO for S3-compatible storage, and an Nginx reverse proxy.
+The stack includes FastAPI, two Postgres databases (master and tenant), Redis, MinIO for S3-compatible storage, and an Nginx reverse proxy. Shut it down with:
+
+```bash
+make down
+```
 
 ## Tenant Onboarding
 
