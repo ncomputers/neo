@@ -105,3 +105,9 @@ Run a single module or test:
 ```bash
 pytest api/tests/test_auth.py::test_password_login_success
 ```
+
+## Events
+
+The API emits domain events using a lightweight in-memory Pub/Sub dispatcher. Events
+such as `order.placed`, `payment.verified`, and `table.cleaned` are processed by
+background consumers for alerting and reporting.
