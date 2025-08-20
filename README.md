@@ -107,6 +107,15 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema.
 
+For development convenience, a lightweight CLI is also available to prepare a
+tenant database or schema and report when it's ready:
+
+```bash
+python scripts/tenant_create_db.py --tenant TENANT_ID
+```
+
+The script will print `READY` once the database is available.
+
 ## Audit Logging
 
 Login attempts, order edits and payments write to SQLite-backed audit tables.

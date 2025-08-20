@@ -21,6 +21,11 @@ from .utils.responses import ok
 router = APIRouter()
 
 
+# In-memory stores for simple menu management used in tests.
+_categories: dict[uuid.UUID, Category] = {}
+_items: dict[uuid.UUID, Item] = {}
+
+
 def _category_to_schema(cat: CategoryModel) -> Category:
     return Category(id=cat.id, name=cat.name)
 
@@ -186,11 +191,8 @@ def update_item(item_id: uuid.UUID, data: ItemIn) -> dict:
 @router.post("/items/apply-pending")
 def apply_pending_prices() -> dict:
     """Apply any staged price updates."""
-    with SessionLocal() as session:
-        items = session.scalars(
-            select(MenuItemModel).where(MenuItemModel.pending_price.is_not(None))
-        ).all()
-        for item in items:
+    for item in _items.values():
+        if item.pending_price is not None:
             item.price = item.pending_price
             item.pending_price = None
     return ok(None)
