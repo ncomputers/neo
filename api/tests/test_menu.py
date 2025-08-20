@@ -12,7 +12,7 @@ import fakeredis.aioredis
 
 from api.app.main import app
 from api.app.db import SessionLocal
-from api.app.models import Category as CategoryModel, MenuItem as MenuItemModel
+from api.app.models_tenant import Category as CategoryModel, MenuItem as MenuItemModel
 
 client = TestClient(app, raise_server_exceptions=False)
 
