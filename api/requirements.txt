@@ -3,6 +3,12 @@ uvicorn[standard]
 alembic
 sqlalchemy
 psycopg2-binary
+
+argon2-cffi
+python-jose[cryptography]
 pydantic-settings
 openpyxl
 python-multipart
+qrcode
+
+
