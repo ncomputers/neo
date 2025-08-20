@@ -61,13 +61,15 @@ def create_tenant(
     )
 
     tenant_db_name = f"tenant_{uuid.uuid4().hex[:8]}"
-    tenant_url = make_url(settings.postgres_tenant_url).set(database=tenant_db_name)
+    tenant_url = make_url(
+        settings.postgres_tenant_url.format(tenant_id=tenant_db_name)
+    )
 
     with master_engine.connect() as conn:
         # Create the isolated tenant database
         conn.execute(text(f'CREATE DATABASE "{tenant_db_name}"'))
 
-    alembic_cfg = Path(__file__).with_name("alembic.ini")
+    alembic_cfg = Path(__file__).with_name("alembic_tenant.ini")
     # Apply migrations so the new database has the latest schema
     subprocess.run(
         [

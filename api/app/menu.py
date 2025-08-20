@@ -13,12 +13,16 @@ from fastapi.responses import StreamingResponse
 from openpyxl import Workbook, load_workbook
 from sqlalchemy import select
 
-from .db import SessionLocal
+from .db.master import SessionLocal
 from .models import Category as CategoryModel, MenuItem as MenuItemModel
 from .schemas import Category, CategoryIn, Item, ItemIn
 from .utils.responses import ok
 
 router = APIRouter()
+
+
+_categories: dict[uuid.UUID, Category] = {}
+_items: dict[uuid.UUID, Item] = {}
 
 
 def _category_to_schema(cat: CategoryModel) -> Category:
@@ -191,6 +195,10 @@ def apply_pending_prices() -> dict:
             select(MenuItemModel).where(MenuItemModel.pending_price.is_not(None))
         ).all()
         for item in items:
+            item.price = item.pending_price
+            item.pending_price = None
+    for item in _items.values():
+        if item.pending_price is not None:
             item.price = item.pending_price
             item.pending_price = None
     return ok(None)
