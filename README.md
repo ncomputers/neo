@@ -44,6 +44,13 @@ All API responses use a standard envelope:
 - Success: `{ "ok": true, "data": ... }`
 - Error: `{ "ok": false, "error": { "code": ..., "message": ... } }`
 
+### Super Admin
+
+The backend exposes a super-admin endpoint used for tenant provisioning:
+
+- `POST /api/super/outlet` – create an outlet and run tenant migrations. The
+  router is present but not yet included in the main application.
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:

@@ -1,10 +1,16 @@
 """Service layer helpers for the API."""
 
-from .kds_service import accept_order, bump_item, queue_view
+from .ema import eta, update_ema
 
-__all__ = ["accept_order", "bump_item", "queue_view"]
-"""Service helpers for the API application."""
+try:  # pragma: no cover - optional until KDS models stabilise
+    from .kds_service import accept_order, bump_item, queue_view
+except Exception:  # pragma: no cover - fallback when dependencies missing
+    accept_order = bump_item = queue_view = None
 
-from .ema import update_ema, eta
-
-__all__ = ["update_ema", "eta"]
+__all__ = [
+    "eta",
+    "update_ema",
+    "accept_order",
+    "bump_item",
+    "queue_view",
+]
