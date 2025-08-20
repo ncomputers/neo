@@ -7,13 +7,14 @@ from __future__ import annotations
 import json
 import os
 import uuid
+import logging
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import asyncio
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
-import redis.asyncio as redis
 from fastapi import (
     Depends,
     FastAPI,
@@ -24,6 +25,10 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
+import redis.asyncio as redis
+from fastapi.responses import JSONResponse
+from fastapi import Request
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from pydantic import BaseModel
 from redis.asyncio import from_url
@@ -43,7 +48,8 @@ from .auth import (
 from .audit import log_event
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
-from .models import TableStatus
+from .middlewares.correlation import CorrelationIdMiddleware
+from .utils.responses import ok, err
 from .events import (
     alerts_sender,
     ema_updater,
@@ -59,8 +65,42 @@ from .models import Base, Table, TableStatus
 settings = get_settings()
 app = FastAPI()
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
+app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.include_router(menu_router, prefix="/menu")
+
+
+logger = logging.getLogger("api")
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(message)s"))
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    latency = time.perf_counter() - start
+    log_data = {
+        "method": request.method,
+        "path": request.url.path,
+        "status": response.status_code,
+        "latency": round(latency, 4),
+        "correlation_id": getattr(request.state, "correlation_id", None),
+    }
+    logger.info(json.dumps(log_data))
+    return response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(err(exc.status_code, exc.detail), status_code=exc.status_code)
+
+
+@app.exception_handler(Exception)
+async def general_error_handler(request: Request, exc: Exception):
+    return JSONResponse(err(500, "Internal Server Error"), status_code=500)
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
@@ -278,8 +318,8 @@ async def verify_payment(
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict:
+    return ok({"status": "ok"})
 
 
 @app.websocket("/tables/{table_code}/ws")
