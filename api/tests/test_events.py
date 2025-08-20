@@ -37,11 +37,11 @@ def test_payment_verified_event_dispatch():
     with TestClient(app) as client:
         tenant_id = client.post(
             "/tenants", params={"name": "t", "licensed_tables": 1}
-        ).json()["tenant_id"]
+        ).json()["data"]["tenant_id"]
         file = ("screenshot.png", b"x", "image/png")
         payment_id = client.post(
             f"/tenants/{tenant_id}/subscription/renew", files={"screenshot": file}
-        ).json()["payment_id"]
+        ).json()["data"]["payment_id"]
         client.post(
             f"/tenants/{tenant_id}/subscription/payments/{payment_id}/verify",
             params={"months": 1},

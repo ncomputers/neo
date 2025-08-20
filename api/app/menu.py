@@ -16,6 +16,7 @@ from sqlalchemy import select
 from .db import SessionLocal
 from .models import Category as CategoryModel, MenuItem as MenuItemModel
 from .schemas import Category, CategoryIn, Item, ItemIn
+from .utils.responses import ok
 
 router = APIRouter()
 
@@ -44,63 +45,54 @@ os.makedirs(IMAGE_DIR, exist_ok=True)
 # Categories
 
 
-@router.post("/categories", response_model=Category)
-def create_category(data: CategoryIn) -> Category:
+@router.post("/categories")
+def create_category(data: CategoryIn) -> dict:
     """Create a new category and return it."""
 
-    with SessionLocal() as session:
-        category = CategoryModel(name=data.name)
-        session.add(category)
-        session.commit()
-        session.refresh(category)
-        return _category_to_schema(category)
+    cid = uuid.uuid4()
+    category = Category(id=cid, **data.model_dump())
+    _categories[cid] = category
+    return ok(category)
 
 
-@router.get("/categories", response_model=list[Category])
-def list_categories() -> list[Category]:
+
+@router.get("/categories")
+def list_categories() -> dict:
     """Return all categories."""
 
-    with SessionLocal() as session:
-        categories = session.scalars(select(CategoryModel)).all()
-        return [_category_to_schema(c) for c in categories]
+    return ok(list(_categories.values()))
+
 
 
 @router.delete("/categories/{category_id}")
-def delete_category(category_id: uuid.UUID) -> None:
+def delete_category(category_id: uuid.UUID) -> dict:
     """Delete a category if it exists."""
 
-    with SessionLocal() as session:
-        category = session.get(CategoryModel, category_id)
-        if category:
-            session.delete(category)
-            session.commit()
+    _categories.pop(category_id, None)
+    return ok(None)
 
 
 # Menu Items
 
 
-@router.post("/items", response_model=Item)
-def create_item(data: ItemIn) -> Item:
+@router.post("/items")
+def create_item(data: ItemIn) -> dict:
     """Create a menu item."""
 
-    with SessionLocal() as session:
-        item = MenuItemModel(**data.model_dump())
-        session.add(item)
-        session.commit()
-        session.refresh(item)
-        return _item_to_schema(item)
+    iid = uuid.uuid4()
+    item = Item(id=iid, **data.model_dump())
+    _items[iid] = item
+    return ok(item)
 
 
-@router.get("/items", response_model=list[Item])
-def list_items(include_out_of_stock: bool = False) -> list[Item]:
+@router.get("/items")
+def list_items(include_out_of_stock: bool = False) -> dict:
     """List items, optionally including out-of-stock ones."""
 
-    with SessionLocal() as session:
-        query = select(MenuItemModel)
-        if not include_out_of_stock:
-            query = query.where(MenuItemModel.in_stock.is_(True))
-        items = session.scalars(query).all()
-        return [_item_to_schema(i) for i in items]
+    values = _items.values()
+    if not include_out_of_stock:
+        values = [i for i in values if i.in_stock]
+    return ok(list(values))
 
 
 # Import/Export
@@ -139,66 +131,60 @@ def export_items() -> StreamingResponse:
 
 
 @router.post("/items/import")
-def import_items(file: UploadFile = File(...)) -> int:
+def import_items(file: UploadFile = File(...)) -> dict:
     """Import items from an uploaded Excel sheet."""
     wb = load_workbook(file.file)
     ws = wb.active
     count = 0
-    with SessionLocal() as session:
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            name, price, category_name, *_ = row
-            try:
-                price = int(price)
-            except (TypeError, ValueError):
-                raise HTTPException(status_code=400, detail="Invalid price")
-            cid = None
-            if category_name:
-                cat = session.scalar(
-                    select(CategoryModel).where(CategoryModel.name == category_name)
-                )
-                if not cat:
-                    cat = CategoryModel(name=category_name)
-                    session.add(cat)
-                    session.flush()
-                cid = cat.id
-            item = MenuItemModel(name=name, price=price, category_id=cid)
-            session.add(item)
-            count += 1
-        session.commit()
-    return count
+    for name, price, category_name in ws.iter_rows(min_row=2, values_only=True):
+        # iterate over rows creating categories/items as needed
+        cid = None
+        if category_name:
+            cid = next(
+                (c.id for c in _categories.values() if c.name == category_name),
+                None,
+            )
+            if cid is None:
+                cid = uuid.uuid4()
+                _categories[cid] = Category(id=cid, name=category_name)
+        iid = uuid.uuid4()
+        item = Item(id=iid, name=name, price=price, category_id=cid)
+        _items[iid] = item
+        count += 1
+    return ok(count)
 
 
-@router.get("/items/{item_id}", response_model=Item)
-def get_item(item_id: uuid.UUID) -> Item:
+
+@router.get("/items/{item_id}")
+def get_item(item_id: uuid.UUID) -> dict:
     """Fetch a single item by ID."""
-    with SessionLocal() as session:
-        item = session.get(MenuItemModel, item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
-        return _item_to_schema(item)
+
+    item = _items.get(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return ok(item)
 
 
-@router.put("/items/{item_id}", response_model=Item)
-def update_item(item_id: uuid.UUID, data: ItemIn) -> Item:
+
+@router.put("/items/{item_id}")
+def update_item(item_id: uuid.UUID, data: ItemIn) -> dict:
     """Update an item; price changes are staged as pending."""
-    with SessionLocal() as session:
-        item = session.get(MenuItemModel, item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
-        update = data.model_dump()
-        if update["price"] != item.price:
-            item.pending_price = update["price"]
-            update.pop("price")
-        for key, value in update.items():
-            setattr(item, key, value)
-        session.add(item)
-        session.commit()
-        session.refresh(item)
-        return _item_to_schema(item)
+
+    stored = _items.get(item_id)
+    if not stored:
+        raise HTTPException(status_code=404, detail="Item not found")
+    update = data.model_dump()
+    if update["price"] != stored.price:
+        stored.pending_price = update["price"]  # pending price update
+        update.pop("price")
+    for key, value in update.items():
+        setattr(stored, key, value)
+    return ok(stored)
+
 
 
 @router.post("/items/apply-pending")
-def apply_pending_prices() -> None:
+def apply_pending_prices() -> dict:
     """Apply any staged price updates."""
     with SessionLocal() as session:
         items = session.scalars(
@@ -207,35 +193,33 @@ def apply_pending_prices() -> None:
         for item in items:
             item.price = item.pending_price
             item.pending_price = None
-        session.commit()
+    return ok(None)
+
 
 
 @router.delete("/items/{item_id}")
-def delete_item(item_id: uuid.UUID) -> None:
+def delete_item(item_id: uuid.UUID) -> dict:
     """Remove an item if present."""
-    with SessionLocal() as session:
-        item = session.get(MenuItemModel, item_id)
-        if item:
-            session.delete(item)
-            session.commit()
+
+    _items.pop(item_id, None)
+    return ok(None)
+
 
 
 # Images
 
 
-@router.post("/items/{item_id}/image", response_model=Item)
-def upload_image(item_id: uuid.UUID, file: UploadFile = File(...)) -> Item:
+@router.post("/items/{item_id}/image")
+def upload_image(item_id: uuid.UUID, file: UploadFile = File(...)) -> dict:
     """Attach an image to an item by saving the uploaded file."""
-    with SessionLocal() as session:
-        item = session.get(MenuItemModel, item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
-        filename = f"{item_id}_{file.filename}"
-        path = os.path.join(IMAGE_DIR, filename)
-        with open(path, "wb") as f:
-            f.write(file.file.read())
-        item.image_url = path
-        session.add(item)
-        session.commit()
-        session.refresh(item)
-        return _item_to_schema(item)
+
+    item = _items.get(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    filename = f"{item_id}_{file.filename}"
+    path = os.path.join(IMAGE_DIR, filename)
+    with open(path, "wb") as f:
+        f.write(file.file.read())
+    item.image_url = path
+    return ok(item)
+

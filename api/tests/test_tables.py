@@ -24,7 +24,7 @@ def test_cart_and_soft_cancel():
     assert client.post("/tables/1/cart", json=item).status_code == 200
     client.post("/tables/1/order")
     resp = client.patch("/tables/1/order/0", json={"quantity": 0, "admin": True})
-    assert resp.json()["orders"][0]["quantity"] == 0
+    assert resp.json()["data"]["orders"][0]["quantity"] == 0
     assert (
         client.patch(
             "/tables/1/order/0", json={"quantity": 0, "admin": False}
@@ -50,11 +50,11 @@ def test_lock_and_clean_persist():
 
     resp = client.post(f"/tables/{table_id}/lock")
     assert resp.status_code == 200
-    assert resp.json()["status"] == TableStatus.LOCKED.value
+    assert resp.json()["data"]["status"] == TableStatus.LOCKED.value
 
     resp = client.post(f"/tables/{table_id}/mark-clean")
     assert resp.status_code == 200
-    assert resp.json()["status"] == TableStatus.AVAILABLE.value
+    assert resp.json()["data"]["status"] == TableStatus.AVAILABLE.value
 
     with SessionLocal() as session:
         table = session.get(Table, table_id)

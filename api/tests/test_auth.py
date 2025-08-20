@@ -25,7 +25,7 @@ def test_password_login_success():
         json={"username": "admin@example.com", "password": "adminpass"},
     )
     assert resp.status_code == 200
-    assert "access_token" in resp.json()
+    assert "access_token" in resp.json()["data"]
 
 
 def test_password_login_fail():
@@ -66,11 +66,11 @@ def test_role_enforcement_allow_and_deny():
     admin_token = client.post(
         "/login/email",
         json={"username": "admin@example.com", "password": "adminpass"},
-    ).json()["access_token"]
+    ).json()["data"]["access_token"]
     cashier_token = client.post(
         "/login/email",
         json={"username": "cashier1", "password": "cashierpass"},
-    ).json()["access_token"]
+    ).json()["data"]["access_token"]
     assert (
         client.get(
             "/admin", headers={"Authorization": f"Bearer {admin_token}"}

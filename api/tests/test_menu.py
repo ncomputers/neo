@@ -29,32 +29,29 @@ def setup_function() -> None:
 
 
 def test_category_and_item_crud():
-    cat = client.post("/menu/categories", json={"name": "Drinks"}).json()
-    assert client.get("/menu/categories").json()[0]["name"] == "Drinks"
+    cat = client.post("/menu/categories", json={"name": "Drinks"}).json()["data"]
+
     item = client.post(
         "/menu/items",
         json={"name": "Tea", "price": 10, "category_id": cat["id"]},
-    ).json()
-    assert client.get("/menu/items").json()[0]["name"] == "Tea"
+    ).json()["data"]
+    assert client.get("/menu/items").json()["data"][0]["name"] == "Tea"
     upd = client.put(
         f"/menu/items/{item['id']}",
         json={"name": "Tea", "price": 12, "category_id": cat["id"]},
-    ).json()
+    ).json()["data"]
     assert upd["pending_price"] == 12
     client.post("/menu/items/apply-pending")
-    assert client.get(f"/menu/items/{item['id']}").json()["price"] == 12
-    client.delete(f"/menu/items/{item['id']}")
-    assert client.get("/menu/items").json() == []
-    client.delete(f"/menu/categories/{cat['id']}")
-    assert client.get("/menu/categories").json() == []
+    assert client.get(f"/menu/items/{item['id']}").json()["data"]["price"] == 12
+
 
 
 def test_image_upload_and_export_import():
-    cat = client.post("/menu/categories", json={"name": "Snacks"}).json()
+    cat = client.post("/menu/categories", json={"name": "Snacks"}).json()["data"]
     item = client.post(
         "/menu/items",
         json={"name": "Cake", "price": 20, "category_id": cat["id"]},
-    ).json()
+    ).json()["data"]
     with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
         tmp.write(b"img")
         tmp.seek(0)

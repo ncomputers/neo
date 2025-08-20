@@ -20,11 +20,11 @@ def test_billing_flow_and_idempotency():
     item = {"item": "Tea", "price": 5.0, "quantity": 2}
     client.post("/tables/10/cart", json=item)
     client.post("/tables/10/order")
-    assert client.get("/tables/10/bill").json()["total"] == 10.0
-    assert client.post("/tables/10/pay").json()["total"] == 10.0
+    assert client.get("/tables/10/bill").json()["data"]["total"] == 10.0
+    assert client.post("/tables/10/pay").json()["data"]["total"] == 10.0
     # second pay should return zero
-    assert client.post("/tables/10/pay").json()["total"] == 0.0
+    assert client.post("/tables/10/pay").json()["data"]["total"] == 0.0
 
 
 def test_bill_without_orders():
-    assert client.get("/tables/99/bill").json()["total"] == 0.0
+    assert client.get("/tables/99/bill").json()["data"]["total"] == 0.0
