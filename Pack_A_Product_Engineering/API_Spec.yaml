@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: QR SaaS API (MVP)
+  version: 1.0.0
+servers:
+  - url: https://api.yourdomain.com
+paths:
+  /api/outlet/{id}/auth/login:
+    post:
+      summary: Email+Password login
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: JWT token
+  /api/outlet/{id}/auth/pin:
+    post:
+      summary: Staff PIN auth
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pin: { type: string, minLength: 4, maxLength: 6 }
+      responses:
+        "200": { description: Short-lived token }
+  /g/{table_token}/menu:
+    get:
+      summary: Get menu for guest
+      parameters:
+        - in: path
+          name: table_token
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Category & items }
+  /g/{table_token}/order:
+    post:
+      summary: Place order (locks cart)
+      parameters:
+        - in: path
+          name: table_token
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      item_id: { type: string }
+                      qty: { type: integer, minimum: 1 }
+      responses:
+        "201": { description: Order created }
+  /g/{table_token}/status:
+    get:
+      summary: Live status (WS/SSE suggested)
+      parameters:
+        - in: path
+          name: table_token
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Stream }
+  /g/{table_token}/bill:
+    post:
+      summary: Generate invoice draft
+      parameters:
+        - in: path
+          name: table_token
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Invoice payload }
+  /api/outlet/{id}/kds/queue:
+    get:
+      summary: KDS queue
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Orders list }
+  /api/outlet/{id}/kds/order/{order_id}/accept:
+    post:
+      summary: Accept order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: order_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Accepted }
+  /api/outlet/{id}/stock/{item_id}/toggle:
+    post:
+      summary: Toggle item stock
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: item_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Updated }
+  /api/outlet/{id}/bill/{session_id}/generate:
+    post:
+      summary: Generate invoice & number
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: session_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Invoice generated }
+  /api/outlet/{id}/payment/{invoice_id}/mark:
+    post:
+      summary: Mark payment (UPI/Cash; split allowed)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: invoice_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode: { type: string, enum: [upi, cash, card] }
+                amount: { type: number }
+                utr: { type: string }
+                verified: { type: boolean }
+      responses:
+        "200": { description: Payment saved }
+  /api/super/outlet:
+    post:
+      summary: Create outlet (provision tenant DB)
+      responses:
+        "201": { description: Outlet created }
