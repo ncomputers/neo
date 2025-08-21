@@ -119,7 +119,7 @@ async def test_tenant_guest_and_kds_flow(monkeypatch) -> None:
         # place order
         order_resp = await client.post(
             "/g/T-001/order",
-            headers=headers,
+            headers={**headers, "Idempotency-Key": "test-1"},
             json={"items": [{"item_id": str(item_id), "qty": 1}]},
         )
         assert order_resp.status_code == 200
