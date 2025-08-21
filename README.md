@@ -133,6 +133,13 @@ numbering for each tenant can be customised via ``invoice_prefix`` and an
 ``invoice_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
 reset, numbers include the year and month, e.g. ``INV/2024/02/000001``.
 
+### Invoice PDFs
+
+Invoices can be rendered as PDFs via ``GET /invoice/{invoice_id}/pdf``.
+Specify ``?size=80mm`` for thermal receipts or ``?size=A4`` for full pages.
+If WeasyPrint is unavailable, the endpoint falls back to returning the
+rendered HTML.
+
 For development convenience, a lightweight CLI is also available to prepare a
 tenant database or schema and report when it's ready:
 
