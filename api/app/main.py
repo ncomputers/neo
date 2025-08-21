@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import uuid
 import logging
 import time
@@ -14,7 +15,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import asyncio
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi import (
     Depends,
     FastAPI,
@@ -25,6 +25,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
+import importlib
 import redis.asyncio as redis
 from fastapi.responses import JSONResponse
 from fastapi import Request
@@ -47,6 +48,11 @@ from .audit import log_event
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares.correlation import CorrelationIdMiddleware
+from .routes_guest_menu import router as guest_menu_router
+from .routes_guest_order import router as guest_order_router
+from .routes_guest_bill import router as guest_bill_router
+from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
+from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
 from .events import (
     alerts_sender,
@@ -58,6 +64,19 @@ from .events import (
 from .utils import PrepTimeTracker
 from .models_tenant import Table, TableStatus
 
+from . import db as app_db
+from . import domain as app_domain
+from . import models_tenant as app_models_tenant
+from . import repos_sqlalchemy as app_repos_sqlalchemy
+from . import utils as app_utils
+sys.modules.setdefault("db", app_db)
+sys.modules.setdefault("domain", app_domain)
+sys.modules.setdefault("models_tenant", app_models_tenant)
+sys.modules.setdefault("repos_sqlalchemy", app_repos_sqlalchemy)
+sys.modules.setdefault("utils", app_utils)
+kds_router = importlib.import_module(".routes_kds", __package__).router
+superadmin_router = importlib.import_module(".routes_superadmin", __package__).router
+
 
 
 settings = get_settings()
@@ -65,6 +84,15 @@ app = FastAPI()
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
+app.add_middleware(GuestRateLimitMiddleware)
+
+subscription_guard = SubscriptionGuard(app)
+
+
+@app.middleware("http")
+async def subscription_guard_middleware(request: Request, call_next):
+    return await subscription_guard(request, call_next)
+
 app.include_router(menu_router, prefix="/menu")
 
 
@@ -533,4 +561,12 @@ async def mark_clean(table_id: str) -> dict:
         session.commit()
         session.refresh(table)
         return ok({"table_id": table_id, "status": table.status.value})
+
+
+app.include_router(guest_menu_router)
+app.include_router(guest_order_router)
+app.include_router(guest_bill_router)
+app.include_router(kds_router)
+if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
+    app.include_router(superadmin_router)
 
