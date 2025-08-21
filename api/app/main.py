@@ -67,6 +67,7 @@ from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
 from .routes_alerts import router as alerts_router
 from .routes_hotel_housekeeping import router as hotel_housekeeping_router
+from .routes_housekeeping import router as housekeeping_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_metrics import router as metrics_router
 from .routes_counter import router as counter_router, router_admin as counter_admin_router
@@ -667,6 +668,7 @@ app.include_router(kds_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
 app.include_router(reports_router)
+app.include_router(housekeeping_router)
 app.include_router(hotel_housekeeping_router)
 app.include_router(metrics_router)
 app.include_router(tables_map_router)
