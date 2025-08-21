@@ -25,24 +25,22 @@ from contextlib import asynccontextmanager
 # Use in-memory redis for rate limiting and other middleware
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
-# Bypass subscription guard to avoid tenant lookup
-class _BypassSubGuard:
-    async def __call__(self, request, call_next):
-        return await call_next(request)
-
-app_main.subscription_guard = _BypassSubGuard()
 
 # Stub out DB-heavy repo functions
 async def _fake_create_order(session, table_code, lines):
     return 1
 
-async def _fake_generate_invoice(session, order_group_id, gst_mode, rounding, tenant_id):
+
+async def _fake_generate_invoice(
+    session, order_group_id, gst_mode, rounding, tenant_id
+):
     return 1
 
 
 async def _fake_get_tenant_session():
     class _DummySession:
         pass
+
     return _DummySession()
 
 
@@ -54,12 +52,13 @@ async def _fake_list_items(self, session, include_hidden=False):
     return [{"id": 1}]
 
 
-
 @asynccontextmanager
 async def _fake_kds_session(tenant_id: str):
     class _DummySession:
         pass
+
     yield _DummySession()
+
 
 async def _fake_list_active(session):
     return []
@@ -69,6 +68,7 @@ async def _fake_list_active(session):
 @pytest.fixture(autouse=True)
 def _override_deps():
     """Apply tenant overrides for guest routes."""
+
     app.dependency_overrides[routes_guest_menu.get_tenant_id] = header_tenant_id
     app.dependency_overrides[routes_guest_menu.get_tenant_session] = (
         _fake_get_tenant_session
@@ -85,6 +85,7 @@ def _override_deps():
     app.dependency_overrides.clear()
 
 
+
 @pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"
@@ -94,7 +95,9 @@ def anyio_backend() -> str:
 async def test_tenant_guest_and_kds_flow(monkeypatch) -> None:
     monkeypatch.setattr(orders_repo_sql, "create_order", _fake_create_order)
     monkeypatch.setattr(invoices_repo_sql, "generate_invoice", _fake_generate_invoice)
-    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_categories", _fake_list_categories)
+    monkeypatch.setattr(
+        menu_repo_sql.MenuRepoSQL, "list_categories", _fake_list_categories
+    )
     monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", _fake_list_items)
     monkeypatch.setattr(routes_kds, "_session", _fake_kds_session)
     monkeypatch.setattr(orders_repo_sql, "list_active", _fake_list_active)

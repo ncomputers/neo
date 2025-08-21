@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import AsyncGenerator, List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.tenant import get_engine
 from .events import event_bus
+from .hooks import order_rejection
 from .repos_sqlalchemy import orders_repo_sql
 from .utils.responses import ok
 
@@ -53,13 +54,19 @@ async def get_tenant_session(tenant_id: str = Depends(get_tenant_id)) -> AsyncGe
 async def create_guest_order(
     table_token: str,
     payload: OrderPayload,
+    request: Request,
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
     """Create a new order for ``table_token`` within the tenant context."""
 
     lines = [line.model_dump() for line in payload.items]
-    order_id = await orders_repo_sql.create_order(session, table_token, lines)
+    try:
+        order_id = await orders_repo_sql.create_order(session, table_token, lines)
+    except ValueError as exc:
+        ip = request.client.host if request.client else "unknown"
+        await order_rejection.on_rejected(ip, request.app.state.redis)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     try:  # optional pubsub notification
         await event_bus.publish(

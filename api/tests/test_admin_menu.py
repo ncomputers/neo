@@ -23,7 +23,13 @@ class _BypassSubGuard:
         return await call_next(request)
 
 
-app_main.subscription_guard = _BypassSubGuard()
+@pytest.fixture(scope="module", autouse=True)
+def _setup_teardown():
+    original_guard = app_main.subscription_guard
+    app_main.subscription_guard = _BypassSubGuard()
+    yield
+    app_main.subscription_guard = original_guard
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture

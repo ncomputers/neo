@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
+from api.app import main as app_main
 from api.app.main import app
 from api.app import main as app_main
 from api.app import routes_guest_menu, routes_guest_order
@@ -29,7 +30,6 @@ def client(monkeypatch):
     app.state.redis = fakeredis.aioredis.FakeRedis()
     original_guard = app_main.subscription_guard
     app_main.subscription_guard = SubscriptionGuard(app)
-
     async def _fake_get_tenant_session():
         class _DummySession:
             pass
@@ -62,6 +62,7 @@ def client(monkeypatch):
     client = TestClient(app, raise_server_exceptions=False)
     yield client
     app.dependency_overrides.clear()
+
     app_main.subscription_guard = original_guard
 
 
