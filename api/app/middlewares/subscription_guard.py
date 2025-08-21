@@ -41,8 +41,12 @@ class SubscriptionGuard:
                     pass
                 async with get_session() as session:
                     try:
-                        tenant = await session.get(Tenant, tenant_id)
-                    except Exception:  # pragma: no cover - defensive
+                        tid = uuid.UUID(tenant_id)
+                    except ValueError:
+                        tid = tenant_id  # allow non-UUID ids in tests
+                    try:
+                        tenant = await session.get(Tenant, tid)
+                    except Exception:  # pragma: no cover - invalid identifier
 
                         tenant = None
                 if tenant and tenant.subscription_expires_at:

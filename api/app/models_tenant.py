@@ -84,6 +84,9 @@ class Table(Base):
     code = Column(String, unique=True, nullable=True)
     qr_token = Column(String, unique=True, nullable=True)
     status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
+    pos_x = Column(Integer, nullable=False, default=0)
+    pos_y = Column(Integer, nullable=False, default=0)
+    label = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
