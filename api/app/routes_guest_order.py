@@ -13,7 +13,7 @@ from .events import event_bus
 from .hooks import order_rejection
 from .repos_sqlalchemy import orders_repo_sql
 from .utils.responses import ok
-from .metrics import orders_created_total
+from .routes_metrics import orders_created_total
 
 
 router = APIRouter(prefix="/g")

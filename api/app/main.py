@@ -67,7 +67,7 @@ from .routes_admin_backup import router as admin_backup_router
 from .routes_reports import router as reports_router
 from .routes_admin_alerts import router as admin_alerts_router
 from .routes_housekeeping import router as housekeeping_router
-from .metrics import router as metrics_router
+from .routes_metrics import router as metrics_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 
