@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
+import { apiFetch } from '../api'
 
 export default function AdminDashboard() {
   const { logo } = useTheme()
@@ -8,7 +9,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch('http://localhost:4000/tables')
+    apiFetch('/tables')
       .then((res) => res.json())
       .then((data) => setTables(data.tables || []))
       .catch((err) => setError(err.message))
