@@ -12,6 +12,7 @@ from ..db.master import get_session
 from ..models_master import Tenant
 from sqlalchemy.exc import StatementError
 from ..utils.responses import err
+from sqlalchemy.exc import StatementError
 
 
 class SubscriptionGuard:
