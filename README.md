@@ -168,6 +168,14 @@ python scripts/tenant_seed.py --tenant TENANT_ID
 
 The command prints a JSON payload containing the new record IDs.
 
+To compute daily totals and enqueue a day-close notification, run:
+
+```bash
+python scripts/day_close.py --tenant TENANT_ID --date YYYY-MM-DD
+```
+
+This queues a `dayclose` event with aggregated totals in the `sync_outbox` table.
+
 ## Audit Logging
 
 Login attempts, order edits and payments write to SQLite-backed audit tables.
