@@ -56,23 +56,49 @@ async def _compute_totals(tenant: str, date_str: str) -> dict:
 
 
 async def compute_and_enqueue(tenant: str, date_str: str) -> None:
-    """Compute totals and enqueue a day-close notification."""
+    """Compute totals and enqueue a day-close notification in tenant DB."""
+    totals = await _compute_totals(tenant, date_str)
+
+    engine = get_tenant_engine(tenant)
+    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async with sessionmaker() as session:
+        await session.run_sync(
+            lambda s: SyncOutbox.__table__.create(bind=s.bind, checkfirst=True)
+        )
+        session.add(SyncOutbox(event_type="dayclose", payload=totals))
+        await session.commit()
+    await engine.dispose()
+
+
+async def compute_and_enqueue_master(tenant: str, date_str: str) -> None:
+    """Compute totals and enqueue a day-close notification in master DB."""
     totals = await _compute_totals(tenant, date_str)
     payload = {"tenant": tenant, "date": date_str, "totals": totals}
 
     async with get_master_session() as session:
+        await session.run_sync(
+            lambda s: SyncOutbox.__table__.create(bind=s.bind, checkfirst=True)
+        )
         session.add(SyncOutbox(event_type="dayclose", payload=payload))
         await session.commit()
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Compute daily totals and enqueue a day-close notification")
+async def main(tenant: str, date: str) -> None:
+    """Programmatic entrypoint used by tests."""
+
+    await compute_and_enqueue(tenant, date)
+
+
+def _cli() -> None:
+    parser = argparse.ArgumentParser(
+        description="Compute daily totals and enqueue a day-close notification"
+    )
     parser.add_argument("--tenant", required=True, help="Tenant identifier")
     parser.add_argument("--date", required=True, help="Date in YYYY-MM-DD format")
     args = parser.parse_args()
-    asyncio.run(compute_and_enqueue(args.tenant, args.date))
+    asyncio.run(compute_and_enqueue_master(args.tenant, args.date))
 
 
 if __name__ == "__main__":
-    main()
+    _cli()
 

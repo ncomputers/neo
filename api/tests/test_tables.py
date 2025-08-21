@@ -56,7 +56,7 @@ def test_settlement_locks_and_cleaner_unlocks():
 
     with SessionLocal() as session:
         table = session.get(Table, table_id)
-        assert table.state == "locked"
+        assert table.state == "LOCKED"
 
     # guests blocked while locked
     resp = client.post(f"/tables/{table_id}/cart", json=item)
@@ -65,20 +65,18 @@ def test_settlement_locks_and_cleaner_unlocks():
 
     token = create_access_token({"sub": "cleaner1", "role": "cleaner"})
     headers = {"Authorization": f"Bearer {token}"}
-    assert (
-        client.post(
-            f"/api/outlet/demo/housekeeping/table/{table_id}/start_clean",
-            headers=headers,
-        ).status_code
-        == 200
+    resp = client.post(
+        f"/api/outlet/demo/housekeeping/table/{table_id}/start_clean",
+        headers=headers,
     )
-    assert (
-        client.post(
-            f"/api/outlet/demo/housekeeping/table/{table_id}/ready",
-            headers=headers,
-        ).status_code
-        == 200
+    assert resp.status_code == 200
+    assert resp.json()["data"]["state"] == "PENDING_CLEANING"
+    resp = client.post(
+        f"/api/outlet/demo/housekeeping/table/{table_id}/ready",
+        headers=headers,
     )
+    assert resp.status_code == 200
+    assert resp.json()["data"]["state"] == "AVAILABLE"
 
     # table reopened
     assert client.post(f"/tables/{table_id}/cart", json=item).status_code == 200

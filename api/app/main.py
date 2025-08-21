@@ -56,6 +56,7 @@ from .middlewares import (
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
     PrometheusMiddleware,
+    TableStateGuardMiddleware,
 )
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
@@ -65,6 +66,8 @@ from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_backup import router as admin_backup_router
 from .routes_reports import router as reports_router
 from .routes_admin_alerts import router as admin_alerts_router
+from .routes_housekeeping import router as housekeeping_router
+from .metrics import router as metrics_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 
@@ -80,7 +83,7 @@ from .events import (
 from .services import notifications
 
 from .utils import PrepTimeTracker
-from .models_tenant import Table, TableState
+from .models_tenant import Table
 
 from . import db as app_db
 from . import domain as app_domain
@@ -127,6 +130,7 @@ app.add_middleware(PrometheusMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlocklistMiddleware)
+app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(GuestRateLimitMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -436,7 +440,7 @@ def _table_state(table_id: str) -> Dict[str, List[CartItem]]:
 
 
 def _guard_table_open(table_id: str):
-    """Return a lock error response if the table isn't open."""
+    """Return a lock error response if the table isn't available."""
 
     try:
         tid = uuid.UUID(table_id)
@@ -444,7 +448,7 @@ def _guard_table_open(table_id: str):
         return None
     with SessionLocal() as session:
         table = session.get(Table, tid)
-        if table and table.state != TableState.OPEN.value:
+        if table and table.state != "AVAILABLE":
             return JSONResponse(err("TABLE_LOCKED", "Table not ready"), status_code=423)
     return None
 
@@ -596,7 +600,7 @@ async def pay_now(table_id: str) -> dict:
         with SessionLocal() as session:
             db_table = session.get(Table, tid)
             if db_table is not None:
-                db_table.state = TableState.LOCKED.value
+                db_table.state = "LOCKED"
                 session.commit()
     log_event("system", "payment", table_id)
     return ok({"total": total})
@@ -627,7 +631,7 @@ async def lock_table(table_id: str) -> dict:
         table = session.get(Table, tid)
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
-        table.state = TableState.LOCKED.value
+        table.state = "LOCKED"
         session.commit()
         session.refresh(table)
         return ok({"table_id": table_id, "state": table.state})
@@ -640,61 +644,13 @@ async def mark_clean(table_id: str) -> dict:
     try:
         tid = uuid.UUID(table_id)
     except ValueError:  # non-UUID ids are allowed but skip DB update
-        return ok({"table_id": table_id, "state": TableState.OPEN.value})
+        return ok({"table_id": table_id, "state": "AVAILABLE"})
 
     with SessionLocal() as session:
         table = session.get(Table, tid)
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
-        table.state = TableState.OPEN.value
-        table.last_cleaned_at = func.now()
-        session.commit()
-        session.refresh(table)
-        return ok({"table_id": table_id, "state": table.state})
-
-
-@app.post("/api/outlet/{tenant_id}/housekeeping/table/{table_id}/start_clean")
-async def start_clean(
-    tenant_id: str,
-    table_id: str,
-    user: User = Depends(role_required("cleaner", "super_admin")),
-) -> dict:
-    """Mark ``table_id`` as being cleaned."""
-
-    try:
-        tid = uuid.UUID(table_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="invalid table id") from exc
-    with SessionLocal() as session:
-        table = session.get(Table, tid)
-        if table is None:
-            raise HTTPException(status_code=404, detail="Table not found")
-        table.state = TableState.CLEANING.value
-        session.commit()
-        session.refresh(table)
-        return ok({"table_id": table_id, "state": table.state})
-
-
-@app.post("/api/outlet/{tenant_id}/housekeeping/table/{table_id}/ready")
-async def mark_ready(
-    tenant_id: str,
-    table_id: str,
-    user: User = Depends(role_required("cleaner", "super_admin")),
-) -> dict:
-    """Mark cleaning complete and reopen the table."""
-
-    await event_bus.publish("table.cleaned", {"table_id": table_id})
-    try:
-        tid = uuid.UUID(table_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="invalid table id") from exc
-    with SessionLocal() as session:
-        table = session.get(Table, tid)
-        if table is None:
-            raise HTTPException(status_code=404, detail="Table not found")
-        table.state = TableState.READY.value
-        session.commit()
-        table.state = TableState.OPEN.value
+        table.state = "AVAILABLE"
         table.last_cleaned_at = func.now()
         session.commit()
         session.refresh(table)
@@ -755,5 +711,7 @@ app.include_router(kds_router)
 app.include_router(admin_menu_router)
 app.include_router(admin_alerts_router)
 app.include_router(reports_router)
+app.include_router(housekeeping_router)
+app.include_router(metrics_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

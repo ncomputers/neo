@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 from ..db.master import get_session as get_master_session
 from ..models_master import Tenant
-from ..models_tenant import Invoice, MenuItem, Order, OrderItem, Payment
+from ..models_tenant import Invoice, MenuItem, Order, OrderItem, Payment, Table
 from ..services import billing_service
 from ..utils import invoice_counter
 
@@ -103,6 +103,11 @@ async def add_payment(
     if total_paid >= invoice.total:
         invoice.settled = True
         invoice.settled_at = datetime.now(timezone.utc)
+        order = await session.get(Order, invoice.order_group_id)
+        if order is not None:
+            table = await session.get(Table, order.table_id)
+            if table is not None:
+                table.state = "LOCKED"
     await session.flush()
 
 
