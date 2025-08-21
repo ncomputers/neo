@@ -51,6 +51,15 @@ The backend exposes a super-admin endpoint used for tenant provisioning:
 - `POST /api/super/outlet` – create an outlet and run tenant migrations. The
   router is present but not yet included in the main application.
 
+### Guest Menu
+
+A guest-facing router exposes menu data for a specific table:
+
+- `GET /g/{table_token}/menu` – list menu categories and items.
+
+This router relies on tenant-specific databases and is not wired into the
+application yet.
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:
