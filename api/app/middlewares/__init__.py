@@ -3,6 +3,7 @@ from .guest_ratelimit import GuestRateLimitMiddleware
 from .guest_blocklist import GuestBlocklistMiddleware
 from .prometheus import PrometheusMiddleware
 from .table_state_guard import TableStateGuardMiddleware
+from .idempotency import IdempotencyMiddleware
 
 __all__ = [
     "CorrelationIdMiddleware",
@@ -10,4 +11,5 @@ __all__ = [
     "GuestBlocklistMiddleware",
     "PrometheusMiddleware",
     "TableStateGuardMiddleware",
+    "IdempotencyMiddleware",
 ]

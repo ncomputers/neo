@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import AsyncGenerator, List
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -56,6 +56,7 @@ async def create_guest_order(
     table_token: str,
     payload: OrderPayload,
     request: Request,
+    idempotency_key: str = Header(..., alias="Idempotency-Key"),
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:

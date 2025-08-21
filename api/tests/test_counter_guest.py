@@ -77,7 +77,9 @@ async def test_counter_guest_flow() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         order_resp = await client.post(
-            "/c/qr1/order", json={"items": [{"item_id": "1", "qty": 1}]}
+            "/c/qr1/order",
+            headers={"Idempotency-Key": "test"},
+            json={"items": [{"item_id": "1", "qty": 1}]},
         )
         assert order_resp.status_code == 200
         body = order_resp.json()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import AsyncGenerator, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -72,6 +72,7 @@ async def fetch_menu(
 async def create_order(
     counter_token: str,
     payload: OrderPayload,
+    idempotency_key: str = Header(..., alias="Idempotency-Key"),
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:

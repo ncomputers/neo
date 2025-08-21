@@ -44,6 +44,7 @@ def test_room_service_and_cleaning():
 
     resp = client.post(
         "/h/R1/order",
+        headers={"Idempotency-Key": "k1"},
         json={"items": [{"item_id": item_id, "qty": 1}]},
     )
     assert resp.status_code == 200
@@ -68,7 +69,9 @@ def test_room_service_and_cleaning():
     assert resp.json()["data"]["state"] == "PENDING_CLEANING"
 
     resp = client.post(
-        "/h/R1/order", json={"items": [{"item_id": item_id, "qty": 1}]}
+        "/h/R1/order",
+        headers={"Idempotency-Key": "k2"},
+        json={"items": [{"item_id": item_id, "qty": 1}]},
     )
     assert resp.status_code == 423
 
@@ -81,6 +84,7 @@ def test_room_service_and_cleaning():
 
     resp = client.post(
         "/h/R1/order",
+        headers={"Idempotency-Key": "k3"},
         json={"items": [{"item_id": item_id, "qty": 1}]},
     )
     assert resp.status_code == 200

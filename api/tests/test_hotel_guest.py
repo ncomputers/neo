@@ -46,7 +46,9 @@ def test_room_menu_order_cleaning():
     assert resp.json()["ok"] is True
 
     resp = client.post(
-        "/h/R-101/order", json={"items": [{"item_id": item_id, "qty": 1}]}
+        "/h/R-101/order",
+        headers={"Idempotency-Key": "test"},
+        json={"items": [{"item_id": item_id, "qty": 1}]},
     )
     assert resp.status_code == 200
     assert resp.json()["ok"] is True

@@ -88,8 +88,9 @@ def test_subscription_expiry_blocks_order_but_allows_menu(client, monkeypatch):
     assert menu_resp.status_code == 200
 
     # ordering blocked with SUB_403 envelope
+    order_headers = {**headers, "Idempotency-Key": "test"}
     order_resp = client.post(
-        "/g/T-001/order", headers=headers, json={"items": [{"item_id": "1", "qty": 1}]}
+        "/g/T-001/order", headers=order_headers, json={"items": [{"item_id": "1", "qty": 1}]}
     )
     assert order_resp.status_code == 403
     assert order_resp.json()["error"]["code"] == "SUB_403"
@@ -120,15 +121,19 @@ def test_guest_post_rate_limit(client, monkeypatch):
 
     headers = {"X-Tenant-ID": "demo"}
 
-    for _ in range(2):
+    for i in range(2):
         resp = client.post(
-            "/g/T-001/order", headers=headers, json={"items": [{"item_id": "1", "qty": 1}]}
+            "/g/T-001/order",
+            headers={**headers, "Idempotency-Key": f"k{i}"},
+            json={"items": [{"item_id": "1", "qty": 1}]},
         )
         assert resp.status_code == 200
 
     # third request exceeds patched limit
     resp = client.post(
-        "/g/T-001/order", headers=headers, json={"items": [{"item_id": "1", "qty": 1}]}
+        "/g/T-001/order",
+        headers={**headers, "Idempotency-Key": "k-final"},
+        json={"items": [{"item_id": "1", "qty": 1}]},
     )
     assert resp.status_code == 429
     assert resp.json()["error"]["code"] == "RATELIMIT_429"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Guest-facing hotel room routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy import func
 
@@ -54,7 +54,11 @@ def fetch_menu(room_token: str) -> dict:
 
 
 @router.post("/{room_token}/order")
-def create_order(room_token: str, payload: OrderPayload) -> dict:
+def create_order(
+    room_token: str,
+    payload: OrderPayload,
+    idempotency_key: str = Header(..., alias="Idempotency-Key"),
+) -> dict:
     lines = [line.model_dump() for line in payload.items]
     with SessionLocal() as session:
         room = session.query(Room).filter_by(code=room_token).one_or_none()
