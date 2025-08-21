@@ -51,6 +51,7 @@ from .middlewares.correlation import CorrelationIdMiddleware
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
+from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
@@ -572,6 +573,7 @@ async def mark_clean(table_id: str) -> dict:
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
+app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
