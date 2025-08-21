@@ -37,6 +37,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from redis.asyncio import from_url
 from .db import SessionLocal
+from sqlalchemy import func
 
 from config import get_settings
 from .auth import (
@@ -79,7 +80,7 @@ from .events import (
 from .services import notifications
 
 from .utils import PrepTimeTracker
-from .models_tenant import Table, TableStatus
+from .models_tenant import Table, TableState
 
 from . import db as app_db
 from . import domain as app_domain
@@ -434,6 +435,20 @@ def _table_state(table_id: str) -> Dict[str, List[CartItem]]:
     return tables.setdefault(table_id, {"cart": [], "orders": []})
 
 
+def _guard_table_open(table_id: str):
+    """Return a lock error response if the table isn't open."""
+
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError:
+        return None
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table and table.state != TableState.OPEN.value:
+            return JSONResponse(err("TABLE_LOCKED", "Table not ready"), status_code=423)
+    return None
+
+
 # Table Operations
 
 
@@ -444,7 +459,7 @@ async def list_tables() -> dict[str, list[dict[str, str]]]:
     with SessionLocal() as session:
         records = session.query(Table).all()
         data = [
-            {"id": str(t.id), "name": t.name, "status": t.status.value} for t in records
+            {"id": str(t.id), "name": t.name, "state": t.state} for t in records
         ]
     return {"tables": data}
 
@@ -456,6 +471,8 @@ async def add_to_cart(table_id: str, item: CartItem) -> dict:
     Multiple guests may add items concurrently by specifying a ``guest_id``.
     """
 
+    if (resp := _guard_table_open(table_id)) is not None:
+        return resp
     table = _table_state(table_id)
     table["cart"].append(item)
     await _broadcast(table_id, {"status": "cart"})
@@ -466,6 +483,8 @@ async def add_to_cart(table_id: str, item: CartItem) -> dict:
 async def place_order(table_id: str) -> dict:
     """Move all cart items to the order, locking them from guest edits."""
 
+    if (resp := _guard_table_open(table_id)) is not None:
+        return resp
     table = _table_state(table_id)
     table["orders"].extend(table["cart"])
     table["cart"] = []  # cart is cleared so guests cannot modify placed items
@@ -569,6 +588,16 @@ async def pay_now(table_id: str) -> dict:
     table = _table_state(table_id)
     total = sum(i.price * i.quantity for i in table["orders"] if i.quantity > 0)
     table["orders"] = []  # clearing orders resets table state for next guests
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError:
+        pass
+    else:
+        with SessionLocal() as session:
+            db_table = session.get(Table, tid)
+            if db_table is not None:
+                db_table.state = TableState.LOCKED.value
+                session.commit()
     log_event("system", "payment", table_id)
     return ok({"total": total})
 
@@ -598,10 +627,10 @@ async def lock_table(table_id: str) -> dict:
         table = session.get(Table, tid)
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
-        table.status = TableStatus.LOCKED
+        table.state = TableState.LOCKED.value
         session.commit()
         session.refresh(table)
-        return ok({"table_id": table_id, "status": table.status.value})
+        return ok({"table_id": table_id, "state": table.state})
 
 
 @app.post("/tables/{table_id}/mark-clean")
@@ -611,16 +640,65 @@ async def mark_clean(table_id: str) -> dict:
     try:
         tid = uuid.UUID(table_id)
     except ValueError:  # non-UUID ids are allowed but skip DB update
-        return ok({"table_id": table_id, "status": TableStatus.AVAILABLE.value})
+        return ok({"table_id": table_id, "state": TableState.OPEN.value})
 
     with SessionLocal() as session:
         table = session.get(Table, tid)
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
-        table.status = TableStatus.AVAILABLE
+        table.state = TableState.OPEN.value
+        table.last_cleaned_at = func.now()
         session.commit()
         session.refresh(table)
-        return ok({"table_id": table_id, "status": table.status.value})
+        return ok({"table_id": table_id, "state": table.state})
+
+
+@app.post("/api/outlet/{tenant_id}/housekeeping/table/{table_id}/start_clean")
+async def start_clean(
+    tenant_id: str,
+    table_id: str,
+    user: User = Depends(role_required("cleaner", "super_admin")),
+) -> dict:
+    """Mark ``table_id`` as being cleaned."""
+
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.state = TableState.CLEANING.value
+        session.commit()
+        session.refresh(table)
+        return ok({"table_id": table_id, "state": table.state})
+
+
+@app.post("/api/outlet/{tenant_id}/housekeeping/table/{table_id}/ready")
+async def mark_ready(
+    tenant_id: str,
+    table_id: str,
+    user: User = Depends(role_required("cleaner", "super_admin")),
+) -> dict:
+    """Mark cleaning complete and reopen the table."""
+
+    await event_bus.publish("table.cleaned", {"table_id": table_id})
+    try:
+        tid = uuid.UUID(table_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid table id") from exc
+    with SessionLocal() as session:
+        table = session.get(Table, tid)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.state = TableState.READY.value
+        session.commit()
+        table.state = TableState.OPEN.value
+        table.last_cleaned_at = func.now()
+        session.commit()
+        session.refresh(table)
+        return ok({"table_id": table_id, "state": table.state})
 
 
 @app.post("/api/outlet/{tenant}/tables/{table_id}/position")

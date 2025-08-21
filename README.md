@@ -72,15 +72,14 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
-### Tables Map
+### Housekeeping
 
-Admin clients can record table coordinates and labels, while the PWA can fetch
-them to render a floor plan:
+Cleaning staff can reset tables after guests settle their bills:
 
-- `POST /api/outlet/{tenant}/tables/{table_id}/position` – body
-  `{ "x": int, "y": int, "label": "optional" }`.
-- `GET /api/outlet/{tenant}/tables/map` – returns
-  `[ {"id", "code", "label", "x", "y", "state"}, ... ]`.
+- `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/start_clean` – mark a table as being cleaned.
+- `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/ready` – record cleaning completion and reopen the table.
+
+Tables transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the table is `open`.
 
 
 ### Start Script
