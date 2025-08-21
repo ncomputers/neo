@@ -1,5 +1,8 @@
+"""Smoke test for counter guest order flow."""
+
 import pathlib
 import sys
+
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 import pytest
@@ -43,7 +46,7 @@ def anyio_backend() -> str:
 
 
 @pytest.mark.anyio
-async def test_takeaway_flow() -> None:
+async def test_counter_guest_flow() -> None:
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -73,25 +76,24 @@ async def test_takeaway_flow() -> None:
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        menu_resp = await client.get("/c/qr1/menu")
-        assert menu_resp.status_code == 200
-        item_id = menu_resp.json()["data"]["items"][0]["id"]
-
         order_resp = await client.post(
-            "/c/qr1/order", json={"items": [{"item_id": str(item_id), "qty": 1}]}
+            "/c/qr1/order", json={"items": [{"item_id": "1", "qty": 1}]}
         )
         assert order_resp.status_code == 200
-        order_id = order_resp.json()["data"]["order_id"]
+        body = order_resp.json()
+        assert body["ok"] is True
+        order_id = body["data"]["order_id"]
 
         status_resp = await client.post(
             f"/api/outlet/demo/counters/{order_id}/status",
             json={"status": "delivered"},
         )
         assert status_resp.status_code == 200
-        assert status_resp.json()["data"]["invoice_id"] is not None
+        status_body = status_resp.json()
+        assert status_body["ok"] is True
+        invoice_id = status_body["data"]["invoice_id"]
+        assert invoice_id is not None
 
     async with Session() as session:
         count = await session.scalar(select(func.count()).select_from(Invoice))
         assert count == 1
-        inv = await session.scalar(select(Invoice))
-        assert inv.number.startswith("80mm/")

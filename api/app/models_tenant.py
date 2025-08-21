@@ -106,6 +106,7 @@ class Room(Base):
     code = Column(String, unique=True, nullable=False)
     qr_token = Column(String, unique=True, nullable=True)
     state = Column(String, nullable=False, default="AVAILABLE")
+    last_cleaned_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class RoomOrder(Base):

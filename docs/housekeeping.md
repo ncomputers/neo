@@ -12,6 +12,6 @@ Additional endpoints allow managing hotel room availability:
 - `POST /api/outlet/{tenant}/housekeeping/room/{room_id}/start_clean`
   Marks the room as `PENDING_CLEANING`.
 - `POST /api/outlet/{tenant}/housekeeping/room/{room_id}/ready`
-  Marks the room as `AVAILABLE`.
+  Marks the room as `AVAILABLE` and records the cleaning timestamp.
 
 Guest POST requests under `/g/` and `/h/` are blocked unless the table or room state is `AVAILABLE`.

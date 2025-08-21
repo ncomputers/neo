@@ -10,4 +10,4 @@ This flow allows a tenant to handle takeaway orders through a single QR code at 
 ## Routes
 - `GET /c/{counter_token}/menu` – fetch menu categories and items for a counter.
 - `POST /c/{counter_token}/order` – place an order with a list of items.
-- `POST /api/outlet/{tenant}/counters/{order_id}/status` – update an order to `ready` or `delivered`. Marking an order as `delivered` generates an invoice and is suitable for printing on an 80 mm thermal printer.
+- `POST /api/outlet/{tenant}/counters/{order_id}/status` – update an order to `ready` or `delivered`. Marking an order as `delivered` generates an invoice from the dedicated `80mm` series and is suitable for printing on an 80 mm thermal printer.
