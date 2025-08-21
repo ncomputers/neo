@@ -63,7 +63,7 @@ from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
-from .routes_admin_backup import router as admin_backup_router
+from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
 from .routes_alerts import router as alerts_router
 from .routes_housekeeping import router as housekeeping_router
@@ -713,5 +713,6 @@ app.include_router(alerts_router)
 app.include_router(reports_router)
 app.include_router(housekeeping_router)
 app.include_router(metrics_router)
+app.include_router(backup_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)
