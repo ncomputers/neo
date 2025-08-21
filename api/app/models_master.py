@@ -4,9 +4,18 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
 from config import AcceptanceMode
 
@@ -55,4 +64,36 @@ class SyncOutbox(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
-__all__ = ["Base", "Tenant", "SyncOutbox"]
+class NotificationRule(Base):
+    """Routing rule for outbound notifications."""
+
+    __tablename__ = "notification_rules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    channel = Column(String, nullable=False)
+    config = Column(JSON, nullable=True)
+
+
+class NotificationOutbox(Base):
+    """Queued notifications awaiting delivery."""
+
+    __tablename__ = "notifications_outbox"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    rule_id = Column(UUID(as_uuid=True), ForeignKey("notification_rules.id"), nullable=False)
+    payload = Column(JSON, nullable=False)
+    status = Column(String, nullable=False, default="queued")
+    created_at = Column(DateTime, server_default=func.now())
+
+    rule = relationship("NotificationRule")
+
+    # TODO: add backoff and max_attempts columns for retries
+
+
+__all__ = [
+    "Base",
+    "Tenant",
+    "SyncOutbox",
+    "NotificationRule",
+    "NotificationOutbox",
+]
