@@ -11,7 +11,7 @@ from ..models_tenant import Room
 from ..utils.responses import err
 
 
-class RoomStateGuardMiddleware(BaseHTTPMiddleware):
+class RoomStateGuard(BaseHTTPMiddleware):
     """Deny guest POST requests for rooms that aren't AVAILABLE."""
 
     async def dispatch(self, request: Request, call_next):
@@ -26,3 +26,7 @@ class RoomStateGuardMiddleware(BaseHTTPMiddleware):
                         err("ROOM_LOCKED", "Room not ready"), status_code=423
                     )
         return await call_next(request)
+
+
+# Backwards compatibility until callers are updated.
+RoomStateGuardMiddleware = RoomStateGuard
