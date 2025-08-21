@@ -64,18 +64,11 @@ async def _fake_list_active(session):
     return []
 
 
-class _BypassSubGuard:
-    async def __call__(self, request, call_next):
-        return await call_next(request)
 
+@pytest.fixture(autouse=True)
+def _override_deps():
+    """Apply tenant overrides for guest routes."""
 
-@pytest.fixture(scope="module", autouse=True)
-def _setup_teardown():
-    """Bypass heavy deps and restore state after module tests."""
-
-    original_guard = app_main.subscription_guard
-
-    # wire tenant-aware dependencies
     app.dependency_overrides[routes_guest_menu.get_tenant_id] = header_tenant_id
     app.dependency_overrides[routes_guest_menu.get_tenant_session] = (
         _fake_get_tenant_session
@@ -88,15 +81,9 @@ def _setup_teardown():
     app.dependency_overrides[routes_guest_bill.get_tenant_session] = (
         _fake_get_tenant_session
     )
-
-    # bypass subscription guard during these tests
-    app_main.subscription_guard = _BypassSubGuard()
-
     yield
-
-    # restore state for other test modules
     app.dependency_overrides.clear()
-    app_main.subscription_guard = original_guard
+
 
 
 @pytest.fixture
