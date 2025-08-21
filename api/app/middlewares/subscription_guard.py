@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 
 from ..db.master import get_session
 from ..models_master import Tenant
+from sqlalchemy.exc import StatementError
 from ..utils.responses import err
 
 
@@ -39,9 +40,9 @@ class SubscriptionGuard:
                     pass
                 async with get_session() as session:
                     try:
-                        tenant = await session.get(Tenant, lookup_id)
+                        tenant = await session.get(Tenant, tenant_id)
+                    except StatementError:
 
-                    except Exception:
                         tenant = None
                 if tenant and tenant.subscription_expires_at:
                     grace = tenant.grace_period_days or 7

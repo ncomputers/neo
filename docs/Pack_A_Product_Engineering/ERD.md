@@ -51,7 +51,8 @@ erDiagram
              jsonb bill_json
              jsonb gst_breakup
              numeric total
-             text mode
+             bool settled
+             timestamptz settled_at
              timestamptz created_at }
   PAYMENTS { uuid id PK
              uuid invoice_id FK
