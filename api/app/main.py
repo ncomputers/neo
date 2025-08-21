@@ -30,6 +30,9 @@ import redis.asyncio as redis
 from fastapi.responses import JSONResponse
 from fastapi import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from pydantic import BaseModel
 from redis.asyncio import from_url
@@ -47,13 +50,15 @@ from .auth import (
 from .audit import log_event
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
-from .middlewares.correlation import CorrelationIdMiddleware
+from .middlewares import CorrelationIdMiddleware, GuestBlocklistMiddleware, GuestRateLimitMiddleware
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
+from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_reports import router as reports_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
+
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
 from .hooks import order_rejection
@@ -72,6 +77,7 @@ from . import domain as app_domain
 from . import models_tenant as app_models_tenant
 from . import repos_sqlalchemy as app_repos_sqlalchemy
 from . import utils as app_utils
+
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)
 sys.modules.setdefault("models_tenant", app_models_tenant)
@@ -81,13 +87,37 @@ kds_router = importlib.import_module(".routes_kds", __package__).router
 superadmin_router = importlib.import_module(".routes_superadmin", __package__).router
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        return response
+
 
 settings = get_settings()
 app = FastAPI()
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
+cors_origins = (
+    ["*"]
+    if allowed_origins == "*"
+    else [o.strip() for o in allowed_origins.split(",") if o.strip()]
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
+app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(GuestRateLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
 
@@ -95,6 +125,7 @@ subscription_guard = SubscriptionGuard(app)
 @app.middleware("http")
 async def subscription_guard_middleware(request: Request, call_next):
     return await subscription_guard(request, call_next)
+
 
 app.include_router(menu_router, prefix="/menu")
 
@@ -131,11 +162,10 @@ async def http_error_handler(request: Request, exc: StarletteHTTPException):
 async def general_error_handler(request: Request, exc: Exception):
     return JSONResponse(err(500, "Internal Server Error"), status_code=500)
 
+
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 prep_trackers: dict[str, PrepTimeTracker] = {}
-
-
 
 
 @app.on_event("startup")
@@ -322,9 +352,7 @@ async def renew_subscription(
 
 
 @app.post("/tenants/{tenant_id}/subscription/payments/{payment_id}/verify")
-async def verify_payment(
-    tenant_id: str, payment_id: str, months: int = 1
-) -> dict:
+async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> dict:
     payment = PAYMENTS.get(payment_id)
     if payment is None or payment["tenant_id"] != tenant_id:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -386,8 +414,7 @@ async def list_tables() -> dict[str, list[dict[str, str]]]:
     with SessionLocal() as session:
         records = session.query(Table).all()
         data = [
-            {"id": str(t.id), "name": t.name, "status": t.status.value}
-            for t in records
+            {"id": str(t.id), "name": t.name, "status": t.status.value} for t in records
         ]
     return {"tables": data}
 
@@ -419,9 +446,7 @@ async def place_order(table_id: str) -> dict:
 
 
 @app.patch("/tables/{table_id}/order/{index}")
-async def update_order(
-    table_id: str, index: int, payload: UpdateQuantity
-) -> dict:
+async def update_order(table_id: str, index: int, payload: UpdateQuantity) -> dict:
     """Allow an admin to soft-cancel an order line by setting ``quantity`` to 0."""
 
     table = _table_state(table_id)
@@ -441,9 +466,7 @@ async def update_order(
 
 
 @app.post("/tables/{table_id}/staff-order")
-async def staff_place_order(
-    table_id: str, item: StaffOrder
-) -> dict:
+async def staff_place_order(table_id: str, item: StaffOrder) -> dict:
     """Staff directly place an order for a guest without a phone."""
 
     table = _table_state(table_id)
@@ -573,9 +596,9 @@ async def mark_clean(table_id: str) -> dict:
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
+app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
 app.include_router(reports_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)
-

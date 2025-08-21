@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
+import { apiFetch } from '../api'
 
 export default function CashierDashboard() {
   const { logo } = useTheme()
@@ -8,7 +9,7 @@ export default function CashierDashboard() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch('http://localhost:4000/orders')
+    apiFetch('/orders')
       .then((res) => res.json())
       .then((data) => setOrders(data.orders || []))
       .catch((err) => setError(err.message))

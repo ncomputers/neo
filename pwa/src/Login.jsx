@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiFetch } from './api'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -7,7 +8,7 @@ export default function Login() {
 
   const handleEmailLogin = async (e) => {
     e.preventDefault()
-    const res = await fetch('/login/email', {
+    const res = await apiFetch('/login/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -23,7 +24,7 @@ export default function Login() {
 
   const handlePinLogin = async (e) => {
     e.preventDefault()
-    const res = await fetch('/login/pin', {
+    const res = await apiFetch('/login/pin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, pin }),

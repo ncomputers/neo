@@ -38,3 +38,17 @@ async def test_invoice_numbering_series_resets(session):
     series_b = invoice_counter.build_series("NEW", "never", date(2024, 1, 1))
     n3 = await invoice_counter.next_invoice_number(session, series_b)
     assert n3.endswith("/000001")
+
+
+@pytest.mark.anyio
+async def test_invoice_numbering_monthly_reset(session):
+    jan = invoice_counter.build_series("MON", "monthly", date(2024, 1, 1))
+    feb = invoice_counter.build_series("MON", "monthly", date(2024, 2, 1))
+
+    jan_1 = await invoice_counter.next_invoice_number(session, jan)
+    jan_2 = await invoice_counter.next_invoice_number(session, jan)
+    feb_1 = await invoice_counter.next_invoice_number(session, feb)
+
+    assert jan_1.endswith("/000001")
+    assert jan_2.endswith("/000002")
+    assert feb_1.endswith("/000001")

@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Invoice {{ invoice['number'] }}</h1>
+    <table>
+      <tr><th>Item</th><th>Price</th><th>Qty</th></tr>
+    {% for item in invoice['items'] %}
+      <tr><td>{{ item.name }}</td><td>{{ item.price }}</td><td>{{ item.qty }}</td></tr>
+    {% endfor %}
+    </table>
+    <p>Total: {{ invoice['total'] }}</p>
+  </body>
+</html>

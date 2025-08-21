@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useOrderStatus } from '../hooks/useOrderStatus'
+import { apiFetch } from '../api'
 
 export default function GuestOrder() {
   const { logo } = useTheme()
@@ -10,7 +11,7 @@ export default function GuestOrder() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch('http://localhost:4000/tables/1/bill')
+    apiFetch('/tables/1/bill')
       .then((res) => res.json())
       .then((data) => setBill(data))
       .catch((err) => setError(err.message))

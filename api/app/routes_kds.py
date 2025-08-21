@@ -10,13 +10,14 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from db.tenant import get_engine
 from domain import OrderStatus, can_transition
 from models_tenant import Order, OrderItem
+from .hooks import order_rejection
 from .services import ema as ema_service
 from repos_sqlalchemy import orders_repo_sql
 from utils.responses import ok
@@ -114,6 +115,14 @@ async def serve_order(tenant_id: str, order_id: int) -> dict:
     return await _transition_order(tenant_id, order_id, OrderStatus.SERVED)
 
 
+
+@router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/reject")
+async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
+    """Mark an order as rejected."""
+    result = await _transition_order(tenant_id, order_id, OrderStatus.REJECTED)
+    ip = request.client.host if request.client else "unknown"
+    await order_rejection.on_rejected(ip, request.app.state.redis)
+    return result
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept")
 async def accept_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as accepted."""
@@ -136,3 +145,11 @@ async def ready_item(tenant_id: str, order_item_id: int) -> dict:
 async def serve_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as served."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.SERVED)
+
+@router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/reject")
+async def reject_item(tenant_id: str, order_item_id: int, request: Request) -> dict:
+    """Mark an order item as rejected."""
+    result = await _transition_item(tenant_id, order_item_id, OrderStatus.REJECTED)
+    ip = request.client.host if request.client else "unknown"
+    await order_rejection.on_rejected(ip, request.app.state.redis)
+    return result

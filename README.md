@@ -29,6 +29,11 @@ alembic upgrade head
 pytest -q
 ```
 
+## Continuous Integration
+
+GitHub Actions runs the test suite and basic lint checks for all pushes and pull
+requests.
+
 ## API
 
 ```bash
@@ -130,7 +135,15 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema. Invoice
 numbering for each tenant can be customised via ``invoice_prefix`` and an
-``invoice_reset`` policy (``monthly``, ``yearly`` or ``never``).
+``invoice_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
+reset, numbers include the year and month, e.g. ``INV/2024/02/000001``.
+
+### Invoice PDFs
+
+Invoices can be rendered as PDFs via ``GET /invoice/{invoice_id}/pdf``.
+Specify ``?size=80mm`` for thermal receipts or ``?size=A4`` for full pages.
+If WeasyPrint is unavailable, the endpoint falls back to returning the
+rendered HTML.
 
 For development convenience, a lightweight CLI is also available to prepare a
 tenant database or schema and report when it's ready:
