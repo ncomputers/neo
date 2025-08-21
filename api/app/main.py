@@ -47,12 +47,11 @@ from .auth import (
 from .audit import log_event
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
-from .middlewares.correlation import CorrelationIdMiddleware
+from .middlewares import CorrelationIdMiddleware, GuestBlocklistMiddleware, GuestRateLimitMiddleware
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_admin_menu import router as admin_menu_router
-from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
 from .hooks import order_rejection
@@ -86,6 +85,7 @@ app = FastAPI()
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
+app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(GuestRateLimitMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
