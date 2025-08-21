@@ -8,3 +8,4 @@ can be mounted in the main application."""
 from .routes_guest_hotel import router
 
 __all__ = ["router"]
+
