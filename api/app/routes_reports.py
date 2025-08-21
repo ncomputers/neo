@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.tenant import get_engine
 from .repos_sqlalchemy import invoices_repo_sql
+from .services import notifications
 
 router = APIRouter()
 
@@ -50,4 +51,5 @@ async def daily_z_report(tenant_id: str, date: str, format: str = "csv"):
         )
     response = Response(content=output.getvalue(), media_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=z-report.csv"
+    await notifications.enqueue(tenant_id, "day.close", {"date": date})
     return response

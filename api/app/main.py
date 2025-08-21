@@ -57,6 +57,7 @@ from .routes_guest_bill import router as guest_bill_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_reports import router as reports_router
+from .routes_admin_alerts import router as admin_alerts_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 from .middlewares.subscription_guard import SubscriptionGuard
@@ -68,6 +69,7 @@ from .events import (
     event_bus,
     report_aggregator,
 )
+from .services import notifications
 
 from .utils import PrepTimeTracker
 from .models_tenant import Table, TableStatus
@@ -326,6 +328,18 @@ async def create_order(request: OrderRequest) -> dict:
     if datetime.utcnow() > expiry + timedelta(days=7):
         raise HTTPException(status_code=403, detail="Subscription expired")
 
+    import uuid
+    import os
+
+    if os.getenv("POSTGRES_TENANT_DSN_TEMPLATE"):
+        try:
+            uuid.UUID(request.tenant_id)
+        except ValueError:
+            pass
+        else:
+            await notifications.enqueue(
+                request.tenant_id, "order.accepted", request.dict()
+            )
     return ok({"status": "order accepted"})
 
 
@@ -599,6 +613,7 @@ app.include_router(guest_bill_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
+app.include_router(admin_alerts_router)
 app.include_router(reports_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

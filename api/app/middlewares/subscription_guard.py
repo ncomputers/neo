@@ -30,8 +30,11 @@ class SubscriptionGuard:
         ):
             tenant_id = request.headers.get("X-Tenant-ID")
             if tenant_id:
-                async with get_session() as session:
-                    tenant = await session.get(Tenant, tenant_id)
+                try:
+                    async with get_session() as session:
+                        tenant = await session.get(Tenant, tenant_id)
+                except Exception:  # pragma: no cover - invalid id format
+                    tenant = None
                 if tenant and tenant.subscription_expires_at:
                     grace = tenant.grace_period_days or 7
                     if datetime.utcnow() > tenant.subscription_expires_at + timedelta(
