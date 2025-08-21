@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .repos_sqlalchemy import invoices_repo_sql
-from .services import billing_service
+from .services import billing_service, notifications
 from .utils.responses import ok
 
 
@@ -51,4 +51,5 @@ async def generate_bill(
         tenant_id=tenant_id,
     )
     invoice_payload = billing_service.compute_bill([], "unreg")
+    await notifications.enqueue(tenant_id, "bill.generated", {"table_token": table_token})
     return ok(invoice_payload)

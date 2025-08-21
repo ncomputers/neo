@@ -36,13 +36,9 @@ class SubscriptionGuard:
             tenant = None
             if tenant_id:
                 try:
-                    lookup_id: UUID | str = UUID(tenant_id)
-                except ValueError:
-                    lookup_id = tenant_id
-                try:
                     async with get_session() as session:
-                        tenant = await session.get(Tenant, lookup_id)
-                except Exception:
+                        tenant = await session.get(Tenant, tenant_id)
+                except Exception:  # pragma: no cover - invalid id format
                     tenant = None
 
                 if tenant and tenant.subscription_expires_at:
