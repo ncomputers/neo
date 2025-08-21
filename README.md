@@ -61,6 +61,9 @@ The backend exposes a super-admin endpoint used for tenant provisioning:
 A guest-facing router exposes menu data for a specific table:
 
 - `GET /g/{table_token}/menu` – list menu categories and items.
+- `GET /h/{room_token}/menu` – list menu for hotel rooms.
+- `POST /h/{room_token}/order` – place a room service order.
+- `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
 
 This router relies on tenant-specific databases and is not wired into the
 application yet.
@@ -72,14 +75,32 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
+### Backups
+
+Trigger a JSON backup of a tenant's database:
+
+- `POST /api/outlet/{tenant_id}/backup` – runs the backup script and returns the
+  path to the generated file.
+
 ### Housekeeping
 
 Cleaning staff can reset tables after guests settle their bills:
 
 - `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/start_clean` – mark a table as being cleaned.
 - `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/ready` – record cleaning completion and reopen the table.
+- `POST /api/outlet/{tenant_id}/housekeeping/room/{room_id}/start_clean` – mark a room as being cleaned.
+- `POST /api/outlet/{tenant_id}/housekeeping/room/{room_id}/ready` – record cleaning completion and reopen the room.
 
-Tables transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the table is `open`.
+Tables and rooms transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the respective table or room is `open`.
+
+
+### Alerts
+
+Configure and inspect notification rules:
+
+- `POST /api/outlet/{tenant_id}/alerts/rules` – create a rule (`event`, `channel`, `target`, `enabled`).
+- `GET /api/outlet/{tenant_id}/alerts/rules` – list configured rules.
+- `GET /api/outlet/{tenant_id}/alerts/outbox?status=queued|delivered` – list recent notifications.
 
 ### Table Map
 
@@ -109,7 +130,9 @@ POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
 ```
 
 The worker drains `notifications_outbox` rows and currently supports
-`console` and `webhook` channels.
+`console`, `webhook`, `whatsapp_stub` and `sms_stub` channels. The
+`*_stub` channels simply log the payload and are placeholders for future
+provider adapters.
 
 ### Real-time Updates
 

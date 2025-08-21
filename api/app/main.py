@@ -63,12 +63,14 @@ from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
-from .routes_admin_backup import router as admin_backup_router
+from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
-from .routes_admin_alerts import router as admin_alerts_router
+from .routes_alerts import router as alerts_router
 from .routes_housekeeping import router as housekeeping_router
+from .routes_guest_hotel import router as guest_hotel_router
 from .metrics import router as metrics_router
 from .routes_tables_map import router as tables_map_router
+
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 
@@ -85,6 +87,7 @@ from .services import notifications
 
 from .utils import PrepTimeTracker
 from .models_tenant import Table
+from .middlewares.room_state_guard import RoomStateGuardMiddleware
 
 from . import db as app_db
 from . import domain as app_domain
@@ -132,6 +135,7 @@ app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
+app.add_middleware(RoomStateGuardMiddleware)
 app.add_middleware(GuestRateLimitMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -654,13 +658,15 @@ async def mark_clean(table_id: str) -> dict:
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
+app.include_router(guest_hotel_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
-app.include_router(admin_alerts_router)
+app.include_router(alerts_router)
 app.include_router(reports_router)
 app.include_router(housekeeping_router)
 app.include_router(metrics_router)
 app.include_router(tables_map_router)
+app.include_router(backup_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

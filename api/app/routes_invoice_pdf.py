@@ -7,7 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, Response
 
 from .pdf.render import render_invoice
-from .metrics import invoices_generated_total
+from .routes_metrics import invoices_generated_total
 
 router = APIRouter()
 

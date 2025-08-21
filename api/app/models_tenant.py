@@ -97,6 +97,43 @@ class Table(Base):
     )
 
 
+class Room(Base):
+    """Hotel rooms mapped to QR tokens."""
+
+    __tablename__ = "rooms"
+
+    id = Column(Integer, primary_key=True)
+    code = Column(String, unique=True, nullable=False)
+    qr_token = Column(String, unique=True, nullable=True)
+    state = Column(String, nullable=False, default="AVAILABLE")
+
+
+class RoomOrder(Base):
+    """Room service orders."""
+
+    __tablename__ = "room_orders"
+
+    id = Column(Integer, primary_key=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
+    status = Column(String, nullable=False)
+    placed_at = Column(DateTime(timezone=True), nullable=True)
+    served_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class RoomOrderItem(Base):
+    """Line items for room service orders."""
+
+    __tablename__ = "room_order_items"
+
+    id = Column(Integer, primary_key=True)
+    room_order_id = Column(Integer, ForeignKey("room_orders.id"), nullable=False)
+    item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=False)
+    name_snapshot = Column(String, nullable=False)
+    price_snapshot = Column(Numeric(10, 2), nullable=False)
+    qty = Column(Integer, nullable=False)
+    status = Column(String, nullable=False)
+
+
 class Order(Base):
     """Orders placed from a table."""
 
@@ -244,6 +281,9 @@ __all__ = [
     "TableStatus",
     "OrderStatus",
     "Table",
+    "Room",
+    "RoomOrder",
+    "RoomOrderItem",
     "Order",
     "OrderItem",
     "Invoice",
