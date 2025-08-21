@@ -72,6 +72,16 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
+### Tables Map
+
+Admin clients can record table coordinates and labels, while the PWA can fetch
+them to render a floor plan:
+
+- `POST /api/outlet/{tenant}/tables/{table_id}/position` – body
+  `{ "x": int, "y": int, "label": "optional" }`.
+- `GET /api/outlet/{tenant}/tables/map` – returns
+  `[ {"id", "code", "label", "x", "y", "state"}, ... ]`.
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:

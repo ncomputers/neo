@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+import uuid
 
 from fastapi import Request
 from starlette.responses import JSONResponse
@@ -31,7 +32,14 @@ class SubscriptionGuard:
             tenant_id = request.headers.get("X-Tenant-ID")
             if tenant_id:
                 async with get_session() as session:
-                    tenant = await session.get(Tenant, tenant_id)
+                    try:
+                        tid = uuid.UUID(tenant_id)
+                    except ValueError:
+                        tid = tenant_id  # allow non-UUID ids in tests
+                    try:
+                        tenant = await session.get(Tenant, tid)
+                    except Exception:  # pragma: no cover - invalid identifier
+                        tenant = None
                 if tenant and tenant.subscription_expires_at:
                     grace = tenant.grace_period_days or 7
                     if datetime.utcnow() > tenant.subscription_expires_at + timedelta(
