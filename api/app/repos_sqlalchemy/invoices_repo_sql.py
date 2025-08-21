@@ -2,11 +2,12 @@ from __future__ import annotations
 
 """SQLAlchemy implementation for invoice persistence."""
 
-from datetime import date
+from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from zoneinfo import ZoneInfo
 
 from ..db.master import get_session as get_master_session
 from ..models_master import Tenant
@@ -92,3 +93,48 @@ async def add_payment(
     )
     session.add(payment)
     await session.flush()
+
+
+async def list_day(
+    session: AsyncSession, day: date, tz: str = "UTC"
+) -> list[dict]:
+    """Return invoices and payments for ``day`` in ``tz`` timezone."""
+
+    tzinfo = ZoneInfo(tz)
+    start = datetime.combine(day, time.min, tzinfo).astimezone(timezone.utc)
+    end = datetime.combine(day, time.max, tzinfo).astimezone(timezone.utc)
+
+    result = await session.execute(
+        select(
+            Invoice.id,
+            Invoice.number,
+            Invoice.bill_json,
+            Invoice.total,
+            Payment.mode,
+            Payment.amount,
+        )
+        .outerjoin(Payment, Payment.invoice_id == Invoice.id)
+        .where(Invoice.created_at >= start, Invoice.created_at <= end)
+    )
+
+    rows = result.all()
+    invoices: dict[int, dict] = {}
+    for inv_id, number, bill, total, mode, amount in rows:
+        entry = invoices.setdefault(
+            inv_id,
+            {
+                "number": number,
+                "subtotal": bill.get("subtotal", 0),
+                "tax": sum(bill.get("tax_breakup", {}).values()),
+                "total": float(total),
+                "payments": [],
+            },
+        )
+        if mode is not None:
+            entry["payments"].append({"mode": mode, "amount": float(amount)})
+
+    for entry in invoices.values():
+        paid = sum(p["amount"] for p in entry["payments"])
+        entry["settled"] = paid >= entry["total"]
+
+    return list(invoices.values())
