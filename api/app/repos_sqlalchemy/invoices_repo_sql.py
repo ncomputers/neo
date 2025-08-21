@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """SQLAlchemy implementation for invoice persistence."""
+
+from __future__ import annotations
 
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from zoneinfo import ZoneInfo
 
@@ -92,6 +92,17 @@ async def add_payment(
         verified=verified,
     )
     session.add(payment)
+    await session.flush()
+
+    total_paid = await session.scalar(
+        select(func.coalesce(func.sum(Payment.amount), 0)).where(
+            Payment.invoice_id == invoice_id, Payment.verified
+        )
+    )
+    invoice = await session.get(Invoice, invoice_id)
+    if total_paid >= invoice.total:
+        invoice.settled = True
+        invoice.settled_at = datetime.now(timezone.utc)
     await session.flush()
 
 
