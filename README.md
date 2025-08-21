@@ -138,6 +138,14 @@ To apply migrations for an existing tenant database, run:
 python scripts/tenant_migrate.py --tenant TENANT_ID
 ```
 
+To populate a tenant with a minimal category, two items and a table, execute:
+
+```bash
+python scripts/tenant_seed.py --tenant TENANT_ID
+```
+
+The command prints a JSON payload containing the new record IDs.
+
 ## Audit Logging
 
 Login attempts, order edits and payments write to SQLite-backed audit tables.
