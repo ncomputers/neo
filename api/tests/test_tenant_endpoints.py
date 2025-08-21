@@ -65,19 +65,24 @@ async def _fake_list_active(session):
     return []
 
 
-# Wire tenant-aware dependencies for guest routes
-app.dependency_overrides[routes_guest_menu.get_tenant_id] = header_tenant_id
-app.dependency_overrides[routes_guest_menu.get_tenant_session] = (
-    _fake_get_tenant_session
-)
-app.dependency_overrides[routes_guest_order.get_tenant_id] = header_tenant_id
-app.dependency_overrides[routes_guest_order.get_tenant_session] = (
-    _fake_get_tenant_session
-)
-app.dependency_overrides[routes_guest_bill.get_tenant_id] = header_tenant_id
-app.dependency_overrides[routes_guest_bill.get_tenant_session] = (
-    _fake_get_tenant_session
-)
+
+@pytest.fixture(autouse=True)
+def _override_deps():
+    """Apply tenant overrides for guest routes."""
+    app.dependency_overrides[routes_guest_menu.get_tenant_id] = header_tenant_id
+    app.dependency_overrides[routes_guest_menu.get_tenant_session] = (
+        _fake_get_tenant_session
+    )
+    app.dependency_overrides[routes_guest_order.get_tenant_id] = header_tenant_id
+    app.dependency_overrides[routes_guest_order.get_tenant_session] = (
+        _fake_get_tenant_session
+    )
+    app.dependency_overrides[routes_guest_bill.get_tenant_id] = header_tenant_id
+    app.dependency_overrides[routes_guest_bill.get_tenant_session] = (
+        _fake_get_tenant_session
+    )
+    yield
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture

@@ -13,10 +13,12 @@ from fastapi.testclient import TestClient
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from api.app.main import app
+from api.app import main as app_main
 from api.app import routes_guest_menu, routes_guest_order
 from api.app.deps.tenant import get_tenant_id as header_tenant_id
 from api.app.repos_sqlalchemy import menu_repo_sql, orders_repo_sql
 from api.app.middlewares import subscription_guard as sg_module
+from api.app.middlewares.subscription_guard import SubscriptionGuard
 from api.app.security import ratelimit
 
 
@@ -25,6 +27,8 @@ def client(monkeypatch):
     """Return TestClient with stubbed tenant dependencies and repos."""
 
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    original_guard = app_main.subscription_guard
+    app_main.subscription_guard = SubscriptionGuard(app)
 
     async def _fake_get_tenant_session():
         class _DummySession:
@@ -58,6 +62,7 @@ def client(monkeypatch):
     client = TestClient(app, raise_server_exceptions=False)
     yield client
     app.dependency_overrides.clear()
+    app_main.subscription_guard = original_guard
 
 
 def test_subscription_expiry_blocks_order_but_allows_menu(client, monkeypatch):
