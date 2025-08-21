@@ -22,6 +22,7 @@ from api.app.models_tenant import (
     Counter,
     Invoice,
 )
+from api.app.deps import flags as flag_deps
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
@@ -43,6 +44,13 @@ def _setup_teardown():
 @pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"
+
+
+@pytest.fixture(autouse=True)
+def _enable_flags(monkeypatch):
+    async def _can_use(tenant_id, flag):
+        return True
+    monkeypatch.setattr(flag_deps, "can_use", _can_use)
 
 
 @pytest.mark.anyio
@@ -75,9 +83,12 @@ async def test_counter_guest_flow() -> None:
     app.dependency_overrides[routes_counter.get_session_from_path] = _session
 
     transport = ASGITransport(app=app)
+    headers = {"X-Tenant-ID": "demo"}
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         order_resp = await client.post(
-            "/c/qr1/order", json={"items": [{"item_id": "1", "qty": 1}]}
+            "/c/qr1/order",
+            json={"items": [{"item_id": "1", "qty": 1}]},
+            headers=headers,
         )
         assert order_resp.status_code == 200
         body = order_resp.json()
@@ -87,6 +98,7 @@ async def test_counter_guest_flow() -> None:
         status_resp = await client.post(
             f"/api/outlet/demo/counters/{order_id}/status",
             json={"status": "delivered"},
+            headers=headers,
         )
         assert status_resp.status_code == 200
         status_body = status_resp.json()

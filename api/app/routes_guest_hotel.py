@@ -2,11 +2,12 @@ from __future__ import annotations
 
 """Guest-facing hotel room routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy import func
 
 from .db import SessionLocal
+from .deps.flags import require_flag
 from .models_tenant import (
     Category,
     MenuItem,
@@ -17,7 +18,7 @@ from .models_tenant import (
 )
 from .utils.responses import ok
 
-router = APIRouter(prefix="/h")
+router = APIRouter(prefix="/h", dependencies=[Depends(require_flag("enable_hotel"))])
 
 
 class OrderLine(BaseModel):

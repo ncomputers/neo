@@ -6,18 +6,28 @@ import types
 import fakeredis.aioredis
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
+import pytest
 
 sys.modules.setdefault("api.app.metrics", types.SimpleNamespace(router=APIRouter()))
 
 from api.app.main import app, SessionLocal
 from api.app.models_tenant import Category, MenuItem, Room, NotificationOutbox
 from api.app.db import engine
+from api.app.deps import flags as flag_deps
 
 client = TestClient(app)
+HEADERS = {"X-Tenant-ID": "demo"}
 
 
 def setup_module():
     app.state.redis = fakeredis.aioredis.FakeRedis()
+
+
+@pytest.fixture(autouse=True)
+def _enable_flags(monkeypatch):
+    async def _can_use(tenant_id, flag):
+        return True
+    monkeypatch.setattr(flag_deps, "can_use", _can_use)
 
 
 def seed():
@@ -41,16 +51,18 @@ def seed():
 def test_room_menu_order_cleaning():
     item_id = seed()
 
-    resp = client.get("/h/R-101/menu")
+    resp = client.get("/h/R-101/menu", headers=HEADERS)
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
 
     resp = client.post(
-        "/h/R-101/order", json={"items": [{"item_id": item_id, "qty": 1}]}
+        "/h/R-101/order",
+        json={"items": [{"item_id": item_id, "qty": 1}]},
+        headers=HEADERS,
     )
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
 
-    resp = client.post("/h/R-101/request/cleaning")
+    resp = client.post("/h/R-101/request/cleaning", headers=HEADERS)
     assert resp.status_code == 200
     assert resp.json()["ok"] is True

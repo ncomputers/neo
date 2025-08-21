@@ -8,16 +8,26 @@ import uuid
 
 from fastapi.testclient import TestClient
 import fakeredis.aioredis
+import pytest
 
 from api.app.main import SessionLocal, app
 from api.app.models_tenant import Table
 from api.app.auth import create_access_token
+from api.app.deps import flags as flag_deps
 
 client = TestClient(app)
+HEADERS = {"X-Tenant-ID": "demo"}
 
 
 def setup_module():
     app.state.redis = fakeredis.aioredis.FakeRedis()
+
+
+@pytest.fixture(autouse=True)
+def _enable_flags(monkeypatch):
+    async def _can_use(tenant_id, flag):
+        return True
+    monkeypatch.setattr(flag_deps, "can_use", _can_use)
 
 
 def test_cart_and_soft_cancel():
@@ -65,15 +75,16 @@ def test_settlement_locks_and_cleaner_unlocks():
 
     token = create_access_token({"sub": "cleaner1", "role": "cleaner"})
     headers = {"Authorization": f"Bearer {token}"}
+    headers_clean = {**headers, **HEADERS}
     resp = client.post(
         f"/api/outlet/demo/housekeeping/table/{table_id}/start_clean",
-        headers=headers,
+        headers=headers_clean,
     )
     assert resp.status_code == 200
     assert resp.json()["data"]["state"] == "PENDING_CLEANING"
     resp = client.post(
         f"/api/outlet/demo/housekeeping/table/{table_id}/ready",
-        headers=headers,
+        headers=headers_clean,
     )
     assert resp.status_code == 200
     assert resp.json()["data"]["state"] == "AVAILABLE"

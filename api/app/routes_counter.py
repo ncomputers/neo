@@ -10,11 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.tenant import get_engine
 from .utils.responses import ok
+from .deps.flags import require_flag
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .repos_sqlalchemy import counter_orders_repo_sql
 
-router = APIRouter(prefix="/c")
-router_admin = APIRouter(prefix="/api/outlet/{tenant_id}/counters")
+router = APIRouter(prefix="/c", dependencies=[Depends(require_flag("enable_counter"))])
+router_admin = APIRouter(
+    prefix="/api/outlet/{tenant_id}/counters",
+    dependencies=[Depends(require_flag("enable_counter"))],
+)
 
 
 class OrderLine(BaseModel):
@@ -85,7 +89,7 @@ async def create_order(
     return ok({"order_id": order_id})
 
 
-@router_admin.post("/{order_id}/status")
+@router_admin.post("/{order_id}/status", dependencies=[Depends(require_flag("enable_takeaway_invoice"))])
 async def update_status(
     tenant_id: str,
     order_id: int,

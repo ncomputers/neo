@@ -10,7 +10,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -21,6 +21,7 @@ from .hooks import order_rejection
 from .services import ema as ema_service
 from repos_sqlalchemy import orders_repo_sql
 from utils.responses import ok
+from .deps.flags import require_flag
 
 router = APIRouter()
 
@@ -123,30 +124,45 @@ async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
     ip = request.client.host if request.client else "unknown"
     await order_rejection.on_rejected(ip, request.app.state.redis)
     return result
-@router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept")
+@router.post(
+    "/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept",
+    dependencies=[Depends(require_flag("enable_kds_item_mode"))],
+)
 async def accept_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as accepted."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.ACCEPTED)
 
 
-@router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/progress")
+@router.post(
+    "/api/outlet/{tenant_id}/kds/item/{order_item_id}/progress",
+    dependencies=[Depends(require_flag("enable_kds_item_mode"))],
+)
 async def progress_item(tenant_id: str, order_item_id: int) -> dict:
     """Move an order item to ``IN_PROGRESS``."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.IN_PROGRESS)
 
 
-@router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/ready")
+@router.post(
+    "/api/outlet/{tenant_id}/kds/item/{order_item_id}/ready",
+    dependencies=[Depends(require_flag("enable_kds_item_mode"))],
+)
 async def ready_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as ready."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.READY)
 
 
-@router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/serve")
+@router.post(
+    "/api/outlet/{tenant_id}/kds/item/{order_item_id}/serve",
+    dependencies=[Depends(require_flag("enable_kds_item_mode"))],
+)
 async def serve_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as served."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.SERVED)
 
-@router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/reject")
+@router.post(
+    "/api/outlet/{tenant_id}/kds/item/{order_item_id}/reject",
+    dependencies=[Depends(require_flag("enable_kds_item_mode"))],
+)
 async def reject_item(tenant_id: str, order_item_id: int, request: Request) -> dict:
     """Mark an order item as rejected."""
     result = await _transition_item(tenant_id, order_item_id, OrderStatus.REJECTED)

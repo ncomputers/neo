@@ -32,6 +32,7 @@ def create_tenant(
     invoice_reset: str = "never",
     ema_window: int | None = None,
     license_limits: dict[str, int] | None = None,
+    flags: dict[str, bool] | None = None,
 ) -> URL:
     """Provision a new tenant database and record its metadata.
 
@@ -40,7 +41,7 @@ def create_tenant(
     name, domain:
         Basic tenant identifiers.
     logo_url, primary_color, gst_mode, invoice_prefix, ema_window,
-    license_limits:
+    license_limits, flags:
         Optional branding and configuration overrides stored alongside the
         tenant record.
 
@@ -97,6 +98,7 @@ def create_tenant(
             invoice_reset=invoice_reset,
             ema_window=ema_window,
             license_limits=license_limits or {},
+            flags=flags or {},
         )
         session.add(tenant)
         session.commit()
