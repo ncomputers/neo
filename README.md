@@ -90,6 +90,17 @@ python start_app.py
 
 The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini` via `python -m alembic`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r api/requirements.txt`.
 
+### Notification Worker
+
+Queued notifications can be delivered via a small CLI worker:
+
+```bash
+POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
+```
+
+The worker drains `notifications_outbox` rows and currently supports
+`console` and `webhook` channels.
+
 ### Real-time Updates
 
 Connect to `ws://localhost:8000/tables/{id}/ws` to receive live order
@@ -105,6 +116,7 @@ Each request is tagged with a `correlation_id` that appears in the JSON logs.
 All HTTP responses follow a simple envelope structure of
 `{"ok": true, "data": ...}` for success or
 `{"ok": false, "error": {"code": ..., "message": ...}}` for failures.
+Prometheus metrics are exposed at `/metrics`, including counters for HTTP requests, orders created, and invoices generated.
 
 
 ## PWA

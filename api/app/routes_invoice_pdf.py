@@ -7,6 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, Response
 
 from .pdf.render import render_invoice
+from .metrics import invoices_generated_total
 
 router = APIRouter()
 
@@ -26,4 +27,5 @@ async def invoice_pdf(invoice_id: int, size: Literal["80mm", "A4"] = "80mm") -> 
         "total": 10.0,
     }
     content, mimetype = render_invoice(invoice, size=size)
+    invoices_generated_total.inc()
     return Response(content, media_type=mimetype)
