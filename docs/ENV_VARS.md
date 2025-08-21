@@ -10,4 +10,5 @@ The application relies on the following environment variables:
 | `DEFAULT_TZ` | Default timezone for application processes. | `UTC` |
 | `JWT_SECRET` | Secret key used to sign JWT tokens. | `your_jwt_secret_key` |
 | `REDIS_URL` | URL for Redis instance. | `redis://localhost:6379/0` |
+| `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Defaults to `*`. | `https://example.com,https://app.com` |
 
