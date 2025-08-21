@@ -83,6 +83,17 @@ python start_app.py
 
 The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini` via `python -m alembic`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r api/requirements.txt`.
 
+### Notification Worker
+
+Queued notifications can be delivered via a small CLI worker:
+
+```bash
+POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
+```
+
+The worker drains `notifications_outbox` rows and currently supports
+`console` and `webhook` channels.
+
 ### Real-time Updates
 
 Connect to `ws://localhost:8000/tables/{id}/ws` to receive live order
@@ -168,6 +179,14 @@ python scripts/tenant_seed.py --tenant TENANT_ID
 ```
 
 The command prints a JSON payload containing the new record IDs.
+
+To compute daily totals and enqueue a day-close notification, run:
+
+```bash
+python scripts/day_close.py --tenant TENANT_ID --date YYYY-MM-DD
+```
+
+This queues a `dayclose` event with aggregated totals in the `sync_outbox` table.
 
 ## Audit Logging
 
