@@ -72,6 +72,13 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
+### Backups
+
+Trigger a JSON backup of a tenant's database:
+
+- `POST /api/outlet/{tenant_id}/backup` – runs the backup script and returns the
+  path to the generated file.
+
 ### Housekeeping
 
 Cleaning staff can reset tables after guests settle their bills:
