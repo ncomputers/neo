@@ -15,12 +15,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Final
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 TEMPLATE_ENV: Final[str] = "POSTGRES_TENANT_DSN_TEMPLATE"
 
@@ -51,6 +52,14 @@ def get_engine(tenant_id: str) -> AsyncEngine:
     """
     dsn = build_dsn(tenant_id)
     return create_async_engine(dsn)
+
+
+@asynccontextmanager
+async def get_tenant_session(tenant_id: str):
+    """Yield an AsyncSession bound to the tenant-specific engine."""
+    engine = get_engine(tenant_id)
+    async with AsyncSession(bind=engine, expire_on_commit=False) as session:
+        yield session
 
 
 async def run_tenant_migrations(tenant_id: str) -> None:
@@ -84,4 +93,4 @@ async def run_tenant_migrations(tenant_id: str) -> None:
             await engine.dispose()
 
 
-__all__ = ["build_dsn", "get_engine", "run_tenant_migrations"]
+__all__ = ["build_dsn", "get_engine", "get_tenant_session", "run_tenant_migrations"]
