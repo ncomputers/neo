@@ -54,6 +54,7 @@ from .routes_guest_bill import router as guest_bill_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
+from .hooks import order_rejection
 from .events import (
     alerts_sender,
     ema_updater,
@@ -477,7 +478,7 @@ async def accept_order(table_id: str, index: int) -> dict[str, str]:
 
 
 @app.post("/orders/{table_id}/{index}/reject")
-async def reject_order(table_id: str, index: int) -> dict[str, str]:
+async def reject_order(table_id: str, index: int, request: Request) -> dict[str, str]:
     """Mark an order line as rejected."""
 
     table = _table_state(table_id)
@@ -487,6 +488,10 @@ async def reject_order(table_id: str, index: int) -> dict[str, str]:
         raise HTTPException(status_code=404, detail="Order item not found") from exc
     order_item.status = "rejected"
     await _broadcast(table_id, {"status": "rejected", "index": index})
+
+    ip = request.client.host if request.client else "unknown"
+    await order_rejection.on_rejected(ip, request.app.state.redis)
+
     return {"status": "rejected"}
 
 
