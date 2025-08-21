@@ -191,11 +191,16 @@ python scripts/tenant_seed.py --tenant TENANT_ID
 
 The command prints a JSON payload containing the new record IDs.
 
-Export a tenant backup to a JSON file:
+To compute daily Z-report totals and enqueue a day-close notification into the
+master outbox, run:
 
 ```bash
-python scripts/tenant_backup.py --tenant TENANT_ID --out backup.json
+python scripts/day_close.py --tenant TENANT_ID --date YYYY-MM-DD
 ```
+
+The CLI aggregates invoice figures for the specified date and records a
+`dayclose` event for downstream processors.
+
 
 ## Audit Logging
 

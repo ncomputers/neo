@@ -1,64 +1,78 @@
 #!/usr/bin/env python3
 """Compute daily totals and enqueue a day-close notification.
 
-The script calculates invoice totals for a given tenant and date using the
-existing Z-report repository method and records an event in the ``sync_outbox``
-table so that background workers can notify downstream systems.
+This CLI aggregates invoice data for a given tenant and date using the
+existing Z-report repository method and records a ``dayclose`` event in the
+master database's sync outbox. The payload includes per-mode payment totals
+and overall bill summaries.
+
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-from datetime import datetime
 import os
-from typing import Dict
+import sys
+from datetime import datetime
+from pathlib import Path
 
-from api.app.db.tenant import get_tenant_session
-from api.app.models_master import SyncOutbox
-from api.app.repos_sqlalchemy import invoices_repo_sql
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+# Ensure ``api`` package is importable when running as a standalone script
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
+sys.path.append(str(BASE_DIR / "api"))
+
+from app.db.tenant import get_engine as get_tenant_engine  # type: ignore  # noqa: E402
+from app.db.master import get_session as get_master_session  # type: ignore  # noqa: E402
+from app.repos_sqlalchemy import invoices_repo_sql  # type: ignore  # noqa: E402
+from app.models_master import SyncOutbox  # type: ignore  # noqa: E402
 
 
-async def _compute_totals(session, day, tz: str) -> Dict:
-    """Return aggregated totals for ``day`` in timezone ``tz``.
+async def _compute_totals(tenant: str, date_str: str) -> dict:
+    """Return aggregated invoice totals for ``tenant`` on ``date_str``."""
+    tz = os.getenv("DEFAULT_TZ", "UTC")
+    day = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-    This reuses the ``list_day`` helper from the invoices repository which is
-    also used by the Z-report API endpoint.
-    """
+    engine = get_tenant_engine(tenant)
+    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    try:
+        async with sessionmaker() as session:
+            rows = await invoices_repo_sql.list_day(session, day, tz)
+    finally:
+        await engine.dispose()
 
-    rows = await invoices_repo_sql.list_day(session, day, tz)
-    totals: Dict[str, float | Dict[str, float]] = {
-        "subtotal": 0.0,
-        "tax": 0.0,
-        "total": 0.0,
-        "payments": {},
-    }
+    totals = {"subtotal": 0.0, "tax": 0.0, "total": 0.0, "payments": {}}
+
     for row in rows:
         totals["subtotal"] += row["subtotal"]
         totals["tax"] += row["tax"]
         totals["total"] += row["total"]
-        for payment in row["payments"]:
-            mode = payment["mode"]
-            amt = payment["amount"]
-            totals["payments"][mode] = totals["payments"].get(mode, 0.0) + amt
+        for p in row["payments"]:
+            totals["payments"].setdefault(p["mode"], 0.0)
+            totals["payments"][p["mode"]] += p["amount"]
     return totals
 
 
-async def main(tenant: str, date_str: str) -> None:
-    """Compute totals for ``tenant`` on ``date_str`` and enqueue a notification."""
+async def compute_and_enqueue(tenant: str, date_str: str) -> None:
+    """Compute totals and enqueue a day-close notification."""
+    totals = await _compute_totals(tenant, date_str)
+    payload = {"tenant": tenant, "date": date_str, "totals": totals}
 
-    day = datetime.strptime(date_str, "%Y-%m-%d").date()
-    tz = os.getenv("DEFAULT_TZ", "UTC")
-    async with get_tenant_session(tenant) as session:
-        totals = await _compute_totals(session, day, tz)
-        session.add(SyncOutbox(event_type="dayclose", payload=totals))
+    async with get_master_session() as session:
+        session.add(SyncOutbox(event_type="dayclose", payload=payload))
         await session.commit()
-    print(totals)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute day-close totals")
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Compute daily totals and enqueue a day-close notification")
     parser.add_argument("--tenant", required=True, help="Tenant identifier")
     parser.add_argument("--date", required=True, help="Date in YYYY-MM-DD format")
     args = parser.parse_args()
-    asyncio.run(main(args.tenant, args.date))
+    asyncio.run(compute_and_enqueue(args.tenant, args.date))
+
+
+if __name__ == "__main__":
+    main()
+
