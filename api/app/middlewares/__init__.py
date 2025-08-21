@@ -1,6 +1,4 @@
-"""Common HTTP middlewares."""
-
 from .correlation import CorrelationIdMiddleware
-from .subscription_guard import SubscriptionGuard
+from .guest_ratelimit import GuestRateLimitMiddleware
 
-__all__ = ["CorrelationIdMiddleware", "SubscriptionGuard"]
+__all__ = ["CorrelationIdMiddleware", "GuestRateLimitMiddleware"]
