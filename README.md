@@ -60,6 +60,13 @@ A guest-facing router exposes menu data for a specific table:
 This router relies on tenant-specific databases and is not wired into the
 application yet.
 
+### Admin Menu
+
+An admin-only route allows toggling item availability:
+
+- `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
+  item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:
