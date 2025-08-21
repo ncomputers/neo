@@ -5,12 +5,15 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from uuid import UUID
 
+
 from fastapi import Request
 from starlette.responses import JSONResponse
 
 from ..db.master import get_session
 from ..models_master import Tenant
+from sqlalchemy.exc import StatementError
 from ..utils.responses import err
+from sqlalchemy.exc import StatementError
 
 
 class SubscriptionGuard:
@@ -41,6 +44,7 @@ class SubscriptionGuard:
                         tenant = await session.get(Tenant, lookup_id)
                 except Exception:
                     tenant = None
+
                 if tenant and tenant.subscription_expires_at:
                     grace = tenant.grace_period_days or 7
                     if datetime.utcnow() > tenant.subscription_expires_at + timedelta(

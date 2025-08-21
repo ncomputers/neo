@@ -50,14 +50,20 @@ from .auth import (
 from .audit import log_event
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
-from .middlewares import CorrelationIdMiddleware, GuestBlocklistMiddleware, GuestRateLimitMiddleware
+from .middlewares import (
+    CorrelationIdMiddleware,
+    GuestBlocklistMiddleware,
+    GuestRateLimitMiddleware,
+    PrometheusMiddleware,
+)
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
+from .routes_admin_backup import router as admin_backup_router
 from .routes_reports import router as reports_router
-from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
+from .metrics import router as metrics_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -110,9 +116,10 @@ app.add_middleware(
     allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["X-Tenant-ID", "Authorization", "*"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1024)
+app.add_middleware(PrometheusMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlocklistMiddleware)
@@ -272,6 +279,14 @@ class StaffOrder(BaseModel):
     item: str
     price: float
     quantity: int
+
+
+class TablePosition(BaseModel):
+    """Coordinates for placing a table on a floor map."""
+
+    x: int
+    y: int
+    label: Optional[str] = None
 
 
 tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
@@ -593,12 +608,59 @@ async def mark_clean(table_id: str) -> dict:
         return ok({"table_id": table_id, "status": table.status.value})
 
 
+@app.post("/api/outlet/{tenant}/tables/{table_id}/position")
+async def set_table_position(
+    tenant: str, table_id: uuid.UUID, pos: TablePosition
+) -> dict:
+    """Persist positional metadata for a table."""
+
+    with SessionLocal() as session:
+        table = session.get(Table, table_id)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.pos_x = pos.x
+        table.pos_y = pos.y
+        table.label = pos.label
+        session.commit()
+        session.refresh(table)
+        return ok(
+            {
+                "id": str(table.id),
+                "x": table.pos_x,
+                "y": table.pos_y,
+                "label": table.label,
+            }
+        )
+
+
+@app.get("/api/outlet/{tenant}/tables/map")
+async def get_table_map(tenant: str) -> dict:
+    """Return coordinates and states for all tables."""
+
+    with SessionLocal() as session:
+        records = session.query(Table).all()
+        data = [
+            {
+                "id": str(t.id),
+                "code": t.code,
+                "label": t.label,
+                "x": t.pos_x,
+                "y": t.pos_y,
+                "state": t.status.value,
+            }
+            for t in records
+        ]
+    return ok(data)
+
+
+
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
+app.include_router(admin_backup_router)
 app.include_router(reports_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

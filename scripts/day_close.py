@@ -5,6 +5,7 @@ This CLI aggregates invoice data for a given tenant and date using the
 existing Z-report repository method and records a ``dayclose`` event in the
 master database's sync outbox. The payload includes per-mode payment totals
 and overall bill summaries.
+
 """
 
 from __future__ import annotations
@@ -43,6 +44,7 @@ async def _compute_totals(tenant: str, date_str: str) -> dict:
         await engine.dispose()
 
     totals = {"subtotal": 0.0, "tax": 0.0, "total": 0.0, "payments": {}}
+
     for row in rows:
         totals["subtotal"] += row["subtotal"]
         totals["tax"] += row["tax"]
@@ -73,3 +75,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
