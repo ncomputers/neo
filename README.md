@@ -29,6 +29,11 @@ alembic upgrade head
 pytest -q
 ```
 
+## Continuous Integration
+
+GitHub Actions runs the test suite and basic lint checks for all pushes and pull
+requests.
+
 ## API
 
 ```bash
