@@ -82,6 +82,15 @@ Cleaning staff can reset tables after guests settle their bills:
 Tables transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the table is `open`.
 
 
+### Alerts
+
+Configure and inspect notification rules:
+
+- `POST /api/outlet/{tenant_id}/alerts/rules` – create a rule (`event`, `channel`, `target`, `enabled`).
+- `GET /api/outlet/{tenant_id}/alerts/rules` – list configured rules.
+- `GET /api/outlet/{tenant_id}/alerts/outbox?status=queued|delivered` – list recent notifications.
+
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:

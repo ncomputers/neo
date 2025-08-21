@@ -65,7 +65,7 @@ from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_backup import router as admin_backup_router
 from .routes_reports import router as reports_router
-from .routes_admin_alerts import router as admin_alerts_router
+from .routes_alerts import router as alerts_router
 from .routes_housekeeping import router as housekeeping_router
 from .metrics import router as metrics_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
@@ -709,7 +709,7 @@ app.include_router(guest_bill_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
-app.include_router(admin_alerts_router)
+app.include_router(alerts_router)
 app.include_router(reports_router)
 app.include_router(housekeeping_router)
 app.include_router(metrics_router)
