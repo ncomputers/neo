@@ -24,6 +24,7 @@ from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+
 TEMPLATE_ENV: Final[str] = "POSTGRES_TENANT_DSN_TEMPLATE"
 
 
@@ -71,6 +72,7 @@ async def get_tenant_session(
         await engine.dispose()
 
 
+
 async def run_tenant_migrations(tenant_id: str) -> None:
     """Run Alembic migrations for ``tenant_id``.
 
@@ -108,3 +110,4 @@ __all__ = [
     "get_tenant_session",
     "run_tenant_migrations",
 ]
+
