@@ -15,12 +15,14 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Final
+from typing import AsyncGenerator, Final
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 TEMPLATE_ENV: Final[str] = "POSTGRES_TENANT_DSN_TEMPLATE"
 
@@ -51,6 +53,22 @@ def get_engine(tenant_id: str) -> AsyncEngine:
     """
     dsn = build_dsn(tenant_id)
     return create_async_engine(dsn)
+
+
+@asynccontextmanager
+async def get_tenant_session(
+    tenant_id: str,
+) -> AsyncGenerator[AsyncSession, None]:
+    """Yield an :class:`AsyncSession` bound to ``tenant_id``'s engine."""
+
+    engine = get_engine(tenant_id)
+    Session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    session = Session()
+    try:
+        yield session
+    finally:
+        await session.close()
+        await engine.dispose()
 
 
 async def run_tenant_migrations(tenant_id: str) -> None:
@@ -84,4 +102,9 @@ async def run_tenant_migrations(tenant_id: str) -> None:
             await engine.dispose()
 
 
-__all__ = ["build_dsn", "get_engine", "run_tenant_migrations"]
+__all__ = [
+    "build_dsn",
+    "get_engine",
+    "get_tenant_session",
+    "run_tenant_migrations",
+]
