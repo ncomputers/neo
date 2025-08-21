@@ -13,6 +13,7 @@ from .auth import User, role_required
 from .db.tenant import get_engine
 from .models_tenant import AlertRule, NotificationOutbox
 from .utils.responses import ok
+from .utils.audit import audit
 
 router = APIRouter()
 
@@ -38,6 +39,7 @@ async def _session(tenant_id: str):
 
 
 @router.post("/api/outlet/{tenant_id}/alerts/rules")
+@audit("create_alert_rule")
 async def create_rule(
     tenant_id: str,
     payload: RuleCreate,
@@ -51,6 +53,7 @@ async def create_rule(
 
 
 @router.get("/api/outlet/{tenant_id}/alerts/rules")
+@audit("list_alert_rules")
 async def list_rules(
     tenant_id: str,
     user: User = Depends(role_required("super_admin", "outlet_admin")),
@@ -71,6 +74,7 @@ async def list_rules(
 
 
 @router.get("/api/outlet/{tenant_id}/alerts/outbox")
+@audit("list_alert_outbox")
 async def list_outbox(
     tenant_id: str,
     status: str = Query("queued"),
