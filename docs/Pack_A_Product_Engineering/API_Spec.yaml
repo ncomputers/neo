@@ -75,7 +75,7 @@ paths:
                       item_id: { type: string }
                       qty: { type: integer, minimum: 1 }
       responses:
-        "201": { description: Order created }
+        "200": { description: Order created }
   /g/{table_token}/status:
     get:
       summary: Live status (WS/SSE suggested)
