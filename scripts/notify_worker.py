@@ -27,7 +27,7 @@ from app.models_master import NotificationOutbox, NotificationRule  # type: igno
 
 def _deliver(rule: NotificationRule, payload: dict) -> None:
     """Send a notification according to its rule."""
-    if rule.channel == "console":
+    if rule.channel in {"console", "whatsapp_stub", "sms_stub"}:
         print(json.dumps(payload))
     elif rule.channel == "webhook":
         url = (rule.config or {}).get("url")

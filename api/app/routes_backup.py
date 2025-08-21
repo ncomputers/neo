@@ -1,5 +1,5 @@
-# routes_admin_backup.py
-"""Admin route to trigger tenant backups."""
+# routes_backup.py
+"""Developer-friendly route to trigger tenant backups."""
 
 from __future__ import annotations
 
@@ -33,4 +33,4 @@ async def backup_tenant(tenant_id: str) -> dict:
         str(out_file),
     ]
     await asyncio.to_thread(subprocess.run, cmd, check=True)
-    return ok({"path": str(out_file)})
+    return ok({"file": str(out_file)})
