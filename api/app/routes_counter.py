@@ -92,7 +92,7 @@ async def update_status(
     payload: StatusPayload,
     session: AsyncSession = Depends(get_session_from_path),
 ) -> dict:
-    """Update status for a counter order and optionally generate invoice."""
+    """Update status and generate an 80mm invoice when delivered."""
 
     invoice_id = await counter_orders_repo_sql.update_status(
         session, order_id, payload.status

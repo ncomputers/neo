@@ -51,3 +51,4 @@ async def mark_room_ready(
         session.commit()
         session.refresh(room)
         return ok({"room_id": str(room_id), "state": room.state})
+
