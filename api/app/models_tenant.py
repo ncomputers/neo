@@ -37,6 +37,9 @@ class Category(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     sort = Column(Integer, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class MenuItem(Base):
@@ -53,6 +56,9 @@ class MenuItem(Base):
     hsn_sac = Column(String, nullable=True)
     show_fssai = Column(Boolean, nullable=False, default=False)
     out_of_stock = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class TableStatus(enum.Enum):

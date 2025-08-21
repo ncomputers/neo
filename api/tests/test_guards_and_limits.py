@@ -52,11 +52,15 @@ def client(monkeypatch):
     async def _fake_list_items(self, session, include_hidden=False):
         return [{"id": 1}]
 
+    async def _fake_menu_etag(self, session):
+        return "etag"
+
     async def _fake_create_order(session, table_token, lines):
         return 1
 
     monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_categories", _fake_list_categories)
     monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", _fake_list_items)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "menu_etag", _fake_menu_etag)
     monkeypatch.setattr(orders_repo_sql, "create_order", _fake_create_order)
 
     client = TestClient(app, raise_server_exceptions=False)
