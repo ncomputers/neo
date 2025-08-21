@@ -18,6 +18,12 @@ def build_series(prefix: str, reset: str, today: date | None = None) -> str:
         ``never``.
     today:
         Date used for generating the series. Defaults to ``date.today()``.
+
+    Returns
+    -------
+    str
+        The series string. For example, with ``prefix='INV'`` and ``reset`` set
+        to ``monthly`` on February 2024, the series becomes ``INV/2024/02``.
     """
     today = today or date.today()
     if reset == "monthly":
