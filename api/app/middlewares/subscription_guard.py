@@ -40,6 +40,7 @@ class SubscriptionGuard:
                 async with get_session() as session:
                     try:
                         tenant = await session.get(Tenant, lookup_id)
+
                     except Exception:
                         tenant = None
                 if tenant and tenant.subscription_expires_at:

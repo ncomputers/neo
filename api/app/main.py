@@ -110,7 +110,7 @@ app.add_middleware(
     allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["X-Tenant-ID", "Authorization", "*"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(CorrelationIdMiddleware)
