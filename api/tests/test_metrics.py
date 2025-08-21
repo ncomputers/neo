@@ -4,11 +4,13 @@ import sys
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi.testclient import TestClient
+import fakeredis.aioredis
 
 from api.app.main import app
 
 
 def test_metrics_endpoint():
+    app.state.redis = fakeredis.aioredis.FakeRedis()
     client = TestClient(app)
     resp = client.get("/metrics")
     assert resp.status_code == 200
