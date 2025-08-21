@@ -68,6 +68,7 @@ from .routes_reports import router as reports_router
 from .routes_admin_alerts import router as admin_alerts_router
 from .routes_housekeeping import router as housekeeping_router
 from .metrics import router as metrics_router
+from .routes_counter import router as counter_router, router_admin as counter_admin_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 
@@ -706,6 +707,8 @@ async def get_table_map(tenant: str) -> dict:
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
+app.include_router(counter_router)
+app.include_router(counter_admin_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
