@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
+import { apiFetch } from '../api'
 
 export default function KitchenDashboard() {
   const { logo } = useTheme()
@@ -9,7 +10,7 @@ export default function KitchenDashboard() {
 
   const fetchOrders = () => {
     setLoading(true)
-    fetch('http://localhost:4000/orders')
+    apiFetch('/orders')
       .then((res) => res.json())
       .then((data) => setOrders(data.orders || []))
       .catch((err) => setError(err.message))
@@ -21,7 +22,7 @@ export default function KitchenDashboard() {
   }, [])
 
   const updateOrder = (tableId, index, action) => {
-    fetch(`http://localhost:4000/orders/${tableId}/${index}/${action}`, {
+    apiFetch(`/orders/${tableId}/${index}/${action}`, {
       method: 'POST',
     })
       .then(() => fetchOrders())
