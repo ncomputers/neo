@@ -63,12 +63,15 @@ from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_admin_menu import router as admin_menu_router
-from .routes_admin_backup import router as admin_backup_router
+from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
-from .routes_admin_alerts import router as admin_alerts_router
+from .routes_alerts import router as alerts_router
 from .routes_housekeeping import router as housekeeping_router
+from .routes_guest_hotel import router as guest_hotel_router
 from .metrics import router as metrics_router
 from .routes_counter import router as counter_router, router_admin as counter_admin_router
+from .routes_tables_map import router as tables_map_router
+
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 
@@ -85,6 +88,7 @@ from .services import notifications
 
 from .utils import PrepTimeTracker
 from .models_tenant import Table
+from .middlewares.room_state_guard import RoomStateGuardMiddleware
 
 from . import db as app_db
 from . import domain as app_domain
@@ -132,6 +136,7 @@ app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
+app.add_middleware(RoomStateGuardMiddleware)
 app.add_middleware(GuestRateLimitMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -288,14 +293,6 @@ class StaffOrder(BaseModel):
     item: str
     price: float
     quantity: int
-
-
-class TablePosition(BaseModel):
-    """Coordinates for placing a table on a floor map."""
-
-    x: int
-    y: int
-    label: Optional[str] = None
 
 
 tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
@@ -658,63 +655,21 @@ async def mark_clean(table_id: str) -> dict:
         return ok({"table_id": table_id, "state": table.state})
 
 
-@app.post("/api/outlet/{tenant}/tables/{table_id}/position")
-async def set_table_position(
-    tenant: str, table_id: uuid.UUID, pos: TablePosition
-) -> dict:
-    """Persist positional metadata for a table."""
-
-    with SessionLocal() as session:
-        table = session.get(Table, table_id)
-        if table is None:
-            raise HTTPException(status_code=404, detail="Table not found")
-        table.pos_x = pos.x
-        table.pos_y = pos.y
-        table.label = pos.label
-        session.commit()
-        session.refresh(table)
-        return ok(
-            {
-                "id": str(table.id),
-                "x": table.pos_x,
-                "y": table.pos_y,
-                "label": table.label,
-            }
-        )
-
-
-@app.get("/api/outlet/{tenant}/tables/map")
-async def get_table_map(tenant: str) -> dict:
-    """Return coordinates and states for all tables."""
-
-    with SessionLocal() as session:
-        records = session.query(Table).all()
-        data = [
-            {
-                "id": str(t.id),
-                "code": t.code,
-                "label": t.label,
-                "x": t.pos_x,
-                "y": t.pos_y,
-                "state": t.status.value,
-            }
-            for t in records
-        ]
-    return ok(data)
-
-
 
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
 app.include_router(counter_router)
 app.include_router(counter_admin_router)
+app.include_router(guest_hotel_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
-app.include_router(admin_alerts_router)
+app.include_router(alerts_router)
 app.include_router(reports_router)
 app.include_router(housekeeping_router)
 app.include_router(metrics_router)
+app.include_router(tables_map_router)
+app.include_router(backup_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

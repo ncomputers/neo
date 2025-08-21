@@ -5,7 +5,7 @@ from __future__ import annotations
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-from ..metrics import http_requests_total
+from ..routes_metrics import http_requests_total
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
