@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from api.app.main import app, tables
+from api.app.hooks import order_rejection
 from api.app.security.blocklist import add_rejection, is_blocked, block_ip, clear_ip
 from api.app.repos_sqlalchemy import orders_repo_sql
 
@@ -86,3 +87,18 @@ def test_guest_block_after_rejections():
     resp = client.post("/g/echo")
     assert resp.status_code == 403
     assert resp.json()["error"]["code"] == "SUB_403"
+
+def test_block_after_three_manual_rejections():
+    redis = fakeredis.aioredis.FakeRedis()
+    app.state.redis = redis
+    client = TestClient(app)
+
+    async def _simulate():
+        for _ in range(3):
+            await order_rejection.on_rejected("testclient", redis)
+    asyncio.run(_simulate())
+
+    resp = client.post("/g/echo")
+    assert resp.status_code == 403
+    assert resp.json()["error"]["code"] == "SUB_403"
+
