@@ -67,7 +67,9 @@ from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
 from .routes_alerts import router as alerts_router
 from .routes_housekeeping import router as housekeeping_router
-from .routes_metrics import router as metrics_router
+from .routes_guest_hotel import router as guest_hotel_router
+from .metrics import router as metrics_router
+
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 
@@ -84,6 +86,7 @@ from .services import notifications
 
 from .utils import PrepTimeTracker
 from .models_tenant import Table
+from .middlewares.room_state_guard import RoomStateGuardMiddleware
 
 from . import db as app_db
 from . import domain as app_domain
@@ -131,6 +134,7 @@ app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
+app.add_middleware(RoomStateGuardMiddleware)
 app.add_middleware(GuestRateLimitMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -706,6 +710,7 @@ async def get_table_map(tenant: str) -> dict:
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
+app.include_router(guest_hotel_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)

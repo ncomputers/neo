@@ -61,6 +61,9 @@ The backend exposes a super-admin endpoint used for tenant provisioning:
 A guest-facing router exposes menu data for a specific table:
 
 - `GET /g/{table_token}/menu` – list menu categories and items.
+- `GET /h/{room_token}/menu` – list menu for hotel rooms.
+- `POST /h/{room_token}/order` – place a room service order.
+- `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
 
 This router relies on tenant-specific databases and is not wired into the
 application yet.
@@ -85,8 +88,10 @@ Cleaning staff can reset tables after guests settle their bills:
 
 - `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/start_clean` – mark a table as being cleaned.
 - `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/ready` – record cleaning completion and reopen the table.
+- `POST /api/outlet/{tenant_id}/housekeeping/room/{room_id}/start_clean` – mark a room as being cleaned.
+- `POST /api/outlet/{tenant_id}/housekeeping/room/{room_id}/ready` – record cleaning completion and reopen the room.
 
-Tables transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the table is `open`.
+Tables and rooms transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the respective table or room is `open`.
 
 
 ### Alerts
