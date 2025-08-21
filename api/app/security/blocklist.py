@@ -9,9 +9,16 @@ BLOCK_KEY = "blocklist:ip:{ip}"
 REJ_KEY = "rej:ip:{ip}"
 
 
-async def add_rejection(redis: Redis, ip: str) -> int:
-    """Increment rejection counter for an IP and return the new count."""
-    return await redis.incr(REJ_KEY.format(ip=ip))
+async def add_rejection(redis: Redis, ip: str, ttl: int = 86400) -> int:
+    """Increment rejection counter for an IP and return the new count.
+
+    The counter is automatically expired after ``ttl`` seconds (default 1 day)
+    so that rejections are counted within a rolling window.
+    """
+    key = REJ_KEY.format(ip=ip)
+    count = await redis.incr(key)
+    await redis.expire(key, ttl)
+    return count
 
 
 async def is_blocked(redis: Redis, ip: str) -> bool:
