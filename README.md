@@ -272,3 +272,11 @@ pytest api/tests/test_auth.py::test_password_login_success
 The API emits domain events using a lightweight in-memory Pub/Sub dispatcher. Events
 such as `order.placed`, `payment.verified`, and `table.cleaned` are processed by
 background consumers for alerting and reporting.
+
+## Takeaway Counters
+
+The project supports a lightweight takeaway flow powered by QR codes at sales
+counters. Guests can scan a counter's QR to browse the menu and place an order.
+Staff can mark orders as ready or delivered, which triggers invoice generation
+suitable for 80 mm thermal printers. See `docs/counter_takeaway.md` for more
+details.

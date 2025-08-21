@@ -214,6 +214,49 @@ class Customer(Base):
     phone = Column(String, nullable=False)
 
 
+class Counter(Base):
+    """Sales counters identified by QR tokens."""
+
+    __tablename__ = "counters"
+
+    id = Column(Integer, primary_key=True)
+    code = Column(String, unique=True, nullable=False)
+    qr_token = Column(String, unique=True, nullable=False)
+
+
+class CounterOrderStatus(enum.Enum):
+    """Lifecycle states for a takeaway counter order."""
+
+    PLACED = "placed"
+    READY = "ready"
+    DELIVERED = "delivered"
+
+
+class CounterOrder(Base):
+    """Orders placed at a counter."""
+
+    __tablename__ = "counter_orders"
+
+    id = Column(Integer, primary_key=True)
+    counter_id = Column(Integer, ForeignKey("counters.id"), nullable=False)
+    status = Column(Enum(CounterOrderStatus), nullable=False)
+    placed_at = Column(DateTime(timezone=True), nullable=True)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class CounterOrderItem(Base):
+    """Snapshot of items in a counter order."""
+
+    __tablename__ = "counter_order_items"
+
+    id = Column(Integer, primary_key=True)
+    order_id = Column(Integer, ForeignKey("counter_orders.id"), nullable=False)
+    item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=False)
+    name_snapshot = Column(String, nullable=False)
+    price_snapshot = Column(Numeric(10, 2), nullable=False)
+    qty = Column(Integer, nullable=False)
+
+
 class EMAStat(Base):
     """Stores exponential moving average stats for alerts."""
 
@@ -290,6 +333,10 @@ __all__ = [
     "Payment",
     "Coupon",
     "Customer",
+    "Counter",
+    "CounterOrderStatus",
+    "CounterOrder",
+    "CounterOrderItem",
     "EMAStat",
     "AlertRule",
     "NotificationOutbox",
