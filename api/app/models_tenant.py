@@ -97,6 +97,7 @@ class Table(Base):
     status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
     state = Column(String, nullable=False, default=TableState.OPEN.value)
     last_cleaned_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -142,6 +143,8 @@ class Invoice(Base):
     bill_json = Column(JSON, nullable=False)
     gst_breakup = Column(JSON, nullable=True)
     total = Column(Numeric(10, 2), nullable=False)
+    settled = Column(Boolean, nullable=False, default=False)
+    settled_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -192,6 +195,33 @@ class EMAStat(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class AlertRule(Base):
+    """Configurable alert rules for tenant events."""
+
+    __tablename__ = "alerts_rules"
+
+    id = Column(Integer, primary_key=True)
+    event = Column(String, nullable=False)
+    channel = Column(String, nullable=False)
+    target = Column(String, nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True)
+
+
+class NotificationOutbox(Base):
+    """Queued notifications awaiting delivery."""
+
+    __tablename__ = "notifications_outbox"
+
+    id = Column(Integer, primary_key=True)
+    event = Column(String, nullable=False)
+    payload = Column(JSON, nullable=False)
+    channel = Column(String, nullable=False)
+    target = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="queued")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+
+
 class AuditTenant(Base):
     """Audit log for tenant actions."""
 
@@ -228,6 +258,8 @@ __all__ = [
     "Coupon",
     "Customer",
     "EMAStat",
+    "AlertRule",
+    "NotificationOutbox",
     "AuditTenant",
     "InvoiceCounter",
 ]

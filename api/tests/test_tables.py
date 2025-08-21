@@ -82,3 +82,4 @@ def test_settlement_locks_and_cleaner_unlocks():
 
     # table reopened
     assert client.post(f"/tables/{table_id}/cart", json=item).status_code == 200
+

@@ -13,6 +13,7 @@ from .events import event_bus
 from .hooks import order_rejection
 from .repos_sqlalchemy import orders_repo_sql
 from .utils.responses import ok
+from .metrics import orders_created_total
 
 
 router = APIRouter(prefix="/g")
@@ -74,5 +75,5 @@ async def create_guest_order(
         )
     except Exception:  # pragma: no cover - pubsub unavailable
         pass
-
+    orders_created_total.inc()
     return ok({"order_id": order_id})

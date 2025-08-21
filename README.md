@@ -81,6 +81,7 @@ Cleaning staff can reset tables after guests settle their bills:
 
 Tables transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the table is `open`.
 
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:
@@ -91,6 +92,17 @@ python start_app.py
 ```
 
 The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini` via `python -m alembic`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r api/requirements.txt`.
+
+### Notification Worker
+
+Queued notifications can be delivered via a small CLI worker:
+
+```bash
+POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
+```
+
+The worker drains `notifications_outbox` rows and currently supports
+`console` and `webhook` channels.
 
 ### Real-time Updates
 
@@ -107,6 +119,7 @@ Each request is tagged with a `correlation_id` that appears in the JSON logs.
 All HTTP responses follow a simple envelope structure of
 `{"ok": true, "data": ...}` for success or
 `{"ok": false, "error": {"code": ..., "message": ...}}` for failures.
+Prometheus metrics are exposed at `/metrics`, including counters for HTTP requests, orders created, and invoices generated.
 
 
 ## PWA
@@ -176,6 +189,17 @@ python scripts/tenant_seed.py --tenant TENANT_ID
 ```
 
 The command prints a JSON payload containing the new record IDs.
+
+To compute daily Z-report totals and enqueue a day-close notification into the
+master outbox, run:
+
+```bash
+python scripts/day_close.py --tenant TENANT_ID --date YYYY-MM-DD
+```
+
+The CLI aggregates invoice figures for the specified date and records a
+`dayclose` event for downstream processors.
+
 
 ## Audit Logging
 
