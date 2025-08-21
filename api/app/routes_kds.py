@@ -8,6 +8,7 @@ used by the KDS workflow.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, update
@@ -16,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from db.tenant import get_engine
 from domain import OrderStatus, can_transition
 from models_tenant import Order, OrderItem
+from .services import ema as ema_service
 from repos_sqlalchemy import orders_repo_sql
 from utils.responses import ok
 
@@ -47,13 +49,22 @@ async def list_queue(tenant_id: str) -> dict:
 async def _transition_order(tenant_id: str, order_id: int, dest: OrderStatus) -> dict:
     """Transition an order to ``dest`` if allowed."""
     async with _session(tenant_id) as session:
-        result = await session.execute(select(Order.status).where(Order.id == order_id))
-        current = result.scalar_one_or_none()
-        if current is None:
+        result = await session.execute(
+            select(Order.status, Order.accepted_at).where(Order.id == order_id)
+        )
+        row = result.first()
+        if row is None:
             raise HTTPException(status_code=404, detail="order not found")
-        if not can_transition(OrderStatus(current), dest):
+        current, accepted_at = row.status, row.accepted_at
+        if not can_transition(OrderStatus(current.value), dest):
             raise HTTPException(status_code=400, detail="invalid transition")
         await orders_repo_sql.update_status(session, order_id, dest.value)
+        if dest is OrderStatus.SERVED and accepted_at is not None:
+            now = datetime.now(timezone.utc)
+            if accepted_at.tzinfo is None:
+                accepted_at = accepted_at.replace(tzinfo=timezone.utc)
+            sample_seconds = (now - accepted_at).total_seconds()
+            await ema_service.record_sample(session, sample_seconds)
     return ok({"status": dest.value})
 
 
