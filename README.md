@@ -72,6 +72,13 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
+### Admin Backup
+
+Generate a development backup for a tenant:
+
+- `POST /api/outlet/{tenant_id}/backup` – create a JSON snapshot and return the
+  file path.
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:
@@ -167,6 +174,12 @@ python scripts/tenant_seed.py --tenant TENANT_ID
 ```
 
 The command prints a JSON payload containing the new record IDs.
+
+Export a tenant backup to a JSON file:
+
+```bash
+python scripts/tenant_backup.py --tenant TENANT_ID --out backup.json
+```
 
 ## Audit Logging
 
