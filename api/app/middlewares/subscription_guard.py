@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from uuid import UUID
+
 
 from fastapi import Request
 from starlette.responses import JSONResponse
 
 from ..db.master import get_session
 from ..models_master import Tenant
+from sqlalchemy.exc import StatementError
 from ..utils.responses import err
+from sqlalchemy.exc import StatementError
 
 
 class SubscriptionGuard:
@@ -29,12 +33,14 @@ class SubscriptionGuard:
             and ("order" in path or "bill" in path)
         ):
             tenant_id = request.headers.get("X-Tenant-ID")
+            tenant = None
             if tenant_id:
                 try:
                     async with get_session() as session:
                         tenant = await session.get(Tenant, tenant_id)
                 except Exception:  # pragma: no cover - invalid id format
                     tenant = None
+
                 if tenant and tenant.subscription_expires_at:
                     grace = tenant.grace_period_days or 7
                     if datetime.utcnow() > tenant.subscription_expires_at + timedelta(
