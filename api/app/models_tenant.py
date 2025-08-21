@@ -19,6 +19,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -85,6 +86,9 @@ class Table(Base):
     qr_token = Column(String, unique=True, nullable=True)
     status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
     state = Column(String, nullable=False, default="AVAILABLE")
+    pos_x = Column(Integer, nullable=False, server_default="0", default=0)
+    pos_y = Column(Integer, nullable=False, server_default="0", default=0)
+    label = Column(Text, nullable=True)
     last_cleaned_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

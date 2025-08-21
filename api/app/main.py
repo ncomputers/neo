@@ -68,6 +68,7 @@ from .routes_reports import router as reports_router
 from .routes_admin_alerts import router as admin_alerts_router
 from .routes_housekeeping import router as housekeeping_router
 from .metrics import router as metrics_router
+from .routes_tables_map import router as tables_map_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 
 
@@ -287,14 +288,6 @@ class StaffOrder(BaseModel):
     item: str
     price: float
     quantity: int
-
-
-class TablePosition(BaseModel):
-    """Coordinates for placing a table on a floor map."""
-
-    x: int
-    y: int
-    label: Optional[str] = None
 
 
 tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
@@ -657,51 +650,6 @@ async def mark_clean(table_id: str) -> dict:
         return ok({"table_id": table_id, "state": table.state})
 
 
-@app.post("/api/outlet/{tenant}/tables/{table_id}/position")
-async def set_table_position(
-    tenant: str, table_id: uuid.UUID, pos: TablePosition
-) -> dict:
-    """Persist positional metadata for a table."""
-
-    with SessionLocal() as session:
-        table = session.get(Table, table_id)
-        if table is None:
-            raise HTTPException(status_code=404, detail="Table not found")
-        table.pos_x = pos.x
-        table.pos_y = pos.y
-        table.label = pos.label
-        session.commit()
-        session.refresh(table)
-        return ok(
-            {
-                "id": str(table.id),
-                "x": table.pos_x,
-                "y": table.pos_y,
-                "label": table.label,
-            }
-        )
-
-
-@app.get("/api/outlet/{tenant}/tables/map")
-async def get_table_map(tenant: str) -> dict:
-    """Return coordinates and states for all tables."""
-
-    with SessionLocal() as session:
-        records = session.query(Table).all()
-        data = [
-            {
-                "id": str(t.id),
-                "code": t.code,
-                "label": t.label,
-                "x": t.pos_x,
-                "y": t.pos_y,
-                "state": t.status.value,
-            }
-            for t in records
-        ]
-    return ok(data)
-
-
 
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
@@ -713,5 +661,6 @@ app.include_router(admin_alerts_router)
 app.include_router(reports_router)
 app.include_router(housekeeping_router)
 app.include_router(metrics_router)
+app.include_router(tables_map_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

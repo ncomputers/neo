@@ -81,6 +81,13 @@ Cleaning staff can reset tables after guests settle their bills:
 
 Tables transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the table is `open`.
 
+### Table Map
+
+Admins can pin tables on a floor plan and retrieve their states:
+
+- `POST /api/outlet/{tenant_id}/tables/{table_id}/position` – set a table's `x`/`y` coordinates and optional label. Requires an admin role.
+- `GET /api/outlet/{tenant_id}/tables/map` – list table positions with their current states.
+
 
 ### Start Script
 
