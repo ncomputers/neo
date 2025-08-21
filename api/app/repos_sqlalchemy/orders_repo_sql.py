@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, List
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain import OrderStatus
@@ -101,11 +101,19 @@ async def list_active(session: AsyncSession) -> List[OrderSummary]:
 async def update_status(
     session: AsyncSession, order_id: int, new_status: str
 ) -> None:
-    """Persist a new status for ``order_id``."""
+    """Persist a new status for ``order_id`` and timestamp it."""
 
-    await session.execute(
-        update(Order).where(Order.id == order_id).values(status=new_status)
-    )
+    field_map = {
+        OrderStatus.PLACED.value: "placed_at",
+        OrderStatus.ACCEPTED.value: "accepted_at",
+        OrderStatus.READY.value: "ready_at",
+        OrderStatus.SERVED.value: "served_at",
+    }
+    values = {"status": new_status}
+    field = field_map.get(new_status)
+    if field:
+        values[field] = func.now()
+    await session.execute(update(Order).where(Order.id == order_id).values(**values))
     await session.commit()
 
 
