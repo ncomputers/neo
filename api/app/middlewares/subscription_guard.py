@@ -10,7 +10,9 @@ from starlette.responses import JSONResponse
 
 from ..db.master import get_session
 from ..models_master import Tenant
+from sqlalchemy.exc import StatementError
 from ..utils.responses import err
+from sqlalchemy.exc import StatementError
 
 
 class SubscriptionGuard:
@@ -30,7 +32,13 @@ class SubscriptionGuard:
             and ("order" in path or "bill" in path)
         ):
             tenant_id = request.headers.get("X-Tenant-ID")
+            tenant = None
             if tenant_id:
+                lookup_id = tenant_id
+                try:
+                    lookup_id = uuid.UUID(tenant_id)
+                except ValueError:
+                    pass
                 async with get_session() as session:
                     try:
                         tid = uuid.UUID(tenant_id)
@@ -39,6 +47,7 @@ class SubscriptionGuard:
                     try:
                         tenant = await session.get(Tenant, tid)
                     except Exception:  # pragma: no cover - invalid identifier
+
                         tenant = None
                 if tenant and tenant.subscription_expires_at:
                     grace = tenant.grace_period_days or 7
