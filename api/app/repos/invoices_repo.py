@@ -20,3 +20,8 @@ class InvoicesRepo(ABC):
     def add_payment(self, invoice_number, amount):
         """Record a payment against an invoice."""
         raise NotImplementedError
+
+    @abstractmethod
+    def list_day(self, session, day, tz):
+        """List invoices and payments for a given local date."""
+        raise NotImplementedError

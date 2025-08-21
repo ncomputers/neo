@@ -52,6 +52,7 @@ from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_admin_menu import router as admin_menu_router
+from .routes_reports import router as reports_router
 from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -574,6 +575,7 @@ app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
+app.include_router(reports_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)
 
