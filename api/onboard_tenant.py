@@ -29,6 +29,7 @@ def create_tenant(
     primary_color: str | None = None,
     gst_mode: bool = False,
     invoice_prefix: str | None = None,
+    invoice_reset: str = "never",
     ema_window: int | None = None,
     license_limits: dict[str, int] | None = None,
 ) -> URL:
@@ -93,6 +94,7 @@ def create_tenant(
             primary_color=primary_color,
             gst_mode=gst_mode,
             invoice_prefix=invoice_prefix,
+            invoice_reset=invoice_reset,
             ema_window=ema_window,
             license_limits=license_limits or {},
         )

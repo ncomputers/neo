@@ -14,8 +14,13 @@ from httpx import AsyncClient, ASGITransport
 from api.app import main as app_main
 from api.app.main import app
 from api.app.deps.tenant import get_tenant_id as header_tenant_id
-from api.app import routes_guest_menu, routes_guest_order, routes_guest_bill
-from api.app.repos_sqlalchemy import orders_repo_sql, invoices_repo_sql
+from api.app import routes_guest_menu, routes_guest_order, routes_guest_bill, routes_kds
+from api.app.repos_sqlalchemy import (
+    orders_repo_sql,
+    invoices_repo_sql,
+    menu_repo_sql,
+)
+from contextlib import asynccontextmanager
 
 # Use in-memory redis for rate limiting and other middleware
 app.state.redis = fakeredis.aioredis.FakeRedis()
@@ -31,19 +36,47 @@ app_main.subscription_guard = _BypassSubGuard()
 async def _fake_create_order(session, table_code, lines):
     return 1
 
-async def _fake_generate_invoice(session, order_group_id, gst_mode, rounding):
+async def _fake_generate_invoice(session, order_group_id, gst_mode, rounding, tenant_id):
     return 1
+
+
+async def _fake_get_tenant_session():
+    class _DummySession:
+        pass
+    return _DummySession()
+
+
+async def _fake_list_categories(self, session):
+    return []
+
+
+async def _fake_list_items(self, session, include_hidden=False):
+    return [{"id": 1}]
+
+
+
+@asynccontextmanager
+async def _fake_kds_session(tenant_id: str):
+    class _DummySession:
+        pass
+    yield _DummySession()
+
+async def _fake_list_active(session):
+    return []
 
 
 # Wire tenant-aware dependencies for guest routes
 app.dependency_overrides[routes_guest_menu.get_tenant_id] = header_tenant_id
 app.dependency_overrides[routes_guest_menu.get_tenant_session] = (
-    routes_guest_order.get_tenant_session
+    _fake_get_tenant_session
 )
 app.dependency_overrides[routes_guest_order.get_tenant_id] = header_tenant_id
+app.dependency_overrides[routes_guest_order.get_tenant_session] = (
+    _fake_get_tenant_session
+)
 app.dependency_overrides[routes_guest_bill.get_tenant_id] = header_tenant_id
 app.dependency_overrides[routes_guest_bill.get_tenant_session] = (
-    routes_guest_order.get_tenant_session
+    _fake_get_tenant_session
 )
 
 
@@ -56,6 +89,10 @@ def anyio_backend() -> str:
 async def test_tenant_guest_and_kds_flow(monkeypatch) -> None:
     monkeypatch.setattr(orders_repo_sql, "create_order", _fake_create_order)
     monkeypatch.setattr(invoices_repo_sql, "generate_invoice", _fake_generate_invoice)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_categories", _fake_list_categories)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", _fake_list_items)
+    monkeypatch.setattr(routes_kds, "_session", _fake_kds_session)
+    monkeypatch.setattr(orders_repo_sql, "list_active", _fake_list_active)
     """Ensure guest-facing menu, order, bill and KDS queue work."""
 
     transport = ASGITransport(app=app)
