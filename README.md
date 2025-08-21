@@ -102,6 +102,13 @@ Configure and inspect notification rules:
 - `GET /api/outlet/{tenant_id}/alerts/rules` – list configured rules.
 - `GET /api/outlet/{tenant_id}/alerts/outbox?status=queued|delivered` – list recent notifications.
 
+### Table Map
+
+Admins can pin tables on a floor plan and retrieve their states:
+
+- `POST /api/outlet/{tenant_id}/tables/{table_id}/position` – set a table's `x`/`y` coordinates and optional label. Requires an admin role.
+- `GET /api/outlet/{tenant_id}/tables/map` – list table positions with their current states.
+
 
 ### Start Script
 
