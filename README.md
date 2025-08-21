@@ -118,7 +118,9 @@ POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
 ```
 
 The worker drains `notifications_outbox` rows and currently supports
-`console` and `webhook` channels.
+`console`, `webhook`, `whatsapp_stub` and `sms_stub` channels. The
+`*_stub` channels simply log the payload and are placeholders for future
+provider adapters.
 
 ### Real-time Updates
 
