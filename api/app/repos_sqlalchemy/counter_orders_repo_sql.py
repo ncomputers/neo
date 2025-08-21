@@ -7,6 +7,8 @@ from typing import List
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..utils import invoice_counter
+
 from ..models_tenant import (
     MenuItem,
     Counter,
@@ -89,9 +91,10 @@ async def update_status(
         )
         items = result.all()
         total = sum(row.price_snapshot * row.qty for row in items)
+        number = await invoice_counter.next_invoice_number(session, "80mm")
         invoice = Invoice(
             order_group_id=order_id,
-            number=f"INV-{order_id}",
+            number=number,
             bill_json={
                 "items": [
                     {

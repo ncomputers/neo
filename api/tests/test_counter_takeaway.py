@@ -93,3 +93,5 @@ async def test_takeaway_flow() -> None:
     async with Session() as session:
         count = await session.scalar(select(func.count()).select_from(Invoice))
         assert count == 1
+        inv = await session.scalar(select(Invoice))
+        assert inv.number.startswith("80mm/")
