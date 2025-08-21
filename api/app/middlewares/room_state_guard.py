@@ -10,6 +10,7 @@ from sqlalchemy import or_
 from ..db import SessionLocal
 from ..models_tenant import Room
 from ..utils.responses import err
+from ..routes_metrics import room_locked_denied_total
 
 
 class RoomStateGuard(BaseHTTPMiddleware):
@@ -27,6 +28,7 @@ class RoomStateGuard(BaseHTTPMiddleware):
                         .one_or_none()
                     )
                 if room is not None and room.state != "AVAILABLE":
+                    room_locked_denied_total.inc()
                     return JSONResponse(
                         err("ROOM_LOCKED", "Room not ready"), status_code=423
                     )
