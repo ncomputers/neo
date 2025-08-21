@@ -42,7 +42,7 @@ class SubscriptionGuard:
                 async with get_session() as session:
                     try:
                         tenant = await session.get(Tenant, tenant_id)
-                    except StatementError:
+                    except Exception:  # pragma: no cover - defensive
 
                         tenant = None
                 if tenant and tenant.subscription_expires_at:
