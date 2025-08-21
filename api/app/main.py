@@ -57,6 +57,8 @@ from .middlewares import (
     GuestRateLimitMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
+    IdempotencyMetricsMiddleware,
+    HttpErrorCounterMiddleware,
 )
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
@@ -67,13 +69,11 @@ from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
 from .routes_alerts import router as alerts_router
 from .routes_hotel_housekeeping import router as hotel_housekeeping_router
+from .routes_housekeeping import router as housekeeping_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_metrics import router as metrics_router
 from .routes_counter import router as counter_router, router_admin as counter_admin_router
 from .routes_tables_map import router as tables_map_router
-
-from .middlewares.guest_ratelimit import GuestRateLimitMiddleware
-
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -132,12 +132,14 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
+app.add_middleware(HttpErrorCounterMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
+app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
@@ -667,6 +669,7 @@ app.include_router(kds_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
 app.include_router(reports_router)
+app.include_router(housekeeping_router)
 app.include_router(hotel_housekeeping_router)
 app.include_router(metrics_router)
 app.include_router(tables_map_router)
