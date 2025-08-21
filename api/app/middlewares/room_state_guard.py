@@ -5,6 +5,7 @@ from __future__ import annotations
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from sqlalchemy import or_
 
 from ..db import SessionLocal
 from ..models_tenant import Room
@@ -20,7 +21,11 @@ class RoomStateGuardMiddleware(BaseHTTPMiddleware):
             if len(parts) > 2 and parts[2]:
                 token = parts[2]
                 with SessionLocal() as session:
-                    room = session.query(Room).filter_by(code=token).one_or_none()
+                    room = (
+                        session.query(Room)
+                        .filter(or_(Room.code == token, Room.qr_token == token))
+                        .one_or_none()
+                    )
                 if room is not None and room.state != "AVAILABLE":
                     return JSONResponse(
                         err("ROOM_LOCKED", "Room not ready"), status_code=423
