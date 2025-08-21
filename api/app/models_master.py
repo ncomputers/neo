@@ -26,6 +26,7 @@ class Tenant(Base):
     primary_color = Column(String, nullable=True)
     gst_mode = Column(Boolean, nullable=False, default=False)
     invoice_prefix = Column(String, nullable=True)
+    invoice_reset = Column(String, nullable=False, default="never")
     ema_window = Column(Integer, nullable=True)
     acceptance_mode = Column(String, nullable=False, default=AcceptanceMode.ITEM.value)
     sla_sound_alert = Column(Boolean, nullable=False, default=False)

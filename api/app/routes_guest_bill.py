@@ -48,6 +48,7 @@ async def generate_bill(
         order_group_id=0,
         gst_mode="unreg",
         rounding="nearest_1",
+        tenant_id=tenant_id,
     )
     invoice_payload = billing_service.compute_bill([], "unreg")
     return ok(invoice_payload)

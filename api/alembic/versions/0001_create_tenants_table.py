@@ -33,6 +33,7 @@ def upgrade() -> None:
             "gst_mode", sa.Boolean(), nullable=False, server_default=sa.text("false")
         ),
         sa.Column("invoice_prefix", sa.String(), nullable=True),
+        sa.Column("invoice_reset", sa.String(), nullable=False, server_default="never"),
         sa.Column("ema_window", sa.Integer(), nullable=True),
         sa.Column("license_limits", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()")),

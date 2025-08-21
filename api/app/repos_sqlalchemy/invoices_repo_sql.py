@@ -2,11 +2,14 @@ from __future__ import annotations
 
 """SQLAlchemy implementation for invoice persistence."""
 
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..db.master import get_session as get_master_session
+from ..models_master import Tenant
 from ..models_tenant import Invoice, MenuItem, Order, OrderItem, Payment
 from ..services import billing_service
 from ..utils import invoice_counter
@@ -17,6 +20,7 @@ async def generate_invoice(
     order_group_id: int,
     gst_mode: billing_service.GSTMode,
     rounding: str,
+    tenant_id: str,
 ) -> int:
     """Generate an immutable invoice and return its primary key.
 
@@ -30,6 +34,9 @@ async def generate_invoice(
         GST registration mode.
     rounding:
         Rounding strategy passed to :func:`billing_service.compute_bill`.
+    tenant_id:
+        Identifier of the tenant to fetch prefix and reset policy from the
+        master schema.
     """
 
     result = await session.execute(
@@ -45,7 +52,14 @@ async def generate_invoice(
     ]
 
     bill = billing_service.compute_bill(items, gst_mode, rounding)
-    number = await invoice_counter.next_invoice_number(session)
+
+    async with get_master_session() as m_session:
+        tenant = await m_session.get(Tenant, tenant_id)
+
+    prefix = tenant.invoice_prefix or "INV"
+    reset = tenant.invoice_reset or "never"
+    series = invoice_counter.build_series(prefix, reset, date.today())
+    number = await invoice_counter.next_invoice_number(session, series)
 
     invoice = Invoice(
         order_group_id=order_group_id,
