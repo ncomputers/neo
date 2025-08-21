@@ -72,6 +72,15 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
+### Housekeeping
+
+Cleaning staff can reset tables after guests settle their bills:
+
+- `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/start_clean` – mark a table as being cleaned.
+- `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/ready` – record cleaning completion and reopen the table.
+
+Tables transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the table is `open`.
+
 ### Start Script
 
 Run migrations and launch the API with a single command once dependencies are installed:

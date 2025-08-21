@@ -6,9 +6,12 @@ import time
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi.testclient import TestClient
+import fakeredis.aioredis
 
 from api.app.main import app
 from api.app.events import ALERTS, EMA_UPDATES, REPORTS
+
+app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
 def _wait_for(condition, timeout: float = 1.0) -> bool:

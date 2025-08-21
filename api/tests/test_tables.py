@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 import fakeredis.aioredis
 
 from api.app.main import SessionLocal, app
-from api.app.models_tenant import Table, TableStatus
+from api.app.models_tenant import Table
+from api.app.auth import create_access_token
 
 client = TestClient(app)
 
@@ -42,20 +43,42 @@ def test_update_order_invalid_index():
     )
 
 
-def test_lock_and_clean_persist():
+def test_settlement_locks_and_cleaner_unlocks():
     table_id = uuid.uuid4()
     with SessionLocal() as session:
         session.add(Table(id=table_id, tenant_id=uuid.uuid4(), name="T1"))
         session.commit()
 
-    resp = client.post(f"/tables/{table_id}/lock")
-    assert resp.status_code == 200
-    assert resp.json()["data"]["status"] == TableStatus.LOCKED.value
-
-    resp = client.post(f"/tables/{table_id}/mark-clean")
-    assert resp.status_code == 200
-    assert resp.json()["data"]["status"] == TableStatus.AVAILABLE.value
+    item = {"item": "Tea", "price": 10.0, "quantity": 1}
+    assert client.post(f"/tables/{table_id}/cart", json=item).status_code == 200
+    client.post(f"/tables/{table_id}/order")
+    client.post(f"/tables/{table_id}/pay")
 
     with SessionLocal() as session:
         table = session.get(Table, table_id)
-        assert table.status == TableStatus.AVAILABLE
+        assert table.state == "locked"
+
+    # guests blocked while locked
+    resp = client.post(f"/tables/{table_id}/cart", json=item)
+    assert resp.status_code == 423
+    assert resp.json()["error"]["code"] == "TABLE_LOCKED"
+
+    token = create_access_token({"sub": "cleaner1", "role": "cleaner"})
+    headers = {"Authorization": f"Bearer {token}"}
+    assert (
+        client.post(
+            f"/api/outlet/demo/housekeeping/table/{table_id}/start_clean",
+            headers=headers,
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/outlet/demo/housekeeping/table/{table_id}/ready",
+            headers=headers,
+        ).status_code
+        == 200
+    )
+
+    # table reopened
+    assert client.post(f"/tables/{table_id}/cart", json=item).status_code == 200

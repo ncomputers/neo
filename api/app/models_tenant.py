@@ -63,6 +63,17 @@ class TableStatus(enum.Enum):
     LOCKED = "locked"
 
 
+class TableState(enum.Enum):
+    """Expanded lifecycle states for a dining table."""
+
+    OPEN = "open"
+    OCCUPIED = "occupied"
+    SETTLED = "settled"
+    LOCKED = "locked"
+    CLEANING = "cleaning"
+    READY = "ready"
+
+
 class OrderStatus(enum.Enum):
     """Possible states for an order."""
 
@@ -84,6 +95,8 @@ class Table(Base):
     code = Column(String, unique=True, nullable=True)
     qr_token = Column(String, unique=True, nullable=True)
     status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
+    state = Column(String, nullable=False, default=TableState.OPEN.value)
+    last_cleaned_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
