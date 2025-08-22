@@ -5,10 +5,13 @@ from __future__ import annotations
 from typing import AsyncGenerator, List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+import json
 
 from .db.tenant import get_engine
+from .deps.tenant import get_tenant_id
 from .events import event_bus
 from .hooks import order_rejection
 from .repos_sqlalchemy import orders_repo_sql
@@ -32,16 +35,6 @@ class OrderPayload(BaseModel):
     items: List[OrderLine]
 
 
-async def get_tenant_id() -> str:
-    """Resolve the tenant identifier for the current request.
-
-    This is a placeholder implementation and will be replaced when tenant
-    resolution is wired in.
-    """
-
-    return "demo"  # TODO: derive from request context
-
-
 async def get_tenant_session(tenant_id: str = Depends(get_tenant_id)) -> AsyncGenerator[AsyncSession, None]:
     """Yield an ``AsyncSession`` bound to the tenant's database."""
 
@@ -61,6 +54,21 @@ async def create_guest_order(
 ) -> dict:
     """Create a new order for ``table_token`` within the tenant context."""
 
+    idem_key = request.headers.get("Idempotency-Key")
+    redis = request.app.state.redis
+    body = payload.model_dump()
+    if idem_key:
+        cache_key = f"idem:{tenant_id}:{idem_key}"
+        cached = await redis.get(cache_key)
+        if cached:
+            cached_obj = json.loads(cached)
+            if cached_obj["payload"] != body:
+                return JSONResponse(
+                    {"ok": False, "error": {"code": "IDEMP_MISMATCH", "message": "Payload mismatch"}},
+                    status_code=400,
+                )
+            return JSONResponse(cached_obj["response"])
+
     lines = [line.model_dump() for line in payload.items]
     try:
         order_id = await orders_repo_sql.create_order(session, table_token, lines)
@@ -76,4 +84,7 @@ async def create_guest_order(
     except Exception:  # pragma: no cover - pubsub unavailable
         pass
     orders_created_total.inc()
-    return ok({"order_id": order_id})
+    response_body = ok({"order_id": order_id})
+    if idem_key:
+        await redis.set(cache_key, json.dumps({"payload": body, "response": response_body}))
+    return response_body

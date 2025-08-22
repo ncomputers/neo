@@ -7,12 +7,14 @@ from api.app.main import SessionLocal, app
 from api.app.models_tenant import Category, MenuItem, Room, NotificationOutbox
 from api.app.db import engine
 from api.app.auth import create_access_token
+from api.app import routes_hotel_housekeeping
 
 client = TestClient(app)
 
 
 def setup_module():
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    app.dependency_overrides[routes_hotel_housekeeping.get_tenant_id] = lambda: "demo"
 
 
 def seed():
@@ -62,7 +64,7 @@ def test_room_service_and_cleaning():
     token = create_access_token({"sub": "cleaner1", "role": "cleaner"})
     headers = {"Authorization": f"Bearer {token}"}
     resp = client.post(
-        f"/api/outlet/demo/housekeeping/room/{room_id}/start_clean",
+        f"/api/outlet/housekeeping/room/{room_id}/start_clean",
         headers=headers,
     )
     assert resp.status_code == 200
@@ -76,7 +78,7 @@ def test_room_service_and_cleaning():
     assert resp.status_code == 423
 
     resp = client.post(
-        f"/api/outlet/demo/housekeeping/room/{room_id}/ready",
+        f"/api/outlet/housekeeping/room/{room_id}/ready",
         headers=headers,
     )
     assert resp.status_code == 200
