@@ -90,35 +90,61 @@ def test_table_positions_map():
     }
 
 
-def test_table_map_stream(monkeypatch):
+def test_table_map_stream_keepalive(monkeypatch):
+    fake = fakeredis.aioredis.FakeRedis()
+    monkeypatch.setattr("api.app.main.redis_client", fake)
+    monkeypatch.setattr(routes_tables_sse, "KEEPALIVE_INTERVAL", 0.01)
+
+    async def run_stream():
+        resp = await routes_tables_sse.stream_table_map("demo", None)
+        first = await resp.body_iterator.__anext__()  # snapshot
+        second = await resp.body_iterator.__anext__()  # keepalive
+        await resp.body_iterator.aclose()
+        return first, second
+
+    snapshot, keepalive = asyncio.run(run_stream())
+    snap_str = snapshot.decode() if isinstance(snapshot, bytes) else snapshot
+    ka_str = keepalive.decode() if isinstance(keepalive, bytes) else keepalive
+    assert snap_str.startswith("event: table_map")
+    assert ka_str.startswith(":keepalive")
+
+
+def test_table_map_stream_resume(monkeypatch):
     fake = fakeredis.aioredis.FakeRedis()
     monkeypatch.setattr("api.app.main.redis_client", fake)
 
-    async def run_stream():
-        resp = await routes_tables_sse.stream_table_map("demo")
-
-        async def publish():
-            await fake.publish(
-                "rt:table_map:demo",
-                json.dumps(
-                    {
-                        "table_id": "t1",
-                        "code": "T1",
-                        "state": "LOCKED",
-                        "x": 1,
-                        "y": 2,
-                        "ts": 0,
-                    }
-                ),
-            )
-
-        asyncio.create_task(publish())
-        line = await resp.body_iterator.__anext__()
+    async def initial():
+        resp = await routes_tables_sse.stream_table_map("demo", None)
+        await resp.body_iterator.__anext__()  # snapshot id 1
+        await fake.publish(
+            "rt:table_map:demo",
+            json.dumps({"table_id": "t1", "code": "T1", "state": "LOCKED", "x": 1, "y": 2, "ts": 0}),
+        )
+        await asyncio.sleep(0)
+        await resp.body_iterator.__anext__()  # diff id 2
         await resp.body_iterator.aclose()
-        return line
 
-    line = asyncio.run(run_stream())
-    if isinstance(line, bytes):
-        line = line.decode()
-    data = json.loads(line.split(": ", 1)[1])
-    assert set(data) == {"table_id", "code", "state", "x", "y", "ts"}
+    asyncio.run(initial())
+
+    async def reconnect():
+        resp = await routes_tables_sse.stream_table_map("demo", last_event_id="2")
+        snap = await resp.body_iterator.__anext__()  # snapshot id 3
+        await fake.publish(
+            "rt:table_map:demo",
+            json.dumps({"table_id": "t2", "code": "T2", "state": "BUSY", "x": 3, "y": 4, "ts": 1}),
+        )
+        await asyncio.sleep(0)
+        while True:
+            line = await resp.body_iterator.__anext__()
+            line_str = line.decode() if isinstance(line, bytes) else line
+            if "table_id" in line_str:
+                diff = line
+                break
+        await resp.body_iterator.aclose()
+        return snap, diff
+
+    snap, diff = asyncio.run(reconnect())
+    snap_str = snap.decode() if isinstance(snap, bytes) else snap
+    diff_str = diff.decode() if isinstance(diff, bytes) else diff
+    assert "id: 3" in snap_str and "event: table_map" in snap_str
+    assert "id: 4" in diff_str and "table_id" in diff_str

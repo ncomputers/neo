@@ -24,5 +24,7 @@ The application relies on the following environment variables:
 The application uses Redis Pub/Sub for real-time features:
 
 - `rt:update:{table_code}` – WebSocket updates for order status per table.
-- `rt:table_map:{tenant}` – Server-Sent Events channel for table map updates.
+- `rt:table_map:{tenant}` – Server-Sent Events channel for table map updates. Emits
+  `event: table_map` messages with heartbeats every 15s and supports the
+  `Last-Event-ID` header.
 
