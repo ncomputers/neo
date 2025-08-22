@@ -20,6 +20,7 @@ def compute_bill(
     coupons: Sequence[Mapping[str, object]] | None = None,
     tip: float = 0.0,
 
+
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
 
@@ -37,6 +38,8 @@ def compute_bill(
     coupons:
         Optional sequence of coupon mappings. Each mapping may include ``code``,
         ``percent``, ``flat``, ``is_stackable`` and ``max_discount``.
+    tip:
+        Optional tip amount applied after tax and discounts.
 
 
     Returns
@@ -116,6 +119,9 @@ def compute_bill(
             subtotal + sum(tax_breakup.values()) + tip_amount - rounded_total
         )
 
+    tip_amount = Decimal(str(tip or 0))
+    total_with_tip = rounded_total + tip_amount
+
     bill = {
         "subtotal": float(subtotal.quantize(Decimal("0.01"))),
         "tax_breakup": {
@@ -125,12 +131,11 @@ def compute_bill(
         "tip": float(tip_amount.quantize(Decimal("0.01"))),
         "total": float(rounded_total.quantize(Decimal("0.01"))),
 
+
     }
 
     if coupons:
         bill["applied_coupons"] = applied_coupons
-        bill["effective_discount"] = float(
-            effective_discount.quantize(Decimal("0.01"))
-        )
+        bill["effective_discount"] = float(effective_discount.quantize(Decimal("0.01")))
 
     return bill

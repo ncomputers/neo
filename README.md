@@ -68,7 +68,8 @@ A guest-facing router exposes menu data for a specific table:
 - `GET /h/{room_token}/menu` – list menu for hotel rooms.
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
-- `POST /g/{table_token}/bill` – generate a bill; payload may include an optional `tip`.
+- `POST /g/{table_token}/bill` – generate a bill; payload may include an optional `tip`,
+  recorded separately from taxable totals.
 
 This router relies on tenant-specific databases and is not wired into the
 application yet.
@@ -79,6 +80,13 @@ An admin-only route allows toggling item availability:
 
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
+
+### Dashboard
+
+An owner-facing endpoint exposes key performance indicators for the current day:
+
+- `GET /api/outlet/{tenant_id}/dashboard/tiles` – returns today's order count,
+  sales total, average ETA seconds, and top items.
 
 ### Staff Login
 
