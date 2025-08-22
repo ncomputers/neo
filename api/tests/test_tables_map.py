@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 from api.app.main import app, SessionLocal
 from api.app.models_tenant import Table
 from api.app.auth import create_access_token
-from api.app import routes_tables_map
+from api.app import routes_tables_map, routes_tables_sse
 
 client = TestClient(app)
 
@@ -95,7 +95,7 @@ def test_table_map_stream(monkeypatch):
     monkeypatch.setattr("api.app.main.redis_client", fake)
 
     async def run_stream():
-        resp = await routes_tables_map.stream_table_map("demo")
+        resp = await routes_tables_sse.stream_table_map("demo")
 
         async def publish():
             await fake.publish(

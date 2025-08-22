@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .auth import User, role_required
@@ -74,28 +73,3 @@ async def get_table_map(tenant: str) -> dict:
             for t in records
         ]
     return ok(data)
-
-
-@router.get("/api/outlet/{tenant}/tables/map/stream")
-async def stream_table_map(tenant: str) -> StreamingResponse:
-    """Server-Sent Events stream for table map updates."""
-
-    from .main import redis_client  # lazy import to avoid circular deps
-
-    channel = f"rt:table_map:{tenant}"
-    pubsub = redis_client.pubsub()
-    await pubsub.subscribe(channel)
-
-    async def event_gen():
-        try:
-            async for message in pubsub.listen():
-                if message["type"] != "message":
-                    continue
-                data = message["data"]
-                if isinstance(data, bytes):
-                    data = data.decode()
-                yield f"data: {data}\n\n"
-        finally:
-            await pubsub.unsubscribe(channel)
-            await pubsub.close()
-    return StreamingResponse(event_gen(), media_type="text/event-stream")
