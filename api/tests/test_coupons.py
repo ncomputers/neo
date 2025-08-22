@@ -23,19 +23,19 @@ def test_non_stackable_coupons_rejected():
     items = [{"price": 100}]
     c1 = {"code": "A", "percent": 10, "is_stackable": False}
     c2 = {"code": "B", "flat": 5, "is_stackable": False}
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(billing_service.CouponError) as exc:
         billing_service.compute_bill(items, "unreg", coupons=[c1, c2])
-    assert "cannot be stacked" in str(exc.value)
+    assert exc.value.code == "NON_STACKABLE"
 
 
 def test_stackable_coupons_with_cap():
-    items = [{"price": 200}]
-    c1 = {"code": "C1", "percent": 5, "is_stackable": True, "max_discount": 15}
+    items = [{"price": 1000}]
+    c1 = {"code": "C1", "percent": 5, "is_stackable": True, "max_discount": 50}
     c2 = {"code": "C2", "percent": 5, "is_stackable": True}
     bill = billing_service.compute_bill(items, "unreg", coupons=[c1, c2])
     assert bill["applied_coupons"] == ["C1", "C2"]
-    assert bill["effective_discount"] == 15.0
-    assert bill["total"] == 185.0
+    assert bill["effective_discount"] == 50.0
+    assert bill["total"] == 950.0
 
 
 @pytest.mark.anyio
@@ -82,7 +82,7 @@ async def test_invoice_persists_coupon_details(monkeypatch):
         item = models_tenant.MenuItem(
             category_id=category.id,
             name="Tea",
-            price=Decimal("100"),
+            price=Decimal("1000"),
             gst_rate=0,
         )
         session.add(item)
@@ -92,7 +92,7 @@ async def test_invoice_persists_coupon_details(monkeypatch):
                 order_id=1,
                 item_id=item.id,
                 name_snapshot="Tea",
-                price_snapshot=Decimal("100"),
+                price_snapshot=Decimal("1000"),
                 qty=1,
                 status="placed",
             )
@@ -105,7 +105,7 @@ async def test_invoice_persists_coupon_details(monkeypatch):
                 "code": "C2",
                 "percent": 5,
                 "is_stackable": True,
-                "max_discount": 5,
+                "max_discount": 50,
             },
         ]
 
@@ -121,6 +121,6 @@ async def test_invoice_persists_coupon_details(monkeypatch):
         await session.commit()
         invoice = await session.get(models_tenant.Invoice, inv_id)
         assert invoice.bill_json["applied_coupons"] == ["C1", "C2"]
-        assert invoice.bill_json["effective_discount"] == 5.0
+        assert invoice.bill_json["effective_discount"] == 50.0
 
     await engine.dispose()
