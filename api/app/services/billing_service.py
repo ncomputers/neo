@@ -18,7 +18,7 @@ def compute_bill(
     gst_mode: GSTMode,
     rounding: str = "nearest_1",
     coupons: Sequence[Mapping[str, object]] | None = None,
-
+    tip: float | Decimal | None = 0,
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
 
@@ -36,6 +36,8 @@ def compute_bill(
     coupons:
         Optional sequence of coupon mappings. Each mapping may include ``code``,
         ``percent``, ``flat``, ``is_stackable`` and ``max_discount``.
+    tip:
+        Optional tip amount applied after tax and discounts.
 
 
     Returns
@@ -110,20 +112,21 @@ def compute_bill(
     if coupons:
         effective_discount = (subtotal + sum(tax_breakup.values())) - rounded_total
 
+    tip_amount = Decimal(str(tip or 0))
+    total_with_tip = rounded_total + tip_amount
+
     bill = {
         "subtotal": float(subtotal.quantize(Decimal("0.01"))),
         "tax_breakup": {
             int(rate): float(val.quantize(Decimal("0.01")))
             for rate, val in tax_breakup.items()
         },
-        "total": float(rounded_total.quantize(Decimal("0.01"))),
-
+        "tip": float(tip_amount.quantize(Decimal("0.01"))),
+        "total": float(total_with_tip.quantize(Decimal("0.01"))),
     }
 
     if coupons:
         bill["applied_coupons"] = applied_coupons
-        bill["effective_discount"] = float(
-            effective_discount.quantize(Decimal("0.01"))
-        )
+        bill["effective_discount"] = float(effective_discount.quantize(Decimal("0.01")))
 
     return bill
