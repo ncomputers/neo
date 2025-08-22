@@ -12,12 +12,14 @@ from .db import SessionLocal
 from .events import event_bus
 from .models_tenant import Table, Room
 from .utils.responses import ok
+from .utils.audit import audit
 
 
 router = APIRouter(prefix="/api/outlet/{tenant}/housekeeping")
 
 
 @router.post("/table/{table_id}/start_clean")
+@audit("start_clean_table")
 async def start_clean(
     tenant: str,
     table_id: str,
@@ -41,6 +43,7 @@ async def start_clean(
 
 
 @router.post("/room/{room_id}/start_clean")
+@audit("start_clean_room")
 async def start_clean_room(
     tenant: str,
     room_id: int,
@@ -59,6 +62,7 @@ async def start_clean_room(
 
 
 @router.post("/table/{table_id}/ready")
+@audit("mark_table_ready")
 async def mark_ready(
     tenant: str,
     table_id: str,
@@ -84,6 +88,7 @@ async def mark_ready(
 
 
 @router.post("/room/{room_id}/ready")
+@audit("mark_room_ready")
 async def mark_room_ready(
     tenant: str,
     room_id: int,

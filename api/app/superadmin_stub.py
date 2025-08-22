@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from utils.responses import ok
+from utils.audit import audit
 from db.tenant import build_dsn
 
 
@@ -20,6 +21,7 @@ class OutletPayload(BaseModel):
 
 
 @router.post("/outlet/check")
+@audit("outlet_check")
 async def outlet_check(payload: OutletPayload) -> dict:
     """Preview provisioning identifiers for a prospective tenant."""
     return ok(

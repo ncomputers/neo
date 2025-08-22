@@ -47,6 +47,8 @@ class Tenant(Base):
     license_limits = Column(JSON, nullable=True)
     subscription_expires_at = Column(DateTime, nullable=True)
     grace_period_days = Column(Integer, nullable=False, default=7)
+    retention_days_customers = Column(Integer, nullable=True)
+    retention_days_outbox = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

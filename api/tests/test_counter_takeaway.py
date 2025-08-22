@@ -78,7 +78,9 @@ async def test_takeaway_flow() -> None:
         item_id = menu_resp.json()["data"]["items"][0]["id"]
 
         order_resp = await client.post(
-            "/c/qr1/order", json={"items": [{"item_id": str(item_id), "qty": 1}]}
+            "/c/qr1/order",
+            headers={"Idempotency-Key": "key1"},
+            json={"items": [{"item_id": str(item_id), "qty": 1}]},
         )
         assert order_resp.status_code == 200
         order_id = order_resp.json()["data"]["order_id"]

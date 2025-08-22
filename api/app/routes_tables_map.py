@@ -11,6 +11,7 @@ from .auth import User, role_required
 from .db import SessionLocal
 from .models_tenant import Table
 from .utils.responses import ok
+from .utils.audit import audit
 
 
 class TablePosition(BaseModel):
@@ -25,6 +26,7 @@ router = APIRouter()
 
 
 @router.post("/api/outlet/{tenant}/tables/{table_id}/position")
+@audit("set_table_position")
 async def set_table_position(
     tenant: str,
     table_id: uuid.UUID,
@@ -53,6 +55,7 @@ async def set_table_position(
 
 
 @router.get("/api/outlet/{tenant}/tables/map")
+@audit("get_table_map")
 async def get_table_map(tenant: str) -> dict:
     """Return coordinates and states for all tables."""
 
