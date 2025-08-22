@@ -46,5 +46,8 @@ Reservations/waitlist; complex item modifiers; multi‑station routing; native a
 ## 7. Acceptance Criteria (high‑level)
 - End‑to‑end happy path works (QR→order→KDS→bill→UPI/Cash settle→lock→clean unlock).
 - GST invoice correct per mode; rounding applied.
+  - Regular: HSN per line, CGST/SGST split, GSTIN header.
+  - Composition: hide HSN, single "Composition Tax Included", GSTIN + Composition Scheme.
+  - Unregistered: hide all GST fields, show tax-exempt note.
 - Subscription guard and grace logic enforced.
 - Offline orders queue and sync correctly.

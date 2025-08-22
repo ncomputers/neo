@@ -138,3 +138,61 @@ def compute_bill(
         bill["effective_discount"] = float(effective_discount.quantize(Decimal("0.01")))
 
     return bill
+
+def build_invoice_context(
+    items: Iterable[Mapping[str, object]],
+    gst_mode: GSTMode,
+    gstin: str | None = None,
+) -> dict:
+    """Build a render-friendly invoice dict based on ``gst_mode``.
+
+    Parameters
+    ----------
+    items:
+        Each mapping should include ``name`` and ``price``. Optional keys
+        include ``qty`` and ``hsn``.
+    gst_mode:
+        Tax mode for the invoice (``"reg"``, ``"comp"`` or ``"unreg"``).
+    gstin:
+        Optional GSTIN to include on the invoice header for registered modes.
+    """
+
+    bill = compute_bill(items, gst_mode)
+    invoice = {
+        "gst_mode": gst_mode,
+        "items": [],
+        "subtotal": bill["subtotal"],
+        "tax_lines": [],
+        "grand_total": bill["total"],
+    }
+
+    if gstin and gst_mode != "unreg":
+        invoice["gstin"] = gstin
+
+    for item in items:
+        line = {
+            "name": item.get("name"),
+            "qty": item.get("qty", 1),
+            "price": item.get("price"),
+        }
+        if gst_mode == "reg" and item.get("hsn"):
+            line["hsn"] = item.get("hsn")
+        invoice["items"].append(line)
+
+    if gst_mode == "reg":
+        for rate, amount in bill["tax_breakup"].items():
+            half_rate = rate / 2
+            half_amount = round(amount / 2, 2)
+            invoice["tax_lines"].append(
+                {"label": f"CGST {half_rate}%", "amount": half_amount}
+            )
+            invoice["tax_lines"].append(
+                {"label": f"SGST {half_rate}%", "amount": half_amount}
+            )
+    elif gst_mode == "comp":
+        total_tax = round(bill["total"] - bill["subtotal"], 2)
+        invoice["tax_lines"].append(
+            {"label": "Composition Tax Included", "amount": total_tax}
+        )
+
+    return invoice
