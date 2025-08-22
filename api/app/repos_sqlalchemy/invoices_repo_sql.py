@@ -22,6 +22,7 @@ async def generate_invoice(
     gst_mode: billing_service.GSTMode,
     rounding: str,
     tenant_id: str,
+    tip: float | Decimal | None = 0,
 ) -> int:
     """Generate an immutable invoice and return its primary key.
 
@@ -38,6 +39,8 @@ async def generate_invoice(
     tenant_id:
         Identifier of the tenant to fetch prefix and reset policy from the
         master schema.
+    tip:
+        Optional tip amount added after tax.
     """
 
     result = await session.execute(
@@ -52,7 +55,7 @@ async def generate_invoice(
         for qty, price, gst in result.all()
     ]
 
-    bill = billing_service.compute_bill(items, gst_mode, rounding)
+    bill = billing_service.compute_bill(items, gst_mode, rounding, tip=tip)
 
     async with get_master_session() as m_session:
         tenant = await m_session.get(Tenant, tenant_id)
@@ -67,6 +70,7 @@ async def generate_invoice(
         number=number,
         bill_json=bill,
         gst_breakup=bill.get("tax_breakup"),
+        tip=Decimal(str(bill.get("tip", 0))),
         total=Decimal(str(bill["total"])),
     )
     session.add(invoice)

@@ -17,6 +17,7 @@ def compute_bill(
     items: Iterable[Mapping[str, float]],
     gst_mode: GSTMode,
     rounding: str = "nearest_1",
+    tip: Decimal | float | None = 0,
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
 
@@ -31,11 +32,13 @@ def compute_bill(
         ``"reg"`` applies the GST rates. ``"unreg"`` and ``"comp"`` ignore GST.
     rounding:
         Currently only ``"nearest_1"`` is supported.
+    tip:
+        Optional amount to add to the final total. Not included in GST.
 
     Returns
     -------
     dict
-        ``{"subtotal": float, "tax_breakup": dict, "total": float}``
+        ``{"subtotal": float, "tax_breakup": dict, "tip": float, "total": float}``
 
     Examples
     --------
@@ -44,9 +47,9 @@ def compute_bill(
     ...     {"qty": 1, "price": 200, "gst": 12},
     ... ]
     >>> compute_bill(items, "reg")
-    {'subtotal': 400.0, 'tax_breakup': {5: 10.0, 12: 24.0}, 'total': 434.0}
-    >>> compute_bill(items, "unreg")
-    {'subtotal': 400.0, 'tax_breakup': {}, 'total': 400.0}
+    {'subtotal': 400.0, 'tax_breakup': {5: 10.0, 12: 24.0}, 'tip': 0.0, 'total': 434.0}
+    >>> compute_bill(items, "unreg", tip=10)
+    {'subtotal': 400.0, 'tax_breakup': {}, 'tip': 10.0, 'total': 410.0}
     """
 
     subtotal = Decimal("0")
@@ -69,8 +72,12 @@ def compute_bill(
     else:
         raise ValueError(f"Unsupported rounding mode: {rounding}")
 
+    tip_amt = Decimal(str(tip or 0))
+    total += tip_amt
+
     return {
         "subtotal": float(subtotal.quantize(Decimal("0.01"))),
         "tax_breakup": {int(rate): float(val.quantize(Decimal("0.01"))) for rate, val in tax_breakup.items()},
+        "tip": float(tip_amt.quantize(Decimal("0.01"))),
         "total": float(total.quantize(Decimal("0.01"))),
     }
