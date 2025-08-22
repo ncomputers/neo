@@ -78,6 +78,7 @@ async def test_counter_order_delivered_invoice():
             json={"items": [{"item_id": str(item_id), "qty": 1}]},
         )
         assert order_resp.status_code == 200
+        assert order_resp.json()["ok"] is True
         order_id = order_resp.json()["data"]["order_id"]
 
         status_resp = await client.post(
