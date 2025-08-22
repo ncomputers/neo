@@ -75,6 +75,13 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
+### Staff Login
+
+Outlet staff can authenticate with a numeric PIN to perform protected actions:
+
+- `POST /api/outlet/{tenant}/staff/login` – verify a PIN and receive a short-lived JWT.
+- `GET /api/outlet/{tenant}/staff/me` – example protected route requiring the JWT.
+
 ### Backups
 
 Trigger a JSON backup of a tenant's database:

@@ -314,6 +314,18 @@ class AuditTenant(Base):
     meta = Column(JSON, nullable=True)
 
 
+class Staff(Base):
+    """Outlet staff able to authenticate via a numeric PIN."""
+
+    __tablename__ = "staff"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    pin_hash = Column(String, nullable=False)
+    active = Column(Boolean, nullable=False, default=True)
+
+
 class InvoiceCounter(Base):
     """Counters for generating sequential invoice numbers."""
 
@@ -348,5 +360,6 @@ __all__ = [
     "AlertRule",
     "NotificationOutbox",
     "AuditTenant",
+    "Staff",
     "InvoiceCounter",
 ]
