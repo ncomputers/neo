@@ -142,7 +142,6 @@ app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
-
 app.add_middleware(SecurityHeadersMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
