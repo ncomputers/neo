@@ -76,6 +76,7 @@ from .routes_counter_guest import router as counter_guest_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_metrics import router as metrics_router
 from .routes_tables_map import router as tables_map_router
+from .routes_version import router as version_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -673,6 +674,7 @@ app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
 app.include_router(tables_map_router)
+app.include_router(version_router)
 app.include_router(backup_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)
