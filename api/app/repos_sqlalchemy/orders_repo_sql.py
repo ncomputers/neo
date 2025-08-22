@@ -123,11 +123,15 @@ async def update_status(
         select(Table.code).join(Order, Order.table_id == Table.id).where(Order.id == order_id)
     )
     table_code = result.scalar_one_or_none()
-    if table_code is None:
+    if table_code is None or new_status not in {
+        OrderStatus.IN_PROGRESS.value,
+        OrderStatus.READY.value,
+        OrderStatus.SERVED.value,
+    }:
         return
 
     eta_seconds = 0.0
-    if new_status != OrderStatus.READY.value:
+    if new_status == OrderStatus.IN_PROGRESS.value:
         current = await ema_repo_sql.load(session)
         ema_val = current[1] if current else 0.0
         eta_seconds = ema.eta([], ema_val)
@@ -136,7 +140,13 @@ async def update_status(
 
     await redis_client.publish(
         f"rt:update:{table_code}",
-        json.dumps({"status": new_status, "eta": eta_seconds}),
+        json.dumps(
+            {
+                "order_id": str(order_id),
+                "status": new_status,
+                "eta_secs": eta_seconds,
+            }
+        ),
     )
 
 

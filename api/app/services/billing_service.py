@@ -17,9 +17,8 @@ def compute_bill(
     items: Iterable[Mapping[str, float]],
     gst_mode: GSTMode,
     rounding: str = "nearest_1",
+    tip: float | Decimal | None = 0,
     coupons: Sequence[Mapping[str, object]] | None = None,
-    tip: float = 0.0,
-
 
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
@@ -75,6 +74,8 @@ def compute_bill(
             tax = line_total * gst_rate / Decimal("100")
             tax_breakup[gst_rate] += tax
 
+    tip_amount = Decimal(str(tip or 0))
+
     total = subtotal + sum(tax_breakup.values())
 
     applied_coupons: list[str] = []
@@ -106,7 +107,7 @@ def compute_bill(
 
         total -= discount
 
-    tip_amount = Decimal(str(tip))
+
     total += tip_amount
 
     if rounding == "nearest_1":
@@ -115,12 +116,10 @@ def compute_bill(
         raise ValueError(f"Unsupported rounding mode: {rounding}")
 
     if coupons:
-        effective_discount = (
-            subtotal + sum(tax_breakup.values()) + tip_amount - rounded_total
+        effective_discount = (subtotal + sum(tax_breakup.values())) - (
+            rounded_total - tip_amount
         )
 
-    tip_amount = Decimal(str(tip or 0))
-    total_with_tip = rounded_total + tip_amount
 
     bill = {
         "subtotal": float(subtotal.quantize(Decimal("0.01"))),
