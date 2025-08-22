@@ -55,6 +55,7 @@ from .middlewares import (
     CorrelationIdMiddleware,
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
+    FeatureFlagsMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
     IdempotencyMetricsMiddleware,
@@ -140,6 +141,7 @@ app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
+app.add_middleware(FeatureFlagsMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 

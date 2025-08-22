@@ -45,6 +45,8 @@ class Tenant(Base):
     sla_color_alert = Column(Boolean, nullable=False, default=False)
     hide_out_of_stock_items = Column(Boolean, nullable=False, default=True)
     license_limits = Column(JSON, nullable=True)
+    enable_hotel = Column(Boolean, nullable=False, default=False)
+    enable_counter = Column(Boolean, nullable=False, default=False)
     subscription_expires_at = Column(DateTime, nullable=True)
     grace_period_days = Column(Integer, nullable=False, default=7)
     retention_days_customers = Column(Integer, nullable=True)
