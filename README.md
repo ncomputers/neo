@@ -49,6 +49,10 @@ All API responses use a standard envelope:
 - Success: `{ "ok": true, "data": ... }`
 - Error: `{ "ok": false, "error": { "code": ..., "message": ... } }`
 
+### Coupons
+
+Coupons can be marked as stackable and may specify a per-invoice `max_discount` cap. When multiple stackable coupons are applied, the invoice `bill_json` records the `applied_coupons` and the combined `effective_discount`.
+
 ### Super Admin
 
 The backend exposes a super-admin endpoint used for tenant provisioning:

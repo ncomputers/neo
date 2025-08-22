@@ -5,7 +5,7 @@
 FR1: Guest reads fixed table QR and loads menu (with veg filter, photos, FSSAI icons).  
 FR2: Guest adds items to cart; places order (no edits after placed).  
 FR3: KDS receives orders instantly; can Accept/Progress/Ready/Serve by item or whole order.  
-FR4: Admin/Cashier generates invoice (GST modes), applies discounts/tips/coupons.  
+FR4: Admin/Cashier generates invoice (GST modes), applies discounts/tips/coupons with stackable coupons and per-invoice discount caps.
 FR5: Payment modes UPI/Cash; split payments supported; UTR/manual verify (auto webhook later).  
 FR6: After settlement, table locks; cleaner must mark "Cleaned & Ready".  
 FR7: Stock toggle hides items for new adds.  
