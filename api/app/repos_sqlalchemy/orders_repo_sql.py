@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, List
 import json
+from datetime import datetime, timezone
 
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -120,21 +121,28 @@ async def update_status(
     await session.commit()
 
     result = await session.execute(
-        select(Table.code).join(Order, Order.table_id == Table.id).where(Order.id == order_id)
+        select(Table.code, Order.accepted_at)
+        .join(Order, Order.table_id == Table.id)
+        .where(Order.id == order_id)
     )
-    table_code = result.scalar_one_or_none()
-    if table_code is None or new_status not in {
+    row = result.one_or_none()
+    if row is None or new_status not in {
         OrderStatus.IN_PROGRESS.value,
         OrderStatus.READY.value,
         OrderStatus.SERVED.value,
     }:
         return
 
-    eta_seconds = 0.0
-    if new_status == OrderStatus.IN_PROGRESS.value:
-        current = await ema_repo_sql.load(session)
-        ema_val = current[1] if current else 0.0
-        eta_seconds = ema.eta([], ema_val)
+    table_code, accepted_at = row
+    now = datetime.now(timezone.utc)
+    elapsed = (now - accepted_at).total_seconds() if accepted_at else 0.0
+
+    current = await ema_repo_sql.load(session)
+    ema_val = current[1] if current else 0.0
+    eta_seconds = max(ema.eta([], ema_val) - elapsed, 0.0)
+
+    if new_status in {OrderStatus.READY.value, OrderStatus.SERVED.value}:
+        eta_seconds = 0.0
 
     from ..main import redis_client  # lazy import to avoid circular deps
 
