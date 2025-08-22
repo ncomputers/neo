@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse
 from ..db import SessionLocal
 from ..models_tenant import Table
 from ..utils.responses import err
+from ..routes_metrics import table_locked_denied_total
 
 
 class TableStateGuardMiddleware(BaseHTTPMiddleware):
@@ -22,6 +23,7 @@ class TableStateGuardMiddleware(BaseHTTPMiddleware):
                 with SessionLocal() as session:
                     table = session.query(Table).filter_by(code=token).one_or_none()
                 if table is not None and table.state != "AVAILABLE":
+                    table_locked_denied_total.inc()
                     return JSONResponse(
                         err("TABLE_LOCKED", "Table not ready"), status_code=423
                     )

@@ -21,6 +21,31 @@ invoices_generated_total = Counter(
 )
 invoices_generated_total.inc(0)
 
+idempotency_hits_total = Counter(
+    "idempotency_hits_total", "Total requests with an idempotency key present"
+)
+idempotency_hits_total.inc(0)
+
+idempotency_conflicts_total = Counter(
+    "idempotency_conflicts_total", "Total idempotency key conflicts"
+)
+idempotency_conflicts_total.inc(0)
+
+table_locked_denied_total = Counter(
+    "table_locked_denied_total", "Total requests denied due to locked tables"
+)
+table_locked_denied_total.inc(0)
+
+room_locked_denied_total = Counter(
+    "room_locked_denied_total", "Total requests denied due to locked rooms"
+)
+room_locked_denied_total.inc(0)
+
+http_errors_total = Counter(
+    "http_errors_total", "Total HTTP errors", ["status"]
+)
+http_errors_total.labels(status="0").inc(0)
+
 router = APIRouter()
 
 
