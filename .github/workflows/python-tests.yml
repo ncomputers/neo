@@ -7,6 +7,30 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        db: [sqlite, postgres]
+    services:
+      postgres:
+        if: matrix.db == 'postgres'
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      POSTGRES_HOST: ${{ matrix.db == 'postgres' && 'localhost' || '' }}
+      POSTGRES_USER: ${{ matrix.db == 'postgres' && 'postgres' || '' }}
+      POSTGRES_PASSWORD: ${{ matrix.db == 'postgres' && 'postgres' || '' }}
+      POSTGRES_DB: ${{ matrix.db == 'postgres' && 'postgres' || '' }}
+      POSTGRES_TENANT_DSN_TEMPLATE: ${{ matrix.db == 'postgres' && 'postgresql+asyncpg://postgres:postgres@localhost:5432/{tenant_id}' || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -17,6 +41,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r api/requirements.txt
           pip install pytest
+          if [ "${{ matrix.db }}" = "postgres" ]; then pip install asyncpg; fi
+      - name: Run tenant migrations
+        if: matrix.db == 'postgres'
+        run: |
+          python scripts/tenant_create_db.py --tenant demo
+          python scripts/tenant_seed.py --tenant demo
       - name: Lint
         run: |
           if grep -q "[tool.black]" pyproject.toml 2>/dev/null; then
