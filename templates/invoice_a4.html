@@ -2,12 +2,34 @@
 <html>
   <body>
     <h1>Invoice {{ invoice['number'] }}</h1>
+    {% if invoice['gst_mode'] != 'unreg' and invoice.get('gstin') %}
+      <p>GSTIN: {{ invoice['gstin'] }}{% if invoice['gst_mode'] == 'comp' %} (Composition Scheme){% endif %}</p>
+    {% endif %}
     <table>
-      <tr><th>Item</th><th>Price</th><th>Qty</th></tr>
-    {% for item in invoice['items'] %}
-      <tr><td>{{ item.name }}</td><td>{{ item.price }}</td><td>{{ item.qty }}</td></tr>
-    {% endfor %}
+      <tr>
+        <th>Item</th>
+        <th>Price</th>
+        <th>Qty</th>
+        {% if invoice['gst_mode'] == 'reg' %}<th>HSN</th>{% endif %}
+      </tr>
+      {% for item in invoice['items'] %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.price }}</td>
+        <td>{{ item.qty }}</td>
+        {% if invoice['gst_mode'] == 'reg' %}<td>{{ item.hsn or '' }}</td>{% endif %}
+      </tr>
+      {% endfor %}
     </table>
-    <p>Total: {{ invoice['total'] }}</p>
+    <p>Subtotal: {{ invoice['subtotal'] }}</p>
+    {% for line in invoice['tax_lines'] %}
+      <p>{{ line.label }}: {{ line.amount }}</p>
+    {% endfor %}
+    <p>Total: {{ invoice['grand_total'] }}</p>
+    {% if invoice['gst_mode'] == 'comp' %}
+      <p>Composition Tax Included</p>
+    {% elif invoice['gst_mode'] == 'unreg' %}
+      <p>GST not applicable</p>
+    {% endif %}
   </body>
 </html>
