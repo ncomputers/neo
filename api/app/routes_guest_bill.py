@@ -46,6 +46,7 @@ async def generate_bill(
     include an optional ``tip`` amount which is added after tax.
     """
     tip = float(payload.get("tip", 0)) if payload else 0
+    coupons = payload.get("coupons") if payload else None
 
     await invoices_repo_sql.generate_invoice(
         session=session,
@@ -54,7 +55,10 @@ async def generate_bill(
         rounding="nearest_1",
         tenant_id=tenant_id,
         tip=tip,
+        coupons=coupons,
     )
-    invoice_payload = billing_service.compute_bill([], "unreg", tip=tip)
+    invoice_payload = billing_service.compute_bill(
+        [], "unreg", tip=tip, coupons=coupons
+    )
     await notifications.enqueue(tenant_id, "bill.generated", {"table_token": table_token})
     return ok(invoice_payload)

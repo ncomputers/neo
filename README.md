@@ -68,7 +68,7 @@ A guest-facing router exposes menu data for a specific table:
 - `GET /h/{room_token}/menu` – list menu for hotel rooms.
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
-- `POST /g/{table_token}/bill` – generate a bill; payload may include an optional `tip`.
+- `POST /g/{table_token}/bill` – generate a bill; payload may include an optional `tip` and `coupons` list.
 
 This router relies on tenant-specific databases and is not wired into the
 application yet.
@@ -150,8 +150,9 @@ provider adapters.
 
 Connect to `ws://localhost:8000/tables/{id}/ws` to receive live order
 notifications. Messages are fanned out via Redis channels named
-`rt:update:{table_code}` and include an `eta` field derived from an
-exponential moving average of preparation times.
+`rt:update:{table_code}` and include the `order_id`, current
+`status` and an `eta_secs` field derived from an exponential moving
+average of preparation times.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
 

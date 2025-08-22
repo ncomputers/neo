@@ -8,6 +8,7 @@ from decimal import Decimal
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from zoneinfo import ZoneInfo
+from typing import Mapping, Sequence
 
 from ..db.master import get_session as get_master_session
 from ..models_master import Tenant
@@ -24,6 +25,7 @@ async def generate_invoice(
     rounding: str,
     tenant_id: str,
     tip: float | Decimal | None = 0,
+    coupons: Sequence[Mapping[str, object]] | None = None,
 ) -> int:
     """Generate an immutable invoice and return its primary key.
 
@@ -56,7 +58,9 @@ async def generate_invoice(
         for qty, price, gst in result.all()
     ]
 
-    bill = billing_service.compute_bill(items, gst_mode, rounding, tip=tip)
+    bill = billing_service.compute_bill(
+        items, gst_mode, rounding, tip=tip, coupons=coupons
+    )
 
     async with get_master_session() as m_session:
         tenant = await m_session.get(Tenant, tenant_id)
