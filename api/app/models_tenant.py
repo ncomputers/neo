@@ -209,6 +209,8 @@ class Coupon(Base):
     percent = Column(Numeric(5, 2), nullable=True)
     flat = Column(Numeric(10, 2), nullable=True)
     active = Column(Boolean, nullable=False, default=True)
+    is_stackable = Column(Boolean, nullable=False, default=False)
+    max_discount = Column(Numeric(10, 2), nullable=True)
 
 
 class Customer(Base):
