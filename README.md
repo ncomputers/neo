@@ -81,6 +81,13 @@ An admin-only route allows toggling item availability:
 - `POST /api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock` – set an
   item's stock flag. Body: `{"flag": true|false}`. Requires an admin role.
 
+### Dashboard
+
+An owner-facing endpoint exposes key performance indicators for the current day:
+
+- `GET /api/outlet/{tenant_id}/dashboard/tiles` – returns today's order count,
+  sales total, average ETA seconds, and top items.
+
 ### Staff Login
 
 Outlet staff can authenticate with a numeric PIN to perform protected actions:
