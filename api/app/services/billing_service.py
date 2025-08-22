@@ -7,6 +7,14 @@ from typing import Iterable, Mapping, Literal, Sequence
 GSTMode = Literal["unreg", "comp", "reg"]
 
 
+class CouponError(ValueError):
+    """Raised when coupon application fails."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
 def _round_nearest_1(amount: Decimal) -> Decimal:
     """Round to nearest rupee using bankers rounding."""
 
@@ -83,7 +91,7 @@ def compute_bill(
     if coupons:
         if len(coupons) > 1 and any(not c.get("is_stackable") for c in coupons):
             bad = next(c["code"] for c in coupons if not c.get("is_stackable"))
-            raise ValueError(f"Coupon {bad} cannot be stacked")
+            raise CouponError("NON_STACKABLE", f"Coupon {bad} cannot be stacked")
 
         percent_total = Decimal("0")
         flat_total = Decimal("0")
