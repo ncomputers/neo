@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import datetime
+import json
 import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from zoneinfo import ZoneInfo
 
 from .db.tenant import get_engine
 from .db.master import get_session as get_master_session
@@ -37,9 +39,16 @@ async def _get_timezone(tenant_id: str) -> str:
 
 
 @router.get("/api/outlet/{tenant_id}/dashboard/tiles")
-async def owner_dashboard_tiles(tenant_id: str):
+async def owner_dashboard_tiles(tenant_id: str, request: Request, force: bool = False):
     tz = await _get_timezone(tenant_id)
-    today = date.today()
+    redis = request.app.state.redis
+    cache_key = f"dash:tiles:{tenant_id}"
+    if not force:
+        cached = await redis.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    today = datetime.now(ZoneInfo(tz)).date()
     async with _session(tenant_id) as session:
         data = await dashboard_repo_sql.tiles_today(session, today, tz)
+    await redis.set(cache_key, json.dumps(data), ex=30)
     return data

@@ -85,8 +85,7 @@ An admin-only route allows toggling item availability:
 
 An owner-facing endpoint exposes key performance indicators for the current day:
 
-- `GET /api/outlet/{tenant_id}/dashboard/tiles` – returns today's order count,
-  sales total, average ETA seconds, and top items.
+- `GET /api/outlet/{tenant_id}/dashboard/tiles?force=true` – returns today's order count, sales total, average ETA seconds, and top items. Metrics are computed in the outlet's timezone and cached for 30s (use `force=true` to bypass cache).
 
 ### Staff Login
 
