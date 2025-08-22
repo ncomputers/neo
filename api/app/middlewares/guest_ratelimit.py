@@ -1,4 +1,4 @@
-"""Guest rate limiting middleware."""
+"""Rate limiting middleware for guest, hotel, and counter POST requests."""
 
 from __future__ import annotations
 
@@ -9,13 +9,14 @@ from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from ..security import ratelimit
 from ..utils.responses import err
+from .guest_utils import _is_guest_post
 
 
 class GuestRateLimitMiddleware(BaseHTTPMiddleware):
-    """Rate limit guest-facing `/g/*` routes."""
+    """Rate limit guest POST endpoints for guest, hotel, and counter routes."""
 
     async def dispatch(self, request: Request, call_next):
-        if not request.url.path.startswith("/g/"):
+        if not _is_guest_post(request.url.path, request.method):
             return await call_next(request)
 
         ip = request.client.host if request.client else "unknown"
