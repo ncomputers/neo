@@ -20,6 +20,7 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
+    Request,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
@@ -28,7 +29,6 @@ from fastapi import (
 import importlib
 import redis.asyncio as redis
 from fastapi.responses import JSONResponse
-from fastapi import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
@@ -356,9 +356,6 @@ async def create_order(request: OrderRequest) -> dict:
     expiry = tenant["subscription_expires_at"]
     if datetime.utcnow() > expiry + timedelta(days=7):
         raise HTTPException(status_code=403, detail="Subscription expired")
-
-    import uuid
-    import os
 
     if os.getenv("POSTGRES_TENANT_DSN_TEMPLATE"):
         try:

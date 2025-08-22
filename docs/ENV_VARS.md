@@ -13,3 +13,16 @@ The application relies on the following environment variables:
 | `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Defaults to `*`. | `https://example.com,https://app.com` |
 | `ADMIN_API_ENABLED` | Enables superadmin endpoints when set to `true`. | `false` |
 
+## JWT/JOSE
+
+- Tokens are signed using the `HS256` algorithm.
+- Access tokens expire after 60 minutes.
+- The signing key is provided via `JWT_SECRET`.
+
+## Redis Channels
+
+The application uses Redis Pub/Sub for real-time features:
+
+- `rt:update:{table_code}` – WebSocket updates for order status per table.
+- `rt:table_map:{tenant}` – Server-Sent Events channel for table map updates.
+
