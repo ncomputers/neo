@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 import json
 
 from .db.tenant import get_engine
+from .deps.tenant import get_tenant_id
 from .utils.responses import ok
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .repos_sqlalchemy import counter_orders_repo_sql
@@ -29,12 +30,6 @@ class OrderPayload(BaseModel):
 
 class StatusPayload(BaseModel):
     status: str
-
-
-async def get_tenant_id() -> str:
-    """Resolve tenant identifier for guest requests."""
-
-    return "demo"  # placeholder until tenant resolution is wired
 
 
 async def get_tenant_session(

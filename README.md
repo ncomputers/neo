@@ -88,8 +88,8 @@ Cleaning staff can reset tables after guests settle their bills:
 
 - `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/start_clean` – mark a table as being cleaned.
 - `POST /api/outlet/{tenant_id}/housekeeping/table/{table_id}/ready` – record cleaning completion and reopen the table.
-- `POST /api/outlet/{tenant_id}/housekeeping/room/{room_id}/start_clean` – mark a room as being cleaned.
-- `POST /api/outlet/{tenant_id}/housekeeping/room/{room_id}/ready` – record cleaning completion and reopen the room.
+- `POST /api/outlet/housekeeping/room/{room_id}/start_clean` – mark a room as being cleaned.
+- `POST /api/outlet/housekeeping/room/{room_id}/ready` – record cleaning completion and reopen the room.
 
 Tables and rooms transition through states such as `open`, `locked` and `cleaning`; guests are blocked from ordering unless the respective table or room is `open`.
 
