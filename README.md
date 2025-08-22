@@ -266,6 +266,15 @@ python scripts/day_close.py --tenant TENANT_ID --date YYYY-MM-DD
 The CLI aggregates invoice figures for the specified date and records a
 `dayclose` event for downstream processors.
 
+To prune old tenant audit logs, delivered notifications and access logs, run:
+
+```bash
+python scripts/retention_sweep.py --tenant TENANT_ID --days 30
+```
+
+The sweep deletes `audit_tenant` rows, delivered `notifications_outbox`
+entries and `access_logs` records older than the specified retention window.
+
 
 ## Audit Logging
 
