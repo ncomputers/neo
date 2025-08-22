@@ -68,6 +68,7 @@ A guest-facing router exposes menu data for a specific table:
 - `GET /h/{room_token}/menu` – list menu for hotel rooms.
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
+- `POST /g/{table_token}/bill` – generate a bill; payload may include an optional `tip`.
 
 This router relies on tenant-specific databases and is not wired into the
 application yet.
@@ -223,6 +224,13 @@ python scripts/tenant_seed.py --tenant TENANT_ID
 ```
 
 The command prints a JSON payload containing the new record IDs.
+
+For hotel or counter flows, additional helpers are available to create QR tokens:
+
+```bash
+python scripts/tenant_seed_hotel.py --tenant TENANT_ID
+python scripts/tenant_seed_counter.py --tenant TENANT_ID
+```
 
 To compute daily Z-report totals and enqueue a day-close notification into the
 master outbox, run:

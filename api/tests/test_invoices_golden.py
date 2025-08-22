@@ -12,7 +12,7 @@ BASKET = [
 
 
 def build_invoice_json(items, gst_mode, discount=0.0, tip=0.0):
-    bill = billing_service.compute_bill(items, gst_mode)
+    bill = billing_service.compute_bill(items, gst_mode, tip=tip)
     tax_lines = []
     if gst_mode == "reg":
         for rate, amount in bill["tax_breakup"].items():
@@ -23,7 +23,7 @@ def build_invoice_json(items, gst_mode, discount=0.0, tip=0.0):
     elif gst_mode == "comp":
         total_tax = round(bill["total"] - bill["subtotal"], 2)
         tax_lines.append({"label": "GST", "amount": total_tax})
-    grand_total = round(bill["total"] - discount + tip, 2)
+    grand_total = round(bill["total"] - discount, 2)
     invoice = {"subtotal": bill["subtotal"], "tax_lines": tax_lines, "grand_total": grand_total}
     if discount:
         invoice["discount"] = discount
@@ -34,13 +34,13 @@ def build_invoice_json(items, gst_mode, discount=0.0, tip=0.0):
 
 def test_unregistered_invoice():
     bill, invoice = build_invoice_json(BASKET, "unreg")
-    assert bill == {"subtotal": 400.0, "tax_breakup": {}, "total": 400.0}
+    assert bill == {"subtotal": 400.0, "tax_breakup": {}, "tip": 0.0, "total": 400.0}
     assert invoice == {"subtotal": 400.0, "tax_lines": [], "grand_total": 400.0}
 
 
 def test_composition_invoice():
     bill, invoice = build_invoice_json(BASKET, "comp")
-    assert bill == {"subtotal": 400.0, "tax_breakup": {}, "total": 400.0}
+    assert bill == {"subtotal": 400.0, "tax_breakup": {}, "tip": 0.0, "total": 400.0}
     assert invoice == {
         "subtotal": 400.0,
         "tax_lines": [{"label": "GST", "amount": 0.0}],
@@ -50,7 +50,7 @@ def test_composition_invoice():
 
 def test_regular_gst_invoice():
     bill, invoice = build_invoice_json(BASKET, "reg")
-    assert bill == {"subtotal": 400.0, "tax_breakup": {5: 10.0, 12: 24.0}, "total": 434.0}
+    assert bill == {"subtotal": 400.0, "tax_breakup": {5: 10.0, 12: 24.0}, "tip": 0.0, "total": 434.0}
     assert invoice == {
         "subtotal": 400.0,
         "tax_lines": [
@@ -65,7 +65,7 @@ def test_regular_gst_invoice():
 
 def test_discount_and_tip_invoice():
     bill, invoice = build_invoice_json(BASKET, "reg", discount=34.0, tip=10.0)
-    assert bill == {"subtotal": 400.0, "tax_breakup": {5: 10.0, 12: 24.0}, "total": 434.0}
+    assert bill == {"subtotal": 400.0, "tax_breakup": {5: 10.0, 12: 24.0}, "tip": 10.0, "total": 444.0}
     assert invoice == {
         "subtotal": 400.0,
         "tax_lines": [
@@ -78,3 +78,10 @@ def test_discount_and_tip_invoice():
         "tip": 10.0,
         "grand_total": 410.0,
     }
+
+
+def test_tip_does_not_change_tax_breakup():
+    bill_base = billing_service.compute_bill(BASKET, "reg")
+    bill_tip = billing_service.compute_bill(BASKET, "reg", tip=10.0)
+    assert bill_base["tax_breakup"] == bill_tip["tax_breakup"]
+    assert bill_tip["total"] == bill_base["total"] + 10.0

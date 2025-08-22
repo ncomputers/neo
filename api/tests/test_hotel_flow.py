@@ -23,23 +23,22 @@ def seed():
         session.flush()
         item = MenuItem(category_id=category.id, name="Tea", price=10.0, is_veg=True)
         session.add(item)
-        room_code = "R" + uuid.uuid4().hex[:6]
         room_token = "r" + uuid.uuid4().hex[:6]
-        room = Room(code=room_code, qr_token=room_token)
+        room = Room(code=room_token, qr_token=room_token)
         session.add(room)
         session.commit()
-        return item.id, room.id, room_code
+        return item.id, room.id, room_token
 
 
 def test_room_order_and_cleaning_cycle():
-    item_id, room_id, room_code = seed()
+    item_id, room_id, room_token = seed()
 
-    resp = client.get(f"/h/{room_code}/menu")
+    resp = client.get(f"/h/{room_token}/menu")
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
 
     resp = client.post(
-        f"/h/{room_code}/order",
+        f"/h/{room_token}/order",
         headers={"Idempotency-Key": uuid.uuid4().hex},
         json={"items": [{"item_id": item_id, "qty": 1}]},
     )
@@ -54,7 +53,7 @@ def test_room_order_and_cleaning_cycle():
     assert resp.status_code == 200
 
     resp = client.post(
-        f"/h/{room_code}/order",
+        f"/h/{room_token}/order",
         headers={"Idempotency-Key": uuid.uuid4().hex},
         json={"items": [{"item_id": item_id, "qty": 1}]},
     )
@@ -64,7 +63,7 @@ def test_room_order_and_cleaning_cycle():
     assert resp.status_code == 200
 
     resp = client.post(
-        f"/h/{room_code}/order",
+        f"/h/{room_token}/order",
         headers={"Idempotency-Key": uuid.uuid4().hex},
         json={"items": [{"item_id": item_id, "qty": 1}]},
     )

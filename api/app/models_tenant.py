@@ -179,6 +179,7 @@ class Invoice(Base):
     number = Column(String, unique=True, nullable=False)
     bill_json = Column(JSON, nullable=False)
     gst_breakup = Column(JSON, nullable=True)
+    tip = Column(Numeric(10, 2), nullable=False, default=0, server_default="0")
     total = Column(Numeric(10, 2), nullable=False)
     settled = Column(Boolean, nullable=False, default=False)
     settled_at = Column(DateTime(timezone=True), nullable=True)
