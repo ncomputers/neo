@@ -5,6 +5,7 @@ from .prometheus import PrometheusMiddleware
 from .table_state_guard import TableStateGuardMiddleware
 from .idempotency import IdempotencyMetricsMiddleware
 from .http_errors import HttpErrorCounterMiddleware
+from .feature_flags import FeatureFlagsMiddleware
 
 
 __all__ = [
@@ -15,5 +16,5 @@ __all__ = [
     "TableStateGuardMiddleware",
     "IdempotencyMetricsMiddleware",
     "HttpErrorCounterMiddleware",
-
+    "FeatureFlagsMiddleware",
 ]

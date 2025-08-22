@@ -27,6 +27,8 @@ class OutletPayload(BaseModel):
     domain: str | None = None
     tz: str | None = None
     plan_tables: int | None = None
+    enable_hotel: bool = False
+    enable_counter: bool = False
 
 
 @router.post("/outlet")
@@ -44,6 +46,8 @@ async def create_outlet(payload: OutletPayload) -> dict:
             timezone=payload.tz,
             licensed_tables=payload.plan_tables or 0,
             status="active",
+            enable_hotel=payload.enable_hotel,
+            enable_counter=payload.enable_counter,
         )
         session.add(tenant)
         await session.commit()
@@ -61,10 +65,12 @@ async def create_outlet(payload: OutletPayload) -> dict:
         check=True,
     )
     return ok(
-        {
+        { 
             "tenant_id": tenant_id,
             "invoice_prefix": invoice_prefix,
             "tz": payload.tz,
             "licensed_tables": payload.plan_tables,
+            "enable_hotel": payload.enable_hotel,
+            "enable_counter": payload.enable_counter,
         }
     )
