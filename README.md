@@ -102,6 +102,14 @@ Trigger a JSON backup of a tenant's database:
 - `POST /api/outlet/{tenant_id}/backup` – runs the backup script and returns the
   path to the generated file.
 
+### Daily Exports
+
+Download a ZIP bundle of invoices, payments and per-day totals over a date range:
+
+- `GET /api/outlet/{tenant}/exports/daily?start=YYYY-MM-DD&end=YYYY-MM-DD` –
+  returns `invoices.csv`, `payments.csv` and `z-report.csv` plus individual invoice
+  PDFs (or HTML when the PDF engine is unavailable).
+
 ### Housekeeping
 
 Cleaning staff can reset tables after guests settle their bills:
