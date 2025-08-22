@@ -27,7 +27,6 @@ def compute_bill(
     rounding: str = "nearest_1",
     tip: float | Decimal | None = 0,
     coupons: Sequence[Mapping[str, object]] | None = None,
-
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
 
@@ -41,7 +40,8 @@ def compute_bill(
     gst_mode:
         ``"reg"`` applies the GST rates. ``"unreg"`` and ``"comp"`` ignore GST.
     rounding:
-        Currently only ``"nearest_1"`` is supported.
+        Rounding policy for the grand total. ``"nearest_1"``/``"nearest"``
+        rounds to the nearest rupee, while ``"none"`` skips rounding.
     coupons:
         Optional sequence of coupon mappings. Each mapping may include ``code``,
         ``percent``, ``flat``, ``is_stackable`` and ``max_discount``.
@@ -52,9 +52,9 @@ def compute_bill(
     Returns
     -------
     dict
-        Bill summary including ``subtotal``, ``tax_breakup`` and ``total``. When
-        coupons are provided, ``applied_coupons`` and ``effective_discount`` are
-        included.
+        Bill summary including ``subtotal``, ``tax_breakup``,
+        ``rounding_adjustment`` and ``total``. When coupons are provided,
+        ``applied_coupons`` and ``effective_discount`` are included.
 
 
     Examples
@@ -115,19 +115,21 @@ def compute_bill(
 
         total -= discount
 
-
     total += tip_amount
 
-    if rounding == "nearest_1":
+    if rounding in {"nearest_1", "nearest"}:
         rounded_total = _round_nearest_1(total)
+    elif rounding in {"none", "off"}:
+        rounded_total = total
     else:
         raise ValueError(f"Unsupported rounding mode: {rounding}")
+
+    rounding_adjustment = rounded_total - total
 
     if coupons:
         effective_discount = (subtotal + sum(tax_breakup.values())) - (
             rounded_total - tip_amount
         )
-
 
     bill = {
         "subtotal": float(subtotal.quantize(Decimal("0.01"))),
@@ -136,9 +138,8 @@ def compute_bill(
             for rate, val in tax_breakup.items()
         },
         "tip": float(tip_amount.quantize(Decimal("0.01"))),
+        "rounding_adjustment": float(rounding_adjustment.quantize(Decimal("0.01"))),
         "total": float(rounded_total.quantize(Decimal("0.01"))),
-
-
     }
 
     if coupons:
@@ -146,6 +147,7 @@ def compute_bill(
         bill["effective_discount"] = float(effective_discount.quantize(Decimal("0.01")))
 
     return bill
+
 
 def build_invoice_context(
     items: Iterable[Mapping[str, object]],
@@ -173,6 +175,9 @@ def build_invoice_context(
         "tax_lines": [],
         "grand_total": bill["total"],
     }
+
+    if bill.get("rounding_adjustment"):
+        invoice["rounding_adjustment"] = bill["rounding_adjustment"]
 
     if gstin and gst_mode != "unreg":
         invoice["gstin"] = gstin

@@ -25,6 +25,9 @@
     {% for line in invoice['tax_lines'] %}
       <p>{{ line.label }}: {{ line.amount }}</p>
     {% endfor %}
+    {% if invoice.get('rounding_adjustment') %}
+      <p>Rounding Adj.: {{ invoice['rounding_adjustment'] }}</p>
+    {% endif %}
     <p>Total: {{ invoice['grand_total'] }}</p>
     {% if invoice['gst_mode'] == 'comp' %}
       <p>Composition Tax Included</p>
