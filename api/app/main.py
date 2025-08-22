@@ -91,6 +91,7 @@ from .services import notifications
 
 from .utils import PrepTimeTracker
 from .models_tenant import Table
+from .hooks.table_map import publish_table_state
 from .middlewares.room_state_guard import RoomStateGuard
 
 from . import db as app_db
@@ -636,7 +637,8 @@ async def lock_table(table_id: str) -> dict:
         table.state = "LOCKED"
         session.commit()
         session.refresh(table)
-        return ok({"table_id": table_id, "state": table.state})
+    await publish_table_state(table)
+    return ok({"table_id": table_id, "state": table.state})
 
 
 @app.post("/tables/{table_id}/mark-clean")
@@ -656,7 +658,8 @@ async def mark_clean(table_id: str) -> dict:
         table.last_cleaned_at = func.now()
         session.commit()
         session.refresh(table)
-        return ok({"table_id": table_id, "state": table.state})
+    await publish_table_state(table)
+    return ok({"table_id": table_id, "state": table.state})
 
 
 app.include_router(guest_menu_router)

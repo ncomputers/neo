@@ -10,12 +10,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable, List
+import json
 
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain import OrderStatus
 from ..models_tenant import MenuItem, Order, OrderItem, Table
+from . import ema_repo_sql
+from ..services import ema
 
 
 @dataclass
@@ -115,6 +118,26 @@ async def update_status(
         values[field] = func.now()
     await session.execute(update(Order).where(Order.id == order_id).values(**values))
     await session.commit()
+
+    result = await session.execute(
+        select(Table.code).join(Order, Order.table_id == Table.id).where(Order.id == order_id)
+    )
+    table_code = result.scalar_one_or_none()
+    if table_code is None:
+        return
+
+    eta_seconds = 0.0
+    if new_status != OrderStatus.READY.value:
+        current = await ema_repo_sql.load(session)
+        ema_val = current[1] if current else 0.0
+        eta_seconds = ema.eta([], ema_val)
+
+    from ..main import redis_client  # lazy import to avoid circular deps
+
+    await redis_client.publish(
+        f"rt:update:{table_code}",
+        json.dumps({"status": new_status, "eta": eta_seconds}),
+    )
 
 
 async def add_round(

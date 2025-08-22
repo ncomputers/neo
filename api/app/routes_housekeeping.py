@@ -13,6 +13,7 @@ from .events import event_bus
 from .models_tenant import Table, Room
 from .utils.responses import ok
 from .utils.audit import audit
+from .hooks.table_map import publish_table_state
 
 
 router = APIRouter(prefix="/api/outlet/{tenant}/housekeeping")
@@ -39,7 +40,8 @@ async def start_clean(
         table.state = "PENDING_CLEANING"
         session.commit()
         session.refresh(table)
-        return ok({"table_id": table_id, "state": table.state})
+    await publish_table_state(table)
+    return ok({"table_id": table_id, "state": table.state})
 
 
 @router.post("/room/{room_id}/start_clean")
@@ -84,7 +86,8 @@ async def mark_ready(
         table.last_cleaned_at = func.now()
         session.commit()
         session.refresh(table)
-        return ok({"table_id": table_id, "state": table.state})
+    await publish_table_state(table)
+    return ok({"table_id": table_id, "state": table.state})
 
 
 @router.post("/room/{room_id}/ready")

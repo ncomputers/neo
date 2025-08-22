@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from ..db.master import get_session as get_master_session
 from ..models_master import Tenant
 from ..models_tenant import Invoice, MenuItem, Order, OrderItem, Payment, Table
+from ..hooks.table_map import publish_table_state
 from ..services import billing_service
 from ..utils import invoice_counter
 
@@ -108,6 +109,9 @@ async def add_payment(
             table = await session.get(Table, order.table_id)
             if table is not None:
                 table.state = "LOCKED"
+                await session.flush()
+                await publish_table_state(table)
+                return
     await session.flush()
 
 
