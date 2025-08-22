@@ -20,3 +20,8 @@ class MenuRepo(ABC):
     def toggle_out_of_stock(self, item_id, flag):
         """Toggle the stock availability of a menu item."""
         raise NotImplementedError
+
+    @abstractmethod
+    def menu_etag(self, session):
+        """Return a hash representing the last menu update."""
+        raise NotImplementedError

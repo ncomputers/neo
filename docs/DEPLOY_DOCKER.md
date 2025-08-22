@@ -1,0 +1,44 @@
+# Deploy with Docker
+
+This repository provides Docker images for the API service and the background worker. The images share the same base but expose different commands.
+
+## Build images
+
+```bash
+docker compose build
+```
+
+## Apply database migrations
+
+Run migrations once the database is ready. This uses the Alembic configuration bundled with the API image.
+
+```bash
+docker compose run --rm api alembic -c api/alembic.ini upgrade head
+```
+
+## Launch services
+
+```bash
+docker compose up -d
+```
+
+The compose file starts:
+
+- **api** – FastAPI application served by Uvicorn.
+- **worker** – background notification worker.
+- **postgres** – PostgreSQL database.
+- **redis** – Redis instance for caching and queues.
+
+## Nginx proxy
+
+The `deploy/nginx.conf` file terminates TLS and proxies requests sent to `/api/` to the API container. Mount the file and your TLS certificates into an Nginx container:
+
+```bash
+docker run -p 80:80 -p 443:443 \
+  -v $(pwd)/deploy/nginx.conf:/etc/nginx/nginx.conf:ro \
+  -v /path/to/certs:/etc/nginx/certs:ro \
+  --network host \
+  nginx:alpine
+```
+
+Replace `/path/to/certs` with a directory containing `fullchain.pem` and `privkey.pem`.

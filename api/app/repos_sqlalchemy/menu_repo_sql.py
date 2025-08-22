@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from uuid import UUID
+import hashlib
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models_tenant import Category, MenuItem
@@ -52,6 +53,17 @@ class MenuRepoSQL(MenuRepo):
         self, session: AsyncSession, item_id: UUID, flag: bool
     ) -> None:
         """Set the out-of-stock flag for a menu item."""
-        stmt = update(MenuItem).where(MenuItem.id == item_id).values(out_of_stock=flag)
+        stmt = (
+            update(MenuItem)
+            .where(MenuItem.id == item_id)
+            .values(out_of_stock=flag, updated_at=func.now())
+        )
         await session.execute(stmt)
         await session.commit()
+
+    async def menu_etag(self, session: AsyncSession) -> str:
+        """Return a hash of the latest update times for categories and items."""
+        cat_updated = await session.scalar(select(func.max(Category.updated_at)))
+        item_updated = await session.scalar(select(func.max(MenuItem.updated_at)))
+        payload = f"{cat_updated}{item_updated}".encode()
+        return hashlib.sha1(payload).hexdigest()

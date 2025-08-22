@@ -11,11 +11,13 @@ from pathlib import Path
 from fastapi import APIRouter
 
 from .utils.responses import ok
+from .utils.audit import audit
 
 router = APIRouter()
 
 
 @router.post("/api/outlet/{tenant_id}/backup")
+@audit("backup_tenant")
 async def backup_tenant(tenant_id: str) -> dict:
     """Create a JSON backup for ``tenant_id`` and return the file path."""
 

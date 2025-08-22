@@ -21,6 +21,7 @@ from .hooks import order_rejection
 from .services import ema as ema_service
 from repos_sqlalchemy import orders_repo_sql
 from utils.responses import ok
+from utils.audit import audit
 
 router = APIRouter()
 
@@ -40,6 +41,7 @@ async def _session(tenant_id: str):
 
 
 @router.get("/api/outlet/{tenant_id}/kds/queue")
+@audit("list_kds_queue")
 async def list_queue(tenant_id: str) -> dict:
     """Return active orders for the KDS queue view."""
     async with _session(tenant_id) as session:
@@ -92,24 +94,28 @@ async def _transition_item(
 
 
 @router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/accept")
+@audit("accept_order")
 async def accept_order(tenant_id: str, order_id: int) -> dict:
     """Mark an order as accepted."""
     return await _transition_order(tenant_id, order_id, OrderStatus.ACCEPTED)
 
 
 @router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/progress")
+@audit("progress_order")
 async def progress_order(tenant_id: str, order_id: int) -> dict:
     """Move an order to ``IN_PROGRESS``."""
     return await _transition_order(tenant_id, order_id, OrderStatus.IN_PROGRESS)
 
 
 @router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/ready")
+@audit("ready_order")
 async def ready_order(tenant_id: str, order_id: int) -> dict:
     """Mark an order as ready."""
     return await _transition_order(tenant_id, order_id, OrderStatus.READY)
 
 
 @router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/serve")
+@audit("serve_order")
 async def serve_order(tenant_id: str, order_id: int) -> dict:
     """Mark an order as served."""
     return await _transition_order(tenant_id, order_id, OrderStatus.SERVED)
@@ -117,6 +123,7 @@ async def serve_order(tenant_id: str, order_id: int) -> dict:
 
 
 @router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/reject")
+@audit("reject_order")
 async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
     """Mark an order as rejected."""
     result = await _transition_order(tenant_id, order_id, OrderStatus.REJECTED)
@@ -124,29 +131,34 @@ async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
     await order_rejection.on_rejected(ip, request.app.state.redis)
     return result
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept")
+@audit("accept_item")
 async def accept_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as accepted."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.ACCEPTED)
 
 
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/progress")
+@audit("progress_item")
 async def progress_item(tenant_id: str, order_item_id: int) -> dict:
     """Move an order item to ``IN_PROGRESS``."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.IN_PROGRESS)
 
 
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/ready")
+@audit("ready_item")
 async def ready_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as ready."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.READY)
 
 
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/serve")
+@audit("serve_item")
 async def serve_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as served."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.SERVED)
 
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/reject")
+@audit("reject_item")
 async def reject_item(tenant_id: str, order_item_id: int, request: Request) -> dict:
     """Mark an order item as rejected."""
     result = await _transition_item(tenant_id, order_item_id, OrderStatus.REJECTED)

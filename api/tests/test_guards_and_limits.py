@@ -5,6 +5,7 @@ import pathlib
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
+import uuid
 
 import pytest
 import fakeredis.aioredis
@@ -52,11 +53,15 @@ def client(monkeypatch):
     async def _fake_list_items(self, session, include_hidden=False):
         return [{"id": 1}]
 
+    async def _fake_menu_etag(self, session):
+        return "etag"
+
     async def _fake_create_order(session, table_token, lines):
         return 1
 
     monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_categories", _fake_list_categories)
     monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", _fake_list_items)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "menu_etag", _fake_menu_etag)
     monkeypatch.setattr(orders_repo_sql, "create_order", _fake_create_order)
 
     client = TestClient(app, raise_server_exceptions=False)
@@ -89,7 +94,9 @@ def test_subscription_expiry_blocks_order_but_allows_menu(client, monkeypatch):
 
     # ordering blocked with SUB_403 envelope
     order_resp = client.post(
-        "/g/T-001/order", headers=headers, json={"items": [{"item_id": "1", "qty": 1}]}
+        "/g/T-001/order",
+        headers={**headers, "Idempotency-Key": uuid.uuid4().hex},
+        json={"items": [{"item_id": "1", "qty": 1}]},
     )
     assert order_resp.status_code == 403
     assert order_resp.json()["error"]["code"] == "SUB_403"
@@ -122,13 +129,17 @@ def test_guest_post_rate_limit(client, monkeypatch):
 
     for _ in range(2):
         resp = client.post(
-            "/g/T-001/order", headers=headers, json={"items": [{"item_id": "1", "qty": 1}]}
+            "/g/T-001/order",
+            headers={**headers, "Idempotency-Key": uuid.uuid4().hex},
+            json={"items": [{"item_id": "1", "qty": 1}]},
         )
         assert resp.status_code == 200
 
     # third request exceeds patched limit
     resp = client.post(
-        "/g/T-001/order", headers=headers, json={"items": [{"item_id": "1", "qty": 1}]}
+        "/g/T-001/order",
+        headers={**headers, "Idempotency-Key": uuid.uuid4().hex},
+        json={"items": [{"item_id": "1", "qty": 1}]},
     )
     assert resp.status_code == 429
     assert resp.json()["error"]["code"] == "RATELIMIT_429"

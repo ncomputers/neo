@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from utils.responses import ok
+from utils.audit import audit
 from .db.master import get_session
 from .models_master import Tenant
 
@@ -29,6 +30,7 @@ class OutletPayload(BaseModel):
 
 
 @router.post("/outlet")
+@audit("create_outlet")
 async def create_outlet(payload: OutletPayload) -> dict:
     """Provision a new tenant, persist it in master and initialise its DB."""
 

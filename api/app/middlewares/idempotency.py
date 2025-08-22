@@ -16,4 +16,5 @@ class IdempotencyMetricsMiddleware(BaseHTTPMiddleware):
             idempotency_hits_total.inc()
             if response.status_code == 409:
                 idempotency_conflicts_total.inc()
+
         return response
