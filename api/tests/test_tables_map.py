@@ -5,13 +5,16 @@ import sys
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 import uuid
+import asyncio
+import json
 
-from fastapi.testclient import TestClient
 import fakeredis.aioredis
 
+from fastapi.testclient import TestClient
 from api.app.main import app, SessionLocal
 from api.app.models_tenant import Table
 from api.app.auth import create_access_token
+from api.app import routes_tables_map
 
 client = TestClient(app)
 
@@ -85,3 +88,37 @@ def test_table_positions_map():
         "y": 40,
         "state": "LOCKED",
     }
+
+
+def test_table_map_stream(monkeypatch):
+    fake = fakeredis.aioredis.FakeRedis()
+    monkeypatch.setattr("api.app.main.redis_client", fake)
+
+    async def run_stream():
+        resp = await routes_tables_map.stream_table_map("demo")
+
+        async def publish():
+            await fake.publish(
+                "rt:table_map:demo",
+                json.dumps(
+                    {
+                        "table_id": "t1",
+                        "code": "T1",
+                        "state": "LOCKED",
+                        "x": 1,
+                        "y": 2,
+                        "ts": 0,
+                    }
+                ),
+            )
+
+        asyncio.create_task(publish())
+        line = await resp.body_iterator.__anext__()
+        await resp.body_iterator.aclose()
+        return line
+
+    line = asyncio.run(run_stream())
+    if isinstance(line, bytes):
+        line = line.decode()
+    data = json.loads(line.split(": ", 1)[1])
+    assert set(data) == {"table_id", "code", "state", "x", "y", "ts"}
