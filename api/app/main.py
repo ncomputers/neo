@@ -20,6 +20,7 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
+    Request,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
@@ -28,7 +29,6 @@ from fastapi import (
 import importlib
 import redis.asyncio as redis
 from fastapi.responses import JSONResponse
-from fastapi import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
@@ -76,8 +76,10 @@ from .routes_counter_guest import router as counter_guest_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_metrics import router as metrics_router
 from .routes_tables_map import router as tables_map_router
+from .routes_tables_sse import router as tables_sse_router
 from .routes_version import router as version_router
 from .routes_staff import router as staff_router
+from .routes_dashboard import router as dashboard_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -354,9 +356,6 @@ async def create_order(request: OrderRequest) -> dict:
     expiry = tenant["subscription_expires_at"]
     if datetime.utcnow() > expiry + timedelta(days=7):
         raise HTTPException(status_code=403, detail="Subscription expired")
-
-    import uuid
-    import os
 
     if os.getenv("POSTGRES_TENANT_DSN_TEMPLATE"):
         try:
@@ -678,7 +677,9 @@ app.include_router(reports_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
+app.include_router(dashboard_router)
 app.include_router(tables_map_router)
+app.include_router(tables_sse_router)
 app.include_router(version_router)
 app.include_router(backup_router)
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
