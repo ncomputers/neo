@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
 
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.responses import ok
@@ -32,11 +33,26 @@ async def get_tenant_session(tenant_id: str) -> AsyncSession:
 @router.get("/g/{table_token}/menu")
 async def fetch_menu(
     table_token: str,
+    request: Request,
+    response: Response,
+    if_none_match: str | None = Header(default=None, alias="If-None-Match"),
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
-    """Return menu categories and items for guests."""
+    """Return menu categories and items for guests with caching and ETag support."""
     repo = MenuRepoSQL()
-    categories = await repo.list_categories(session)
-    items = await repo.list_items(session)
-    return ok({"categories": categories, "items": items})
+    etag = await repo.menu_etag(session)
+    if if_none_match == etag:
+        return Response(status_code=304, headers={"ETag": etag})
+    cache_key = f"menu:{tenant_id}"
+    redis = request.app.state.redis
+    cached = await redis.get(cache_key)
+    if cached:
+        data = json.loads(cached)
+    else:
+        categories = await repo.list_categories(session)
+        items = await repo.list_items(session)
+        data = {"categories": categories, "items": items}
+        await redis.set(cache_key, json.dumps(data), ex=60)
+    response.headers["ETag"] = etag
+    return ok(data)

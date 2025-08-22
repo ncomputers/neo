@@ -51,6 +51,9 @@ async def _fake_list_categories(self, session):
 async def _fake_list_items(self, session, include_hidden=False):
     return [{"id": 1}]
 
+async def _fake_menu_etag(self, session):
+    return "etag"
+
 
 @asynccontextmanager
 async def _fake_kds_session(tenant_id: str):
@@ -99,6 +102,7 @@ async def test_tenant_guest_and_kds_flow(monkeypatch) -> None:
         menu_repo_sql.MenuRepoSQL, "list_categories", _fake_list_categories
     )
     monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", _fake_list_items)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "menu_etag", _fake_menu_etag)
     monkeypatch.setattr(routes_kds, "_session", _fake_kds_session)
     monkeypatch.setattr(orders_repo_sql, "list_active", _fake_list_active)
     """Ensure guest-facing menu, order, bill and KDS queue work."""

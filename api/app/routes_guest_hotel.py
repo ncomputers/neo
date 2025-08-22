@@ -2,9 +2,12 @@ from __future__ import annotations
 
 """Guest-facing hotel room routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header, Request, Response
 from pydantic import BaseModel
 from sqlalchemy import func
+import asyncio
+import json
+import hashlib
 
 from .db import SessionLocal
 from .models_tenant import (
@@ -30,27 +33,52 @@ class OrderPayload(BaseModel):
 
 
 @router.get("/{room_token}/menu")
-def fetch_menu(room_token: str) -> dict:
+def fetch_menu(
+    room_token: str,
+    request: Request,
+    response: Response,
+    if_none_match: str | None = Header(default=None, alias="If-None-Match"),
+) -> dict:
+    """Return menu categories and items for hotel rooms with ETag and caching."""
+
     with SessionLocal() as session:
-        categories = [
-            {"id": c.id, "name": c.name, "sort": c.sort}
-            for c in session.query(Category).order_by(Category.sort)
-        ]
-        items = [
-            {
-                "id": i.id,
-                "category_id": i.category_id,
-                "name": i.name,
-                "price": float(i.price),
-                "is_veg": i.is_veg,
-                "gst_rate": float(i.gst_rate) if i.gst_rate is not None else None,
-                "hsn_sac": i.hsn_sac,
-                "show_fssai": i.show_fssai,
-                "out_of_stock": i.out_of_stock,
-            }
-            for i in session.query(MenuItem).filter(MenuItem.out_of_stock.is_(False))
-        ]
-    return ok({"categories": categories, "items": items})
+        cat_ts = session.query(func.max(Category.updated_at)).scalar()
+        item_ts = session.query(func.max(MenuItem.updated_at)).scalar()
+    etag = hashlib.sha1(f"{cat_ts}{item_ts}".encode()).hexdigest()
+    if if_none_match == etag:
+        return Response(status_code=304, headers={"ETag": etag})
+
+    cache_key = "menu:default"
+    redis = request.app.state.redis
+    cached = asyncio.run(redis.get(cache_key))
+    if cached:
+        data = json.loads(cached)
+    else:
+        with SessionLocal() as session:
+            categories = [
+                {"id": c.id, "name": c.name, "sort": c.sort}
+                for c in session.query(Category).order_by(Category.sort)
+            ]
+            items = [
+                {
+                    "id": i.id,
+                    "category_id": i.category_id,
+                    "name": i.name,
+                    "price": float(i.price),
+                    "is_veg": i.is_veg,
+                    "gst_rate": float(i.gst_rate)
+                    if i.gst_rate is not None
+                    else None,
+                    "hsn_sac": i.hsn_sac,
+                    "show_fssai": i.show_fssai,
+                    "out_of_stock": i.out_of_stock,
+                }
+                for i in session.query(MenuItem).filter(MenuItem.out_of_stock.is_(False))
+            ]
+        data = {"categories": categories, "items": items}
+        asyncio.run(redis.set(cache_key, json.dumps(data), ex=60))
+    response.headers["ETag"] = etag
+    return ok(data)
 
 
 @router.post("/{room_token}/order")
