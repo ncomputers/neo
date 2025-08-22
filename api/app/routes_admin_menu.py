@@ -17,6 +17,7 @@ from .auth import User, role_required
 from .db.tenant import get_engine
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.responses import ok
+from .utils.audit import audit
 
 router = APIRouter()
 
@@ -43,6 +44,7 @@ async def _session(tenant_id: str):
 
 
 @router.post("/api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock")
+@audit("toggle_out_of_stock")
 async def toggle_out_of_stock(
     tenant_id: str,
     item_id: UUID,
