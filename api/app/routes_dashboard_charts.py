@@ -6,6 +6,8 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 import json
 import os
+import statistics
+import builtins
 
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -55,5 +57,15 @@ async def owner_dashboard_charts(
     start = today - timedelta(days=range - 1)
     async with _session(tenant_id) as session:
         data = await dashboard_repo_sql.charts_range(session, start, today, tz)
+    sales = [pt["v"] for pt in data.get("series", {}).get("sales", [])]
+    dates = [pt["d"] for pt in data.get("series", {}).get("sales", [])]
+    anomalies = []
+    for i in builtins.range(6, len(sales)):
+        window = sales[i - 6 : i + 1]
+        avg = statistics.mean(window)
+        std = statistics.pstdev(window)
+        if std and abs(sales[i] - avg) > 2 * std:
+            anomalies.append(dates[i])
+    data["anomalies"] = anomalies
     await redis.set(cache_key, json.dumps(data), ex=300)
     return data
