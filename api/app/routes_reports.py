@@ -64,15 +64,3 @@ async def daily_z_report(tenant_id: str, date: str, format: str = "csv"):
     return response
 
 
-@router.post("/api/outlet/{tenant_id}/digest/run")
-async def run_digest(tenant_id: str, date: str | None = None) -> dict:
-    """Trigger the daily digest script for ``tenant_id``."""
-    root = Path(__file__).resolve().parents[2]
-    script = root / "scripts" / "daily_digest.py"
-    cmd = [sys.executable, str(script), "--tenant", tenant_id]
-    if date:
-        cmd.extend(["--date", date])
-    await asyncio.to_thread(subprocess.run, cmd, check=True)
-    return {"status": "ok"}
-
-

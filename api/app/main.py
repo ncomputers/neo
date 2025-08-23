@@ -73,6 +73,7 @@ from .routes_admin_menu import router as admin_menu_router
 from .routes_backup import router as backup_router
 from .routes_daybook_pdf import router as daybook_pdf_router
 from .routes_reports import router as reports_router
+from .routes_digest import router as digest_router
 from .routes_exports import router as exports_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_alerts import router as alerts_router
@@ -724,6 +725,7 @@ app.include_router(push_router)
 # Reports domain
 app.include_router(daybook_pdf_router)
 app.include_router(reports_router)
+app.include_router(digest_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
 
