@@ -178,8 +178,9 @@ The worker drains `notifications_outbox` rows and currently supports
 `console`, `webhook`, `whatsapp_stub` and `sms_stub` channels. The
 `*_stub` channels simply log the payload and are placeholders for future
 provider adapters. Failed deliveries are retried with exponential backoff
-(`1m`, `5m`, `30m`) and moved to `notifications_dlq` after the
-`OUTBOX_MAX_ATTEMPTS` threshold (default `5`).
+(`1m`, `5m`, `30m`) and moved to `notifications_dlq` once the
+`OUTBOX_MAX_ATTEMPTS` limit is exceeded (default `5`; the worker reads this
+environment variable on each run).
 
 ### KDS SLA Watcher
 

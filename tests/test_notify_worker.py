@@ -45,7 +45,7 @@ def test_webhook_retry_and_dlq(monkeypatch):
     engine = create_engine("sqlite:///:memory:")
     notify_worker.NotificationOutbox.__table__.create(engine)
     notify_worker.NotificationDLQ.__table__.create(engine)
-    notify_worker.MAX_ATTEMPTS = 2
+    monkeypatch.setenv("OUTBOX_MAX_ATTEMPTS", "2")
 
     with Session(engine) as session:
         session.add(

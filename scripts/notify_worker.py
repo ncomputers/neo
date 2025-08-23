@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
-from sqlalchemy import create_engine, or_, select, func
+from sqlalchemy import create_engine, or_, select
 from sqlalchemy.orm import Session
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -27,7 +27,11 @@ sys.path.append(str(BASE_DIR / "api"))
 from app.models_tenant import NotificationOutbox, NotificationDLQ  # type: ignore  # noqa: E402
 
 BACKOFF_SCHEDULE = [60, 300, 1800]
-MAX_ATTEMPTS = int(os.getenv("OUTBOX_MAX_ATTEMPTS", "5"))
+
+
+def _max_attempts() -> int:
+    """Read the max retry limit from the environment."""
+    return int(os.getenv("OUTBOX_MAX_ATTEMPTS", "5"))
 
 
 def _deliver(channel: str, target: str, payload: dict) -> None:
@@ -50,7 +54,7 @@ def process_once(engine) -> None:
                 NotificationOutbox.status == "queued",
                 or_(
                     NotificationOutbox.next_attempt_at.is_(None),
-                    NotificationOutbox.next_attempt_at <= func.now(),
+                    NotificationOutbox.next_attempt_at <= now,
                 ),
             )
             .order_by(NotificationOutbox.created_at)
@@ -62,7 +66,7 @@ def process_once(engine) -> None:
                 event.delivered_at = now
             except Exception as exc:  # Network or channel error
                 event.attempts += 1
-                if event.attempts >= MAX_ATTEMPTS:
+                if event.attempts >= _max_attempts():
                     session.add(
                         NotificationDLQ(
                             original_id=event.id,
