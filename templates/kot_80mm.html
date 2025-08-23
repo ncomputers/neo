@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>KOT {{ kot['order_id'] }}</h1>
+    <p>Counter: {{ kot['counter_code'] }}</p>
+    <p>Placed: {{ kot['placed_at'] }}</p>
+    {% if kot.get('notes') %}<p>Notes: {{ kot['notes'] }}</p>{% endif %}
+    <table>
+      <tr><th>Item</th><th>Qty</th></tr>
+      {% for item in kot['items'] %}
+      <tr><td>{{ item.name }}</td><td>{{ item.qty }}</td></tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

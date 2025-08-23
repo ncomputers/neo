@@ -237,6 +237,13 @@ Specify ``?size=80mm`` for thermal receipts or ``?size=A4`` for full pages.
 If WeasyPrint is unavailable, the endpoint falls back to returning the
 rendered HTML.
 
+### KOT PDFs
+
+Kitchen Order Tickets for counter orders can be printed through
+``GET /api/outlet/{tenant}/kot/{order_id}.pdf``. The route returns an 80mm
+render suitable for thermal printers and falls back to HTML when PDF
+generation is not available.
+
 For development convenience, a lightweight CLI is also available to prepare a
 tenant database or schema and report when it's ready:
 
