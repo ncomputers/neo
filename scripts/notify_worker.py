@@ -4,6 +4,7 @@
 Environment variables:
 - POSTGRES_URL: SQLAlchemy URL for the master database.
 - POLL_INTERVAL: Seconds between polling attempts (default: 5).
+- OUTBOX_MAX_ATTEMPTS: Max delivery attempts before DLQ (default: 5).
 """
 
 from __future__ import annotations

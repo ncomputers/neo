@@ -135,6 +135,15 @@ def test_webhook_failures_move_to_dlq(monkeypatch):
         evt = session.get(notify_worker.NotificationOutbox, event_id)
         assert evt is not None
         assert evt.attempts == 1
+        assert evt.next_attempt_at is not None
+        assert evt.next_attempt_at > datetime.utcnow()
+
+    # Second run should be skipped because next_attempt_at is in the future
+    notify_worker.process_once(engine)
+    with Session(engine) as session:
+        evt = session.get(notify_worker.NotificationOutbox, event_id)
+        assert evt is not None
+        assert evt.attempts == 1
         evt.next_attempt_at = datetime.utcnow() - timedelta(seconds=1)
         session.add(evt)
         session.commit()
