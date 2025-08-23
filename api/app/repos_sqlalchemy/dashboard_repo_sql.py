@@ -1,14 +1,13 @@
 """Helpers for owner dashboard aggregates."""
 from __future__ import annotations
 
-from datetime import date, datetime, time, timezone
-from typing import List
+from datetime import date, datetime, time, timezone, timedelta
 
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from zoneinfo import ZoneInfo
 
-from ..models_tenant import Order, OrderItem, Invoice
+from ..models_tenant import Order, OrderItem, Invoice, Payment
 from . import ema_repo_sql
 
 
@@ -52,4 +51,65 @@ async def tiles_today(session: AsyncSession, day: date, tz: str) -> dict:
         "sales_today": sales_today,
         "avg_eta_secs": avg_eta_secs,
         "top_items_today": top_items_today,
+    }
+
+
+async def charts_range(
+    session: AsyncSession, start: date, end: date, tz: str
+) -> dict:
+    """Return time-series metrics and payment mix for ``start``–``end``.
+
+    ``start`` and ``end`` are inclusive and interpreted in ``tz`` timezone.
+    """
+
+    tzinfo = ZoneInfo(tz)
+    days = (end - start).days + 1
+
+    sales_series = []
+    orders_series = []
+    avg_series = []
+    for i in range(days):
+        day = start + timedelta(days=i)
+        s = datetime.combine(day, time.min, tzinfo).astimezone(timezone.utc)
+        e = datetime.combine(day, time.max, tzinfo).astimezone(timezone.utc)
+
+        orders = await session.scalar(
+            select(func.count()).select_from(Order).where(
+                Order.placed_at >= s, Order.placed_at <= e
+            )
+        )
+        orders = int(orders or 0)
+
+        sales = await session.scalar(
+            select(func.coalesce(func.sum(Invoice.total), 0)).where(
+                Invoice.created_at >= s, Invoice.created_at <= e
+            )
+        )
+        sales = float(sales or 0)
+
+        avg_ticket = float(sales / orders) if orders else 0.0
+        ds = day.isoformat()
+        sales_series.append({"d": ds, "v": sales})
+        orders_series.append({"d": ds, "v": orders})
+        avg_series.append({"d": ds, "v": avg_ticket})
+
+    range_start = datetime.combine(start, time.min, tzinfo).astimezone(timezone.utc)
+    range_end = datetime.combine(end, time.max, tzinfo).astimezone(timezone.utc)
+
+    result = await session.execute(
+        select(Payment.mode, func.coalesce(func.sum(Payment.amount), 0))
+        .where(Payment.created_at >= range_start, Payment.created_at <= range_end)
+        .group_by(Payment.mode)
+    )
+    modes = {"cash": 0.0, "upi": 0.0, "card": 0.0}
+    for mode, amt in result.all():
+        modes[mode] = float(amt or 0)
+
+    return {
+        "series": {
+            "sales": sales_series,
+            "orders": orders_series,
+            "avg_ticket": avg_series,
+        },
+        "modes": modes,
     }
