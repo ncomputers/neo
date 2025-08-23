@@ -19,7 +19,7 @@ def test_allowed_origins_env(monkeypatch):
     assert resp_ok.headers.get("access-control-allow-origin") == "https://allowed.com"
 
     resp_block = client.get("/ready", headers={"Origin": "https://bad.com"})
-    assert "access-control-allow-origin" not in resp_block.headers
+    assert resp_block.status_code == 403
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
     importlib.reload(app_main)
