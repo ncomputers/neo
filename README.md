@@ -231,7 +231,7 @@ Each request is tagged with a `correlation_id` that appears in the JSON logs.
 All HTTP responses follow a simple envelope structure of
 `{"ok": true, "data": ...}` for success or
 `{"ok": false, "error": {"code": ..., "message": ...}}` for failures.
-Prometheus metrics are exposed at `/metrics`, including counters for HTTP requests, orders created, invoices generated, idempotency key usage, lock denials, HTTP errors, notifications outbox deliveries and failures, WebSocket messages, a gauge for active SSE clients, and the number of digests sent.
+Prometheus metrics are exposed at `/metrics`, including counters for HTTP requests, orders created, invoices generated, idempotency key usage, lock denials, HTTP errors, notifications outbox deliveries and failures, WebSocket messages, a gauge for active SSE clients, and the number of digests sent. The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
 
 ## PWA

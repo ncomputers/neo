@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from .db.tenant import get_engine
 from .repos_sqlalchemy import invoices_repo_sql
 from .services import notifications
+from .routes_metrics import digest_sent_total
 
 router = APIRouter()
 
@@ -73,6 +74,7 @@ async def run_digest(tenant_id: str, date: str | None = None) -> dict:
     if date:
         cmd.extend(["--date", date])
     await asyncio.to_thread(subprocess.run, cmd, check=True)
+    digest_sent_total.inc()
     return {"status": "ok"}
 
 
