@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import re
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from ..routes_metrics import idempotency_hits_total, idempotency_conflicts_total
+from ..utils.responses import err
 
 
 class IdempotencyMetricsMiddleware(BaseHTTPMiddleware):
@@ -36,6 +39,14 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
             and request.url.path.startswith(("/g/", "/h/", "/c/"))
             and (key := request.headers.get("Idempotency-Key"))
         ):
+            if len(key) > 128 or not (
+                re.fullmatch(r"[0-9a-fA-F]+", key)
+                or re.fullmatch(r"[A-Za-z0-9+/=]+", key)
+            ):
+                return JSONResponse(
+                    err("INVALID_IDEMPOTENCY_KEY", "InvalidIdempotencyKey"),
+                    status_code=HTTP_400_BAD_REQUEST,
+                )
             redis = request.app.state.redis
             cache_key = f"idem:{request.url.path}:{key}"
             cached = await redis.get(cache_key)

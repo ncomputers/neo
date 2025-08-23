@@ -24,8 +24,9 @@ class GuestRateLimitMiddleware(BaseHTTPMiddleware):
 
         allowed = await ratelimit.allow(redis, ip, "guest", rate_per_min=60, burst=100)
         if not allowed:
+            retry_after = await redis.ttl(f"ratelimit:{ip}:guest")
             return JSONResponse(
-                err("RATELIMIT_429", "TooManyRequests"),
+                err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
                 status_code=HTTP_429_TOO_MANY_REQUESTS,
             )
         return await call_next(request)

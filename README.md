@@ -212,12 +212,18 @@ average and decreases with elapsed prep time. It never goes below zero and
 hits exactly `0` when an order is `ready` or `served`.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
+### Guest request limits
+
+Anonymous guest POSTs under `/g/*` are capped at 256KB. When rate limits are
+exceeded, responses use error code `RATELIMITED` and include a `retry_after`
+hint in seconds.
+
 ### Idempotency
 
 POST requests under `/g`, `/h` and `/c` honour an `Idempotency-Key`
-header. Successful responses are cached in Redis for five minutes so that
-network retries receive the original body without creating duplicate
-records.
+header. Keys must be base64 or hexadecimal strings up to 128 characters.
+Successful responses are cached in Redis for five minutes so that network
+retries receive the original body without creating duplicate records.
 
 ### Observability
 

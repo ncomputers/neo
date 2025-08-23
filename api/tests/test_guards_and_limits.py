@@ -117,11 +117,11 @@ def test_guest_post_rate_limit(client, monkeypatch):
 
     monkeypatch.setattr(sg_module, "get_session", _valid_session)
 
-    calls = {"n": 0}
+    orig_allow = ratelimit.allow
 
     async def _allow(redis, ip, key, rate_per_min=60, burst=100):
-        calls["n"] += 1
-        return calls["n"] < 3
+        # limit to 2 requests by using a tiny burst
+        return await orig_allow(redis, ip, key, rate_per_min=60, burst=2)
 
     monkeypatch.setattr(ratelimit, "allow", _allow)
 
@@ -142,4 +142,17 @@ def test_guest_post_rate_limit(client, monkeypatch):
         json={"items": [{"item_id": "1", "qty": 1}]},
     )
     assert resp.status_code == 429
-    assert resp.json()["error"]["code"] == "RATELIMIT_429"
+    body = resp.json()["error"]
+    assert body["code"] == "RATELIMITED"
+    assert body["details"]["retry_after"] >= 0
+
+
+def test_guest_post_body_size_limit(client):
+    headers = {"X-Tenant-ID": "demo"}
+    small = b"x" * 10
+    resp_ok = client.post("/g/big", headers=headers, data=small)
+    assert resp_ok.status_code == 404
+
+    large = b"x" * (256 * 1024 + 1)
+    resp_large = client.post("/g/big", headers=headers, data=large)
+    assert resp_large.status_code == 413
