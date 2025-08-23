@@ -37,19 +37,45 @@ The notification worker signs outbound webhook requests when `WEBHOOK_SIGNING_SE
 ```python
 import hmac, hashlib, time
 
-def verify(secret: str, body: str, headers: dict, redis):
-    ts = headers.get("X-Webhook-Timestamp", "")
+def verify(secret: str, body: bytes, headers: dict, redis):
+    ts = int(headers.get("X-Webhook-Timestamp", "0"))
     sig = headers.get("X-Webhook-Signature", "")
-    expected = "sha256=" + hmac.new(
-        secret.encode(), f"{ts}.{body}".encode(), hashlib.sha256
+    expected_hash = hmac.new(
+        secret.encode(), f"{ts}.".encode() + body, hashlib.sha256
     ).hexdigest()
+    expected = f"sha256={expected_hash}"
     if not hmac.compare_digest(sig, expected):
         return False  # invalid signature
-    if abs(time.time() - int(ts)) > 300:
+    if abs(time.time() - ts) > 300:
         return False  # stale timestamp
-    nonce = f"{ts}.{expected.split('=', 1)[1]}"
-    if redis.get(nonce):
+    nonce_key = f"wh:nonce:{ts}:{expected_hash}"
+    if redis.get(nonce_key):
         return False  # replayed request
-    redis.setex(nonce, 300, 1)
+    redis.setex(nonce_key, 300, 1)
     return True
+```
+
+```javascript
+const crypto = require('crypto');
+
+function verify(secret, body, headers, redis) {
+  const ts = parseInt(headers['x-webhook-timestamp'] || '0', 10);
+  const sig = headers['x-webhook-signature'] || '';
+  const hash = crypto.createHmac('sha256', secret)
+                     .update(`${ts}.${body}`)
+                     .digest('hex');
+  const expected = `sha256=${hash}`;
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+    return false;
+  }
+  if (Math.abs(Date.now() / 1000 - ts) > 300) {
+    return false;
+  }
+  const nonceKey = `wh:nonce:${ts}:${hash}`;
+  if (redis.get(nonceKey)) {
+    return false;
+  }
+  redis.setex(nonceKey, 300, '1');
+  return true;
+}
 ```
