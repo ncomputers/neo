@@ -1,3 +1,5 @@
+"""Tests for the owner daily export ZIP endpoint."""
+
 from __future__ import annotations
 
 import pathlib
