@@ -95,7 +95,7 @@ An admin-only route allows toggling item availability:
 An owner-facing endpoint exposes key performance indicators for the current day:
 
 - `GET /api/outlet/{tenant_id}/dashboard/tiles?force=true` – returns today's order count, sales total, average ETA seconds, and top items. Metrics are computed in the outlet's timezone and cached for 30s (use `force=true` to bypass cache).
-- `GET /api/outlet/{tenant_id}/dashboard/charts?range=7&force=true` – returns daily sales, orders, average ticket and payment mix for the last 7/30/90 days. Metrics are computed in the outlet's timezone and cached for 5 minutes (use `force=true` to bypass cache).
+- `GET /api/outlet/{tenant_id}/dashboard/charts?range=7&force=true` – returns daily sales, orders, average ticket, payment mix, and anomaly flags for the last 7/30/90 days. Metrics are computed in the outlet's timezone and cached for 5 minutes (use `force=true` to bypass cache).
 
 ### Staff Login
 

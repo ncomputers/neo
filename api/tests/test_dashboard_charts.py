@@ -120,5 +120,64 @@ async def test_dashboard_charts_cached(seeded_session, monkeypatch):
         t2 = time.perf_counter()
         await client.get("/api/outlet/demo/dashboard/charts?range=7")
         d2 = time.perf_counter() - t2
-    assert calls == 1
+        await client.get("/api/outlet/demo/dashboard/charts?range=7&force=true")
+    assert calls == 2
     assert d2 < d1
+
+
+@pytest.mark.anyio
+async def test_dashboard_charts_anomalies(monkeypatch):
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(models_tenant.Base.metadata.create_all)
+    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async with sessionmaker() as session:
+        base = datetime(2025, 8, 4, 23, 0, tzinfo=timezone.utc)
+        for i in range(7):
+            placed = base + timedelta(days=i)
+            order = Order(table_id=1, status=OrderStatus.NEW, placed_at=placed)
+            session.add(order)
+            await session.flush()
+            total = 100 if i == 6 else 10
+            invoice = Invoice(
+                order_group_id=order.id,
+                number=f"INV{i}",
+                bill_json={"total": total},
+                total=total,
+                created_at=placed,
+            )
+            session.add(invoice)
+            await session.flush()
+            payment = Payment(
+                invoice_id=invoice.id,
+                mode="cash",
+                amount=total,
+                created_at=placed,
+            )
+            session.add(payment)
+        await session.commit()
+        seeded = session
+
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        yield seeded
+
+    async def fake_tz(tenant_id: str) -> str:
+        return "UTC"
+
+    class FixedDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2025, 8, 10, tzinfo=tz)
+
+    monkeypatch.setattr(routes_dashboard_charts, "_session", fake_session)
+    monkeypatch.setattr(routes_dashboard_charts, "_get_timezone", fake_tz)
+    monkeypatch.setattr(routes_dashboard_charts, "datetime", FixedDatetime)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/outlet/demo/dashboard/charts?range=7&force=true")
+    await engine.dispose()
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["anomalies"] == ["2025-08-10"]
