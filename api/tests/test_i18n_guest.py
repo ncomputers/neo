@@ -13,9 +13,16 @@ from api.app.main import app
 from api.app.deps.tenant import get_tenant_id as header_tenant_id
 from api.app import routes_guest_menu
 from api.app.repos_sqlalchemy import menu_repo_sql
+from api.app.utils.responses import ok
+from api.app.middlewares import table_state_guard as tsg_module
 
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
+
+
+@app.post("/g/{table_token}/dummy")
+async def _g_dummy(table_token: str):
+    return ok({"dummy": True})
 
 
 async def _fake_get_tenant_session():
@@ -65,4 +72,46 @@ async def test_accept_language_hindi_returns_hindi_labels(monkeypatch):
     body = resp.json()
     assert body["ok"] is True
     assert body["data"]["labels"]["order"] == "ऑर्डर करें"
+
+
+@pytest.mark.anyio
+async def test_table_locked_error_hindi(monkeypatch):
+    class DummySession:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            pass
+
+        def query(self, model):
+            class Query:
+                def filter_by(self, **kwargs):
+                    class Result:
+                        def one_or_none(self):
+                            class TableObj:
+                                tenant_id = "t1"
+                                state = "LOCKED"
+
+                            return TableObj()
+
+                    return Result()
+
+            return Query()
+
+        def get(self, model, pk):
+            class TenantObj:
+                default_language = "en"
+
+            return TenantObj()
+
+    monkeypatch.setattr(tsg_module, "SessionLocal", lambda: DummySession())
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/g/T-001/dummy", headers={"Accept-Language": "hi"}
+        )
+    assert resp.status_code == 423
+    body = resp.json()
+    assert body["error"]["code"] == "TABLE_LOCKED"
+    assert body["error"]["message"] == "टेबल तैयार नहीं है"
 

@@ -40,14 +40,18 @@ def test_features_disabled(client, monkeypatch):
 
     monkeypatch.setattr(ff_module, "get_session", _session)
 
-    headers = {"X-Tenant-ID": "demo"}
+    headers = {"X-Tenant-ID": "demo", "Accept-Language": "hi"}
     resp = client.get("/h/dummy", headers=headers)
     assert resp.status_code == 403
-    assert resp.json()["error"]["code"] == "FEATURE_OFF"
+    body = resp.json()
+    assert body["error"]["code"] == "FEATURE_OFF"
+    assert body["error"]["message"] == "फ़ीचर बंद है"
 
     resp = client.get("/c/dummy", headers=headers)
     assert resp.status_code == 403
-    assert resp.json()["error"]["code"] == "FEATURE_OFF"
+    body = resp.json()
+    assert body["error"]["code"] == "FEATURE_OFF"
+    assert body["error"]["message"] == "फ़ीचर बंद है"
 
 
 def test_features_enabled(client, monkeypatch):

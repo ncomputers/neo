@@ -19,6 +19,7 @@ from .models_tenant import (
     NotificationOutbox,
 )
 from .utils.responses import ok
+from .i18n import resolve_lang, get_msg
 
 router = APIRouter(prefix="/h")
 
@@ -38,6 +39,7 @@ def fetch_menu(
     request: Request,
     response: Response,
     if_none_match: str | None = Header(default=None, alias="If-None-Match"),
+    accept_language: str | None = Header(default=None, alias="Accept-Language"),
 ) -> dict:
     """Return menu categories and items for hotel rooms with ETag and caching."""
 
@@ -77,6 +79,11 @@ def fetch_menu(
             ]
         data = {"categories": categories, "items": items}
         asyncio.run(redis.set(cache_key, json.dumps(data), ex=60))
+    lang = resolve_lang(accept_language)
+    data["labels"] = {
+        name: get_msg(lang, f"labels.{name}")
+        for name in ("menu", "order", "pay", "get_bill")
+    }
     response.headers["ETag"] = etag
     return ok(data)
 
