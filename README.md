@@ -225,7 +225,7 @@ Each request is tagged with a `correlation_id` that appears in the JSON logs.
 All HTTP responses follow a simple envelope structure of
 `{"ok": true, "data": ...}` for success or
 `{"ok": false, "error": {"code": ..., "message": ...}}` for failures.
-Prometheus metrics are exposed at `/metrics`, including counters for HTTP requests, orders created, invoices generated, idempotency key usage, lock denials, and HTTP errors.
+Prometheus metrics are exposed at `/metrics`, including counters for HTTP requests, orders created, invoices generated, idempotency key usage, lock denials, HTTP errors, notifications outbox deliveries and failures, WebSocket messages, a gauge for active SSE clients, and the number of digests sent.
 
 
 ## PWA

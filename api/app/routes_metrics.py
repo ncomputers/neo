@@ -5,7 +5,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Response
-from prometheus_client import Counter, CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import (
+    Counter,
+    Gauge,
+    CONTENT_TYPE_LATEST,
+    generate_latest,
+)
 
 # Counters
 http_requests_total = Counter(
@@ -45,6 +50,33 @@ http_errors_total = Counter(
     "http_errors_total", "Total HTTP errors", ["status"]
 )
 http_errors_total.labels(status="0").inc(0)
+
+notifications_outbox_delivered_total = Counter(
+    "notifications_outbox_delivered_total",
+    "Total notifications delivered from outbox",
+)
+notifications_outbox_delivered_total.inc(0)
+
+notifications_outbox_failed_total = Counter(
+    "notifications_outbox_failed_total",
+    "Total notifications that failed from outbox",
+)
+notifications_outbox_failed_total.inc(0)
+
+sse_clients_gauge = Gauge(
+    "sse_clients_gauge", "Current number of connected SSE clients"
+)
+sse_clients_gauge.set(0)
+
+ws_messages_total = Counter(
+    "ws_messages_total", "Total WebSocket messages sent"
+)
+ws_messages_total.inc(0)
+
+digest_sent_total = Counter(
+    "digest_sent_total", "Total digests sent"
+)
+digest_sent_total.inc(0)
 
 router = APIRouter()
 

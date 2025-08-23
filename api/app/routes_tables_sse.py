@@ -13,6 +13,8 @@ import json
 from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 
+from .routes_metrics import sse_clients_gauge
+
 from .db import SessionLocal
 from .models_tenant import Table
 
@@ -38,6 +40,7 @@ async def stream_table_map(
     await pubsub.subscribe(channel)
 
     seq = int(last_event_id) + 1 if last_event_id and last_event_id.isdigit() else 1
+    sse_clients_gauge.inc()
 
     async def event_gen():
         nonlocal seq
@@ -76,5 +79,6 @@ async def stream_table_map(
         finally:
             await pubsub.unsubscribe(channel)
             await pubsub.close()
+            sse_clients_gauge.dec()
 
     return StreamingResponse(event_gen(), media_type="text/event-stream")

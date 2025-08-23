@@ -19,3 +19,8 @@ def test_metrics_endpoint():
     assert "http_requests_total" in body
     assert "orders_created_total" in body
     assert "invoices_generated_total" in body
+    assert "notifications_outbox_delivered_total" in body
+    assert "notifications_outbox_failed_total" in body
+    assert "sse_clients_gauge" in body
+    assert "ws_messages_total" in body
+    assert "digest_sent_total" in body

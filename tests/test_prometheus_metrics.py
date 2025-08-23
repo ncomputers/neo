@@ -31,3 +31,8 @@ def test_metrics_expose_counters():
     assert "room_locked_denied_total" in text
     assert "http_errors_total" in text
     assert 'http_errors_total{status="404"}' in text
+    assert "notifications_outbox_delivered_total" in text
+    assert "notifications_outbox_failed_total" in text
+    assert "sse_clients_gauge" in text
+    assert "ws_messages_total" in text
+    assert "digest_sent_total" in text

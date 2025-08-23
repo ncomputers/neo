@@ -81,7 +81,7 @@ from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_counter_guest import router as counter_guest_router
 from .routes_counter_admin import router as counter_admin_router
-from .routes_metrics import router as metrics_router
+from .routes_metrics import router as metrics_router, ws_messages_total
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_version import router as version_router
@@ -444,6 +444,7 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
             if prep_time is not None:
                 data["eta"] = tracker.add_prep_time(float(prep_time))
             await websocket.send_json(data)
+            ws_messages_total.inc()
     except WebSocketDisconnect:  # pragma: no cover - network disconnect
         pass
     finally:
