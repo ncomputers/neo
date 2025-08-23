@@ -38,7 +38,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from redis.asyncio import from_url
 from .db import SessionLocal
-from sqlalchemy import func, text
+from sqlalchemy import func
 
 from config import get_settings
 from .auth import (
@@ -67,6 +67,7 @@ from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_invoice_pdf import router as invoice_pdf_router
+from .routes_kot_pdf import router as kot_pdf_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
@@ -417,6 +418,8 @@ async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> di
 @app.get("/health")
 async def health() -> dict:
     return ok({"status": "ok"})
+
+
 @app.websocket("/tables/{table_code}/ws")
 async def table_ws(websocket: WebSocket, table_code: str) -> None:
     """Stream order status updates for ``table_code``."""
@@ -685,6 +688,7 @@ app.include_router(staff_router)
 app.include_router(hotel_guest_router)
 app.include_router(ready_router)
 app.include_router(invoice_pdf_router)
+app.include_router(kot_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
