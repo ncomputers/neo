@@ -6,6 +6,7 @@
   "proxy_url": "http://localhost:80",
   "acceptance_mode": "item",
   "ema_window": 10,
+  "kds_sla_secs": 900,
   "sla_sound_alert": false,
   "sla_color_alert": false,
   "hide_out_of_stock_items": true,

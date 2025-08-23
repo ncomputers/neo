@@ -10,6 +10,10 @@ This repository contains three main services:
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
 
+The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
+that determines how long a KDS item may remain `in_progress` before a breach
+notification is triggered.
+
 Copy the example environment file and adjust values as needed:
 
 ```bash
@@ -170,6 +174,18 @@ The worker drains `notifications_outbox` rows and currently supports
 `console`, `webhook`, `whatsapp_stub` and `sms_stub` channels. The
 `*_stub` channels simply log the payload and are placeholders for future
 provider adapters.
+
+### KDS SLA Watcher
+
+`scripts/kds_sla_watch.py` scans a tenant's queue and enqueues
+`kds.sla_breach` events when an item remains `in_progress` longer than the
+`kds_sla_secs` setting. Schedule it periodically:
+
+```bash
+POSTGRES_URL=sqlite:///dev_master.db \
+POSTGRES_TENANT_DSN_TEMPLATE=sqlite+aiosqlite:///tenant_{tenant_id}.db \
+python scripts/kds_sla_watch.py --tenant demo
+```
 
 ### Real-time Updates
 

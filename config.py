@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     proxy_url: str
     acceptance_mode: AcceptanceMode = AcceptanceMode.ITEM
     ema_window: int = 10
+    kds_sla_secs: int = 900
     sla_sound_alert: bool = False
     sla_color_alert: bool = False
     hide_out_of_stock_items: bool = True

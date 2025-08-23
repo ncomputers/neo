@@ -40,6 +40,7 @@ class Tenant(Base):
     licensed_tables = Column(Integer, nullable=False, default=0)
     status = Column(String, nullable=False, default="active")
     ema_window = Column(Integer, nullable=True)
+    kds_sla_secs = Column(Integer, nullable=False, default=900)
     acceptance_mode = Column(String, nullable=False, default=AcceptanceMode.ITEM.value)
     sla_sound_alert = Column(Boolean, nullable=False, default=False)
     sla_color_alert = Column(Boolean, nullable=False, default=False)

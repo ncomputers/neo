@@ -31,6 +31,7 @@ def create_tenant(
     invoice_prefix: str | None = None,
     invoice_reset: str = "never",
     ema_window: int | None = None,
+    kds_sla_secs: int | None = None,
     license_limits: dict[str, int] | None = None,
 ) -> URL:
     """Provision a new tenant database and record its metadata.
@@ -40,9 +41,10 @@ def create_tenant(
     name, domain:
         Basic tenant identifiers.
     logo_url, primary_color, gst_mode, invoice_prefix, ema_window,
-    license_limits:
+    kds_sla_secs, license_limits:
         Optional branding and configuration overrides stored alongside the
-        tenant record.
+        tenant record. ``kds_sla_secs`` defines the time in seconds an order
+        item may remain in ``IN_PROGRESS`` before triggering an alert.
 
     Returns
     -------
@@ -96,6 +98,7 @@ def create_tenant(
             invoice_prefix=invoice_prefix,
             invoice_reset=invoice_reset,
             ema_window=ema_window,
+            kds_sla_secs=kds_sla_secs,
             license_limits=license_limits or {},
         )
         session.add(tenant)
