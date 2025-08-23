@@ -90,6 +90,7 @@ from .routes_dashboard import router as dashboard_router
 from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_ready import router as ready_router
 from .routes_print import router as print_router
+from .routes_push import router as push_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -715,6 +716,7 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(backup_router)
 app.include_router(print_router)
+app.include_router(push_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)
