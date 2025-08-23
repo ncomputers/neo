@@ -72,6 +72,7 @@ from .routes_admin_menu import router as admin_menu_router
 from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
 from .routes_exports import router as exports_router
+from .routes_gst_monthly import router as gst_monthly_router
 from .routes_alerts import router as alerts_router
 from .routes_housekeeping import router as housekeeping_router
 from .routes_hotel_guest import router as hotel_guest_router
@@ -693,6 +694,7 @@ app.include_router(kds_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
 app.include_router(reports_router)
+app.include_router(gst_monthly_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
