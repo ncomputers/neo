@@ -9,9 +9,11 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 import json
 
+from .auth import User, role_required
 from .db.tenant import get_engine
 from .deps.tenant import get_tenant_id
 from .utils.responses import ok
+from .utils.audit import audit
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .repos_sqlalchemy import counter_orders_repo_sql
 
@@ -97,11 +99,13 @@ async def create_order(
 
 
 @router_admin.post("/{order_id}/status")
+@audit("update_counter_status")
 async def update_status(
     tenant_id: str,
     order_id: int,
     payload: StatusPayload,
     session: AsyncSession = Depends(get_session_from_path),
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
 ) -> dict:
     """Update status and generate an 80mm invoice when delivered."""
 

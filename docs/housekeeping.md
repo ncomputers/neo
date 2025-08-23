@@ -1,6 +1,8 @@
 # Housekeeping API
 
-Two endpoints allow cleaners or administrators to manage table availability:
+Two endpoints allow cleaners or administrators to manage table availability.
+Each action is recorded in the tenant audit log with the acting staff member and
+target table or room:
 
 - `POST /api/outlet/{tenant}/housekeeping/table/{table_id}/start_clean`
   Marks the table as `PENDING_CLEANING`.

@@ -79,8 +79,8 @@ def test_pin_throttle_and_reset():
     with SessionLocal() as session:
         row = session.query(AuditTenant).filter_by(action="set_pin").first()
         assert row is not None
-        assert row.actor == str(manager_id)
-        assert row.meta["target"] == str(staff_id)
+        assert row.actor == f"{manager_id}:manager"
+        assert row.meta["target"]["staff_id"] == str(staff_id)
 
     resp = client.post(
         f"/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "4321"}

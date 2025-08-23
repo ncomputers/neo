@@ -12,6 +12,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 from api.app.main import app
 from api.app import main as app_main
 from api.app import routes_counter
+from api.app.auth import create_access_token
 from api.app.models_tenant import Base, Category, MenuItem, Counter
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
@@ -81,9 +82,11 @@ async def test_counter_order_delivered_invoice():
         assert order_resp.json()["ok"] is True
         order_id = order_resp.json()["data"]["order_id"]
 
+        token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
         status_resp = await client.post(
             f"/api/outlet/demo/counters/{order_id}/status",
             json={"status": "delivered"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert status_resp.status_code == 200
         invoice_id = status_resp.json()["data"]["invoice_id"]

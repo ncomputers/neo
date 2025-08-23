@@ -22,6 +22,7 @@ from api.app.models_tenant import (
     Counter,
     Invoice,
 )
+from api.app.auth import create_access_token
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
@@ -86,9 +87,11 @@ async def test_counter_guest_flow() -> None:
         assert body["ok"] is True
         order_id = body["data"]["order_id"]
 
+        token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
         status_resp = await client.post(
             f"/api/outlet/demo/counters/{order_id}/status",
             json={"status": "delivered"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert status_resp.status_code == 200
         status_body = status_resp.json()
