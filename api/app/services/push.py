@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-"""Web Push subscription storage and stubs."""
+"""Web Push subscription storage and outbox enqueueing."""
 
 import json
 import logging
 
+from ..db import SessionLocal
+from ..models_master import NotificationOutbox, NotificationRule
 
 logger = logging.getLogger("push")
 
@@ -18,7 +20,7 @@ async def save_subscription(tenant: str, table: str, subscription: dict) -> None
 
 
 async def notify_ready(tenant: str, table: str, order_id: int) -> None:
-    """Log a stub Web Push notification when an order is ready."""
+    """Queue a stub Web Push notification when an order is ready."""
     from ..main import redis_client  # lazy import to avoid circular deps
 
     key = f"rt:push:{tenant}:{table}"
@@ -28,4 +30,19 @@ async def notify_ready(tenant: str, table: str, order_id: int) -> None:
         return
     if not data:
         return
+
+    payload = {
+        "title": "Order ready",
+        "body": f"Order {order_id} is ready",
+        "table_code": table,
+        "order_no": order_id,
+    }
+
+    with SessionLocal() as session:
+        rule = NotificationRule(channel="webpush", config={})
+        session.add(rule)
+        session.flush()
+        session.add(NotificationOutbox(rule_id=rule.id, payload=payload))
+        session.commit()
+
     logger.info("web-push queued")

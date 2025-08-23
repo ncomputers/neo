@@ -41,6 +41,9 @@ from api.app.routes_metrics import (  # type: ignore  # noqa: E402
 PROVIDER_REGISTRY = {
     "whatsapp": os.getenv("ALERTS_WHATSAPP_PROVIDER", "app.providers.whatsapp_stub"),
     "sms": os.getenv("ALERTS_SMS_PROVIDER", "app.providers.sms_stub"),
+    "webpush": os.getenv(
+        "ALERTS_WEBPUSH_PROVIDER", "app.providers.webpush_stub"
+    ),
 }
 
 
