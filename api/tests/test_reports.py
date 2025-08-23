@@ -23,7 +23,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.app import routes_reports
 from api.app.db.tenant import get_engine
 from api.app import models_tenant
-from api.app.models_tenant import Invoice, Payment
+from api.app.models_tenant import (
+    Invoice,
+    Payment,
+    Category,
+    MenuItem,
+    Order,
+    OrderItem,
+    OrderStatus,
+)
+from api.app.services import billing_service
 
 os.environ.setdefault("POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db")
 
@@ -83,6 +92,74 @@ async def seeded_session(tenant_session):
     return tenant_session
 
 
+@pytest.fixture
+async def gst_seeded_session(tenant_session):
+    cat = Category(name="Food", sort=1)
+    tenant_session.add(cat)
+    await tenant_session.flush()
+
+    item1 = MenuItem(
+        category_id=cat.id,
+        name="Item1",
+        price=100,
+        gst_rate=5,
+        hsn_sac="1001",
+        is_veg=False,
+    )
+    item2 = MenuItem(
+        category_id=cat.id,
+        name="Item2",
+        price=200,
+        gst_rate=12,
+        hsn_sac="2002",
+        is_veg=False,
+    )
+    tenant_session.add_all([item1, item2])
+    await tenant_session.flush()
+
+    order = Order(table_id=1, status=OrderStatus.NEW)
+    tenant_session.add(order)
+    await tenant_session.flush()
+
+    oi1 = OrderItem(
+        order_id=order.id,
+        item_id=item1.id,
+        name_snapshot=item1.name,
+        price_snapshot=item1.price,
+        qty=2,
+        status="served",
+    )
+    oi2 = OrderItem(
+        order_id=order.id,
+        item_id=item2.id,
+        name_snapshot=item2.name,
+        price_snapshot=item2.price,
+        qty=1,
+        status="served",
+    )
+    tenant_session.add_all([oi1, oi2])
+    await tenant_session.flush()
+
+    bill = billing_service.compute_bill(
+        [
+            {"qty": 2, "price": 100, "gst": 5},
+            {"qty": 1, "price": 200, "gst": 12},
+        ],
+        "reg",
+    )
+    invoice = Invoice(
+        order_group_id=order.id,
+        number="INV1",
+        bill_json=bill,
+        gst_breakup=bill.get("tax_breakup"),
+        total=bill["total"],
+        created_at=datetime(2024, 1, 15, tzinfo=timezone.utc),
+    )
+    tenant_session.add(invoice)
+    await tenant_session.commit()
+    return tenant_session
+
+
 @pytest.mark.anyio
 async def test_z_report_csv(seeded_session, monkeypatch):
     monkeypatch.setenv("DEFAULT_TZ", "UTC")
@@ -100,3 +177,24 @@ async def test_z_report_csv(seeded_session, monkeypatch):
         rows = list(csv.reader(io.StringIO(resp.text)))
         assert rows[0] == ["invoice_no", "subtotal", "tax", "total", "payments", "settled"]
         assert rows[1] == ["INV1", "100.0", "5.0", "105.0", "cash:105.0", "True"]
+
+
+@pytest.mark.anyio
+async def test_gst_monthly_report_csv(gst_seeded_session, monkeypatch):
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        yield gst_seeded_session
+
+    monkeypatch.setattr(routes_reports, "_session", fake_session)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(
+            "/api/outlet/demo/reports/gst/monthly?month=2024-01&gst_mode=reg"
+        )
+        assert resp.status_code == 200
+        rows = list(csv.reader(io.StringIO(resp.text)))
+        assert rows[0] == ["hsn", "taxable_value", "cgst", "sgst", "total"]
+        assert rows[1] == ["1001", "200.0", "5.0", "5.0", "210.0"]
+        assert rows[2] == ["2002", "200.0", "12.0", "12.0", "224.0"]
+        assert rows[3] == ["TOTAL", "400.0", "17.0", "17.0", "434.0"]
