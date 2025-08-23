@@ -14,6 +14,9 @@
 ## Day Close (Z-Report)
 - Admin/Cashier → Reports → Z-report → auto-email; verify totals.
 
+## Owner Daybook
+- Admin → Reports → Daybook PDF → print or email daily summary.
+
 ## Verify Subscription Payment
 - Super-Admin → Payment Proof → mark verified → extend subscription.
 

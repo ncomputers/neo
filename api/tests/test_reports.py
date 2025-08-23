@@ -198,3 +198,33 @@ async def test_gst_monthly_report_csv(gst_seeded_session, monkeypatch):
         assert rows[1] == ["1001", "200.0", "5.0", "5.0", "210.0"]
         assert rows[2] == ["2002", "200.0", "12.0", "12.0", "224.0"]
         assert rows[3] == ["TOTAL", "400.0", "17.0", "17.0", "434.0"]
+
+
+@pytest.mark.anyio
+async def test_daybook_pdf(seeded_session, monkeypatch):
+    monkeypatch.setenv("DEFAULT_TZ", "UTC")
+
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        yield seeded_session
+
+    monkeypatch.setattr(routes_reports, "_session", fake_session)
+
+    import api.app.pdf.render as render_mod
+
+    def _raise(name):
+        raise ImportError
+
+    monkeypatch.setattr(render_mod.importlib, "import_module", _raise)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(
+            "/api/outlet/demo/reports/daybook.pdf?date=2024-01-01"
+        )
+        assert resp.status_code == 200
+        assert resp.headers["content-type"].startswith("text/html")
+        assert "Orders: 1" in resp.text
+        assert "Sales: 105.00" in resp.text
+        assert "Tax: 5.00" in resp.text
+        assert "<td>cash</td><td>105.00</td>" in resp.text
