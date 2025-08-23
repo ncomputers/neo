@@ -1,4 +1,10 @@
-"""Server-Sent Events stream for table map updates."""
+"""Server-Sent Events stream for table map updates.
+
+Each event emits ``event: table_map`` with a monotonically increasing
+``id``. Clients may reconnect using the ``Last-Event-ID`` header to
+resume the sequence; when the server lacks history to bridge the gap it
+falls back to sending a full snapshot before incremental updates.
+"""
 
 from __future__ import annotations
 
