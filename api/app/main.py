@@ -58,6 +58,7 @@ from .middlewares import (
     FeatureFlagsMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
+    IdempotencyMiddleware,
     IdempotencyMetricsMiddleware,
     HttpErrorCounterMiddleware,
 )
@@ -148,6 +149,7 @@ app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
 app.add_middleware(FeatureFlagsMiddleware)
+app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
