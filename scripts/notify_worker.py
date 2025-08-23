@@ -8,6 +8,7 @@ Environment variables:
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import sys
@@ -25,9 +26,16 @@ sys.path.append(str(BASE_DIR / "api"))
 from app.models_master import NotificationOutbox, NotificationRule  # type: ignore  # noqa: E402
 
 
+PROVIDERS = {
+    "whatsapp": os.getenv(
+        "ALERTS_WHATSAPP_PROVIDER", "app.providers.whatsapp_stub"
+    ),
+    "sms": os.getenv("ALERTS_SMS_PROVIDER", "app.providers.sms_stub"),
+}
+
 def _deliver(rule: NotificationRule, payload: dict) -> None:
     """Send a notification according to its rule."""
-    if rule.channel in {"console", "whatsapp_stub", "sms_stub"}:
+    if rule.channel == "console":
         print(json.dumps(payload))
     elif rule.channel == "webhook":
         url = (rule.config or {}).get("url")
@@ -39,6 +47,20 @@ def _deliver(rule: NotificationRule, payload: dict) -> None:
         except Exception as exc:  # Network or HTTP error
             # In hermetic/offline environments we still mark as delivered
             print(f"webhook delivery failed: {exc}")
+    else:
+        module_name = PROVIDERS.get(rule.channel)
+        if not module_name:
+            print(f"unknown channel: {rule.channel}")
+            return
+        try:
+            provider = importlib.import_module(module_name)
+        except Exception as exc:
+            print(f"provider import failed: {exc}")
+            return
+        try:
+            provider.send(None, payload, (rule.config or {}).get("target"))
+        except Exception as exc:
+            print(f"provider send failed: {exc}")
 
 
 def process_once(engine) -> None:

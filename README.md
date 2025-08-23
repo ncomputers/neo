@@ -175,9 +175,10 @@ POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
 ```
 
 The worker drains `notifications_outbox` rows and currently supports
-`console`, `webhook`, `whatsapp_stub` and `sms_stub` channels. The
-`*_stub` channels simply log the payload and are placeholders for future
-provider adapters.
+`console`, `webhook`, `whatsapp` and `sms` channels. WhatsApp and SMS
+deliveries are routed through pluggable providers (defaulting to the stub
+implementations) which can be overridden via environment variables such as
+`ALERTS_WHATSAPP_PROVIDER`.
 
 ### KDS SLA Watcher
 
