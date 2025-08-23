@@ -37,7 +37,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from redis.asyncio import from_url
 from .db import SessionLocal
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from config import get_settings
 from .auth import (
@@ -411,6 +411,18 @@ async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> di
 
 @app.get("/health")
 async def health() -> dict:
+    return ok({"status": "ok"})
+
+
+@app.get("/ready")
+async def ready() -> dict:
+    """Return readiness status after a simple DB ping."""
+
+    try:
+        with SessionLocal() as session:
+            session.execute(text("SELECT 1"))
+    except Exception as exc:  # pragma: no cover - best effort only
+        raise HTTPException(status_code=503, detail="DB not ready") from exc
     return ok({"status": "ok"})
 
 

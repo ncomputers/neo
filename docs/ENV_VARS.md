@@ -9,15 +9,18 @@ The application relies on the following environment variables:
 | `POSTGRES_SUPER_URL` (optional) | Superuser connection URL used when creating databases. Not required for SQLite. |  |
 | `DEFAULT_TZ` | Default timezone for application processes. | `UTC` |
 | `JWT_SECRET` | Secret key used to sign JWT tokens. | `your_jwt_secret_key` |
+| `JWKS_URL` (optional) | JWKS endpoint for verifying JWT signatures. | `https://auth.example.com/jwks.json` |
 | `REDIS_URL` | URL for Redis instance. | `redis://localhost:6379/0` |
 | `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Defaults to `*`. | `https://example.com,https://app.com` |
 | `ADMIN_API_ENABLED` | Enables superadmin endpoints when set to `true`. | `false` |
+| `SSE_KEEPALIVE_INTERVAL` | Seconds between SSE keepalive comments. | `15` |
+| `EXPORT_MAX_ROWS` | Maximum rows included in export files. | `1000` |
 
 ## JWT/JOSE
 
 - Tokens are signed using the `HS256` algorithm.
 - Access tokens expire after 60 minutes.
-- The signing key is provided via `JWT_SECRET`.
+ - The signing key is provided via `JWT_SECRET` or `JWKS_URL`.
 
 ## Redis Channels
 

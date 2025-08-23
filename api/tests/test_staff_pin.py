@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from api.app.main import app, SessionLocal
-from api.app.models_tenant import Staff
+from api.app.models_tenant import AuditTenant, Staff
 from api.app.staff_auth import create_staff_token
 
 client = TestClient(app)
@@ -75,6 +75,12 @@ def test_pin_throttle_and_reset():
         headers=headers,
     )
     assert resp.status_code == 200
+
+    with SessionLocal() as session:
+        row = session.query(AuditTenant).filter_by(action="set_pin").first()
+        assert row is not None
+        assert row.actor == str(manager_id)
+        assert row.meta["target"] == str(staff_id)
 
     resp = client.post(
         f"/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "4321"}

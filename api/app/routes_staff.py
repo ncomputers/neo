@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from .audit import log_event
 from .db import SessionLocal
-from .models_tenant import Staff
+from .models_tenant import AuditTenant, Staff
 from .security.ratelimit import allow
 from .staff_auth import StaffToken, create_staff_token, role_required
 from .utils.responses import err, ok
@@ -37,7 +37,7 @@ async def login(tenant: str, payload: LoginPayload, request: Request) -> dict:
 
     redis = request.app.state.redis
     ip = request.client.host if request.client else "unknown"
-    throttle_key = f"staff:{payload.code}"
+    throttle_key = str(payload.code)
     existing = await redis.get(f"ratelimit:{ip}:{throttle_key}")
     if existing and int(existing) >= 5:
         return JSONResponse(
@@ -47,12 +47,20 @@ async def login(tenant: str, payload: LoginPayload, request: Request) -> dict:
     with SessionLocal() as session:
         staff = session.get(Staff, payload.code)
         if not staff or not staff.active:
-            await allow(redis, ip, throttle_key, rate_per_min=0.5, burst=5)
+            allowed = await allow(redis, ip, throttle_key, rate_per_min=0.5, burst=5)
+            if not allowed:
+                return JSONResponse(
+                    err("AUTH_THROTTLED", "TooManyRequests"), status_code=403
+                )
             raise HTTPException(status_code=400, detail="Invalid credentials")
         try:
             ph.verify(staff.pin_hash, payload.pin)
         except Exception:  # pragma: no cover - defensive
-            await allow(redis, ip, throttle_key, rate_per_min=0.5, burst=5)
+            allowed = await allow(redis, ip, throttle_key, rate_per_min=0.5, burst=5)
+            if not allowed:
+                return JSONResponse(
+                    err("AUTH_THROTTLED", "TooManyRequests"), status_code=403
+                )
             raise HTTPException(status_code=400, detail="Invalid credentials")
     token = create_staff_token(staff.id, staff.role)
     return ok(StaffToken(access_token=token, role=staff.role, staff_id=staff.id))
@@ -73,10 +81,17 @@ async def set_pin(
         if target is None:
             raise HTTPException(status_code=404, detail="Staff not found")
         target.pin_hash = ph.hash(payload.pin)
+        session.add(
+            AuditTenant(
+                actor=str(staff.staff_id),
+                action="set_pin",
+                meta={"target": str(staff_id)},
+            )
+        )
         session.commit()
 
     redis = request.app.state.redis
-    async for key in redis.scan_iter(f"ratelimit:*:staff:{staff_id}"):
+    async for key in redis.scan_iter(f"ratelimit:*:{staff_id}"):
         await redis.delete(key)
     log_event(str(staff.staff_id), "set_pin", str(staff_id))
     return ok(True)
