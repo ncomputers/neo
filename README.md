@@ -147,6 +147,11 @@ Configure and inspect notification rules:
 - `POST /api/outlet/{tenant_id}/alerts/rules` – create a rule (`event`, `channel`, `target`, `enabled`).
 - `GET /api/outlet/{tenant_id}/alerts/rules` – list configured rules.
 - `GET /api/outlet/{tenant_id}/alerts/outbox?status=queued|delivered` – list recent notifications.
+- `GET /api/outlet/{tenant_id}/outbox?status=pending|delivered|failed&limit=100` – inspect notification outbox.
+- `POST /api/outlet/{tenant_id}/outbox/{id}/retry` – reset a notification for another delivery attempt.
+- `GET /api/outlet/{tenant_id}/dlq?limit=100` – view dead-lettered notifications.
+- `POST /api/outlet/{tenant_id}/dlq/{id}/requeue` – move a dead-lettered event back to the outbox.
+- `DELETE /api/outlet/{tenant_id}/dlq/{id}` – discard a dead-lettered event.
 
 ### Table Map
 
