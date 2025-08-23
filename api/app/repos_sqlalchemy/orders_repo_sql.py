@@ -139,10 +139,11 @@ async def update_status(
 
     current = await ema_repo_sql.load(session)
     ema_val = current[1] if current else 0.0
-    eta_seconds = max(ema.eta([], ema_val) - elapsed, 0.0)
-
+    eta_seconds = ema.eta([], ema_val) - elapsed
     if new_status in {OrderStatus.READY.value, OrderStatus.SERVED.value}:
         eta_seconds = 0.0
+    else:
+        eta_seconds = max(eta_seconds, 0.0)
 
     from ..main import redis_client  # lazy import to avoid circular deps
 

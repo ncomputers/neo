@@ -169,8 +169,8 @@ Connect to `ws://localhost:8000/tables/{id}/ws` to receive live order
 notifications. Messages are fanned out via Redis channels named
 `rt:update:{table_code}` and include the `order_id`, current `status` and
 an `eta_secs` field. The ETA is computed from an exponential moving
-average and decreases with elapsed prep time, zeroing out when an order is
-`ready` or `served`.
+average and decreases with elapsed prep time. It never goes below zero and
+hits exactly `0` when an order is `ready` or `served`.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
 
