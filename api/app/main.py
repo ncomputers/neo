@@ -81,6 +81,7 @@ from .routes_tables_sse import router as tables_sse_router
 from .routes_version import router as version_router
 from .routes_staff import router as staff_router
 from .routes_dashboard import router as dashboard_router
+from .routes_ready import router as ready_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -412,20 +413,6 @@ async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> di
 @app.get("/health")
 async def health() -> dict:
     return ok({"status": "ok"})
-
-
-@app.get("/ready")
-async def ready() -> dict:
-    """Return readiness status after a simple DB ping."""
-
-    try:
-        with SessionLocal() as session:
-            session.execute(text("SELECT 1"))
-    except Exception as exc:  # pragma: no cover - best effort only
-        raise HTTPException(status_code=503, detail="DB not ready") from exc
-    return ok({"status": "ok"})
-
-
 @app.websocket("/tables/{table_code}/ws")
 async def table_ws(websocket: WebSocket, table_code: str) -> None:
     """Stream order status updates for ``table_code``."""
@@ -682,6 +669,7 @@ app.include_router(counter_guest_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(hotel_guest_router)
+app.include_router(ready_router)
 app.include_router(invoice_pdf_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)

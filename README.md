@@ -2,7 +2,7 @@
 
 This repository contains three main services:
 
-- `api/` – FastAPI application with a `/health` endpoint, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
+- `api/` – FastAPI application with `/health` and `/ready` endpoints, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
 - `pwa/` – React + Tailwind front end with a placeholder home page.
 - `ops/` – Docker Compose for local development.
 
@@ -42,7 +42,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Visit <http://localhost:8000/health> to verify the service.
+Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
 
 All API responses use a standard envelope:
 
