@@ -202,10 +202,5 @@ def build_invoice_context(
             invoice["tax_lines"].append(
                 {"label": f"SGST {half_rate}%", "amount": half_amount}
             )
-    elif gst_mode == "comp":
-        total_tax = round(bill["total"] - bill["subtotal"], 2)
-        invoice["tax_lines"].append(
-            {"label": "Composition Tax Included", "amount": total_tax}
-        )
 
     return invoice

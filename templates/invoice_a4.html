@@ -22,17 +22,19 @@
       {% endfor %}
     </table>
     <p>Subtotal: {{ invoice['subtotal'] }}</p>
-    {% for line in invoice['tax_lines'] %}
+    {% if invoice['gst_mode'] == 'reg' %}
+      {% for line in invoice['tax_lines'] %}
       <p>{{ line.label }}: {{ line.amount }}</p>
-    {% endfor %}
+      {% endfor %}
+    {% endif %}
     {% if invoice.get('rounding_adjustment') %}
       <p>Rounding Adj.: {{ invoice['rounding_adjustment'] }}</p>
     {% endif %}
     <p>Total: {{ invoice['grand_total'] }}</p>
     {% if invoice['gst_mode'] == 'comp' %}
-      <p>Composition Tax Included</p>
+      <p>Composition tax included</p>
     {% elif invoice['gst_mode'] == 'unreg' %}
-      <p>GST not applicable</p>
+      <p>Tax not applicable</p>
     {% endif %}
   </body>
 </html>
