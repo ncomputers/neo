@@ -1,8 +1,8 @@
 # Web Push Notifications
 
 Guest devices can register for Web Push updates so they are alerted when an
-order is ready. Subscriptions are stored in Redis and delivery is currently a
-stub that logs activity.
+order is ready. Subscriptions are stored in Redis and an outbox event is queued
+for delivery. The worker currently stubs the send by logging activity.
 
 ## Subscribe
 
@@ -20,7 +20,8 @@ POST /api/outlet/{tenant}/push/subscribe?table={code}
 ## Order Ready
 
 When an order transitions to `READY` and a subscription exists for the table,
-a background worker logs `web-push queued`.
+an outbox item with channel `webpush` is queued. The notification worker logs
+`web-push dispatched` when processing this stub event.
 
 ## VAPID Keys
 
