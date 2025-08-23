@@ -7,8 +7,12 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from datetime import datetime
 from io import StringIO
+import asyncio
 import csv
 import os
+import subprocess
+import sys
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -55,5 +59,17 @@ async def daily_z_report(tenant_id: str, date: str, format: str = "csv"):
     response.headers["Content-Disposition"] = "attachment; filename=z-report.csv"
     await notifications.enqueue(tenant_id, "day.close", {"date": date})
     return response
+
+
+@router.post("/api/outlet/{tenant_id}/digest/run")
+async def run_digest(tenant_id: str, date: str | None = None) -> dict:
+    """Trigger the daily digest script for ``tenant_id``."""
+    root = Path(__file__).resolve().parents[2]
+    script = root / "scripts" / "daily_digest.py"
+    cmd = [sys.executable, str(script), "--tenant", tenant_id]
+    if date:
+        cmd.extend(["--date", date])
+    await asyncio.to_thread(subprocess.run, cmd, check=True)
+    return {"status": "ok"}
 
 
