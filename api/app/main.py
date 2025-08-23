@@ -85,6 +85,7 @@ from .routes_tables_sse import router as tables_sse_router
 from .routes_version import router as version_router
 from .routes_staff import router as staff_router
 from .routes_dashboard import router as dashboard_router
+from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_ready import router as ready_router
 from .routes_print import router as print_router
 
@@ -704,6 +705,7 @@ app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
 app.include_router(dashboard_router)
+app.include_router(dashboard_charts_router)
 app.include_router(tables_map_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
