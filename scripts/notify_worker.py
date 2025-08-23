@@ -14,8 +14,6 @@ import json
 import os
 import sys
 import time
-import hashlib
-import hmac
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -36,6 +34,7 @@ from api.app.routes_metrics import (  # type: ignore  # noqa: E402
     notifications_outbox_delivered_total,
     notifications_outbox_failed_total,
 )
+from app.utils.webhook_signing import sign  # type: ignore  # noqa: E402
 
 
 PROVIDER_REGISTRY = {
@@ -62,17 +61,6 @@ if redis is not None:
             REDIS_CLIENT = redis.from_url(redis_url)
         except Exception:  # pragma: no cover - connection issues
             REDIS_CLIENT = None
-
-
-def sign_webhook(body: str, secret: str, timestamp: str | None = None) -> tuple[str, str]:
-    """Return timestamp and signature header for a webhook body."""
-    ts = timestamp or str(int(time.time()))
-    digest = hmac.new(
-        secret.encode(), f"{ts}.{body}".encode(), hashlib.sha256
-    ).hexdigest()
-    return ts, f"sha256={digest}"
-
-
 def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
     """Send a notification according to its rule."""
     payload = event.payload
@@ -87,16 +75,17 @@ def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
         body = json.dumps(payload, separators=(",", ":"))
         headers = {"Content-Type": "application/json"}
         if secret:
-            ts, sig = sign_webhook(body, secret)
-            headers["X-Webhook-Timestamp"] = ts
+            ts = int(time.time())
+            sig = sign(secret, ts, body.encode())
+            headers["X-Webhook-Timestamp"] = str(ts)
             headers["X-Webhook-Signature"] = sig
-            nonce = f"{ts}.{sig.split('=', 1)[1]}"
+            digest = sig.split("=", 1)[1]
             if REDIS_CLIENT is not None:
                 try:
-                    REDIS_CLIENT.setex(nonce, 300, "1")
+                    REDIS_CLIENT.setex(f"wh:nonce:{ts}:{digest}", 300, "1")
                 except RedisError:  # pragma: no cover - redis failure
                     pass
-        requests.post(url, data=body, headers=headers, timeout=5).raise_for_status()
+        requests.post(url, data=body.encode(), headers=headers, timeout=5).raise_for_status()
     elif rule.channel in PROVIDER_REGISTRY:
         module = importlib.import_module(PROVIDER_REGISTRY[rule.channel])
         module.send(event, payload, target)
