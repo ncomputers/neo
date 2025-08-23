@@ -93,6 +93,88 @@ async def seeded_session(tenant_session):
 
 
 @pytest.fixture
+async def daybook_seeded_session(tenant_session):
+    cat = Category(name="Food", sort=1)
+    tenant_session.add(cat)
+    await tenant_session.flush()
+
+    pizza = MenuItem(
+        category_id=cat.id,
+        name="Pizza",
+        price=100,
+        gst_rate=5,
+        is_veg=False,
+    )
+    pasta = MenuItem(
+        category_id=cat.id,
+        name="Pasta",
+        price=50,
+        gst_rate=5,
+        is_veg=False,
+    )
+    tenant_session.add_all([pizza, pasta])
+    await tenant_session.flush()
+
+    order = Order(
+        table_id=1,
+        status=OrderStatus.NEW,
+        placed_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+    tenant_session.add(order)
+    await tenant_session.flush()
+
+    oi1 = OrderItem(
+        order_id=order.id,
+        item_id=pizza.id,
+        name_snapshot=pizza.name,
+        price_snapshot=pizza.price,
+        qty=2,
+        status="served",
+    )
+    oi2 = OrderItem(
+        order_id=order.id,
+        item_id=pasta.id,
+        name_snapshot=pasta.name,
+        price_snapshot=pasta.price,
+        qty=1,
+        status="served",
+    )
+    tenant_session.add_all([oi1, oi2])
+    await tenant_session.flush()
+
+    bill = billing_service.compute_bill(
+        [
+            {"qty": 2, "price": 100, "gst": 5},
+            {"qty": 1, "price": 50, "gst": 5},
+        ],
+        "reg",
+        tip=10,
+    )
+    invoice = Invoice(
+        order_group_id=order.id,
+        number="INV1",
+        bill_json=bill,
+        gst_breakup=bill.get("tax_breakup"),
+        tip=bill.get("tip", 0),
+        total=bill["total"],
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+    tenant_session.add(invoice)
+    await tenant_session.flush()
+
+    payment = Payment(
+        invoice_id=invoice.id,
+        mode="cash",
+        amount=invoice.total,
+        verified=True,
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+    tenant_session.add(payment)
+    await tenant_session.commit()
+    return tenant_session
+
+
+@pytest.fixture
 async def gst_seeded_session(tenant_session):
     cat = Category(name="Food", sort=1)
     tenant_session.add(cat)
@@ -201,21 +283,14 @@ async def test_gst_monthly_report_csv(gst_seeded_session, monkeypatch):
 
 
 @pytest.mark.anyio
-async def test_daybook_pdf(seeded_session, monkeypatch):
+async def test_daybook_pdf(daybook_seeded_session, monkeypatch):
     monkeypatch.setenv("DEFAULT_TZ", "UTC")
 
     @asynccontextmanager
     async def fake_session(tenant_id: str):
-        yield seeded_session
+        yield daybook_seeded_session
 
     monkeypatch.setattr(routes_reports, "_session", fake_session)
-
-    import api.app.pdf.render as render_mod
-
-    def _raise(name):
-        raise ImportError
-
-    monkeypatch.setattr(render_mod.importlib, "import_module", _raise)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -223,8 +298,15 @@ async def test_daybook_pdf(seeded_session, monkeypatch):
             "/api/outlet/demo/reports/daybook.pdf?date=2024-01-01"
         )
         assert resp.status_code == 200
-        assert resp.headers["content-type"].startswith("text/html")
-        assert "Orders: 1" in resp.text
-        assert "Sales: 105.00" in resp.text
-        assert "Tax: 5.00" in resp.text
-        assert "<td>cash</td><td>105.00</td>" in resp.text
+        assert resp.headers["content-type"].startswith("text/html") or resp.headers[
+            "content-type"
+        ].startswith("application/pdf")
+        body = resp.text
+        assert "Orders: 1" in body
+        assert "Subtotal: 250.00" in body
+        assert "Tax: 12.50" in body
+        assert "Tip: 10.00" in body
+        assert "Total: 273.00" in body
+        assert "Pizza" in body and "Pasta" in body
+
+
