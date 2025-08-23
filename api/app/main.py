@@ -67,7 +67,7 @@ from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_invoice_pdf import router as invoice_pdf_router
-from .routes_kot_pdf import router as kot_pdf_router
+from .routes_kot import router as kot_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_backup import router as backup_router
 from .routes_reports import router as reports_router
@@ -689,7 +689,7 @@ app.include_router(staff_router)
 app.include_router(hotel_guest_router)
 app.include_router(ready_router)
 app.include_router(invoice_pdf_router)
-app.include_router(kot_pdf_router)
+app.include_router(kot_router)
 app.include_router(kds_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
