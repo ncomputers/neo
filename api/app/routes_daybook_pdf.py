@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone, time
 import os
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, HTTPException
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from zoneinfo import ZoneInfo
@@ -40,7 +40,10 @@ async def owner_daybook_pdf(tenant_id: str, date: str) -> Response:
     tz = os.getenv("DEFAULT_TZ", "UTC")
     day = datetime.strptime(date, "%Y-%m-%d").date()
     async with _session(tenant_id) as session:
-        rows = await invoices_repo_sql.list_day(session, day, tz)
+        try:
+            rows = await invoices_repo_sql.list_day(session, day, tz, tenant_id)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="forbidden") from None
 
         tzinfo = ZoneInfo(tz)
         start = datetime.combine(day, time.min, tzinfo).astimezone(timezone.utc)

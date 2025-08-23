@@ -45,7 +45,10 @@ async def _session(tenant_id: str):
 async def list_queue(tenant_id: str) -> dict:
     """Return active orders for the KDS queue view."""
     async with _session(tenant_id) as session:
-        orders = await orders_repo_sql.list_active(session)
+        try:
+            orders = await orders_repo_sql.list_active(session, tenant_id)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="forbidden") from None
     return ok(orders)
 
 

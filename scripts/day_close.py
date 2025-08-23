@@ -39,7 +39,7 @@ async def _compute_totals(tenant: str, date_str: str) -> dict:
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     try:
         async with sessionmaker() as session:
-            rows = await invoices_repo_sql.list_day(session, day, tz)
+            rows = await invoices_repo_sql.list_day(session, day, tz, tenant)
     finally:
         await engine.dispose()
 

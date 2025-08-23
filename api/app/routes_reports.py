@@ -46,7 +46,10 @@ async def daily_z_report(tenant_id: str, date: str, format: str = "csv"):
     tz = os.getenv("DEFAULT_TZ", "UTC")
     day = datetime.strptime(date, "%Y-%m-%d").date()
     async with _session(tenant_id) as session:
-        rows = await invoices_repo_sql.list_day(session, day, tz)
+        try:
+            rows = await invoices_repo_sql.list_day(session, day, tz, tenant_id)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="forbidden") from None
     output = StringIO()
     writer = csv.writer(output)
     writer.writerow(["invoice_no", "subtotal", "tax", "total", "payments", "settled"])

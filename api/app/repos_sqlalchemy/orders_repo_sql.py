@@ -79,8 +79,12 @@ async def create_order(
     return order.id
 
 
-async def list_active(session: AsyncSession) -> List[OrderSummary]:
-    """Return all active orders as ``OrderSummary`` objects."""
+async def list_active(session: AsyncSession, tenant_id: str) -> List[OrderSummary]:
+    """Return all active orders as ``OrderSummary`` objects for ``tenant_id``."""
+
+    from . import TenantGuard
+
+    TenantGuard.assert_tenant(session, tenant_id)
 
     active_statuses = [
         OrderStatus.PLACED.value,

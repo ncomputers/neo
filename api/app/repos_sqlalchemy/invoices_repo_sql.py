@@ -124,9 +124,17 @@ async def add_payment(
 
 
 async def list_day(
-    session: AsyncSession, day: date, tz: str = "UTC"
+    session: AsyncSession, day: date, tz: str = "UTC", tenant_id: str | None = None
 ) -> list[dict]:
-    """Return invoices and payments for ``day`` in ``tz`` timezone."""
+    """Return invoices and payments for ``day`` in ``tz`` timezone.
+
+    The ``tenant_id`` argument is used purely for guard assertions to ensure the
+    session is bound to the correct tenant database.
+    """
+
+    from . import TenantGuard
+
+    TenantGuard.assert_tenant(session, tenant_id or "")
 
     tzinfo = ZoneInfo(tz)
     start = datetime.combine(day, time.min, tzinfo).astimezone(timezone.utc)
