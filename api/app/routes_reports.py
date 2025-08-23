@@ -17,6 +17,7 @@ from .db.tenant import get_engine
 from .models_tenant import Invoice, MenuItem, OrderItem
 from .repos_sqlalchemy import invoices_repo_sql
 from .services import notifications
+from .pdf.render import render_template
 
 router = APIRouter()
 
@@ -33,6 +34,39 @@ async def _session(tenant_id: str):
             yield session
     finally:
         await engine.dispose()
+
+
+@router.get("/api/outlet/{tenant_id}/reports/daybook.pdf")
+async def owner_daybook_pdf(tenant_id: str, date: str):
+    """Return a daily owner daybook in PDF or HTML format."""
+
+    tz = os.getenv("DEFAULT_TZ", "UTC")
+    day = datetime.strptime(date, "%Y-%m-%d").date()
+    async with _session(tenant_id) as session:
+        rows = await invoices_repo_sql.list_day(session, day, tz)
+
+    orders = len(rows)
+    sales = sum(r["total"] for r in rows)
+    tax = sum(r["tax"] for r in rows)
+    payments: dict[str, float] = {}
+    for r in rows:
+        for p in r["payments"]:
+            payments[p["mode"]] = payments.get(p["mode"], 0) + p["amount"]
+
+    content, mimetype = render_template(
+        "daybook_a4.html",
+        {
+            "date": date,
+            "orders": orders,
+            "sales": sales,
+            "tax": tax,
+            "payments": payments,
+        },
+    )
+    response = Response(content=content, media_type=mimetype)
+    ext = "pdf" if mimetype == "application/pdf" else "html"
+    response.headers["Content-Disposition"] = f"attachment; filename=daybook.{ext}"
+    return response
 
 
 @router.get("/api/outlet/{tenant_id}/reports/z")

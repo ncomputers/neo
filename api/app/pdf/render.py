@@ -20,6 +20,19 @@ _TEMPLATE_MAP = {
 }
 
 
+def render_template(template_name: str, context: dict) -> Tuple[bytes, str]:
+    """Render ``context`` using ``template_name`` to PDF or HTML."""
+
+    template = _env.get_template(template_name)
+    html = template.render(**context)
+    try:
+        weasyprint = importlib.import_module("weasyprint")
+        pdf_bytes = weasyprint.HTML(string=html).write_pdf()
+        return pdf_bytes, "application/pdf"
+    except Exception:
+        return html.encode("utf-8"), "text/html"
+
+
 def render_invoice(invoice_json: dict, size: Literal["80mm", "A4"] = "80mm") -> Tuple[bytes, str]:
     """Render ``invoice_json`` to PDF or HTML.
 
