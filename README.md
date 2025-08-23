@@ -264,7 +264,7 @@ rendered HTML.
 
 ### KOT PDFs
 
-Kitchen Order Tickets for counter orders can be printed through
+Kitchen Order Tickets for table, room or counter orders can be printed through
 ``GET /api/outlet/{tenant}/kot/{order_id}.pdf``. The route returns an 80mm
 render suitable for thermal printers and falls back to HTML when PDF
 generation is not available.
