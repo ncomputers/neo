@@ -86,6 +86,7 @@ from .routes_version import router as version_router
 from .routes_staff import router as staff_router
 from .routes_dashboard import router as dashboard_router
 from .routes_ready import router as ready_router
+from .routes_print import router as print_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -708,6 +709,7 @@ app.include_router(tables_sse_router)
 app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(backup_router)
+app.include_router(print_router)
 
 # Reports domain
 app.include_router(reports_router)
