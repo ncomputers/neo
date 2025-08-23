@@ -9,10 +9,11 @@ from pydantic import BaseModel
 
 from .audit import log_event
 from .db import SessionLocal
-from .models_tenant import AuditTenant, Staff
+from .models_tenant import Staff
 from .security.ratelimit import allow
 from .staff_auth import StaffToken, create_staff_token, role_required
 from .utils.responses import err, ok
+from .utils.audit import audit
 
 router = APIRouter(prefix="/api/outlet/{tenant}/staff")
 ph = PasswordHasher()
@@ -67,6 +68,7 @@ async def login(tenant: str, payload: LoginPayload, request: Request) -> dict:
 
 
 @router.post("/{staff_id}/set_pin")
+@audit("set_pin")
 async def set_pin(
     tenant: str,
     staff_id: int,
@@ -81,13 +83,6 @@ async def set_pin(
         if target is None:
             raise HTTPException(status_code=404, detail="Staff not found")
         target.pin_hash = ph.hash(payload.pin)
-        session.add(
-            AuditTenant(
-                actor=str(staff.staff_id),
-                action="set_pin",
-                meta={"target": str(staff_id)},
-            )
-        )
         session.commit()
 
     redis = request.app.state.redis

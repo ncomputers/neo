@@ -8,7 +8,8 @@ Body: `{ "pin": "1234" }`
 
 Requires `admin` or `manager` staff token. Updates the staff member's PIN,
 clears any login throttle for that staff member, and records the change in the
-audit log.
+audit log including the acting staff ID and role along with the target staff
+member.
 
 ## Login Throttling
 

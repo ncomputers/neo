@@ -53,12 +53,25 @@ def audit(action: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
             }
             result = await func(**call_kwargs)
             if isinstance(result, dict) and result.get("ok") is True:
-                actor = getattr(bound.arguments.get("user"), "username", "guest")
+                if "staff" in bound.arguments:
+                    staff = bound.arguments["staff"]
+                    actor = f"{getattr(staff, 'staff_id', 'unknown')}:{getattr(staff, 'role', 'unknown')}"
+                elif "user" in bound.arguments:
+                    user = bound.arguments["user"]
+                    actor = f"{getattr(user, 'username', 'guest')}:{getattr(user, 'role', 'guest')}"
+                else:
+                    actor = "guest"
+                targets = {
+                    k: str(v)
+                    for k, v in bound.arguments.items()
+                    if k not in {"tenant", "tenant_id", "request", "user", "staff"}
+                    and k.endswith("id")
+                }
                 meta = {"path": request.url.path, "payload": payload}
+                if targets:
+                    meta["target"] = targets
                 with SessionLocal() as session:
-                    session.add(
-                        AuditTenant(actor=actor, action=action, meta=meta)
-                    )
+                    session.add(AuditTenant(actor=actor, action=action, meta=meta))
                     session.commit()
             return result
 

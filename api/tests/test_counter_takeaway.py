@@ -19,6 +19,7 @@ from api.app.models_tenant import (
     Counter,
     Invoice,
 )
+from api.app.auth import create_access_token
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
@@ -85,9 +86,11 @@ async def test_takeaway_flow() -> None:
         assert order_resp.status_code == 200
         order_id = order_resp.json()["data"]["order_id"]
 
+        token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
         status_resp = await client.post(
             f"/api/outlet/demo/counters/{order_id}/status",
             json={"status": "delivered"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert status_resp.status_code == 200
         assert status_resp.json()["data"]["invoice_id"] is not None
