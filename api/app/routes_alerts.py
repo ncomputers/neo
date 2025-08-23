@@ -95,6 +95,8 @@ async def list_outbox(
                 "channel": o.channel,
                 "target": o.target,
                 "status": o.status,
+                "attempts": o.attempts,
+                "next_attempt_at": o.next_attempt_at,
                 "created_at": o.created_at,
                 "delivered_at": o.delivered_at,
             }

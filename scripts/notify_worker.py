@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Background worker to deliver queued notifications.
+"""Background worker to deliver queued notifications with retries.
 
 Environment variables:
-- POSTGRES_URL: SQLAlchemy URL for the master database.
+- POSTGRES_URL: SQLAlchemy URL for the tenant database.
 - POLL_INTERVAL: Seconds between polling attempts (default: 5).
+- OUTBOX_MAX_ATTEMPTS: Max delivery attempts before moving to DLQ (default: 5).
 """
 
 from __future__ import annotations
@@ -12,49 +13,70 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, or_, select, func
 from sqlalchemy.orm import Session
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "api"))
 
-from app.models_master import NotificationOutbox, NotificationRule  # type: ignore  # noqa: E402
+from app.models_tenant import NotificationOutbox, NotificationDLQ  # type: ignore  # noqa: E402
+
+BACKOFF_SCHEDULE = [60, 300, 1800]
+MAX_ATTEMPTS = int(os.getenv("OUTBOX_MAX_ATTEMPTS", "5"))
 
 
-def _deliver(rule: NotificationRule, payload: dict) -> None:
-    """Send a notification according to its rule."""
-    if rule.channel in {"console", "whatsapp_stub", "sms_stub"}:
+def _deliver(channel: str, target: str, payload: dict) -> None:
+    """Send a notification based on its channel."""
+    if channel in {"console", "whatsapp_stub", "sms_stub"}:
         print(json.dumps(payload))
-    elif rule.channel == "webhook":
-        url = (rule.config or {}).get("url")
-        if not url:
-            print("webhook rule missing url")
-            return
-        try:
-            requests.post(url, json=payload, timeout=5).raise_for_status()
-        except Exception as exc:  # Network or HTTP error
-            # In hermetic/offline environments we still mark as delivered
-            print(f"webhook delivery failed: {exc}")
+    elif channel == "webhook":
+        requests.post(target, json=payload, timeout=5).raise_for_status()
+    else:
+        raise ValueError(f"unknown channel {channel}")
 
 
 def process_once(engine) -> None:
     """Attempt to deliver all queued notifications once."""
+    now = datetime.now(timezone.utc)
     with Session(engine) as session:
         events = session.scalars(
-            select(NotificationOutbox).where(NotificationOutbox.status == "queued").order_by(NotificationOutbox.created_at)
+            select(NotificationOutbox)
+            .where(
+                NotificationOutbox.status == "queued",
+                or_(
+                    NotificationOutbox.next_attempt_at.is_(None),
+                    NotificationOutbox.next_attempt_at <= func.now(),
+                ),
+            )
+            .order_by(NotificationOutbox.created_at)
         ).all()
         for event in events:
-            rule = session.get(NotificationRule, event.rule_id)
-            if rule is None:
+            try:
+                _deliver(event.channel, event.target, event.payload)
                 event.status = "delivered"
-                session.add(event)
-                continue
-            _deliver(rule, event.payload)
-            event.status = "delivered"
+                event.delivered_at = now
+            except Exception as exc:  # Network or channel error
+                event.attempts += 1
+                if event.attempts >= MAX_ATTEMPTS:
+                    session.add(
+                        NotificationDLQ(
+                            original_id=event.id,
+                            event=event.event,
+                            channel=event.channel,
+                            target=event.target,
+                            payload=event.payload,
+                            error=str(exc),
+                        )
+                    )
+                    session.delete(event)
+                    continue
+                backoff = BACKOFF_SCHEDULE[min(event.attempts - 1, len(BACKOFF_SCHEDULE) - 1)]
+                event.next_attempt_at = now + timedelta(seconds=backoff)
             session.add(event)
         session.commit()
 
