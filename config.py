@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     sla_color_alert: bool = False
     hide_out_of_stock_items: bool = True
     audit_retention_days: int = 30
+    vapid_public_key: str | None = None
+    vapid_private_key: str | None = None
 
 
 # Cached singleton to avoid repeated file reads

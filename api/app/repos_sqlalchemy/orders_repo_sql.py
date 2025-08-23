@@ -104,8 +104,11 @@ async def list_active(session: AsyncSession) -> List[OrderSummary]:
 
 async def update_status(
     session: AsyncSession, order_id: int, new_status: str
-) -> None:
-    """Persist a new status for ``order_id`` and timestamp it."""
+) -> str | None:
+    """Persist a new status for ``order_id`` and timestamp it.
+
+    Returns the table code for the updated order if available.
+    """
 
     field_map = {
         OrderStatus.PLACED.value: "placed_at",
@@ -126,14 +129,16 @@ async def update_status(
         .where(Order.id == order_id)
     )
     row = result.one_or_none()
-    if row is None or new_status not in {
+    if row is None:
+        return None
+
+    table_code, accepted_at = row
+    if new_status not in {
         OrderStatus.IN_PROGRESS.value,
         OrderStatus.READY.value,
         OrderStatus.SERVED.value,
     }:
-        return
-
-    table_code, accepted_at = row
+        return table_code
     now = datetime.now(timezone.utc)
     elapsed = (now - accepted_at).total_seconds() if accepted_at else 0.0
 
@@ -157,6 +162,7 @@ async def update_status(
             }
         ),
     )
+    return table_code
 
 
 async def add_round(

@@ -18,7 +18,7 @@ from db.tenant import get_engine
 from domain import OrderStatus, can_transition
 from models_tenant import Order, OrderItem
 from .hooks import order_rejection
-from .services import ema as ema_service
+from .services import ema as ema_service, push
 from repos_sqlalchemy import orders_repo_sql
 from utils.responses import ok
 from utils.audit import audit
@@ -61,7 +61,9 @@ async def _transition_order(tenant_id: str, order_id: int, dest: OrderStatus) ->
         current, accepted_at = row.status, row.accepted_at
         if not can_transition(OrderStatus(current.value), dest):
             raise HTTPException(status_code=400, detail="invalid transition")
-        await orders_repo_sql.update_status(session, order_id, dest.value)
+        table_code = await orders_repo_sql.update_status(session, order_id, dest.value)
+        if dest is OrderStatus.READY and table_code:
+            await push.notify_ready(tenant_id, table_code, order_id)
         if dest is OrderStatus.SERVED and accepted_at is not None:
             now = datetime.now(timezone.utc)
             if accepted_at.tzinfo is None:

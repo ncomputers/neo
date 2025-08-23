@@ -15,6 +15,8 @@ The application relies on the following environment variables:
 | `ADMIN_API_ENABLED` | Enables superadmin endpoints when set to `true`. | `false` |
 | `SSE_KEEPALIVE_INTERVAL` | Seconds between SSE keepalive comments. | `15` |
 | `EXPORT_MAX_ROWS` | Maximum rows included in export files. Defaults to `10000`. | `10000` |
+| `VAPID_PUBLIC_KEY` (optional) | Public key for Web Push authentication. | `BASE64_KEY` |
+| `VAPID_PRIVATE_KEY` (optional) | Private key for Web Push authentication. | `BASE64_KEY` |
 
 ## JWT/JOSE
 
