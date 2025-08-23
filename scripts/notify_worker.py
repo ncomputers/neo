@@ -8,6 +8,7 @@ Environment variables:
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import sys
@@ -30,15 +31,26 @@ from app.models_master import (  # type: ignore  # noqa: E402
 )
 
 
-def _deliver(rule: NotificationRule, payload: dict) -> None:
+PROVIDER_REGISTRY = {
+    "whatsapp": os.getenv("ALERTS_WHATSAPP_PROVIDER", "app.providers.whatsapp_stub"),
+    "sms": os.getenv("ALERTS_SMS_PROVIDER", "app.providers.sms_stub"),
+}
+
+
+def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
     """Send a notification according to its rule."""
-    if rule.channel in {"console", "whatsapp_stub", "sms_stub"}:
+    payload = event.payload
+    target = (rule.config or {}).get("target")
+    if rule.channel == "console":
         print(json.dumps(payload))
     elif rule.channel == "webhook":
         url = (rule.config or {}).get("url")
         if not url:
             raise ValueError("webhook rule missing url")
         requests.post(url, json=payload, timeout=5).raise_for_status()
+    elif rule.channel in PROVIDER_REGISTRY:
+        module = importlib.import_module(PROVIDER_REGISTRY[rule.channel])
+        module.send(event, payload, target)
     else:
         raise ValueError(f"unsupported channel {rule.channel}")
 
@@ -72,7 +84,7 @@ def process_once(engine) -> None:
                 session.add(event)
                 continue
             try:
-                _deliver(rule, event.payload)
+                _deliver(rule, event)
             except Exception as exc:
                 event.attempts += 1
                 if event.attempts > max_attempts:
