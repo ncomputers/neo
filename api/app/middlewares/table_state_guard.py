@@ -10,7 +10,7 @@ from ..db import SessionLocal
 from ..models_tenant import Table
 from ..utils.responses import err
 from ..routes_metrics import table_locked_denied_total
-from ..i18n import get_catalog, select_language
+from ..i18n import resolve_lang, get_msg
 
 
 class TableStateGuardMiddleware(BaseHTTPMiddleware):
@@ -25,8 +25,8 @@ class TableStateGuardMiddleware(BaseHTTPMiddleware):
                     table = session.query(Table).filter_by(code=token).one_or_none()
                 if table is not None and table.state != "AVAILABLE":
                     table_locked_denied_total.inc()
-                    lang = select_language(request.headers.get("Accept-Language"))
-                    msg = get_catalog(lang)["errors"]["TABLE_LOCKED"]
+                    lang = resolve_lang(request.headers.get("Accept-Language"))
+                    msg = get_msg(lang, "errors.TABLE_LOCKED")
                     return JSONResponse(
                         err("TABLE_LOCKED", msg), status_code=423
                     )

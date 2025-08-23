@@ -10,7 +10,7 @@ from starlette.status import HTTP_403_FORBIDDEN
 from ..db.master import get_session
 from ..models_master import Tenant
 from ..utils.responses import err
-from ..i18n import get_catalog, select_language
+from ..i18n import resolve_lang, get_msg
 
 
 class FeatureFlagsMiddleware(BaseHTTPMiddleware):
@@ -25,8 +25,8 @@ class FeatureFlagsMiddleware(BaseHTTPMiddleware):
                     tenant = await session.get(Tenant, tenant_id)
                 if tenant:
                     if path.startswith("/h/") and not getattr(tenant, "enable_hotel", False):
-                        lang = select_language(request.headers.get("Accept-Language"))
-                        msg = get_catalog(lang)["errors"]["FEATURE_OFF"]
+                        lang = resolve_lang(request.headers.get("Accept-Language"))
+                        msg = get_msg(lang, "errors.FEATURE_OFF")
                         return JSONResponse(
                             err("FEATURE_OFF", msg),
                             status_code=HTTP_403_FORBIDDEN,
@@ -34,8 +34,8 @@ class FeatureFlagsMiddleware(BaseHTTPMiddleware):
                     if path.startswith("/c/") and not getattr(
                         tenant, "enable_counter", False
                     ):
-                        lang = select_language(request.headers.get("Accept-Language"))
-                        msg = get_catalog(lang)["errors"]["FEATURE_OFF"]
+                        lang = resolve_lang(request.headers.get("Accept-Language"))
+                        msg = get_msg(lang, "errors.FEATURE_OFF")
                         return JSONResponse(
                             err("FEATURE_OFF", msg),
                             status_code=HTTP_403_FORBIDDEN,

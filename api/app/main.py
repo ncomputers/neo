@@ -89,7 +89,7 @@ from .routes_ready import router as ready_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
-from .i18n import get_catalog, select_language
+from .i18n import resolve_lang, get_msg
 from .hooks import order_rejection
 from .events import (
     alerts_sender,
@@ -462,7 +462,7 @@ def _guard_table_open(table_id: str, lang: str):
     with SessionLocal() as session:
         table = session.get(Table, tid)
         if table and table.state != "AVAILABLE":
-            msg = get_catalog(lang)["errors"]["TABLE_LOCKED"]
+            msg = get_msg(lang, "errors.TABLE_LOCKED")
             return JSONResponse(err("TABLE_LOCKED", msg), status_code=423)
     return None
 
@@ -491,7 +491,7 @@ async def add_to_cart(
     Multiple guests may add items concurrently by specifying a ``guest_id``.
     """
 
-    lang = select_language(accept_language)
+    lang = resolve_lang(accept_language)
     if (resp := _guard_table_open(table_id, lang)) is not None:
         return resp
     table = _table_state(table_id)
@@ -507,7 +507,7 @@ async def place_order(
 ) -> dict:
     """Move all cart items to the order, locking them from guest edits."""
 
-    lang = select_language(accept_language)
+    lang = resolve_lang(accept_language)
     if (resp := _guard_table_open(table_id, lang)) is not None:
         return resp
     table = _table_state(table_id)

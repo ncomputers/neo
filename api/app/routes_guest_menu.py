@@ -10,7 +10,7 @@ import json
 
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.responses import ok
-from .i18n import get_catalog, select_language
+from .i18n import resolve_lang, get_msg
 
 router = APIRouter()
 
@@ -56,7 +56,10 @@ async def fetch_menu(
         items = await repo.list_items(session)
         data = {"categories": categories, "items": items}
         await redis.set(cache_key, json.dumps(data), ex=60)
-    lang = select_language(accept_language)
-    data["labels"] = get_catalog(lang)["labels"]
+    lang = resolve_lang(accept_language)
+    data["labels"] = {
+        name: get_msg(lang, f"labels.{name}")
+        for name in ("menu", "order", "pay", "get_bill")
+    }
     response.headers["ETag"] = etag
     return ok(data)

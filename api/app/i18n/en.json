@@ -1,0 +1,12 @@
+{
+  "labels": {
+    "menu": "Menu",
+    "order": "Order",
+    "pay": "Pay",
+    "get_bill": "Get Bill"
+  },
+  "errors": {
+    "TABLE_LOCKED": "Table not ready",
+    "FEATURE_OFF": "Feature disabled"
+  }
+}
