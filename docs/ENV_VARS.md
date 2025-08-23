@@ -14,7 +14,7 @@ The application relies on the following environment variables:
 | `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Defaults to `*`. | `https://example.com,https://app.com` |
 | `ADMIN_API_ENABLED` | Enables superadmin endpoints when set to `true`. | `false` |
 | `SSE_KEEPALIVE_INTERVAL` | Seconds between SSE keepalive comments. | `15` |
-| `EXPORT_MAX_ROWS` | Maximum rows included in export files. | `1000` |
+| `EXPORT_MAX_ROWS` | Maximum rows included in export files. Defaults to `10000`. | `10000` |
 
 ## JWT/JOSE
 

@@ -10,6 +10,7 @@ import os
 from zipfile import ZipFile
 
 from fastapi import APIRouter, HTTPException, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from zoneinfo import ZoneInfo
@@ -18,6 +19,7 @@ from .db.tenant import get_engine
 from .models_tenant import Invoice, Payment
 from .repos_sqlalchemy import invoices_repo_sql
 from .pdf.render import render_invoice
+from .utils.responses import err
 
 router = APIRouter()
 
@@ -34,8 +36,13 @@ async def _session(tenant_id: str):
         await engine.dispose()
 
 
+DEFAULT_LIMIT = int(os.getenv("EXPORT_MAX_ROWS", "10000"))
+
+
 @router.get("/api/outlet/{tenant_id}/exports/daily")
-async def daily_export(tenant_id: str, start: str, end: str) -> Response:
+async def daily_export(
+    tenant_id: str, start: str, end: str, limit: int = DEFAULT_LIMIT
+) -> Response:
     """Return a ZIP bundle of invoices, payments and z-report rows."""
     try:
         start_date = datetime.strptime(start, "%Y-%m-%d").date()
@@ -44,6 +51,10 @@ async def daily_export(tenant_id: str, start: str, end: str) -> Response:
         raise HTTPException(status_code=400, detail="invalid date format")
     if end_date < start_date:
         raise HTTPException(status_code=400, detail="invalid range")
+    if (end_date - start_date).days > 30:
+        return JSONResponse(err("RANGE_TOO_LARGE", "Range too large"), status_code=400)
+
+    limit = min(limit, DEFAULT_LIMIT)
 
     tz = os.getenv("DEFAULT_TZ", "UTC")
     tzinfo = ZoneInfo(tz)
@@ -61,7 +72,9 @@ async def daily_export(tenant_id: str, start: str, end: str) -> Response:
                     Invoice.total,
                     Invoice.settled,
                     Invoice.created_at,
-                ).where(Invoice.created_at >= start_dt, Invoice.created_at <= end_dt)
+                )
+                .where(Invoice.created_at >= start_dt, Invoice.created_at <= end_dt)
+                .limit(limit)
             )
         ).all()
 
@@ -77,6 +90,7 @@ async def daily_export(tenant_id: str, start: str, end: str) -> Response:
                 )
                 .join(Invoice, Payment.invoice_id == Invoice.id)
                 .where(Invoice.created_at >= start_dt, Invoice.created_at <= end_dt)
+                .limit(limit)
             )
         ).all()
 
