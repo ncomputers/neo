@@ -13,6 +13,7 @@ from .auth import User, role_required
 from .db.tenant import get_engine
 from .deps.tenant import get_tenant_id
 from .utils.responses import ok
+from .i18n import resolve_lang, get_msg
 from .utils.audit import audit
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .repos_sqlalchemy import counter_orders_repo_sql
@@ -58,6 +59,7 @@ async def fetch_menu(
     request: Request,
     response: Response,
     if_none_match: str | None = Header(default=None, alias="If-None-Match"),
+    accept_language: str | None = Header(default=None, alias="Accept-Language"),
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
@@ -77,6 +79,11 @@ async def fetch_menu(
         items = await repo.list_items(session)
         data = {"categories": categories, "items": items}
         await redis.set(cache_key, json.dumps(data), ex=60)
+    lang = resolve_lang(accept_language)
+    data["labels"] = {
+        name: get_msg(lang, f"labels.{name}")
+        for name in ("menu", "order", "pay", "get_bill")
+    }
     response.headers["ETag"] = etag
     return ok(data)
 

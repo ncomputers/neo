@@ -24,8 +24,11 @@ class FeatureFlagsMiddleware(BaseHTTPMiddleware):
                 async with get_session() as session:
                     tenant = await session.get(Tenant, tenant_id)
                 if tenant:
+                    tenant_lang = getattr(tenant, "default_language", None)
                     if path.startswith("/h/") and not getattr(tenant, "enable_hotel", False):
-                        lang = resolve_lang(request.headers.get("Accept-Language"))
+                        lang = resolve_lang(
+                            request.headers.get("Accept-Language"), tenant_lang
+                        )
                         msg = get_msg(lang, "errors.FEATURE_OFF")
                         return JSONResponse(
                             err("FEATURE_OFF", msg),
@@ -34,7 +37,9 @@ class FeatureFlagsMiddleware(BaseHTTPMiddleware):
                     if path.startswith("/c/") and not getattr(
                         tenant, "enable_counter", False
                     ):
-                        lang = resolve_lang(request.headers.get("Accept-Language"))
+                        lang = resolve_lang(
+                            request.headers.get("Accept-Language"), tenant_lang
+                        )
                         msg = get_msg(lang, "errors.FEATURE_OFF")
                         return JSONResponse(
                             err("FEATURE_OFF", msg),
