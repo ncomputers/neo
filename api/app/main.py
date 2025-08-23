@@ -31,7 +31,6 @@ import importlib
 import redis.asyncio as redis
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -56,7 +55,6 @@ from .middlewares import (
     CorrelationIdMiddleware,
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
-    GuestBodyLimitMiddleware,
     FeatureFlagsMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
@@ -64,6 +62,7 @@ from .middlewares import (
     IdempotencyMetricsMiddleware,
     HttpErrorCounterMiddleware,
 )
+from .middlewares.security import SecurityMiddleware
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_guest_bill import router as guest_bill_router
@@ -137,19 +136,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 settings = get_settings()
 app = FastAPI()
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
-cors_origins = (
-    ["*"]
-    if allowed_origins == "*"
-    else [o.strip() for o in allowed_origins.split(",") if o.strip()]
-)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["X-Tenant-ID", "Authorization", "*"],
-)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)
@@ -159,11 +145,11 @@ app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
-app.add_middleware(GuestBodyLimitMiddleware)
 app.add_middleware(FeatureFlagsMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(SecurityMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
 

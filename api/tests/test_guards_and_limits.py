@@ -156,3 +156,4 @@ def test_guest_post_body_size_limit(client):
     large = b"x" * (256 * 1024 + 1)
     resp_large = client.post("/g/big", headers=headers, data=large)
     assert resp_large.status_code == 413
+    assert resp_large.json()["error"]["code"] == "BODY_TOO_LARGE"

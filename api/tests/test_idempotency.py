@@ -65,7 +65,7 @@ def test_rejects_invalid_idempotency_keys(client):
     payload = {"items": [{"item_id": "1", "qty": 1}]}
     resp = client.post("/g/T-001/order", headers=headers, json=payload)
     assert resp.status_code == 400
-    assert resp.json()["error"]["code"] == "INVALID_IDEMPOTENCY_KEY"
+    assert resp.json()["error"]["code"] == "BAD_IDEMPOTENCY_KEY"
 
 
 def test_rejects_long_idempotency_keys(client):
@@ -73,3 +73,4 @@ def test_rejects_long_idempotency_keys(client):
     payload = {"items": [{"item_id": "1", "qty": 1}]}
     resp = client.post("/g/T-001/order", headers=headers, json=payload)
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "BAD_IDEMPOTENCY_KEY"
