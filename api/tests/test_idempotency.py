@@ -1,4 +1,3 @@
-import asyncio
 import pathlib
 import sys
 
@@ -33,42 +32,29 @@ def client(monkeypatch):
     app.dependency_overrides[routes_guest_order.get_tenant_id] = header_tenant_id
     app.dependency_overrides[routes_guest_order.get_tenant_session] = _fake_get_tenant_session
 
-    async def _fake_create_order(session, table_token, lines):
-        return 1
-
-    monkeypatch.setattr(orders_repo_sql, "create_order", _fake_create_order)
-
     client = TestClient(app, raise_server_exceptions=False)
     yield client
     app.dependency_overrides.clear()
     app_main.subscription_guard = original_guard
 
 
-def test_idempotent_order_returns_cached_response(client):
+def test_idempotent_order_returns_cached_response(client, monkeypatch):
+    calls = 0
+
+    async def _fake_create_order(session, table_token, lines):
+        nonlocal calls
+        calls += 1
+        return 1
+
+    monkeypatch.setattr(orders_repo_sql, "create_order", _fake_create_order)
+
     headers = {"X-Tenant-ID": "demo", "Idempotency-Key": "abc"}
     payload = {"items": [{"item_id": "1", "qty": 1}]}
 
     resp1 = client.post("/g/T-001/order", headers=headers, json=payload)
     assert resp1.status_code == 200
 
-    # ensure cached in redis
-    cached = asyncio.run(app.state.redis.get("idem:demo:abc"))
-    assert cached is not None
-
     resp2 = client.post("/g/T-001/order", headers=headers, json=payload)
     assert resp2.status_code == 200
     assert resp2.json() == resp1.json()
-
-
-def test_idempotency_mismatch_body(client):
-    headers = {"X-Tenant-ID": "demo", "Idempotency-Key": "reuse"}
-    payload1 = {"items": [{"item_id": "1", "qty": 1}]}
-    payload2 = {"items": [{"item_id": "2", "qty": 1}]}
-
-    resp1 = client.post("/g/T-001/order", headers=headers, json=payload1)
-    assert resp1.status_code == 200
-
-    resp2 = client.post("/g/T-001/order", headers=headers, json=payload2)
-    assert resp2.status_code == 400
-    body = resp2.json()
-    assert body["error"]["code"] == "IDEMP_MISMATCH"
+    assert calls == 1

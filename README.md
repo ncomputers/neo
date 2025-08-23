@@ -198,6 +198,12 @@ average and decreases with elapsed prep time. It never goes below zero and
 hits exactly `0` when an order is `ready` or `served`.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
+### Idempotency
+
+POST requests under `/g`, `/h` and `/c` honour an `Idempotency-Key`
+header. Successful responses are cached in Redis for five minutes so that
+network retries receive the original body without creating duplicate
+records.
 
 ### Observability
 
