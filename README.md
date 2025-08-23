@@ -111,6 +111,14 @@ Download a ZIP bundle of invoices, payments and per-day totals over a date range
   returns `invoices.csv`, `payments.csv` and `z-report.csv` plus individual invoice
   PDFs (or HTML when the PDF engine is unavailable).
 
+### GST Reports
+
+Generate monthly GST summaries:
+
+- `GET /api/outlet/{tenant}/reports/gst/monthly?month=YYYY-MM` – returns a CSV
+  grouped by HSN with CGST/SGST totals for registered outlets, a single summary
+  line for composition, or totals without tax lines for unregistered outlets.
+
 ### Housekeeping
 
 Cleaning staff can reset tables after guests settle their bills:
