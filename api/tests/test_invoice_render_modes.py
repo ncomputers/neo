@@ -27,7 +27,7 @@ def test_render_regular():
     assert "HSN" in html
     assert "CGST 2.5%" in html and "SGST 2.5%" in html
     assert "Composition Scheme" not in html
-    assert "GST not applicable" not in html
+    assert "Tax not applicable" not in html
 
 
 def test_render_composition():
@@ -35,8 +35,8 @@ def test_render_composition():
     assert "GSTIN: 22AAAAA0000A1Z5 (Composition Scheme)" in html
     assert "HSN" not in html
     assert "CGST" not in html and "SGST" not in html
-    assert "Composition Tax Included" in html
-    assert "GST not applicable" not in html
+    assert "Composition tax included" in html
+    assert "Tax not applicable" not in html
 
 
 def test_render_unregistered():
@@ -44,5 +44,5 @@ def test_render_unregistered():
     assert "GSTIN" not in html
     assert "HSN" not in html
     assert "CGST" not in html and "SGST" not in html
-    assert "GST not applicable" in html
+    assert "Tax not applicable" in html
     assert "Composition Scheme" not in html

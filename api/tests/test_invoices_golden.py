@@ -21,9 +21,6 @@ def build_invoice_json(items, gst_mode, discount=0.0, tip=0.0):
             half_amount = round(amount / 2, 2)
             tax_lines.append({"label": f"CGST {half_rate}%", "amount": half_amount})
             tax_lines.append({"label": f"SGST {half_rate}%", "amount": half_amount})
-    elif gst_mode == "comp":
-        total_tax = round(bill["total"] - bill["subtotal"], 2)
-        tax_lines.append({"label": "GST", "amount": total_tax})
     grand_total = round(bill["total"] - discount, 2)
     invoice = {
         "subtotal": bill["subtotal"],
@@ -62,7 +59,7 @@ def test_composition_invoice():
     }
     assert invoice == {
         "subtotal": 400.0,
-        "tax_lines": [{"label": "GST", "amount": 0.0}],
+        "tax_lines": [],
         "grand_total": 400.0,
     }
 
