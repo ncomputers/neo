@@ -88,11 +88,25 @@ class NotificationOutbox(Base):
     rule_id = Column(UUID(as_uuid=True), ForeignKey("notification_rules.id"), nullable=False)
     payload = Column(JSON, nullable=False)
     status = Column(String, nullable=False, default="queued")
+    attempts = Column(Integer, nullable=False, default=0)
+    next_attempt_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
     rule = relationship("NotificationRule")
 
-    # TODO: add backoff and max_attempts columns for retries
+
+
+class NotificationDLQ(Base):
+    """Dead-letter queue for events that exceeded retry attempts."""
+
+    __tablename__ = "notifications_dlq"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    original_id = Column(UUID(as_uuid=True), nullable=False)
+    rule_id = Column(UUID(as_uuid=True), nullable=False)
+    payload = Column(JSON, nullable=False)
+    error = Column(String, nullable=False)
+    failed_at = Column(DateTime, server_default=func.now())
 
 
 __all__ = [
@@ -101,4 +115,5 @@ __all__ = [
     "SyncOutbox",
     "NotificationRule",
     "NotificationOutbox",
+    "NotificationDLQ",
 ]
