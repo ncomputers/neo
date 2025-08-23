@@ -20,7 +20,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from api.app import routes_reports, routes_gst_monthly
+from api.app import routes_reports, routes_gst_monthly, routes_daybook_pdf
 from api.app.db.tenant import get_engine
 from api.app import models_tenant
 from api.app.models_tenant import (
@@ -67,6 +67,7 @@ async def tenant_session() -> AsyncSession:
 app = FastAPI()
 app.include_router(routes_reports.router)
 app.include_router(routes_gst_monthly.router)
+app.include_router(routes_daybook_pdf.router)
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
@@ -116,16 +117,16 @@ async def daybook_seeded_session(tenant_session):
     tenant_session.add_all([pizza, pasta])
     await tenant_session.flush()
 
-    order = Order(
+    order1 = Order(
         table_id=1,
         status=OrderStatus.NEW,
         placed_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
     )
-    tenant_session.add(order)
+    tenant_session.add(order1)
     await tenant_session.flush()
 
     oi1 = OrderItem(
-        order_id=order.id,
+        order_id=order1.id,
         item_id=pizza.id,
         name_snapshot=pizza.name,
         price_snapshot=pizza.price,
@@ -133,7 +134,7 @@ async def daybook_seeded_session(tenant_session):
         status="served",
     )
     oi2 = OrderItem(
-        order_id=order.id,
+        order_id=order1.id,
         item_id=pasta.id,
         name_snapshot=pasta.name,
         price_snapshot=pasta.price,
@@ -143,7 +144,7 @@ async def daybook_seeded_session(tenant_session):
     tenant_session.add_all([oi1, oi2])
     await tenant_session.flush()
 
-    bill = billing_service.compute_bill(
+    bill1 = billing_service.compute_bill(
         [
             {"qty": 2, "price": 100, "gst": 5},
             {"qty": 1, "price": 50, "gst": 5},
@@ -151,26 +152,73 @@ async def daybook_seeded_session(tenant_session):
         "reg",
         tip=10,
     )
-    invoice = Invoice(
-        order_group_id=order.id,
+    invoice1 = Invoice(
+        order_group_id=order1.id,
         number="INV1",
-        bill_json=bill,
-        gst_breakup=bill.get("tax_breakup"),
-        tip=bill.get("tip", 0),
-        total=bill["total"],
+        bill_json=bill1,
+        gst_breakup=bill1.get("tax_breakup"),
+        tip=bill1.get("tip", 0),
+        total=bill1["total"],
         created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
     )
-    tenant_session.add(invoice)
+    tenant_session.add(invoice1)
     await tenant_session.flush()
 
-    payment = Payment(
-        invoice_id=invoice.id,
+    payment1 = Payment(
+        invoice_id=invoice1.id,
         mode="cash",
-        amount=invoice.total,
+        amount=invoice1.total,
         verified=True,
         created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
     )
-    tenant_session.add(payment)
+
+    # Second order
+    order2 = Order(
+        table_id=2,
+        status=OrderStatus.NEW,
+        placed_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+    tenant_session.add(order2)
+    await tenant_session.flush()
+
+    oi3 = OrderItem(
+        order_id=order2.id,
+        item_id=pizza.id,
+        name_snapshot=pizza.name,
+        price_snapshot=pizza.price,
+        qty=1,
+        status="served",
+    )
+    tenant_session.add(oi3)
+    await tenant_session.flush()
+
+    bill2 = billing_service.compute_bill(
+        [
+            {"qty": 1, "price": 100, "gst": 5},
+        ],
+        "reg",
+    )
+    invoice2 = Invoice(
+        order_group_id=order2.id,
+        number="INV2",
+        bill_json=bill2,
+        gst_breakup=bill2.get("tax_breakup"),
+        tip=bill2.get("tip", 0),
+        total=bill2["total"],
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+    tenant_session.add(invoice2)
+    await tenant_session.flush()
+
+    payment2 = Payment(
+        invoice_id=invoice2.id,
+        mode="card",
+        amount=invoice2.total,
+        verified=True,
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+
+    tenant_session.add_all([payment1, payment2])
     await tenant_session.commit()
     return tenant_session
 
@@ -291,6 +339,7 @@ async def test_daybook_pdf(daybook_seeded_session, monkeypatch):
     async def fake_session(tenant_id: str):
         yield daybook_seeded_session
 
+    monkeypatch.setattr(routes_daybook_pdf, "_session", fake_session)
     monkeypatch.setattr(routes_reports, "_session", fake_session)
 
     transport = ASGITransport(app=app)
@@ -303,11 +352,19 @@ async def test_daybook_pdf(daybook_seeded_session, monkeypatch):
             "content-type"
         ].startswith("application/pdf")
         body = resp.text
-        assert "Orders: 1" in body
-        assert "Subtotal: 250.00" in body
-        assert "Tax: 12.50" in body
+        resp_z = await client.get(
+            "/api/outlet/demo/reports/z?date=2024-01-01&format=csv"
+        )
+        rows = list(csv.reader(io.StringIO(resp_z.text)))
+        subtotal_z = sum(float(r[1]) for r in rows[1:])
+        tax_z = sum(float(r[2]) for r in rows[1:])
+        total_z = sum(float(r[3]) for r in rows[1:])
+        assert "Orders: 2" in body
+        assert f"Subtotal: {subtotal_z:.2f}" in body
+        assert f"Tax: {tax_z:.2f}" in body
         assert "Tip: 10.00" in body
-        assert "Total: 273.00" in body
+        assert f"Total: {total_z:.2f}" in body
+        assert "cash" in body and "card" in body
         assert "Pizza" in body and "Pasta" in body
 
 
