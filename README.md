@@ -111,6 +111,13 @@ Download a ZIP bundle of invoices, payments and per-day totals over a date range
   returns `invoices.csv`, `payments.csv` and `z-report.csv` plus individual invoice
   PDFs (or HTML when the PDF engine is unavailable).
 
+### Kitchen Order Tickets
+
+Render printable order slips for the kitchen:
+
+- `GET /api/outlet/{tenant}/kot/{order_id}.pdf?size=80mm` – returns a PDF when a
+  generator is available, falling back to HTML otherwise.
+
 ### GST Reports
 
 Generate monthly GST summaries:
