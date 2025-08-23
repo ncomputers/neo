@@ -44,7 +44,7 @@ conn.commit()
 conn.close()
 
 
-async def _list_active_stub(session):  # pragma: no cover - simple stub
+async def _list_active_stub(session, tenant_id):  # pragma: no cover - simple stub
     return []
 
 

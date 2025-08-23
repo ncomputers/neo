@@ -39,7 +39,7 @@ def anyio_backend() -> str:
 
 @pytest.fixture
 async def tenant_session() -> AsyncSession:
-    tenant_id = "test_" + uuid4().hex[:8]
+    tenant_id = "demo"
     engine = get_engine(tenant_id)
     async with engine.begin() as conn:
         await conn.run_sync(models_tenant.Base.metadata.create_all)

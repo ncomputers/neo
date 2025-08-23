@@ -127,22 +127,25 @@ async def daily_export(
         z_writer = csv.writer(z_csv)
         z_writer.writerow(["date", "orders", "sales", "tax", "cash", "upi", "card"])
         day = start_date
-        while day <= end_date:
-            rows = await invoices_repo_sql.list_day(session, day, tz)
-            orders = len(rows)
-            sales = sum(r["total"] for r in rows)
-            tax_total = sum(r["tax"] for r in rows)
-            cash = sum(
-                p["amount"] for r in rows for p in r["payments"] if p["mode"] == "cash"
-            )
-            upi = sum(
-                p["amount"] for r in rows for p in r["payments"] if p["mode"] == "upi"
-            )
-            card = sum(
-                p["amount"] for r in rows for p in r["payments"] if p["mode"] == "card"
-            )
-            z_writer.writerow([day.isoformat(), orders, sales, tax_total, cash, upi, card])
-            day += timedelta(days=1)
+        try:
+            while day <= end_date:
+                rows = await invoices_repo_sql.list_day(session, day, tz, tenant_id)
+                orders = len(rows)
+                sales = sum(r["total"] for r in rows)
+                tax_total = sum(r["tax"] for r in rows)
+                cash = sum(
+                    p["amount"] for r in rows for p in r["payments"] if p["mode"] == "cash"
+                )
+                upi = sum(
+                    p["amount"] for r in rows for p in r["payments"] if p["mode"] == "upi"
+                )
+                card = sum(
+                    p["amount"] for r in rows for p in r["payments"] if p["mode"] == "card"
+                )
+                z_writer.writerow([day.isoformat(), orders, sales, tax_total, cash, upi, card])
+                day += timedelta(days=1)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="forbidden") from None
 
         bundle = BytesIO()
         with ZipFile(bundle, "w") as zf:

@@ -22,6 +22,6 @@ class InvoicesRepo(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_day(self, session, day, tz):
-        """List invoices and payments for a given local date."""
+    def list_day(self, session, day, tz, tenant_id):
+        """List invoices and payments for a given local date scoped to tenant."""
         raise NotImplementedError

@@ -63,7 +63,7 @@ async def _fake_kds_session(tenant_id: str):
     yield _DummySession()
 
 
-async def _fake_list_active(session):
+async def _fake_list_active(session, tenant_id):
     return []
 
 
