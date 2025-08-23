@@ -58,3 +58,18 @@ def test_idempotent_order_returns_cached_response(client, monkeypatch):
     assert resp2.status_code == 200
     assert resp2.json() == resp1.json()
     assert calls == 1
+
+
+def test_rejects_invalid_idempotency_keys(client):
+    headers = {"X-Tenant-ID": "demo", "Idempotency-Key": "bad-$$$"}
+    payload = {"items": [{"item_id": "1", "qty": 1}]}
+    resp = client.post("/g/T-001/order", headers=headers, json=payload)
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_IDEMPOTENCY_KEY"
+
+
+def test_rejects_long_idempotency_keys(client):
+    headers = {"X-Tenant-ID": "demo", "Idempotency-Key": "a" * 129}
+    payload = {"items": [{"item_id": "1", "qty": 1}]}
+    resp = client.post("/g/T-001/order", headers=headers, json=payload)
+    assert resp.status_code == 400
