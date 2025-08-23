@@ -21,6 +21,7 @@ from fastapi import (
     File,
     HTTPException,
     Request,
+    Header,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
@@ -85,6 +86,7 @@ from .routes_ready import router as ready_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
+from .i18n import get_catalog, select_language
 from .hooks import order_rejection
 from .events import (
     alerts_sender,
@@ -444,7 +446,7 @@ def _table_state(table_id: str) -> Dict[str, List[CartItem]]:
     return tables.setdefault(table_id, {"cart": [], "orders": []})
 
 
-def _guard_table_open(table_id: str):
+def _guard_table_open(table_id: str, lang: str):
     """Return a lock error response if the table isn't available."""
 
     try:
@@ -454,7 +456,8 @@ def _guard_table_open(table_id: str):
     with SessionLocal() as session:
         table = session.get(Table, tid)
         if table and table.state != "AVAILABLE":
-            return JSONResponse(err("TABLE_LOCKED", "Table not ready"), status_code=423)
+            msg = get_catalog(lang)["errors"]["TABLE_LOCKED"]
+            return JSONResponse(err("TABLE_LOCKED", msg), status_code=423)
     return None
 
 
@@ -472,13 +475,18 @@ async def list_tables() -> dict[str, list[dict[str, str]]]:
 
 
 @app.post("/tables/{table_id}/cart")
-async def add_to_cart(table_id: str, item: CartItem) -> dict:
+async def add_to_cart(
+    table_id: str,
+    item: CartItem,
+    accept_language: str | None = Header(default=None, alias="Accept-Language"),
+) -> dict:
     """Add an item to a table's cart.
 
     Multiple guests may add items concurrently by specifying a ``guest_id``.
     """
 
-    if (resp := _guard_table_open(table_id)) is not None:
+    lang = select_language(accept_language)
+    if (resp := _guard_table_open(table_id, lang)) is not None:
         return resp
     table = _table_state(table_id)
     table["cart"].append(item)
@@ -487,10 +495,14 @@ async def add_to_cart(table_id: str, item: CartItem) -> dict:
 
 
 @app.post("/tables/{table_id}/order")
-async def place_order(table_id: str) -> dict:
+async def place_order(
+    table_id: str,
+    accept_language: str | None = Header(default=None, alias="Accept-Language"),
+) -> dict:
     """Move all cart items to the order, locking them from guest edits."""
 
-    if (resp := _guard_table_open(table_id)) is not None:
+    lang = select_language(accept_language)
+    if (resp := _guard_table_open(table_id, lang)) is not None:
         return resp
     table = _table_state(table_id)
     table["orders"].extend(table["cart"])
