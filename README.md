@@ -177,7 +177,10 @@ POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
 The worker drains `notifications_outbox` rows and currently supports
 `console`, `webhook`, `whatsapp_stub` and `sms_stub` channels. The
 `*_stub` channels simply log the payload and are placeholders for future
-provider adapters.
+provider adapters. Failed deliveries are retried with backoff delays of
+1, 5 and 30 minutes. The retry count is capped by the `OUTBOX_MAX_ATTEMPTS`
+environment variable (default: 5). Events that still fail are moved to a
+`notifications_dlq` table for inspection.
 
 ### KDS SLA Watcher
 

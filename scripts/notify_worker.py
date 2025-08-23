@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -22,7 +23,11 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "api"))
 
-from app.models_master import NotificationOutbox, NotificationRule  # type: ignore  # noqa: E402
+from app.models_master import (  # type: ignore  # noqa: E402
+    NotificationDLQ,
+    NotificationOutbox,
+    NotificationRule,
+)
 
 
 def _deliver(rule: NotificationRule, payload: dict) -> None:
@@ -32,20 +37,33 @@ def _deliver(rule: NotificationRule, payload: dict) -> None:
     elif rule.channel == "webhook":
         url = (rule.config or {}).get("url")
         if not url:
-            print("webhook rule missing url")
-            return
-        try:
-            requests.post(url, json=payload, timeout=5).raise_for_status()
-        except Exception as exc:  # Network or HTTP error
-            # In hermetic/offline environments we still mark as delivered
-            print(f"webhook delivery failed: {exc}")
+            raise ValueError("webhook rule missing url")
+        requests.post(url, json=payload, timeout=5).raise_for_status()
+    else:
+        raise ValueError(f"unsupported channel {rule.channel}")
+
+
+BACKOFF = [60, 300, 1800]  # 1m, 5m, 30m
+
+
+def _next_attempt(attempts: int) -> datetime:
+    delay = BACKOFF[min(attempts - 1, len(BACKOFF) - 1)]
+    return datetime.now(timezone.utc) + timedelta(seconds=delay)
 
 
 def process_once(engine) -> None:
     """Attempt to deliver all queued notifications once."""
+    max_attempts = int(os.getenv("OUTBOX_MAX_ATTEMPTS", "5"))
+    now = datetime.now(timezone.utc)
     with Session(engine) as session:
         events = session.scalars(
-            select(NotificationOutbox).where(NotificationOutbox.status == "queued").order_by(NotificationOutbox.created_at)
+            select(NotificationOutbox)
+            .where(NotificationOutbox.status == "queued")
+            .where(
+                (NotificationOutbox.next_attempt_at == None)
+                | (NotificationOutbox.next_attempt_at <= now)
+            )
+            .order_by(NotificationOutbox.created_at)
         ).all()
         for event in events:
             rule = session.get(NotificationRule, event.rule_id)
@@ -53,7 +71,24 @@ def process_once(engine) -> None:
                 event.status = "delivered"
                 session.add(event)
                 continue
-            _deliver(rule, event.payload)
+            try:
+                _deliver(rule, event.payload)
+            except Exception as exc:
+                event.attempts += 1
+                if event.attempts > max_attempts:
+                    session.add(
+                        NotificationDLQ(
+                            original_id=event.id,
+                            rule_id=event.rule_id,
+                            payload=event.payload,
+                            error=str(exc),
+                        )
+                    )
+                    session.delete(event)
+                else:
+                    event.next_attempt_at = _next_attempt(event.attempts)
+                    session.add(event)
+                continue
             event.status = "delivered"
             session.add(event)
         session.commit()
