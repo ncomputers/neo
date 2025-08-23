@@ -137,6 +137,7 @@ async def list_day(
             Invoice.id,
             Invoice.number,
             Invoice.bill_json,
+            Invoice.tip,
             Invoice.total,
             Payment.mode,
             Payment.amount,
@@ -147,13 +148,14 @@ async def list_day(
 
     rows = result.all()
     invoices: dict[int, dict] = {}
-    for inv_id, number, bill, total, mode, amount in rows:
+    for inv_id, number, bill, tip, total, mode, amount in rows:
         entry = invoices.setdefault(
             inv_id,
             {
                 "number": number,
                 "subtotal": bill.get("subtotal", 0),
                 "tax": sum(bill.get("tax_breakup", {}).values()),
+                "tip": float(tip or 0),
                 "total": float(total),
                 "payments": [],
             },

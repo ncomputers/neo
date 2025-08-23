@@ -12,13 +12,24 @@
 <body>
     <h1>Daybook - {{ date }}</h1>
     <p>Orders: {{ orders }}</p>
-    <p>Sales: {{ '%.2f'|format(sales) }}</p>
+    <p>Subtotal: {{ '%.2f'|format(subtotal) }}</p>
     <p>Tax: {{ '%.2f'|format(tax) }}</p>
+    <p>Tip: {{ '%.2f'|format(tip) }}</p>
+    <p>Total: {{ '%.2f'|format(total) }}</p>
+
     <h2>Payments</h2>
     <table>
         <tr><th>Mode</th><th>Amount</th></tr>
         {% for mode, amount in payments.items() %}
         <tr><td>{{ mode }}</td><td>{{ '%.2f'|format(amount) }}</td></tr>
+        {% endfor %}
+    </table>
+
+    <h2>Top Items</h2>
+    <table>
+        <tr><th>Item</th><th>Qty</th></tr>
+        {% for item in top_items %}
+        <tr><td>{{ item.name }}</td><td>{{ item.qty }}</td></tr>
         {% endfor %}
     </table>
 </body>
