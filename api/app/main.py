@@ -680,21 +680,25 @@ async def mark_clean(table_id: str) -> dict:
     return ok({"table_id": table_id, "state": table.state})
 
 
+# Router wiring
+
+# Guest domain
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
 app.include_router(counter_guest_router)
-app.include_router(counter_admin_router)
-app.include_router(staff_router)
 app.include_router(hotel_guest_router)
-app.include_router(ready_router)
 app.include_router(invoice_pdf_router)
+
+# KDS/KOT domain
 app.include_router(kot_router)
 app.include_router(kds_router)
+
+# Admin domain
+app.include_router(counter_admin_router)
+app.include_router(staff_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
-app.include_router(reports_router)
-app.include_router(gst_monthly_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
@@ -702,7 +706,13 @@ app.include_router(dashboard_router)
 app.include_router(tables_map_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
+app.include_router(ready_router)
 app.include_router(backup_router)
+
+# Reports domain
+app.include_router(reports_router)
+app.include_router(gst_monthly_router)
 app.include_router(exports_router)
+
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)
