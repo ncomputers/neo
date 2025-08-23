@@ -32,6 +32,10 @@ from app.models_master import (  # type: ignore  # noqa: E402
     NotificationOutbox,
     NotificationRule,
 )
+from api.app.routes_metrics import (  # type: ignore  # noqa: E402
+    notifications_outbox_delivered_total,
+    notifications_outbox_failed_total,
+)
 
 
 PROVIDER_REGISTRY = {
@@ -123,6 +127,7 @@ def process_once(engine) -> None:
             rule = session.get(NotificationRule, event.rule_id)
             if rule is None:
                 event.status = "delivered"
+                notifications_outbox_delivered_total.inc()
                 session.add(event)
                 continue
             try:
@@ -138,12 +143,14 @@ def process_once(engine) -> None:
                             error=str(exc),
                         )
                     )
+                    notifications_outbox_failed_total.inc()
                     session.delete(event)
                 else:
                     event.next_attempt_at = _next_attempt(event.attempts)
                     session.add(event)
                 continue
             event.status = "delivered"
+            notifications_outbox_delivered_total.inc()
             session.add(event)
         session.commit()
 

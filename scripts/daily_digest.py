@@ -23,6 +23,7 @@ import sys
 
 # Ensure ``api`` package is importable when running as a standalone script
 BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "api"))
 
 from app.db.tenant import get_engine as get_tenant_engine  # type: ignore
@@ -30,6 +31,7 @@ from app.models_tenant import Order, OrderItem, Invoice, Payment  # type: ignore
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from zoneinfo import ZoneInfo
+from api.app.routes_metrics import digest_sent_total  # type: ignore
 
 
 class ConsoleProvider:
@@ -145,6 +147,7 @@ async def main(tenant: str, date_str: str | None = None, providers: Iterable[str
         provider = PROVIDERS.get(name)
         if provider:
             provider.send(line)
+            digest_sent_total.inc()
     return line
 
 
