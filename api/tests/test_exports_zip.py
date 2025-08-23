@@ -143,3 +143,20 @@ async def test_daily_export_zip(seeded_session, monkeypatch):
         assert len(inv_rows) > 1
         assert len(pay_rows) > 1
         assert len(z_rows) > 1
+
+
+@pytest.mark.anyio
+async def test_range_too_large(seeded_session, monkeypatch):
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        yield seeded_session
+
+    monkeypatch.setattr(routes_exports, "_session", fake_session)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(
+            "/api/outlet/demo/exports/daily?start=2024-01-01&end=2024-03-01"
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "RANGE_TOO_LARGE"
