@@ -20,7 +20,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from api.app import routes_reports
+from api.app import routes_reports, routes_gst_monthly
 from api.app.db.tenant import get_engine
 from api.app import models_tenant
 from api.app.models_tenant import (
@@ -66,6 +66,7 @@ async def tenant_session() -> AsyncSession:
 
 app = FastAPI()
 app.include_router(routes_reports.router)
+app.include_router(routes_gst_monthly.router)
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
@@ -267,7 +268,7 @@ async def test_gst_monthly_report_csv(gst_seeded_session, monkeypatch):
     async def fake_session(tenant_id: str):
         yield gst_seeded_session
 
-    monkeypatch.setattr(routes_reports, "_session", fake_session)
+    monkeypatch.setattr(routes_gst_monthly, "_session", fake_session)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
