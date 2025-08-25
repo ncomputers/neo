@@ -11,6 +11,10 @@ Optional Razorpay/Stripe checkout can be enabled per deployment.
 Set `GATEWAY_SANDBOX=true` to use sandbox credentials globally or set
 `gateway_sandbox=true` for an individual tenant.
 
+When running in sandbox, configure the test secrets (`RAZORPAY_SECRET_TEST`
+or `STRIPE_SECRET_TEST`). Webhook payloads should include a unique
+`event_id`; repeated webhooks with the same ID are safely ignored.
+
 ## Test mode
 
 Configure Razorpay/Stripe credentials for the appropriate environment. When in
@@ -28,8 +32,8 @@ Use the gateway dashboard to simulate the webhook call back to
 ### Happy path
 
 1. Call `checkout/start` to obtain an `order_id`.
-2. Post a `paid` webhook with HMAC of `order_id|invoice_id|amount|paid`.
-   Duplicate webhooks return `attached: False` and do not create a second
-   payment.
+2. Post a `paid` webhook with HMAC of `order_id|invoice_id|amount|paid` and an
+   `event_id`. Duplicate webhooks with the same `event_id` return
+   `attached: False` and do not create a second payment.
 3. Post a `refund` webhook with HMAC of `order_id|invoice_id|amount|refund` to
    reset the invoice's `settled` status.
