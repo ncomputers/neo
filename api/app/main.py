@@ -157,6 +157,7 @@ from .routes_tenant_close import router as tenant_close_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhooks import router as webhooks_router
+from .routes_webhook_tools import router as webhook_tools_router
 
 from .services import notifications
 from .utils import PrepTimeTracker

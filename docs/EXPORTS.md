@@ -20,6 +20,8 @@ This admin-only endpoint streams a ZIP containing:
 - `settings.json`
 - `schema.json` (table names + column metadata)
 
+If 2FA is enabled, a recent `/auth/2fa/stepup` verification is required before accessing this endpoint.
+
 ## Resuming
 
 To resume an export, pass the `cursor` query parameter returned from the previous request.
