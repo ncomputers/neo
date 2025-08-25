@@ -65,6 +65,7 @@ from .middlewares import (
     CorrelationIdMiddleware,
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
+    HTMLErrorPagesMiddleware,
     HttpErrorCounterMiddleware,
     IdempotencyMetricsMiddleware,
     IdempotencyMiddleware,
@@ -117,6 +118,7 @@ from .routes_reports import router as reports_router
 from .routes_security import router as security_router
 from .routes_support import router as support_router
 from .routes_staff import router as staff_router
+from .routes_support import router as support_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_vapid import router as vapid_router
@@ -155,10 +157,12 @@ app = FastAPI()
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
 init_tracing(app)
+asyncio.set_event_loop(asyncio.new_event_loop())
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)
+app.add_middleware(HTMLErrorPagesMiddleware, static_dir=static_dir)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlocklistMiddleware)
@@ -726,6 +730,7 @@ app.include_router(tables_map_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
 app.include_router(ready_router)
+app.include_router(support_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)

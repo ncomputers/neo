@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+"""Support contact information endpoints."""
+
+from fastapi import APIRouter
+
 """Support bundle export route."""
 
 import json
@@ -16,9 +20,20 @@ from .audit import Audit, SessionLocal
 from .db.master import get_session
 from .models_master import Tenant
 from .utils.responses import ok
+ main
 
 router = APIRouter()
 
+
+@router.get("/support/contact")
+async def support_contact() -> dict:
+    """Return support contact details."""
+    return {
+        "email": "support@example.com",
+        "phone": "+1-800-555-0199",
+        "hours": "09:00-18:00 IST",
+        "docs_url": "https://docs.example.com",
+    }
 
 _ENV_KEYS = ["LOG_LEVEL", "LOG_FORMAT", "REDIS_URL"]
 

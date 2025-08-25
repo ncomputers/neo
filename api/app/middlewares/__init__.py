@@ -1,4 +1,5 @@
 from .correlation import CorrelationIdMiddleware
+from .error_pages import HTMLErrorPagesMiddleware
 from .feature_flags import FeatureFlagsMiddleware
 from .guest_blocklist import GuestBlocklistMiddleware
 from .guest_ratelimit import GuestRateLimitMiddleware
@@ -22,6 +23,7 @@ __all__ = [
     "IdempotencyMiddleware",
     "IdempotencyMetricsMiddleware",
     "HttpErrorCounterMiddleware",
+    "HTMLErrorPagesMiddleware",
     "FeatureFlagsMiddleware",
     "LicensingMiddleware",
     "SecurityMiddleware",
