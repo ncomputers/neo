@@ -85,6 +85,7 @@ from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
 from .routes_dashboard import router as dashboard_router
 from .routes_dashboard_charts import router as dashboard_charts_router
+from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_daybook_pdf import router as daybook_pdf_router
 from .routes_digest import router as digest_router
 from .routes_exports import router as exports_router
@@ -708,6 +709,7 @@ app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
 app.include_router(dashboard_router)
 app.include_router(dashboard_charts_router)
+app.include_router(owner_aggregate_router)
 app.include_router(tables_map_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
