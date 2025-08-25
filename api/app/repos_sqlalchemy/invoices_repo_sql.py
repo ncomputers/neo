@@ -65,8 +65,8 @@ async def generate_invoice(
     async with get_master_session() as m_session:
         tenant = await m_session.get(Tenant, tenant_id)
 
-    prefix = tenant.invoice_prefix or "INV"
-    reset = tenant.invoice_reset or "never"
+    prefix = tenant.inv_prefix or "GEN"
+    reset = tenant.inv_reset or "never"
     series = invoice_counter.build_series(prefix, reset, date.today())
     number = await invoice_counter.next_invoice_number(session, series)
 

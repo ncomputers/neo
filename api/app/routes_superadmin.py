@@ -37,12 +37,12 @@ async def create_outlet(payload: OutletPayload) -> dict:
     """Provision a new tenant, persist it in master and initialise its DB."""
 
     tenant_uuid = uuid4()
-    invoice_prefix = payload.name[:3].upper()
+    inv_prefix = payload.name[:3].upper()
     async with get_session() as session:
         tenant = Tenant(
             id=tenant_uuid,
             name=payload.name,
-            invoice_prefix=invoice_prefix,
+            inv_prefix=inv_prefix,
             timezone=payload.tz,
             licensed_tables=payload.plan_tables or 0,
             status="active",
@@ -67,7 +67,7 @@ async def create_outlet(payload: OutletPayload) -> dict:
     return ok(
         { 
             "tenant_id": tenant_id,
-            "invoice_prefix": invoice_prefix,
+            "inv_prefix": inv_prefix,
             "tz": payload.tz,
             "licensed_tables": payload.plan_tables,
             "enable_hotel": payload.enable_hotel,

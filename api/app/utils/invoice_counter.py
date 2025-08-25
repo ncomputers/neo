@@ -7,29 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def build_series(prefix: str, reset: str, today: date | None = None) -> str:
-    """Return a counter series incorporating ``prefix`` and ``reset`` policy.
+    """Return the series string for ``prefix`` and ``reset`` policy.
 
-    Parameters
-    ----------
-    prefix:
-        String prefix for the invoice number.
-    reset:
-        Policy determining when counters reset – ``monthly``, ``yearly`` or
-        ``never``.
-    today:
-        Date used for generating the series. Defaults to ``date.today()``.
-
-    Returns
-    -------
-    str
-        The series string. For example, with ``prefix='INV'`` and ``reset`` set
-        to ``monthly`` on February 2024, the series becomes ``INV/2024/02``.
+    The resulting value acts as the persistence key in
+    :mod:`invoice_counters`. It excludes the constant ``INV`` prefix and the
+    zero-padded counter suffix which are appended by
+    :func:`next_invoice_number`.
     """
     today = today or date.today()
     if reset == "monthly":
-        return f"{prefix}/{today:%Y}/{today:%m}"
+        return f"{prefix}-{today:%Y%m}"
     if reset == "yearly":
-        return f"{prefix}/{today:%Y}"
+        return f"{prefix}-{today:%Y}"
     return prefix
 
 
@@ -37,9 +26,9 @@ async def next_invoice_number(session: AsyncSession, series: str) -> str:
     """Return the next invoice number for ``series``.
 
     ``series`` should already include any prefix and reset components, e.g.
-    ``PFX/2024/05`` for a monthly reset. The counter is created if missing and
+    ``PFX-202405`` for a monthly reset. The counter is created if missing and
     atomically incremented. The resulting invoice number is formatted as
-    ``SERIES/000001``.
+    ``INV-SERIES-0001`` with a four-digit, zero-padded counter.
     """
     stmt = text(
         """
@@ -53,4 +42,4 @@ async def next_invoice_number(session: AsyncSession, series: str) -> str:
     result = await session.execute(stmt, {"series": series})
     current = result.scalar_one()
     await session.commit()
-    return f"{series}/{current:06d}"
+    return f"INV-{series}-{current:04d}"

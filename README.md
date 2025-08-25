@@ -74,7 +74,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
+Visit <http://localhost:8000/health> for liveness, <http://localhost:8000/ready> for readiness, and <http://localhost:8000/version> for build metadata.
 
 All API responses use a standard envelope:
 
@@ -353,9 +353,9 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema. Invoice
-numbering for each tenant can be customised via ``invoice_prefix`` and an
-``invoice_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
-reset, numbers include the year and month, e.g. ``INV/2024/02/000001``.
+numbering for each tenant can be customised via ``inv_prefix`` and an
+``inv_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
+reset, numbers include the year and month, e.g. ``INV-ABC-202402-0001``.
 
 ### Invoice PDFs
 
@@ -422,6 +422,16 @@ python scripts/retention_sweep.py --tenant TENANT_ID --days 30
 
 The sweep deletes `audit_tenant` rows, delivered `notifications_outbox`
 entries and `access_logs` records older than the specified retention window.
+
+To anonymize stale guest PII for a tenant, use:
+
+```bash
+python scripts/anonymize_pii.py --tenant TENANT_ID --days 30
+```
+
+This helper nulls the `name`, `phone` and `email` columns in `invoices` and
+`customers` beyond the retention window and records a summary in
+`audit_tenant`.
 
 
 ## Audit Logging

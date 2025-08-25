@@ -10,6 +10,7 @@ from .maintenance import MaintenanceMiddleware
 from .prometheus import PrometheusMiddleware
 from .security import SecurityMiddleware
 from .table_state_guard import TableStateGuardMiddleware
+from .api_key_auth import APIKeyAuthMiddleware
 
 __all__ = [
     "CorrelationIdMiddleware",
@@ -25,4 +26,5 @@ __all__ = [
     "LicensingMiddleware",
     "SecurityMiddleware",
     "MaintenanceMiddleware",
+    "APIKeyAuthMiddleware",
 ]

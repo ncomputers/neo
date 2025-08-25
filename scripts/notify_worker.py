@@ -45,6 +45,7 @@ PROVIDER_REGISTRY = {
     "webpush": os.getenv(
         "ALERTS_WEBPUSH_PROVIDER", "app.providers.webpush_stub"
     ),
+    "slack": os.getenv("ALERTS_SLACK_PROVIDER", "app.providers.slack_stub"),
 }
 
 

@@ -358,6 +358,17 @@ class Staff(Base):
     active = Column(Boolean, nullable=False, default=True)
 
 
+class ApiKey(Base):
+    """API keys for third-party integrations."""
+
+    __tablename__ = "api_keys"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    token = Column(String, nullable=False, unique=True)
+    scopes = Column(JSON, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class InvoiceCounter(Base):
     """Counters for generating sequential invoice numbers."""
 
@@ -394,6 +405,7 @@ __all__ = [
     "NotificationDLQ",
     "AuditTenant",
     "Staff",
+    "ApiKey",
     "InvoiceCounter",
     "TenantMeta",
 ]

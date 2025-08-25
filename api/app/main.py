@@ -61,6 +61,7 @@ from .i18n import get_msg, resolve_lang
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (
+    APIKeyAuthMiddleware,
     CorrelationIdMiddleware,
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
@@ -100,6 +101,7 @@ from .routes_housekeeping import router as housekeeping_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_kot import router as kot_router
 from .routes_media import router as media_router
+from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
@@ -112,11 +114,13 @@ from .routes_push import router as push_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
+from .routes_support import router as support_router
 from .routes_staff import router as staff_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
+from .routes_api_keys import router as api_keys_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -166,6 +170,7 @@ app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(MaintenanceMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(APIKeyAuthMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
@@ -704,6 +709,7 @@ app.include_router(kds_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
+app.include_router(menu_import_router)
 app.include_router(alerts_router)
 app.include_router(admin_jobs_router)
 app.include_router(outbox_admin_router)
@@ -723,6 +729,7 @@ app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
 app.include_router(media_router)
+app.include_router(api_keys_router)
 app.include_router(vapid_router)
 
 # Reports domain
@@ -731,6 +738,7 @@ app.include_router(digest_router)
 app.include_router(reports_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
+app.include_router(support_router)
 
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

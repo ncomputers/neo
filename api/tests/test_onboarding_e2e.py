@@ -6,6 +6,8 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import fakeredis.aioredis
+
 from api.app.routes_onboarding import router as onboarding_router, TENANTS
 from api.app.routes_qrpack import router as qrpack_router
 
@@ -16,6 +18,7 @@ def _setup_app() -> FastAPI:
     app = FastAPI()
     app.include_router(onboarding_router)
     app.include_router(qrpack_router)
+    app.state.redis = fakeredis.aioredis.FakeRedis()
     return app
 
 
