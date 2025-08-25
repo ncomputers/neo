@@ -557,3 +557,7 @@ details.
 Static help pages for staff are available under `/help/{page}`. Currently
 `printing`, `network`, and `qr` guides are bundled and will show the outlet's
 branding when a `tenant_id` is supplied.
+
+## Release
+
+Run `python scripts/release_tag.py` to generate a changelog entry and tag a new version. The helper queries merged pull requests since the last tag and groups entries by label. A `release` workflow is available for manual triggering via the GitHub UI.
