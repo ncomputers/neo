@@ -24,3 +24,12 @@ curl -X POST https://localhost:8000/api/outlet/demo/checkout/start \
 
 Use the gateway dashboard to simulate the webhook call back to
 `/api/outlet/<tenant>/checkout/webhook` with a valid signature.
+
+### Happy path
+
+1. Call `checkout/start` to obtain an `order_id`.
+2. Post a `paid` webhook with HMAC of `order_id|invoice_id|amount|paid`.
+   Duplicate webhooks return `attached: False` and do not create a second
+   payment.
+3. Post a `refund` webhook with HMAC of `order_id|invoice_id|amount|refund` to
+   reset the invoice's `settled` status.

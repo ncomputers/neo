@@ -121,19 +121,31 @@ def test_webhook_signature_validation(provider, secret_env, client, monkeypatch)
     ] = _tenant_session
 
     amount = 10.0
-    body = f"o1|1|{amount}"
+    body = f"o1|1|{amount}|paid"
     sig = hmac.new(b"secret", body.encode(), hashlib.sha256).hexdigest()
 
     resp = client.post(
         "/api/outlet/demo/checkout/webhook",
-        json={"order_id": "o1", "invoice_id": 1, "amount": 10, "signature": sig},
+        json={
+            "order_id": "o1",
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "paid",
+            "signature": sig,
+        },
     )
     assert resp.status_code == 200
     assert payments and payments[0].invoice_id == 1
 
     resp_bad = client.post(
         "/api/outlet/demo/checkout/webhook",
-        json={"order_id": "o1", "invoice_id": 1, "amount": 10, "signature": "bad"},
+        json={
+            "order_id": "o1",
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "paid",
+            "signature": "bad",
+        },
     )
     assert resp_bad.status_code == 400
 
@@ -172,12 +184,22 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
     )
     order_id = resp.json()["data"]["order_id"]
 
-    sig = hmac.new(b"secret", f"{order_id}|1|10.0".encode(), hashlib.sha256).hexdigest()
+    sig_paid = hmac.new(
+        b"secret",
+        f"{order_id}|1|10.0|paid".encode(),
+        hashlib.sha256,
+    ).hexdigest()
 
     # first webhook
     resp1 = client.post(
         "/api/outlet/demo/checkout/webhook",
-        json={"order_id": order_id, "invoice_id": 1, "amount": 10, "signature": sig},
+        json={
+            "order_id": order_id,
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "paid",
+            "signature": sig_paid,
+        },
     )
     assert resp1.status_code == 200
     assert invoice.settled
@@ -186,7 +208,34 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
     # duplicate webhook should be idempotent
     resp2 = client.post(
         "/api/outlet/demo/checkout/webhook",
-        json={"order_id": order_id, "invoice_id": 1, "amount": 10, "signature": sig},
+        json={
+            "order_id": order_id,
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "paid",
+            "signature": sig_paid,
+        },
     )
     assert resp2.status_code == 200
     assert len(payments) == 1
+
+    # refund webhook
+    sig_refund = hmac.new(
+        b"secret",
+        f"{order_id}|1|10.0|refund".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    resp3 = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={
+            "order_id": order_id,
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "refund",
+            "signature": sig_refund,
+        },
+    )
+    assert resp3.status_code == 200
+    assert not invoice.settled
+    assert len(payments) == 2
+    assert payments[1].amount == -10

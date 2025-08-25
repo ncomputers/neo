@@ -28,6 +28,7 @@ class WebhookPayload(BaseModel):
     order_id: str
     invoice_id: int
     amount: float
+    status: str = "paid"
     signature: str | None = None
 
 
@@ -83,27 +84,44 @@ async def checkout_webhook(
         "stripe": "STRIPE_SECRET_TEST" if sandbox else "STRIPE_SECRET",
     }
     secret = os.getenv(secret_env.get(provider, ""), "")
-    body = f"{payload.order_id}|{payload.invoice_id}|{payload.amount}"
+    body = f"{payload.order_id}|{payload.invoice_id}|{payload.amount}|{payload.status}"
     expected = hmac.new(secret.encode(), body.encode(), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected, payload.signature):
         raise HTTPException(status_code=400, detail="invalid signature")
     invoice = await session.get(Invoice, payload.invoice_id)
     if not invoice:
         raise HTTPException(status_code=404)
-    if getattr(invoice, "settled", False):
-        return ok({"attached": False})
-    payment = Payment(
-        invoice_id=payload.invoice_id,
-        mode="gateway",
-        amount=payload.amount,
-        utr=payload.order_id,
-        verified=True,
-    )
-    session.add(payment)
-    invoice.settled = True
-    invoice.settled_at = datetime.now(timezone.utc)
-    await session.commit()
-    return ok({"attached": True})
+    if payload.status == "paid":
+        if getattr(invoice, "settled", False):
+            return ok({"attached": False})
+        payment = Payment(
+            invoice_id=payload.invoice_id,
+            mode="gateway",
+            amount=payload.amount,
+            utr=payload.order_id,
+            verified=True,
+        )
+        session.add(payment)
+        invoice.settled = True
+        invoice.settled_at = datetime.now(timezone.utc)
+        await session.commit()
+        return ok({"attached": True})
+    if payload.status == "refund":
+        if not getattr(invoice, "settled", False):
+            return ok({"refunded": False})
+        payment = Payment(
+            invoice_id=payload.invoice_id,
+            mode="gateway_refund",
+            amount=-payload.amount,
+            utr=payload.order_id,
+            verified=True,
+        )
+        session.add(payment)
+        invoice.settled = False
+        invoice.settled_at = None
+        await session.commit()
+        return ok({"refunded": True})
+    raise HTTPException(status_code=400, detail="unknown status")
 
 
 __all__ = ["router", "get_tenant_session"]
