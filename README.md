@@ -32,6 +32,7 @@ Real-time streams expose additional knobs:
 Tenants may also set a future `maintenance_until` timestamp in the `tenants`
 table to temporarily block their own traffic. Requests made before the
 timestamp receive the same 503 response with a `Retry-After` header.
+Administrators can schedule this window via `POST /api/outlet/{tenant}/maintenance/schedule`.
 
 Request bodies and query parameters are scrubbed of sensitive keys such as
 `pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.

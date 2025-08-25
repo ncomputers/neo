@@ -122,6 +122,7 @@ from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_jobs_status import router as jobs_status_router
 from .routes_kot import router as kot_router
 from .routes_legal import router as legal_router
+from .routes_maintenance import router as maintenance_router
 from .routes_media import router as media_router
 from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
@@ -834,6 +835,7 @@ app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)
+app.include_router(maintenance_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)

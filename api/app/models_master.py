@@ -19,7 +19,6 @@ from sqlalchemy.orm import declarative_base, relationship
 
 from config import AcceptanceMode
 
-
 Base = declarative_base()
 
 
@@ -52,6 +51,7 @@ class Tenant(Base):
     grace_period_days = Column(Integer, nullable=False, default=7)
     retention_days_customers = Column(Integer, nullable=True)
     retention_days_outbox = Column(Integer, nullable=True)
+    maintenance_until = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -85,7 +85,9 @@ class NotificationOutbox(Base):
     __tablename__ = "notifications_outbox"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    rule_id = Column(UUID(as_uuid=True), ForeignKey("notification_rules.id"), nullable=False)
+    rule_id = Column(
+        UUID(as_uuid=True), ForeignKey("notification_rules.id"), nullable=False
+    )
     payload = Column(JSON, nullable=False)
     status = Column(String, nullable=False, default="queued")
     attempts = Column(Integer, nullable=False, default=0)
@@ -93,7 +95,6 @@ class NotificationOutbox(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     rule = relationship("NotificationRule")
-
 
 
 class NotificationDLQ(Base):
