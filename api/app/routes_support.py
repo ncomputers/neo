@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Support contact information and diagnostic bundle endpoints."""
+"""Support contact and bundle export endpoints."""
 
 
 import json
