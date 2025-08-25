@@ -1,14 +1,27 @@
+import builtins
+import os
 import pathlib
 import sys
+import types
 from contextlib import asynccontextmanager
 
 import fakeredis.aioredis
 import pytest
+from fastapi import APIRouter
 from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
+_webhooks_stub = types.ModuleType("routes_webhooks")
+_webhooks_stub.router = None
+sys.modules.setdefault("api.app.routes_webhooks", _webhooks_stub)
+os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("DB_URL", "https://example.com")
+os.environ.setdefault("REDIS_URL", "redis://localhost")
+os.environ.setdefault("SECRET_KEY", "x" * 32)
+builtins.webhook_tools_router = APIRouter()
+
 from api.app import main as app_main  # noqa: E402
-from api.app import routes_checkout  # noqa: E402
+from api.app import routes_checkout_gateway  # noqa: E402
 from api.app.main import app  # noqa: E402
 
 
@@ -31,7 +44,7 @@ def _master_session(enabled: bool):
     @asynccontextmanager
     async def _session():
         class _Tenant:
-            enable_gateway = enabled
+            gateway_provider = "razorpay" if enabled else "none"
 
         class _Session:
             async def get(self, model, pk):
@@ -44,7 +57,7 @@ def _master_session(enabled: bool):
 
 def test_start_disabled_env(client, monkeypatch):
     monkeypatch.delenv("ENABLE_GATEWAY", raising=False)
-    monkeypatch.setattr(routes_checkout, "get_session", _master_session(True))
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(True))
     resp = client.post(
         "/api/outlet/demo/checkout/start", json={"invoice_id": 1, "amount": 10}
     )
@@ -53,7 +66,7 @@ def test_start_disabled_env(client, monkeypatch):
 
 def test_start_disabled_tenant(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
-    monkeypatch.setattr(routes_checkout, "get_session", _master_session(False))
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(False))
     resp = client.post(
         "/api/outlet/demo/checkout/start", json={"invoice_id": 1, "amount": 10}
     )
@@ -62,7 +75,7 @@ def test_start_disabled_tenant(client, monkeypatch):
 
 def test_start_success(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
-    monkeypatch.setattr(routes_checkout, "get_session", _master_session(True))
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(True))
     resp = client.post(
         "/api/outlet/demo/checkout/start", json={"invoice_id": 1, "amount": 10}
     )
@@ -72,7 +85,7 @@ def test_start_success(client, monkeypatch):
 
 def test_webhook_attaches_payment(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
-    monkeypatch.setattr(routes_checkout, "get_session", _master_session(True))
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(True))
 
     payments: list = []
 
@@ -86,7 +99,9 @@ def test_webhook_attaches_payment(client, monkeypatch):
 
         return _Session()
 
-    app.dependency_overrides[routes_checkout.get_tenant_session] = _tenant_session
+    app.dependency_overrides[
+        routes_checkout_gateway.get_tenant_session
+    ] = _tenant_session
 
     resp = client.post(
         "/api/outlet/demo/checkout/webhook",
