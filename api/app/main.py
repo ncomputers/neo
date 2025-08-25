@@ -125,6 +125,7 @@ from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
+from .routes_feedback import router as feedback_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
@@ -780,6 +781,7 @@ app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
+app.include_router(feedback_router)
 app.include_router(media_router)
 app.include_router(api_keys_router)
 app.include_router(vapid_router)

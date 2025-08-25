@@ -118,6 +118,11 @@ Coupons can be marked as stackable and may specify a per-invoice `max_discount` 
 
 Attempts to combine a non-stackable coupon with others raise a `CouponError` with code `NON_STACKABLE`.
 
+### Feedback
+
+- `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
+- `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregate ratings for admins over the last `range` days (default 30).
+
 ### Super Admin
 
 The backend exposes a super-admin endpoint used for tenant provisioning:
