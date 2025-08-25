@@ -99,7 +99,7 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
-from .routes_admin_analytics import router as admin_analytics_router
+from .routes_owner_analytics import router as owner_analytics_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
@@ -157,6 +157,7 @@ from .routes_tenant_close import router as tenant_close_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhooks import router as webhooks_router
+
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -833,12 +834,12 @@ app.include_router(alerts_router)
 app.include_router(security_router)
 app.include_router(jobs_status_router)
 app.include_router(outbox_admin_router)
-app.include_router(webhooks_router)
+app.include_router(webhook_tools_router)
 app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
-app.include_router(admin_analytics_router)
+app.include_router(owner_analytics_router)
 app.include_router(dashboard_router)
 app.include_router(dashboard_charts_router)
 app.include_router(owner_aggregate_router)

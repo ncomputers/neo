@@ -21,4 +21,6 @@ All notable changes to this project will be documented in this file.
 - Require staff PIN rotation every 90 days with a warning emitted after 80 days.
 - Soft-delete support for menu items and tables with restore endpoints and
   status included in exports.
+- Admin endpoints to test webhook destinations and replay webhooks from the
+  notification outbox.
 

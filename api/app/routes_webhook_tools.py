@@ -12,11 +12,10 @@ from pydantic import AnyHttpUrl, BaseModel
 
 from .auth import User, role_required
 from .models_tenant import NotificationOutbox
-from .utils.audit import audit
-from .utils.responses import ok
-from .utils.scrub import scrub_payload
 from .routes_outbox_admin import _session
 from .security.webhook_egress import is_allowed_url
+from .utils.audit import audit
+from .utils.responses import ok
 from .utils.webhook_signing import sign
 
 router = APIRouter()
@@ -36,6 +35,7 @@ async def webhook_test(
 ) -> dict:
     if not is_allowed_url(str(body.url)):
         raise HTTPException(status_code=400, detail="EGRESS_BLOCKED")
+
     payload = {"event": body.event, "sample": True}
     data = json.dumps(payload, separators=(",", ":")).encode()
     headers = {"Content-Type": "application/json"}
@@ -45,9 +45,28 @@ async def webhook_test(
         sig = sign(secret, ts, data)
         headers["X-Webhook-Timestamp"] = str(ts)
         headers["X-Webhook-Signature"] = sig
-    async with httpx.AsyncClient(timeout=5) as client:
-        await client.post(str(body.url), content=data, headers=headers)
-    return ok(scrub_payload(payload))
+
+    start = time.monotonic()
+    status = "error"
+    http_code: int | None = None
+    snippet = ""
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.post(str(body.url), content=data, headers=headers)
+        http_code = resp.status_code
+        snippet = resp.text[:100]
+        status = "success" if resp.is_success else "error"
+    except httpx.HTTPError as exc:
+        snippet = str(exc)[:100]
+    latency_ms = int((time.monotonic() - start) * 1000)
+    return ok(
+        {
+            "status": status,
+            "http_code": http_code,
+            "latency_ms": latency_ms,
+            "response_snippet": snippet,
+        }
+    )
 
 
 @router.post("/api/outlet/{tenant_id}/webhooks/{item_id}/replay")
