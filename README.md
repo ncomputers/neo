@@ -125,14 +125,16 @@ gitleaks detect -c .gitleaks.toml
 
 ## Localization
 
-Translation files live in `api/app/i18n`. Verify that English, Hindi and Gujarati
-JSON files share the same keys:
+Translation files live in `api/app/i18n`. A pre-commit hook verifies that English,
+Hindi and Gujarati JSON files share the same keys:
 
 ```bash
+pre-commit run --hook-stage manual i18n-lint --all-files
+# or run directly:
 python scripts/i18n_lint.py
 ```
 
-The CI workflow runs this lint to prevent missing translations.
+The CI workflow also runs this lint to prevent missing translations.
 
 ## End-to-End Tests
 
@@ -171,6 +173,9 @@ A minimal onboarding flow captures tenant details:
 - `POST /api/onboarding/start` – create a session and return `onboarding_id`.
 - `POST /api/onboarding/{id}/profile` – set name, address, logo, timezone and language.
 - `POST /api/onboarding/{id}/tax` – store GST mode and registration info.
+- Tenants may also define rounding policies:
+  - `gst_rounding` – either `item-wise` or `invoice-total`
+  - `rounding_mode` – one of `half-up`, `bankers`, `ceil` or `floor`
 - `POST /api/onboarding/{id}/tables` – allocate tables and assign QR tokens.
 - `POST /api/onboarding/{id}/payments` – configure payment modes and VPA.
 - `POST /api/onboarding/{id}/finish` – finalize and activate the tenant.

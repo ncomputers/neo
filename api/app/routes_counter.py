@@ -107,7 +107,8 @@ async def create_order(
             session, counter_token, lines
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        status = 403 if str(exc) == "GONE_RESOURCE" else 400
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
     return ok({"order_id": order_id})
 
 

@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import (
+    Decimal,
+    ROUND_HALF_UP,
+    ROUND_HALF_EVEN,
+    ROUND_CEILING,
+    ROUND_FLOOR,
+)
 from typing import Iterable, Mapping, Literal, Sequence
 
 GSTMode = Literal["unreg", "comp", "reg"]
@@ -15,10 +21,22 @@ class CouponError(ValueError):
         self.code = code
 
 
-def _round_nearest_1(amount: Decimal) -> Decimal:
-    """Round to nearest rupee using bankers rounding."""
+ROUNDING_MAP = {
+    "half-up": ROUND_HALF_UP,
+    "bankers": ROUND_HALF_EVEN,
+    "ceil": ROUND_CEILING,
+    "floor": ROUND_FLOOR,
+}
 
-    return amount.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+
+def _round_nearest_1(amount: Decimal, mode: str) -> Decimal:
+    """Round to nearest rupee using the given rounding ``mode``."""
+
+    try:
+        rounding = ROUNDING_MAP[mode]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported rounding mode: {mode}") from exc
+    return amount.quantize(Decimal("1"), rounding=rounding)
 
 
 def compute_bill(
@@ -27,6 +45,8 @@ def compute_bill(
     rounding: str = "nearest_1",
     tip: float | Decimal | None = 0,
     coupons: Sequence[Mapping[str, object]] | None = None,
+    gst_rounding: str = "invoice-total",
+    rounding_mode: str = "half-up",
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
 
@@ -72,6 +92,13 @@ def compute_bill(
     subtotal = Decimal("0")
     tax_breakup: defaultdict[Decimal, Decimal] = defaultdict(lambda: Decimal("0"))
 
+    if rounding_mode not in ROUNDING_MAP:
+        raise ValueError(f"Unsupported rounding mode: {rounding_mode}")
+    rounding_constant = ROUNDING_MAP[rounding_mode]
+
+    if gst_rounding not in {"item-wise", "invoice-total"}:
+        raise ValueError(f"Unsupported GST rounding style: {gst_rounding}")
+
     for item in items:
         qty = Decimal(str(item.get("qty", 1)))
         price = Decimal(str(item["price"]))
@@ -80,9 +107,17 @@ def compute_bill(
         subtotal += line_total
         if gst_mode == "reg" and gst_rate:
             tax = line_total * gst_rate / Decimal("100")
+            if gst_rounding == "item-wise":
+                tax = tax.quantize(Decimal("0.01"), rounding=rounding_constant)
             tax_breakup[gst_rate] += tax
 
     tip_amount = Decimal(str(tip or 0))
+
+    if gst_rounding == "invoice-total":
+        for rate in list(tax_breakup.keys()):
+            tax_breakup[rate] = tax_breakup[rate].quantize(
+                Decimal("0.01"), rounding=rounding_constant
+            )
 
     total = subtotal + sum(tax_breakup.values())
 
@@ -118,7 +153,7 @@ def compute_bill(
     total += tip_amount
 
     if rounding in {"nearest_1", "nearest"}:
-        rounded_total = _round_nearest_1(total)
+        rounded_total = _round_nearest_1(total, rounding_mode)
     elif rounding in {"none", "off"}:
         rounded_total = total
     else:
@@ -132,14 +167,22 @@ def compute_bill(
         )
 
     bill = {
-        "subtotal": float(subtotal.quantize(Decimal("0.01"))),
+        "subtotal": float(
+            subtotal.quantize(Decimal("0.01"), rounding=rounding_constant)
+        ),
         "tax_breakup": {
-            int(rate): float(val.quantize(Decimal("0.01")))
+            int(rate): float(
+                val.quantize(Decimal("0.01"), rounding=rounding_constant)
+            )
             for rate, val in tax_breakup.items()
         },
-        "tip": float(tip_amount.quantize(Decimal("0.01"))),
-        "rounding_adjustment": float(rounding_adjustment.quantize(Decimal("0.01"))),
-        "total": float(rounded_total.quantize(Decimal("0.01"))),
+        "tip": float(tip_amount.quantize(Decimal("0.01"), rounding=rounding_constant)),
+        "rounding_adjustment": float(
+            rounding_adjustment.quantize(Decimal("0.01"), rounding=rounding_constant)
+        ),
+        "total": float(
+            rounded_total.quantize(Decimal("0.01"), rounding=rounding_constant)
+        ),
     }
 
     if coupons:
@@ -153,6 +196,9 @@ def build_invoice_context(
     items: Iterable[Mapping[str, object]],
     gst_mode: GSTMode,
     gstin: str | None = None,
+    rounding: str = "nearest_1",
+    gst_rounding: str = "invoice-total",
+    rounding_mode: str = "half-up",
 ) -> dict:
     """Build a render-friendly invoice dict based on ``gst_mode``.
 
@@ -167,7 +213,13 @@ def build_invoice_context(
         Optional GSTIN to include on the invoice header for registered modes.
     """
 
-    bill = compute_bill(items, gst_mode)
+    bill = compute_bill(
+        items,
+        gst_mode,
+        rounding=rounding,
+        gst_rounding=gst_rounding,
+        rounding_mode=rounding_mode,
+    )
     invoice = {
         "gst_mode": gst_mode,
         "items": [],

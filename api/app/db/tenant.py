@@ -24,6 +24,7 @@ from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from api.app.obs import add_query_logger
 
 TEMPLATE_ENV: Final[str] = "POSTGRES_TENANT_DSN_TEMPLATE"
 
@@ -53,7 +54,9 @@ def get_engine(tenant_id: str) -> AsyncEngine:
     :func:`sqlalchemy.ext.asyncio.create_async_engine`.
     """
     dsn = build_dsn(tenant_id)
-    return create_async_engine(dsn)
+    engine = create_async_engine(dsn)
+    add_query_logger(engine, tenant_id)
+    return engine
 
 
 @asynccontextmanager
@@ -70,7 +73,6 @@ async def get_tenant_session(
     finally:
         await session.close()
         await engine.dispose()
-
 
 
 async def run_tenant_migrations(tenant_id: str) -> None:
@@ -110,4 +112,3 @@ __all__ = [
     "get_tenant_session",
     "run_tenant_migrations",
 ]
-

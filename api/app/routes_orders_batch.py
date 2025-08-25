@@ -51,6 +51,12 @@ async def ingest_orders_batch(tenant_id: str, payload: BatchPayload) -> dict:
         order_ids = []
         for order in payload.orders:
             lines = [line.model_dump() for line in order.items]
-            order_id = await orders_repo_sql.create_order(session, order.table_code, lines)
+            try:
+                order_id = await orders_repo_sql.create_order(
+                    session, order.table_code, lines
+                )
+            except ValueError as exc:
+                status = 403 if str(exc) == "GONE_RESOURCE" else 400
+                raise HTTPException(status_code=status, detail=str(exc)) from exc
             order_ids.append(order_id)
     return ok({"order_ids": order_ids})

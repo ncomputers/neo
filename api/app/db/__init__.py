@@ -4,6 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from api.app.obs import add_query_logger
+
 from ..models_master import Base as MasterBase
 from ..models_tenant import Base as TenantBase
 
@@ -13,6 +15,7 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
+add_query_logger(engine, "test")
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 MasterBase.metadata.create_all(bind=engine)
 TenantBase.metadata.create_all(bind=engine)
