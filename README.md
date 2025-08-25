@@ -69,7 +69,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
+Visit <http://localhost:8000/health> for liveness, <http://localhost:8000/ready> for readiness, and <http://localhost:8000/version> for build metadata.
 
 All API responses use a standard envelope:
 
