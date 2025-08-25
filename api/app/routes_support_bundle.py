@@ -48,8 +48,10 @@ async def support_bundle(
         config = {
             "plan": (tenant.license_limits or {}).get("plan"),
             "feature_flags": {
-                "enable_hotel": flags.get("hotel_mode", tenant),
-                "enable_counter": flags.get("counter_mode", tenant),
+                "enable_hotel": bool(tenant.enable_hotel),
+                "enable_counter": bool(tenant.enable_counter),
+                "enable_gateway": bool(getattr(tenant, "enable_gateway", False)),
+
                 "sla_sound_alert": bool(tenant.sla_sound_alert),
                 "sla_color_alert": bool(tenant.sla_color_alert),
             },

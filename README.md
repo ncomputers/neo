@@ -27,9 +27,11 @@ Logging can be tuned via:
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
 - `ERROR_DSN` – optional Sentry-compatible DSN for centralized error reporting
 - `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
+- `ENABLE_GATEWAY` – enable Razorpay/Stripe checkout routes (defaults to manual UTR when off)
 - `READ_REPLICA_URL` – optional PostgreSQL DSN for read-only queries. When
   reachable, menu fetch, dashboard charts and export endpoints use this
   replica.
+
 
 Real-time streams expose additional knobs:
 

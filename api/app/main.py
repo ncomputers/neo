@@ -106,6 +106,7 @@ from .routes_api_keys import router as api_keys_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_auth_2fa import router as auth_2fa_router
 from .routes_backup import router as backup_router
+from .routes_checkout import router as checkout_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
 from .routes_dashboard import router as dashboard_router
@@ -856,6 +857,7 @@ app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
+app.include_router(checkout_router)
 app.include_router(feedback_router)
 app.include_router(media_router)
 app.include_router(api_keys_router)
