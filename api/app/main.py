@@ -102,6 +102,7 @@ from .routes_metrics import ws_messages_total
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_print import router as print_router
+from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
@@ -707,6 +708,7 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(backup_router)
 app.include_router(print_router)
+app.include_router(print_bridge_router)
 app.include_router(push_router)
 app.include_router(media_router)
 app.include_router(vapid_router)
