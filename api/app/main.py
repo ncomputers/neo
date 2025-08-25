@@ -77,8 +77,8 @@ from .middlewares.security import SecurityMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .otel import init_tracing
-from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_jobs import router as admin_jobs_router
+from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
@@ -86,7 +86,6 @@ from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
 from .routes_dashboard import router as dashboard_router
 from .routes_dashboard_charts import router as dashboard_charts_router
-from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_daybook_pdf import router as daybook_pdf_router
 from .routes_digest import router as digest_router
 from .routes_exports import router as exports_router
@@ -100,11 +99,13 @@ from .routes_housekeeping import router as housekeeping_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_kot import router as kot_router
 from .routes_media import router as media_router
+from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
+from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
@@ -702,6 +703,7 @@ app.include_router(kds_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
+app.include_router(menu_import_router)
 app.include_router(alerts_router)
 app.include_router(admin_jobs_router)
 app.include_router(outbox_admin_router)
