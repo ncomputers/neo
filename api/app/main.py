@@ -62,12 +62,12 @@ from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (
     CorrelationIdMiddleware,
-    FeatureFlagsMiddleware,
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
     HttpErrorCounterMiddleware,
     IdempotencyMetricsMiddleware,
     IdempotencyMiddleware,
+    LicensingMiddleware,
     LoggingMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
@@ -155,7 +155,7 @@ app.add_middleware(GuestBlocklistMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
-app.add_middleware(FeatureFlagsMiddleware)
+app.add_middleware(LicensingMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
