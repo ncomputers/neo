@@ -93,8 +93,8 @@ A minimal onboarding flow captures tenant details:
   - `size` may be `A4`, `A3` or `Letter`
   - `per_page` accepts `6`, `12` or `24` (max `24`)
   - `show_logo` toggles the outlet logo on each page
-  - `label_fmt` customises table labels; `{n}` is replaced with the table number
-  - generation is rate-limited to one request per minute per tenant and the result is cached for ten minutes
+  - `label_fmt` customises table labels; `{n}` is replaced with the table number and `{label}` with the base label
+  - responses are cached in Redis for ten minutes and the endpoint is rate-limited to one request per minute per tenant
 
 ### Coupons
 
