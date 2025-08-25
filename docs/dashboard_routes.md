@@ -8,4 +8,6 @@ Owner dashboard endpoints.
 
 Charts pull from the `sales_rollup` table for precomputed daily totals and
 fall back to live aggregation when a day's rollup is missing. The
-`scripts/rollup_daily.py` job recomputes yesterday and today's rollups hourly.
+`scripts/rollup_daily.py` job recomputes yesterday and today's rollups hourly,
+uses a Redis lock (`rollup:{tenant}:{date}`) to avoid double execution and
+exposes `rollup_runs_total`/`rollup_failures_total` Prometheus counters.
