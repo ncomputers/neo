@@ -40,8 +40,14 @@ pytest -q
 
 ## Continuous Integration
 
-GitHub Actions runs the test suite and basic lint checks for all pushes and pull
-requests.
+GitHub Actions runs the test suite along with `pre-commit` and `pip-audit` for
+all pull requests. To mirror these checks locally:
+
+```bash
+pip install pre-commit pip-audit
+pre-commit run --all-files
+pip-audit
+```
 
 ## API
 
