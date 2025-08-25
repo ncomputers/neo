@@ -8,6 +8,10 @@ This repository contains three main services:
 
 Invoices support optional FSSAI license details when provided.
 
+## Security
+
+Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
@@ -50,6 +54,23 @@ storage with:
 - `MEDIA_DIR` – directory for local file storage
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` – S3
   connection details used when the backend is `s3`
+
+To cut storage costs, apply an S3 lifecycle rule that transitions objects to
+infrequent access after 30 days and purges delete markers after a week:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "media-ia",
+      "Filter": {"Prefix": ""},
+      "Status": "Enabled",
+      "Transitions": [{"Days": 30, "StorageClass": "STANDARD_IA"}],
+      "Expiration": {"Days": 7, "ExpiredObjectDeleteMarker": true}
+    }
+  ]
+}
+```
 
 Copy the example environment file and adjust values as needed:
 
