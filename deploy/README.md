@@ -112,3 +112,7 @@ sudo cp deploy/systemd/neo-purge.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now neo-purge.timer
 ```
+
+## Nightly purge report
+A scheduled GitHub Actions workflow (`.github/workflows/purge_dry_run.yml`) runs every night at 03:30 UTC.
+It performs a dry-run purge for soft-deleted rows using `PURGE_DAYS` (default 90) and uploads the summary as an artifact.
