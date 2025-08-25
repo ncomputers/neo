@@ -51,3 +51,10 @@ sudo systemctl enable --now neo-canary.timer
 ```
 
 The probe runs every 10 minutes and logs success or failure.
+
+## Grafana dashboards
+
+Prebuilt dashboards for API, background workers and tenant KPIs are located in
+[`deploy/grafana`](grafana/README.md). Import them into Grafana to get instant
+metrics visibility.
+
