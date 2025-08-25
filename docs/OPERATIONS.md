@@ -18,3 +18,15 @@ Run daily at 3 AM:
 ```
 0 3 * * * cd /path/to/neo && python scripts/purge_data.py --tenant TENANT_NAME
 ```
+
+## Support Bundle
+
+Administrators can download a diagnostic archive for a tenant:
+
+```
+GET /api/outlet/{tenant}/support/bundle.zip
+```
+
+The ZIP contains masked environment flags, health and readiness reports, build
+metadata, recent logs or the latest audit entries, and the tenant's plan and
+feature configuration.

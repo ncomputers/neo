@@ -5,6 +5,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+import fakeredis.aioredis
 
 from api.app.routes_onboarding import router as onboarding_router, TENANTS
 from api.app.routes_qrpack import router as qrpack_router
@@ -16,6 +17,7 @@ def _setup_app() -> FastAPI:
     app = FastAPI()
     app.include_router(onboarding_router)
     app.include_router(qrpack_router)
+    app.state.redis = fakeredis.aioredis.FakeRedis()
     return app
 
 
@@ -33,7 +35,10 @@ def test_onboarding_end_to_end_flow_and_qrpack_render():
         "timezone": "UTC",
         "language": "en",
     }
-    assert client.post(f"/api/onboarding/{oid}/profile", json=profile).status_code == 200
+    assert (
+        client.post(f"/api/onboarding/{oid}/profile", json=profile).status_code
+        == 200
+    )
 
     tax = {"mode": "regular", "gstin": "GST123", "hsn_required": True}
     assert client.post(f"/api/onboarding/{oid}/tax", json=tax).status_code == 200
@@ -48,7 +53,10 @@ def test_onboarding_end_to_end_flow_and_qrpack_render():
         "central_vpa": True,
         "modes": {"cash": True, "upi": True, "card": False},
     }
-    assert client.post(f"/api/onboarding/{oid}/payments", json=payments).status_code == 200
+    assert (
+        client.post(f"/api/onboarding/{oid}/payments", json=payments).status_code
+        == 200
+    )
 
     finish = client.post(f"/api/onboarding/{oid}/finish").json()["data"]
     tid = finish["tenant_id"]

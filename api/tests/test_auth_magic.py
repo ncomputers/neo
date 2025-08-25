@@ -54,8 +54,6 @@ def test_magic_login_throttling_and_expiry():
         {"sub": "owner@example.com", "jti": jti, "scope": "magic"},
         expires_delta=timedelta(seconds=-1),
     )
-    asyncio.get_event_loop().run_until_complete(
-        app.state.redis.set(f"magic:{jti}", "owner@example.com")
-    )
+    asyncio.run(app.state.redis.set(f"magic:{jti}", "owner@example.com"))
     resp = local_client.get(f"/auth/magic/consume?token={token}")
     assert resp.status_code == 400

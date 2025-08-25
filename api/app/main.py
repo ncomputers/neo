@@ -110,6 +110,7 @@ from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
 from .routes_staff import router as staff_router
+from .routes_support import router as support_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_vapid import router as vapid_router
@@ -713,6 +714,7 @@ app.include_router(tables_sse_router)
 app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(backup_router)
+app.include_router(support_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
