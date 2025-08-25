@@ -1,0 +1,10 @@
+[Unit]
+Description=Recompute sales rollups hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=neo-rollup.service
+
+[Install]
+WantedBy=timers.target

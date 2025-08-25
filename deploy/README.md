@@ -52,7 +52,18 @@ sudo systemctl enable --now neo-canary.timer
 
 The probe runs every 10 minutes and logs success or failure.
 
-## 6. Blue/green releases
+## 6. Enable rollup
+Recompute sales rollups hourly to keep analytics current. Install the service and timer:
+
+```bash
+sudo cp deploy/systemd/neo-rollup.service /etc/systemd/system/
+sudo cp deploy/systemd/neo-rollup.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now neo-rollup.timer
+```
+
+
+## 7. Blue/green releases
 For safer deploys that avoid downtime, see the [blue/green guide](bluegreen/README.md)
 for instructions on upstream swaps, health gates and release smoke tests.
 ## Grafana dashboards
