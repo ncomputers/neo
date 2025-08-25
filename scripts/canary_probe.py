@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Synthetic canary probe performing an order round-trip.
+"""Synthetic canary probe performing an end-to-end order round-trip.
 
-The probe places a tiny order via guest endpoints, immediately cancels it via
-admin APIs and emits a log line (and optional Prometheus metric). It is intended
-for external uptime monitoring.
+The probe places a tiny order, generates a bill, exercises the checkout flow,
+marks the order as paid and fetches an invoice PDF. It emits a log line (and
+optional Prometheus metric) and is intended for external uptime monitoring.
 """
 
 from __future__ import annotations
@@ -87,6 +87,32 @@ def main() -> None:
             {},
         )
 
+        _request(
+            "POST",
+            f"{args.base_url}/g/{args.table}/bill",
+            headers,
+            {},
+        )
+
+        _request(
+            "POST",
+            f"{args.base_url}/api/outlet/{args.tenant}/checkout/start",
+            {},
+            {"invoice_id": 1, "amount": 1},
+        )
+
+        _request(
+            "POST",
+            f"{args.base_url}/tables/{args.table}/pay",
+            {},
+        )
+
+        _request(
+            "GET",
+            f"{args.base_url}/invoice/1/pdf",
+            {},
+        )
+
         secret = os.environ.get("JWT_SECRET", "supersecret")
         token = jwt.encode(
             {
@@ -105,12 +131,6 @@ def main() -> None:
             {},
         )
 
-        _request(
-            "PATCH",
-            f"{args.base_url}/tables/{args.table}/order/0",
-            {"X-Tenant-ID": args.tenant},
-            {"quantity": 0, "admin": True},
-        )
         logging.info(
             "canary probe ok tenant=%s table=%s order=%s", args.tenant, args.table, order_id
         )
