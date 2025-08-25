@@ -176,8 +176,10 @@ Owners can authenticate using a passwordless email flow:
 
 Admins can attach photos to items:
 
-- `POST /api/outlet/{tenant}/media/upload` – stores a file using the configured
-  storage backend and returns `{url, key}`. Requires an admin role.
+- `POST /api/outlet/{tenant}/media/upload` – accepts PNG, JPEG, or WebP up to
+  2 MB and 4096×4096 pixels, strips EXIF metadata, re-encodes the image, and
+  stores it via the configured backend. Returns `{url, key}`. Requires an admin
+  role.
 
 ### Backups
 
