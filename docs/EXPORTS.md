@@ -8,8 +8,17 @@ Big export endpoints support cursor-based pagination so interrupted downloads ca
 GET /api/outlet/{tenant}/export/all.zip
 ```
 
-This admin-only endpoint streams a ZIP containing CSV files for menu, orders,
-invoices, payments, customers and settings, along with a `schema.json` manifest.
+This admin-only endpoint streams a ZIP containing:
+
+- `menu.csv`
+- `items.csv`
+- `orders.csv`
+- `order_items.csv`
+- `invoices.csv`
+- `payments.csv`
+- `customers.csv`
+- `settings.json`
+- `schema.json` (table names + column metadata)
 
 ## Resuming
 

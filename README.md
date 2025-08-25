@@ -58,7 +58,8 @@ cp .env.example .env
 ```
 
 At startup the API validates that critical variables like `DB_URL` and
-`REDIS_URL` are present. Run `scripts/env_audit.py` to compare
+`REDIS_URL` are present. CI runs `scripts/env_audit.py` during linting to
+keep `.env.example` in sync, and you can run the script locally to compare
 `.env.example` against the required list and spot missing keys.
 
 ## Quickstart
@@ -575,3 +576,7 @@ branding when a `tenant_id` is supplied.
 ## Release
 
 Run `python scripts/release_tag.py` to generate a changelog entry and tag a new version. The helper queries merged pull requests since the last tag and groups entries by label. A `release` workflow is available for manual triggering via the GitHub UI.
+
+## Deployment
+
+A `deploy` GitHub Actions workflow builds Docker images, verifies staging with preflight, smoke, canary, and accessibility gates, then waits for manual approval before a blue/green production rollout with automatic rollback on failure. See `docs/CI_CD.md` for details.

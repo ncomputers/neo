@@ -57,6 +57,8 @@ jobs:
             pip install flake8
             flake8 . || true
           fi
+      - name: Audit environment
+        run: python scripts/env_audit.py
       - name: Check i18n keys
         run: python scripts/i18n_lint.py
       - name: Test
