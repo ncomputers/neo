@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "FastAPI",
+    "title": "Neo API",
     "version": "0.1.0"
   },
   "paths": {
@@ -6130,5 +6130,10 @@
         "scheme": "bearer"
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }
