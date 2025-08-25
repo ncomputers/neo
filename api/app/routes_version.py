@@ -19,3 +19,11 @@ async def version() -> dict:
         "built_at": os.getenv("BUILT_AT", "unknown"),
         "env": env,
     }
+
+
+@router.get("/pwa/version")
+async def pwa_version() -> dict:
+    return {
+        "build": os.getenv("GIT_SHA", "unknown"),
+        "time": os.getenv("BUILT_AT", "unknown"),
+    }

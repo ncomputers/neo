@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import App from './App'
 import Login from './Login'
 import Dashboard from './Dashboard'
@@ -50,3 +50,26 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </React.StrictMode>,
 )
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js')
+  navigator.serviceWorker.addEventListener('message', async (event) => {
+    if (event.data?.type === 'UPDATE_READY') {
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (!reg?.waiting) {
+        return
+      }
+      const btn = document.createElement('button')
+      btn.textContent = 'New version available'
+      btn.style.position = 'fixed'
+      btn.style.bottom = '1rem'
+      btn.style.right = '1rem'
+      btn.style.zIndex = '1000'
+      btn.addEventListener('click', async () => {
+        await reg.waiting?.skipWaiting()
+        window.location.reload()
+      })
+      document.body.appendChild(btn)
+    }
+  })
+}

@@ -7,6 +7,22 @@ self.addEventListener('install', event => {
   );
 });
 
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+  self.registration.addEventListener('updatefound', () => {
+    const newSW = self.registration.installing;
+    if (newSW) {
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'installed') {
+          self.clients.matchAll({ type: 'window' }).then(clients => {
+            clients.forEach(client => client.postMessage({ type: 'UPDATE_READY' }));
+          });
+        }
+      });
+    }
+  });
+});
+
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
