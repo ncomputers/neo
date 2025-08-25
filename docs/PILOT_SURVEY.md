@@ -1,13 +1,16 @@
 # Pilot Survey
 
-Staff feedback form for pilot participants.
+Use this form to collect staff feedback after the pilot.
 
 ## Questions
-1. What worked well during the pilot?
-2. What issues did you encounter?
-3. Was training sufficient?
-4. Any suggestions before full launch?
+- How intuitive was the ordering flow?
+- Were there any errors or delays?
+- Rate reliability on a scale of 1-5.
+- What features should be improved?
+- Additional comments?
 
 ## Submission
-- Send responses to ops@example.com
-- Deadline: within 48 hours of pilot end
+- Collect responses via Google Form or internal survey tool.
+- Review results weekly during the pilot.
+
+

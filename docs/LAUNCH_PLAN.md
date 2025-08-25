@@ -1,16 +1,19 @@
 # Launch Plan
 
 ## Timeline
-- Week 1: Pilot kickoff with selected staff
-- Week 2: Gather feedback and iterate
-- Week 3: Go/No-Go review and wider release
+- Week 1: enable pilot in staging
+- Week 2: onboard first outlet
+- Week 3: expand to remaining pilots
+- Week 4: general availability decision
 
 ## Owners
-- Operations: Jane Doe
-- Engineering: John Smith
-- Support: Priya Patel
+- Product: Dana (PM)
+- Engineering: Ravi (backend), Mei (frontend)
+- Operations: Luis
 
 ## Rollback
-- Trigger: Critical bug or negative feedback
-- Action: Revert to last stable version within 1 hour
-- Comms: Notify stakeholders via status page and email
+- Trigger: error rate >5% or critical bug
+- Steps: disable feature flag, redeploy previous tag, notify stakeholders
+- Postmortem: document root cause and prevention actions
+
+

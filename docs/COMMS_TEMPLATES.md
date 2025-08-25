@@ -1,21 +1,23 @@
-# Communications Templates
+# Comms Templates
 
-## Planned Update
-Subject: Service update on <date>
+## Planned Outage Notice
+Subject: Scheduled Maintenance
 
 Hi team,
 
-We will deploy an update on <date> at <time>. No downtime is expected. Track status at <status page>.
+We will perform maintenance on <date> from <start> to <end>. Ordering and payments will be unavailable. Please inform guests and complete pending orders before the window.
 
 Thanks,
-Ops Team
+Ops
 
-## Outage Notification
-Subject: Service outage
+## Incident Update
+Subject: Service Incident Update
 
-We are investigating an outage starting at <time>. Updates will be posted every 30 minutes at <status page>.
+Hi team,
 
-## Resolution Notice
-Subject: Service restored
+We are investigating an incident affecting ordering. Next update in 30 minutes. Follow the incident channel for updates.
 
-The issue was resolved at <time>. Please reach out to support if you notice any lingering problems.
+Thanks,
+Ops
+
+
