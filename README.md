@@ -57,13 +57,14 @@ pytest -q
 
 ## Continuous Integration
 
-GitHub Actions runs the test suite along with `pre-commit` and `pip-audit` for
+GitHub Actions runs the test suite along with `pre-commit`, `pip-audit`, and `gitleaks` for
 all pull requests. To mirror these checks locally:
 
 ```bash
-pip install pre-commit pip-audit
+pip install pre-commit pip-audit gitleaks
 pre-commit run --all-files
 pip-audit
+gitleaks detect -c .gitleaks.toml
 ```
 
 ## API
