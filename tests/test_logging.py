@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import sys
 from pathlib import Path
 
@@ -38,22 +39,33 @@ def _make_app():
 
 def test_body_redaction(caplog):
     client = TestClient(_make_app())
+    payload = {
+        "pin": "1234",
+        "utr": "u",
+        "auth": "a",
+        "gstin": "g",
+        "email": "e@example.com",
+        "nested": {"email": "n@example.com"},
+    }
+    params = {"auth": "q", "email": "q@example.com"}
     with caplog.at_level(logging.INFO, logger="api"):
-        client.post("/echo", json={"pin": "1234"})
+        client.post("/echo", json=payload, params=params)
     inbound = json.loads(caplog.messages[0])
-    assert inbound["body"]["pin"] == "***"
+    body = inbound["body"]
+    query = inbound["query"]
+    for k in ["pin", "utr", "auth", "gstin", "email"]:
+        assert body[k] == "***"
+    assert body["nested"]["email"] == "***"
+    assert query["auth"] == "***"
+    assert query["email"] == "***"
 
 
 def test_guest_4xx_sampling(monkeypatch, caplog):
-    monkeypatch.setattr("api.app.middlewares.logging.LOG_SAMPLE_GUEST_4XX", 0.5)
+    monkeypatch.setattr("api.app.middlewares.logging.LOG_SAMPLE_GUEST_4XX", 0.1)
+    random.seed(1)
     client = TestClient(_make_app())
-    monkeypatch.setattr("api.app.middlewares.logging.random.random", lambda: 0.9)
     with caplog.at_level(logging.INFO, logger="api"):
-        client.post("/g/fail")
-    assert len(caplog.messages) == 0
-
-    caplog.clear()
-    monkeypatch.setattr("api.app.middlewares.logging.random.random", lambda: 0.1)
-    with caplog.at_level(logging.INFO, logger="api"):
-        client.post("/g/fail")
-    assert len(caplog.messages) == 2
+        for _ in range(100):
+            client.post("/g/fail")
+    logged = len(caplog.messages) // 2
+    assert 5 <= logged <= 15

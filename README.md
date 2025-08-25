@@ -20,6 +20,9 @@ Logging can be tuned via:
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
 
+Request bodies and query parameters are scrubbed of sensitive keys such as
+`pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.
+
 Media files can be persisted using either the local filesystem or S3. Configure
 storage with:
 
