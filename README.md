@@ -84,6 +84,17 @@ pip-audit
 gitleaks detect -c .gitleaks.toml
 ```
 
+## Localization
+
+Translation files live in `api/app/i18n`. Verify that English, Hindi and Gujarati
+JSON files share the same keys:
+
+```bash
+python scripts/i18n_lint.py
+```
+
+The CI workflow runs this lint to prevent missing translations.
+
 ## API
 
 ```bash
