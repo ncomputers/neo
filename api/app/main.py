@@ -135,6 +135,7 @@ from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
+from .routes_webhooks import router as webhooks_router
 from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
@@ -830,6 +831,7 @@ app.include_router(alerts_router)
 app.include_router(security_router)
 app.include_router(jobs_status_router)
 app.include_router(outbox_admin_router)
+app.include_router(webhooks_router)
 app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)

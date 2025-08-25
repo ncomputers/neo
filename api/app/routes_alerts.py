@@ -13,6 +13,7 @@ from .auth import User, role_required
 from .db.tenant import get_engine
 from .models_tenant import AlertRule, NotificationOutbox
 from .utils.responses import ok
+from .utils.scrub import scrub_payload
 from .utils.audit import audit
 
 router = APIRouter()
@@ -91,7 +92,7 @@ async def list_outbox(
             {
                 "id": o.id,
                 "event": o.event,
-                "payload": o.payload,
+                "payload": scrub_payload(o.payload),
                 "channel": o.channel,
                 "target": o.target,
                 "status": o.status,

@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+"""Routes for testing and replaying outbound webhooks."""
+
+import json
+import os
+import time
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import AnyHttpUrl, BaseModel
+
+from .auth import User, role_required
+from .models_tenant import NotificationOutbox
+from .utils.audit import audit
+from .utils.responses import ok
+from .utils.scrub import scrub_payload
+from .routes_outbox_admin import _session
+from .security.webhook_egress import is_allowed_url
+from .utils.webhook_signing import sign
+
+router = APIRouter()
+
+
+class WebhookTestRequest(BaseModel):
+    url: AnyHttpUrl
+    event: str
+
+
+@router.post("/api/outlet/{tenant_id}/webhooks/test")
+@audit("webhook_test")
+async def webhook_test(
+    tenant_id: str,
+    body: WebhookTestRequest,
+    user: User = Depends(role_required("super_admin", "outlet_admin")),
+) -> dict:
+    if not is_allowed_url(str(body.url)):
+        raise HTTPException(status_code=400, detail="EGRESS_BLOCKED")
+    payload = {"event": body.event, "sample": True}
+    data = json.dumps(payload, separators=(",", ":")).encode()
+    headers = {"Content-Type": "application/json"}
+    secret = os.getenv("WEBHOOK_SIGNING_SECRET")
+    if secret:
+        ts = int(time.time())
+        sig = sign(secret, ts, data)
+        headers["X-Webhook-Timestamp"] = str(ts)
+        headers["X-Webhook-Signature"] = sig
+    async with httpx.AsyncClient(timeout=5) as client:
+        await client.post(str(body.url), content=data, headers=headers)
+    return ok(scrub_payload(payload))
+
+
+@router.post("/api/outlet/{tenant_id}/webhooks/{item_id}/replay")
+@audit("webhook_replay")
+async def webhook_replay(
+    tenant_id: str,
+    item_id: int,
+    user: User = Depends(role_required("super_admin", "outlet_admin")),
+) -> dict:
+    async with _session(tenant_id) as session:
+        obj = await session.get(NotificationOutbox, item_id)
+        if obj:
+            session.add(
+                NotificationOutbox(
+                    event=obj.event,
+                    payload=obj.payload,
+                    channel=obj.channel,
+                    target=obj.target,
+                    status="queued",
+                    attempts=0,
+                )
+            )
+            await session.commit()
+    return ok({})
