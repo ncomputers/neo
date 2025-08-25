@@ -289,7 +289,10 @@ records the original event and error.
 
 `scripts/kds_sla_watch.py` scans a tenant's queue and enqueues
 `kds.sla_breach` events when an item remains `in_progress` longer than the
-`kds_sla_secs` setting. Schedule it periodically:
+`kds_sla_secs` setting. When breaches occur an additional
+`kds.sla_breach.owner` event summarises the most delayed items and tables for
+delivery via owner alert channels (WhatsApp, email or Slack). Schedule it
+periodically:
 
 ```bash
 POSTGRES_URL=sqlite:///dev_master.db \
