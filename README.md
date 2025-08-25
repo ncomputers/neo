@@ -72,12 +72,13 @@ still benefit from the new indexes.
 
 ## Continuous Integration
 
-GitHub Actions runs the test suite along with `pre-commit`, `pip-audit`, and `gitleaks` for
+GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-audit`, and `gitleaks` for
 all pull requests. To mirror these checks locally:
 
 ```bash
 pip install pre-commit pip-audit gitleaks
 pre-commit run --all-files
+npx pa11y-ci
 pip-audit
 gitleaks detect -c .gitleaks.toml
 ```

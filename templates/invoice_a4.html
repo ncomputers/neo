@@ -1,5 +1,12 @@
 <!doctype html>
-<html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { color: #000; background: #fff; }
+      a:focus, button:focus { outline: 2px solid #005fcc; }
+    </style>
+  </head>
   <body>
     <h1>Invoice #{{ invoice['number'] }}</h1>
     {% if invoice['gst_mode'] != 'unreg' and invoice.get('gstin') %}
@@ -13,7 +20,7 @@
       <!-- Optional FSSAI logo -->
       <p>FSSAI Logo</p>
     {% endif %}
-    <table>
+    <table aria-label="Invoice items">
       <tr>
         <th>Item</th>
         <th>Price</th>
