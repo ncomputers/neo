@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from .db.master import get_read_session
+from .db.replica import read_only, replica_session
 from .db.tenant import get_engine
 from .models_master import Tenant
 from .pdf.render import render_template
@@ -34,7 +34,7 @@ async def _session(tenant_id: str):
 
 
 async def _get_tenants_info(tenant_ids: Iterable[str]) -> dict[str, dict]:
-    async with get_read_session() as session:
+    async with replica_session() as session:
         result = await session.execute(
             select(Tenant.id, Tenant.name, Tenant.timezone).where(
                 Tenant.id.in_(tenant_ids)
@@ -55,6 +55,7 @@ def _parse_scope(request: Request) -> list[str]:
 
 
 @router.get("/api/owner/{owner_id}/dashboard/charts")
+@read_only
 async def owner_dashboard_charts(owner_id: str, request: Request, range: int = 7):
     if range not in (7, 30, 90):
         raise HTTPException(status_code=400, detail="invalid range")
@@ -104,6 +105,7 @@ async def owner_dashboard_charts(owner_id: str, request: Request, range: int = 7
 
 
 @router.get("/api/owner/{owner_id}/daybook.pdf")
+@read_only
 async def owner_daybook_pdf(owner_id: str, request: Request, date: str) -> Response:
     tenant_ids = _parse_scope(request)
     info = await _get_tenants_info(tenant_ids)

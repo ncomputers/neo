@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
+from .db.replica import read_only
 from .db.tenant import get_engine
 from .models_tenant import Invoice, Payment
 from .pdf.render import render_invoice
@@ -46,6 +47,7 @@ SCAN_LIMIT = int(os.getenv("EXPORT_SCAN_ROWS", "5000"))
 
 
 @router.get("/api/outlet/{tenant_id}/exports/daily")
+@read_only
 async def daily_export(
     tenant_id: str,
     start: str,

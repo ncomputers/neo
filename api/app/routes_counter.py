@@ -2,21 +2,22 @@
 
 from __future__ import annotations
 
+import json
 from typing import AsyncGenerator, List
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-import json
 
 from .auth import User, role_required
+from .db.replica import read_only
 from .db.tenant import get_engine
 from .deps.tenant import get_tenant_id
-from .utils.responses import ok
-from .i18n import resolve_lang, get_msg
-from .utils.audit import audit
-from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
+from .i18n import get_msg, resolve_lang
 from .repos_sqlalchemy import counter_orders_repo_sql
+from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
+from .utils.audit import audit
+from .utils.responses import ok
 
 router = APIRouter(prefix="/c")
 router_admin = APIRouter(prefix="/api/outlet/{tenant_id}/counters")
@@ -39,7 +40,9 @@ async def get_tenant_session(
     tenant_id: str = Depends(get_tenant_id),
 ) -> AsyncGenerator[AsyncSession, None]:
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with sessionmaker() as session:
         yield session
 
@@ -48,12 +51,15 @@ async def get_session_from_path(
     tenant_id: str,
 ) -> AsyncGenerator[AsyncSession, None]:
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with sessionmaker() as session:
         yield session
 
 
 @router.get("/{counter_token}/menu")
+@read_only
 async def fetch_menu(
     counter_token: str,
     request: Request,
