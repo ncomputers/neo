@@ -18,6 +18,16 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+try:  # Optional Redis client
+    import redis.asyncio as redis  # type: ignore
+except Exception:  # pragma: no cover - redis not installed
+    redis = None  # type: ignore
+
+try:  # Optional Prometheus metrics
+    from prometheus_client import CollectorRegistry, Counter, push_to_gateway  # type: ignore
+except Exception:  # pragma: no cover - dependency optional
+    CollectorRegistry = Counter = push_to_gateway = None  # type: ignore
+
 # Ensure ``api`` package is importable when running as a standalone script
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
@@ -25,6 +35,20 @@ sys.path.append(str(BASE_DIR / "api"))
 
 from app.db.tenant import get_engine as get_tenant_engine  # type: ignore  # noqa: E402
 from app.models_tenant import SalesRollup, Order, Invoice, Payment  # type: ignore  # noqa: E402
+
+
+registry = CollectorRegistry() if CollectorRegistry else None
+if registry:
+    rollup_runs_total = Counter(
+        "rollup_runs_total", "Total rollup runs", registry=registry
+    )
+    rollup_failures_total = Counter(
+        "rollup_failures_total", "Total rollup failures", registry=registry
+    )
+    rollup_runs_total.inc(0)
+    rollup_failures_total.inc(0)
+else:  # pragma: no cover - metrics disabled
+    rollup_runs_total = rollup_failures_total = None  # type: ignore
 
 
 async def rollup_day(session: AsyncSession, tenant: str, day: date, tz: str) -> None:
@@ -97,12 +121,40 @@ async def main(tenant: str) -> None:
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
+
+    redis_url = os.environ.get("REDIS_URL")
+    if redis is None or redis_url is None:
+        raise RuntimeError("redis client not available")
+    redis_client = redis.from_url(redis_url)
+
     try:
         async with sessionmaker() as session:
             for day in days:
-                await rollup_day(session, tenant, day, tz)
+                key = f"rollup:{tenant}:{day.isoformat()}"
+                acquired = await redis_client.set(key, 1, nx=True, ex=3600)
+                if not acquired:
+                    continue
+                try:
+                    await rollup_day(session, tenant, day, tz)
+                    if rollup_runs_total:
+                        rollup_runs_total.inc()
+                except Exception:
+                    if rollup_failures_total:
+                        rollup_failures_total.inc()
+                    raise
+                finally:
+                    await redis_client.delete(key)
     finally:
         await engine.dispose()
+        await redis_client.aclose()
+
+    if push_to_gateway and registry:
+        gateway = os.environ.get("PUSHGATEWAY")
+        if gateway:
+            try:  # pragma: no cover - best effort
+                push_to_gateway(gateway, job="rollup_daily", registry=registry)
+            except Exception:  # pragma: no cover - best effort
+                pass
 
 
 def _cli() -> None:
