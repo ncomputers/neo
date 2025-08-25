@@ -12,7 +12,7 @@ from ..utils.responses import err
 from .guest_utils import _is_guest_post
 
 
-class GuestBlocklistMiddleware(BaseHTTPMiddleware):
+class GuestBlockMiddleware(BaseHTTPMiddleware):
     """Deny blocked IPs for guest, hotel, and counter POST endpoints."""
 
     async def dispatch(self, request: Request, call_next):

@@ -1,7 +1,7 @@
 from .correlation import CorrelationIdMiddleware
 from .error_pages import HTMLErrorPagesMiddleware
 from .feature_flags import FeatureFlagsMiddleware
-from .guest_blocklist import GuestBlocklistMiddleware
+from .guest_block import GuestBlockMiddleware
 from .guest_ratelimit import GuestRateLimitMiddleware
 from .http_errors import HttpErrorCounterMiddleware
 from .idempotency import IdempotencyMetricsMiddleware, IdempotencyMiddleware
@@ -17,7 +17,7 @@ __all__ = [
     "CorrelationIdMiddleware",
     "LoggingMiddleware",
     "GuestRateLimitMiddleware",
-    "GuestBlocklistMiddleware",
+    "GuestBlockMiddleware",
     "PrometheusMiddleware",
     "TableStateGuardMiddleware",
     "IdempotencyMiddleware",
