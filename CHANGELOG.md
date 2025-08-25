@@ -28,4 +28,5 @@ All notable changes to this project will be documented in this file.
 - Content-Security-Policy nonces for invoice and KOT templates to harden inline styles and scripts.
 - Slow query logging with WARNs above the configurable threshold and 1% sampling
   of regular queries.
+- Idempotent offline order queue using client-side `op_id` dedupe.
 
