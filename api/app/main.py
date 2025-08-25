@@ -97,6 +97,7 @@ from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
+from .obs import capture_exception, init_sentry
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
@@ -237,6 +238,7 @@ handler.setFormatter(
 )
 logger.addHandler(handler)
 logger.setLevel(LOG_LEVEL)
+init_sentry(env=os.getenv("ENV"))
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -246,6 +248,7 @@ async def http_error_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(Exception)
 async def general_error_handler(request: Request, exc: Exception):
+    capture_exception(exc)
     return JSONResponse(err(500, "Internal Server Error"), status_code=500)
 
 

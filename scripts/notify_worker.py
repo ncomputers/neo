@@ -31,6 +31,7 @@ from app.models_master import (  # type: ignore  # noqa: E402
     NotificationOutbox,
     NotificationRule,
 )
+from app.obs import capture_exception, init_sentry  # type: ignore  # noqa: E402
 from app.security.webhook_egress import is_allowed_url  # type: ignore  # noqa: E402
 from app.utils.webhook_signing import sign  # type: ignore  # noqa: E402
 
@@ -209,11 +210,15 @@ def process_once(engine) -> None:
 
 
 def main() -> None:
+    init_sentry()
     db_url = os.environ["POSTGRES_URL"]
     poll = int(os.getenv("POLL_INTERVAL", "5"))
     engine = create_engine(db_url)
     while True:
-        process_once(engine)
+        try:
+            process_once(engine)
+        except Exception as exc:  # pragma: no cover - defensive
+            capture_exception(exc)
         time.sleep(poll)
 
 
