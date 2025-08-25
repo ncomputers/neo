@@ -245,6 +245,8 @@ Outlet staff can authenticate with a numeric PIN to perform protected actions:
 
 - `POST /api/outlet/{tenant}/staff/login` – verify a PIN and receive a short-lived JWT.
 - `GET /api/outlet/{tenant}/staff/me` – example protected route requiring the JWT.
+- `GET /api/outlet/{tenant}/staff/shifts?date=YYYY-MM-DD` – staff shift summary with logins,
+  KOT accepted, tables cleaned, voids and total login time. Use `format=csv` for CSV export.
 
 ### Magic Link Login
 
