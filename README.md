@@ -278,9 +278,13 @@ Configure and inspect notification rules:
 - `GET /api/outlet/{tenant_id}/alerts/outbox?status=queued|delivered` – list recent notifications.
 - `GET /api/outlet/{tenant_id}/outbox?status=pending|delivered|failed&limit=100` – inspect notification outbox.
 - `POST /api/outlet/{tenant_id}/outbox/{id}/retry` – reset a notification for another delivery attempt.
+- `POST /api/outlet/{tenant_id}/webhooks/test` – send a sample webhook payload to a URL.
+- `POST /api/outlet/{tenant_id}/webhooks/{id}/replay` – re-enqueue a webhook from outbox history.
 - `GET /api/outlet/{tenant_id}/dlq?limit=100` – view dead-lettered notifications.
 - `POST /api/outlet/{tenant_id}/dlq/{id}/requeue` – move a dead-lettered event back to the outbox.
 - `DELETE /api/outlet/{tenant_id}/dlq/{id}` – discard a dead-lettered event.
+
+Webhook payloads returned via these endpoints are scrubbed of secret fields for safe display.
 
 ### Table Map
 
