@@ -4,6 +4,11 @@
     "title": "Neo API",
     "version": "0.1.0"
   },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
   "paths": {
     "/menu/categories": {
       "get": {
@@ -1547,6 +1552,213 @@
         }
       }
     },
+    "/auth/2fa/setup": {
+      "post": {
+        "summary": "Setup 2Fa",
+        "operationId": "setup_2fa_auth_2fa_setup_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/2fa/enable": {
+      "post": {
+        "summary": "Enable 2Fa",
+        "operationId": "enable_2fa_auth_2fa_enable_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/2fa/disable": {
+      "post": {
+        "summary": "Disable 2Fa",
+        "operationId": "disable_2fa_auth_2fa_disable_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/2fa/verify": {
+      "post": {
+        "summary": "Verify 2Fa",
+        "operationId": "verify_2fa_auth_2fa_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/2fa/stepup": {
+      "post": {
+        "summary": "Stepup 2Fa",
+        "description": "Verify a TOTP code for the current session.",
+        "operationId": "stepup_2fa_auth_2fa_stepup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/2fa/backup": {
+      "get": {
+        "summary": "Backup Codes",
+        "operationId": "backup_codes_auth_2fa_backup_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/g/{table_token}/menu": {
       "get": {
         "summary": "Fetch Menu",
@@ -2490,48 +2702,6 @@
         }
       }
     },
-    "/api/outlet/{tenant}/tables/{code}/qr/rotate": {
-      "post": {
-        "summary": "Rotate Table Qr",
-        "description": "Rotate the QR token for a table and return a new deeplink.",
-        "operationId": "rotate_table_qr_api_outlet__tenant__tables__code__qr_rotate_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "tenant",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Tenant"
-            }
-          },
-          {
-            "name": "code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Code"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/outlet/{tenant_id}/kot/{order_id}.pdf": {
       "get": {
         "summary": "Kot Pdf",
@@ -3142,6 +3312,57 @@
         }
       }
     },
+    "/api/outlet/{tenant_id}/kds/sla/breach": {
+      "post": {
+        "summary": "Kds Sla Breach",
+        "operationId": "kds_sla_breach_api_outlet__tenant_id__kds_sla_breach_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlaBreachIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Kds Sla Breach Api Outlet  Tenant Id  Kds Sla Breach Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/counters/{order_id}/status": {
       "post": {
         "summary": "Update Status",
@@ -3348,6 +3569,175 @@
         ]
       }
     },
+    "/api/outlet/{tenant}/staff/shifts": {
+      "get": {
+        "summary": "Staff Shifts",
+        "description": "Return staff activity summary for ``date``.\n\nAggregates logins, KOT accepted, tables cleaned, voids and total time\nlogged in for each staff member. Supports CSV via ``format=csv``.",
+        "operationId": "staff_shifts_api_outlet__tenant__staff_shifts_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Date"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "json",
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/menu/items": {
+      "post": {
+        "summary": "Create Menu Item",
+        "description": "Create a menu item placeholder used for limit checks.",
+        "operationId": "create_menu_item_api_outlet__tenant_id__menu_items_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Menu Item Api Outlet  Tenant Id  Menu Items Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Menu Items",
+        "description": "Return menu items for admins with optional deleted records.",
+        "operationId": "list_menu_items_api_outlet__tenant_id__menu_items_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Deleted"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Menu Items Api Outlet  Tenant Id  Menu Items Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock": {
       "post": {
         "summary": "Toggle Out Of Stock",
@@ -3398,6 +3788,224 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Toggle Out Of Stock Api Outlet  Tenant Id  Menu Item  Item Id  Out Of Stock Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/menu/items/{item_id}/delete": {
+      "patch": {
+        "summary": "Delete Menu Item",
+        "description": "Soft delete a menu item.",
+        "operationId": "delete_menu_item_api_outlet__tenant_id__menu_items__item_id__delete_patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Menu Item Api Outlet  Tenant Id  Menu Items  Item Id  Delete Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/menu/items/{item_id}/restore": {
+      "post": {
+        "summary": "Restore Menu Item",
+        "description": "Restore a previously deleted menu item.",
+        "operationId": "restore_menu_item_api_outlet__tenant_id__menu_items__item_id__restore_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Restore Menu Item Api Outlet  Tenant Id  Menu Items  Item Id  Restore Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/limits/usage": {
+      "get": {
+        "summary": "Licensing Usage",
+        "description": "Return current usage and configured limits for ``tenant``.",
+        "operationId": "licensing_usage_api_outlet__tenant__limits_usage_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Licensing Usage Api Outlet  Tenant  Limits Usage Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/menu/import/dryrun": {
+      "post": {
+        "summary": "Menu Import Dryrun",
+        "description": "Validate a CSV file without mutating the database.\n\nReturns ``ok`` along with any ``warnings`` or ``errors`` detected. Also\nreports ``missing_fields`` from the CSV header and a placeholder\n``inferred_hsn`` list for future enhancements.",
+        "operationId": "menu_import_dryrun_api_outlet__tenant_id__menu_import_dryrun_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_menu_import_dryrun_api_outlet__tenant_id__menu_import_dryrun_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Menu Import Dryrun Api Outlet  Tenant Id  Menu Import Dryrun Post"
                 }
               }
             }
@@ -3571,6 +4179,62 @@
         }
       }
     },
+    "/api/outlet/{tenant}/security/unblock_ip": {
+      "post": {
+        "summary": "Unblock Ip",
+        "operationId": "unblock_ip_api_outlet__tenant__security_unblock_ip_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnblockIPPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Unblock Ip Api Outlet  Tenant  Security Unblock Ip Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/jobs/status": {
       "get": {
         "summary": "Jobs Status",
@@ -3632,9 +4296,26 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "minimum": 1,
               "default": 100,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -3744,9 +4425,26 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "minimum": 1,
               "default": 100,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -3869,6 +4567,117 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Delete Dlq Api Outlet  Tenant Id  Dlq  Item Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/webhooks/test": {
+      "post": {
+        "summary": "Webhook Test",
+        "operationId": "webhook_test_api_outlet__tenant_id__webhooks_test_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookTestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Webhook Test Api Outlet  Tenant Id  Webhooks Test Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/webhooks/{item_id}/replay": {
+      "post": {
+        "summary": "Webhook Replay",
+        "operationId": "webhook_replay_api_outlet__tenant_id__webhooks__item_id__replay_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Webhook Replay Api Outlet  Tenant Id  Webhooks  Item Id  Replay Post"
                 }
               }
             }
@@ -4305,6 +5114,54 @@
         }
       }
     },
+    "/api/admin/analytics/owners": {
+      "get": {
+        "summary": "Admin Owner Analytics",
+        "description": "Return owner cohort and retention metrics for the given range.\n\nResults are cached for 10 minutes to reduce load.",
+        "operationId": "admin_owner_analytics_api_admin_analytics_owners_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "title": "Range"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Owner Analytics Api Admin Analytics Owners Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/dashboard/tiles": {
       "get": {
         "summary": "Owner Dashboard Tiles",
@@ -4502,6 +5359,83 @@
         }
       }
     },
+    "/api/admin/preflight": {
+      "get": {
+        "summary": "Preflight",
+        "operationId": "preflight_api_admin_preflight_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Preflight Api Admin Preflight Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/tables": {
+      "post": {
+        "summary": "Create Table",
+        "description": "Create a table placeholder.\n\nActual persistence is handled elsewhere; this endpoint exists for limit\nchecks in tests.",
+        "operationId": "create_table_api_outlet__tenant__tables_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Table Api Outlet  Tenant  Tables Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant}/tables/{table_id}/position": {
       "post": {
         "summary": "Set Table Position",
@@ -4583,6 +5517,16 @@
               "type": "string",
               "title": "Tenant"
             }
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Deleted"
+            }
           }
         ],
         "responses": {
@@ -4594,6 +5538,174 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Get Table Map Api Outlet  Tenant  Tables Map Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/tables/{code}/delete": {
+      "patch": {
+        "summary": "Delete Table",
+        "description": "Soft delete a table.",
+        "operationId": "delete_table_api_outlet__tenant__tables__code__delete_patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          },
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Table Api Outlet  Tenant  Tables  Code  Delete Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/tables/{code}/restore": {
+      "post": {
+        "summary": "Restore Table",
+        "description": "Restore a previously deleted table.",
+        "operationId": "restore_table_api_outlet__tenant__tables__code__restore_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          },
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Restore Table Api Outlet  Tenant  Tables  Code  Restore Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/tables/{code}/qr/rotate": {
+      "post": {
+        "summary": "Rotate Table Qr",
+        "description": "Rotate the QR token for ``code`` and return deeplink and QR data URL.",
+        "operationId": "rotate_table_qr_api_outlet__tenant__tables__code__qr_rotate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          },
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Rotate Table Qr Api Outlet  Tenant  Tables  Code  Qr Rotate Post"
                 }
               }
             }
@@ -4663,6 +5775,26 @@
         }
       }
     },
+    "/pwa/version": {
+      "get": {
+        "summary": "Pwa Version",
+        "operationId": "pwa_version_pwa_version_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Pwa Version Pwa Version Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/version": {
       "get": {
         "summary": "Version",
@@ -4697,6 +5829,332 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Ready Ready Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/help/{page}": {
+      "get": {
+        "summary": "Help Page",
+        "description": "Return the named help page with optional outlet branding.",
+        "operationId": "help_page_help__page__get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Page"
+            }
+          },
+          {
+            "name": "tenant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/support/contact": {
+      "get": {
+        "summary": "Support Contact",
+        "description": "Return support contact details.",
+        "operationId": "support_contact_support_contact_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Support Contact Support Contact Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/support/bundle.zip": {
+      "get": {
+        "summary": "Support Bundle",
+        "operationId": "support_bundle_api_outlet__tenant_id__support_bundle_zip_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/legal/{page}": {
+      "get": {
+        "summary": "Legal Page",
+        "description": "Return the named legal page with optional outlet branding.",
+        "operationId": "legal_page_legal__page__get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Page"
+            }
+          },
+          {
+            "name": "tenant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/maintenance/schedule": {
+      "post": {
+        "summary": "Schedule Maintenance",
+        "description": "Set ``maintenance_until`` for ``tenant``.",
+        "operationId": "schedule_maintenance_api_outlet__tenant__maintenance_schedule_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Schedule Maintenance Api Outlet  Tenant  Maintenance Schedule Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/close": {
+      "post": {
+        "summary": "Close Tenant",
+        "description": "Mark a tenant as closed and schedule data purge.",
+        "operationId": "close_tenant_api_outlet__tenant__close_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Close Tenant Api Outlet  Tenant  Close Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/tenants/{tenant}/restore": {
+      "post": {
+        "summary": "Restore Tenant",
+        "description": "Reactivate a closed tenant if still within the purge window.",
+        "operationId": "restore_tenant_api_admin_tenants__tenant__restore_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Restore Tenant Api Admin Tenants  Tenant  Restore Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -4902,10 +6360,226 @@
         }
       }
     },
+    "/api/outlet/{tenant}/checkout/start": {
+      "post": {
+        "summary": "Checkout Start",
+        "operationId": "checkout_start_api_outlet__tenant__checkout_start_post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutStart"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Checkout Start Api Outlet  Tenant  Checkout Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/checkout/webhook": {
+      "post": {
+        "summary": "Checkout Webhook",
+        "operationId": "checkout_webhook_api_outlet__tenant__checkout_webhook_post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Checkout Webhook Api Outlet  Tenant  Checkout Webhook Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/feedback": {
+      "post": {
+        "summary": "Submit Feedback",
+        "description": "Accept a feedback submission from a guest.",
+        "operationId": "submit_feedback_api_outlet__tenant__feedback_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Submit Feedback Api Outlet  Tenant  Feedback Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/feedback/summary": {
+      "get": {
+        "summary": "Feedback Summary",
+        "description": "Return aggregated feedback counts within the given day range.",
+        "operationId": "feedback_summary_api_outlet__tenant__feedback_summary_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "title": "Range"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Feedback Summary Api Outlet  Tenant  Feedback Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant}/media/upload": {
       "post": {
         "summary": "Upload Media",
-        "description": "Persist ``file`` and return its public URL and storage key.",
+        "description": "Validate and persist ``file`` and return its public URL and storage key.",
         "operationId": "upload_media_api_outlet__tenant__media_upload_post",
         "security": [
           {
@@ -4959,6 +6633,186 @@
         }
       }
     },
+    "/api/outlet/{tenant_id}/api-keys": {
+      "post": {
+        "summary": "Create Api Key",
+        "operationId": "create_api_key_api_outlet__tenant_id__api_keys_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Api Key Api Outlet  Tenant Id  Api Keys Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Api Keys",
+        "operationId": "list_api_keys_api_outlet__tenant_id__api_keys_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Api Keys Api Outlet  Tenant Id  Api Keys Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/api-keys/{key_id}": {
+      "get": {
+        "summary": "Get Api Key",
+        "operationId": "get_api_key_api_outlet__tenant_id__api_keys__key_id__get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Api Key Api Outlet  Tenant Id  Api Keys  Key Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Api Key",
+        "operationId": "delete_api_key_api_outlet__tenant_id__api_keys__key_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Api Key Api Outlet  Tenant Id  Api Keys  Key Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/vapid/public_key": {
       "get": {
         "summary": "Get Vapid Public Key",
@@ -4974,6 +6828,22 @@
                   "type": "object",
                   "title": "Response Get Vapid Public Key Vapid Public Key Get"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/postman/collection.json": {
+      "get": {
+        "summary": "Postman Collection",
+        "operationId": "postman_collection_postman_collection_json_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -5285,6 +7155,74 @@
           }
         }
       }
+    },
+    "/api/outlet/{tenant_id}/export/all.zip": {
+      "get": {
+        "summary": "Export All",
+        "operationId": "export_all_api_outlet__tenant_id__export_all_zip_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10000,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5319,6 +7257,20 @@
           "file"
         ],
         "title": "Body_import_items_menu_items_import_post"
+      },
+      "Body_menu_import_dryrun_api_outlet__tenant_id__menu_import_dryrun_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_menu_import_dryrun_api_outlet__tenant_id__menu_import_dryrun_post"
       },
       "Body_renew_subscription_tenants__tenant_id__subscription_renew_post": {
         "properties": {
@@ -5361,6 +7313,41 @@
           "file"
         ],
         "title": "Body_upload_media_api_outlet__tenant__media_upload_post"
+      },
+      "Breach": {
+        "properties": {
+          "item": {
+            "type": "string",
+            "title": "Item"
+          },
+          "avg_prep": {
+            "type": "number",
+            "title": "Avg Prep"
+          },
+          "orders": {
+            "type": "integer",
+            "title": "Orders"
+          },
+          "table": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Table"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item",
+          "avg_prep",
+          "orders",
+          "table"
+        ],
+        "title": "Breach"
       },
       "CartItem": {
         "properties": {
@@ -5421,6 +7408,37 @@
         "title": "CategoryIn",
         "description": "Input schema for creating a category."
       },
+      "CheckoutStart": {
+        "properties": {
+          "invoice_id": {
+            "type": "integer",
+            "title": "Invoice Id"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "amount"
+        ],
+        "title": "CheckoutStart"
+      },
+      "CodePayload": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "CodePayload"
+      },
       "EmailLogin": {
         "properties": {
           "username": {
@@ -5442,6 +7460,43 @@
         "title": "EmailLogin",
         "description": "Email/password login payload."
       },
+      "FeedbackIn": {
+        "properties": {
+          "table_code": {
+            "type": "string",
+            "title": "Table Code",
+            "description": "Table identifier"
+          },
+          "rating": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Rating",
+            "description": "Thumbs up or down"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Optional free-form note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "table_code",
+          "rating"
+        ],
+        "title": "FeedbackIn",
+        "description": "Incoming feedback payload from a guest."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -5454,6 +7509,20 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ItemCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ItemCreate",
+        "description": "Minimal payload for creating a menu item."
       },
       "ItemIn": {
         "properties": {
@@ -5514,6 +7583,32 @@
         ],
         "title": "LoginPayload",
         "description": "Credentials for staff PIN login."
+      },
+      "MaintenancePayload": {
+        "properties": {
+          "until": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Until"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "until"
+        ],
+        "title": "MaintenancePayload",
+        "description": "Payload for scheduling maintenance."
       },
       "OrderRequest": {
         "properties": {
@@ -5721,6 +7816,10 @@
       },
       "QueuedOrder": {
         "properties": {
+          "op_id": {
+            "type": "string",
+            "title": "Op Id"
+          },
           "table_code": {
             "type": "string",
             "title": "Table Code"
@@ -5735,6 +7834,7 @@
         },
         "type": "object",
         "required": [
+          "op_id",
           "table_code",
           "items"
         ],
@@ -5782,6 +7882,27 @@
         ],
         "title": "SetPinPayload",
         "description": "New PIN to assign to a staff member."
+      },
+      "SlaBreachIn": {
+        "properties": {
+          "window": {
+            "type": "string",
+            "title": "Window"
+          },
+          "breaches": {
+            "items": {
+              "$ref": "#/components/schemas/Breach"
+            },
+            "type": "array",
+            "title": "Breaches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window",
+          "breaches"
+        ],
+        "title": "SlaBreachIn"
       },
       "StaffOrder": {
         "properties": {
@@ -5837,6 +7958,20 @@
           "status"
         ],
         "title": "StatusPayload"
+      },
+      "TableCreate": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "TableCreate",
+        "description": "Payload for creating a new table."
       },
       "TablePosition": {
         "properties": {
@@ -5937,6 +8072,19 @@
         "title": "Tax",
         "description": "Tax configuration for the tenant."
       },
+      "UnblockIPPayload": {
+        "properties": {
+          "ip": {
+            "type": "string",
+            "title": "Ip"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ip"
+        ],
+        "title": "UnblockIPPayload"
+      },
       "UpdateQuantity": {
         "properties": {
           "quantity": {
@@ -5990,6 +8138,76 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WebhookPayload": {
+        "properties": {
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          },
+          "invoice_id": {
+            "type": "integer",
+            "title": "Invoice Id"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "paid"
+          },
+          "signature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "invoice_id",
+          "amount"
+        ],
+        "title": "WebhookPayload"
+      },
+      "WebhookTestRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url"
+          },
+          "event": {
+            "type": "string",
+            "title": "Event"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "event"
+        ],
+        "title": "WebhookTestRequest"
       },
       "api__app__routes_counter__OrderLine": {
         "properties": {
@@ -6130,10 +8348,5 @@
         "scheme": "bearer"
       }
     }
-  },
-  "servers": [
-    {
-      "url": "/"
-    }
-  ]
+  }
 }

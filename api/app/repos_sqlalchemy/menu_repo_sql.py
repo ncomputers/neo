@@ -7,6 +7,7 @@ from uuid import UUID
 
 from sqlalchemy import func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 
 from ..models_tenant import Category, MenuItem, TenantMeta
 from ..repos.menu_repo import MenuRepo
@@ -73,7 +74,9 @@ class MenuRepoSQL(MenuRepo):
             .where(MenuItem.id == item_id)
             .values(deleted_at=func.now(), updated_at=func.now())
         )
-        await session.execute(stmt)
+        result = await session.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Menu item not found")
         await self._bump_menu_version(session)
         await session.commit()
 
@@ -83,7 +86,9 @@ class MenuRepoSQL(MenuRepo):
             .where(MenuItem.id == item_id)
             .values(deleted_at=None, updated_at=func.now())
         )
-        await session.execute(stmt)
+        result = await session.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Menu item not found")
         await self._bump_menu_version(session)
         await session.commit()
 

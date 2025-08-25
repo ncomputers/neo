@@ -92,3 +92,35 @@ async def test_delete_and_restore_menu_item(monkeypatch) -> None:
         )
         resp4 = await client.get("/api/outlet/demo/menu/items", headers=headers)
         assert resp4.json()["data"] == [{"id": item_id}]
+
+
+@pytest.mark.anyio
+async def test_delete_restore_nonexistent_item(monkeypatch) -> None:
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        class Dummy:
+            async def execute(self, stmt):
+                class Result:
+                    rowcount = 0
+
+                return Result()
+
+        yield Dummy()
+
+    monkeypatch.setattr(routes_admin_menu, "_session", fake_session)
+
+    token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        headers = {"Authorization": f"Bearer {token}"}
+        resp = await client.patch(
+            "/api/outlet/demo/menu/items/00000000-0000-0000-0000-000000000000/delete",
+            headers=headers,
+        )
+        assert resp.status_code == 404
+        resp = await client.post(
+            "/api/outlet/demo/menu/items/00000000-0000-0000-0000-000000000000/restore",
+            headers=headers,
+        )
+        assert resp.status_code == 404
