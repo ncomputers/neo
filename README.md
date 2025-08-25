@@ -355,6 +355,9 @@ For hotel or counter flows, additional helpers are available to create QR tokens
 ```bash
 python scripts/tenant_seed_hotel.py --tenant TENANT_ID
 python scripts/tenant_seed_counter.py --tenant TENANT_ID
+python scripts/tenant_qr_tools.py list_tables --tenant TENANT_ID
+python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
+python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
 ```
 
 To compute daily Z-report totals and enqueue a day-close notification into the
