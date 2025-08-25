@@ -95,7 +95,7 @@ from .middlewares.security import SecurityMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .otel import init_tracing
-from .routes_admin_jobs import router as admin_jobs_router
+from .routes_jobs_status import router as jobs_status_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router  # noqa: E402
@@ -145,6 +145,7 @@ from .routes_version import router as version_router  # noqa: E402
 from .services import notifications  # noqa: E402
 from .utils import PrepTimeTracker  # noqa: E402
 from .utils.responses import err, ok  # noqa: E402
+
 
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)
@@ -800,7 +801,7 @@ app.include_router(admin_menu_router)
 app.include_router(menu_import_router)
 app.include_router(alerts_router)
 app.include_router(security_router)
-app.include_router(admin_jobs_router)
+app.include_router(jobs_status_router)
 app.include_router(outbox_admin_router)
 app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
@@ -811,7 +812,7 @@ app.include_router(dashboard_charts_router)
 app.include_router(owner_aggregate_router)
 app.include_router(preflight_router)
 app.include_router(tables_map_router)
-app.include_router(tables_qr_router)
+app.include_router(tables_qr_rotate_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
 app.include_router(ready_router)

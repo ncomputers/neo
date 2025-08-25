@@ -1,0 +1,14 @@
+[Unit]
+Description=Recompute daily sales rollups
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/neo/tenants.env
+WorkingDirectory=/opt/neo
+ExecStart=/bin/bash -c '\
+for t in $TENANTS; do \
+  /usr/bin/python3 scripts/rollup_daily.py --tenant "$t"; \
+done'
+
+[Install]
+WantedBy=multi-user.target

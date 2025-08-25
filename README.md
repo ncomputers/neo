@@ -119,7 +119,7 @@ A minimal onboarding flow captures tenant details:
   - `show_logo` toggles the outlet logo on each page
   - `label_fmt` customises table labels; `{n}` is replaced with the table number and `{label}` with the base label
   - responses are cached in Redis for ten minutes and the endpoint is rate-limited to one request per minute per tenant
-- `POST /api/outlet/{tenant}/tables/{code}/qr/rotate` – rotate a table's QR token and return a new deeplink.
+- `POST /api/outlet/{tenant}/tables/{code}/qr/rotate` – rotate a table's QR token, returning a new deeplink and QR image.
 
 ### Coupons
 
