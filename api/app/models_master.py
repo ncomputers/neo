@@ -112,6 +112,29 @@ class NotificationDLQ(Base):
     failed_at = Column(DateTime, server_default=func.now())
 
 
+class TwoFactorSecret(Base):
+    """TOTP secret hashes for owner/admin accounts."""
+
+    __tablename__ = "twofactor_secrets"
+
+    user = Column(String, primary_key=True)
+    secret = Column(String, nullable=False)
+    confirmed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class TwoFactorBackupCode(Base):
+    """One-time backup codes for 2FA."""
+
+    __tablename__ = "twofactor_backup_codes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user = Column(String, nullable=False, index=True)
+    code_hash = Column(String, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -119,4 +142,6 @@ __all__ = [
     "NotificationRule",
     "NotificationOutbox",
     "NotificationDLQ",
+    "TwoFactorSecret",
+    "TwoFactorBackupCode",
 ]

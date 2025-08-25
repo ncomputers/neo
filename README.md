@@ -8,6 +8,10 @@ This repository contains three main services:
 
 Invoices support optional FSSAI license details when provided.
 
+## Security
+
+Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
