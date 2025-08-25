@@ -101,7 +101,7 @@ class Table(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), nullable=False)
     name = Column(String, nullable=False)
-    code = Column(String, unique=True, nullable=True)
+    code = Column(String, nullable=True)
     qr_token = Column(String, unique=True, nullable=True)
     status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
     state = Column(String, nullable=False, default="AVAILABLE")

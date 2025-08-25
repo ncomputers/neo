@@ -5,6 +5,10 @@ Deleted resources are hidden from standard queries and excluded from guest
 operations. Admin requests may include removed records by passing the query
 parameter `include_deleted=true`.
 
+Database-level partial unique indexes ensure that active tables and menu items
+do not collide on their identifiers while still allowing reuse once a record is
+soft deleted.
+
 ## Endpoints
 
 | Endpoint | Method | Description |

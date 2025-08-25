@@ -10,11 +10,10 @@ from sqlalchemy import func
 from .auth import User, role_required
 from .db import SessionLocal
 from .events import event_bus
-from .models_tenant import Table, Room
-from .utils.responses import ok
-from .utils.audit import audit
 from .hooks.table_map import publish_table_state
-
+from .models_tenant import Room, Table
+from .utils.audit import audit
+from .utils.responses import ok
 
 router = APIRouter(prefix="/api/outlet/{tenant}/housekeeping")
 
@@ -35,7 +34,7 @@ async def start_clean(
 
     with SessionLocal() as session:
         table = session.get(Table, tid)
-        if table is None:
+        if table is None or table.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Table not found")
         table.state = "PENDING_CLEANING"
         session.commit()
@@ -80,7 +79,7 @@ async def mark_ready(
 
     with SessionLocal() as session:
         table = session.get(Table, tid)
-        if table is None:
+        if table is None or table.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Table not found")
         table.state = "AVAILABLE"
         table.last_cleaned_at = func.now()
