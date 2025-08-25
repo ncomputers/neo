@@ -1,0 +1,17 @@
+{{ define "APIHighErrorRate.subject" }}High API error rate detected{{ end }}
+{{ define "APIHighErrorRate.body" }}
+The API is returning more than 2% errors over the last 5 minutes.
+Check logs and recent deployments for potential causes.
+{{ end }}
+
+{{ define "DigestMissed.subject" }}Tenant digest missed{{ end }}
+{{ define "DigestMissed.body" }}
+A tenant has not received a scheduled digest in the past 24 hours.
+Ensure the digest scheduler and worker are running.
+{{ end }}
+
+{{ define "WorkerBacklogHigh.subject" }}Worker backlog is high{{ end }}
+{{ define "WorkerBacklogHigh.body" }}
+More than 100 jobs have been pending in a worker queue for over 5 minutes.
+Consider scaling workers or investigating stuck jobs.
+{{ end }}
