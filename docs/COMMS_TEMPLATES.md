@@ -20,4 +20,12 @@ We are investigating an incident affecting ordering. Next update in 30 minutes. 
 Thanks,
 Ops
 
+## Resolution Notice
+Subject: Service Restored
 
+Hi team,
+
+Service has been restored as of <time>. Monitor for any follow-up issues and report anomalies.
+
+Thanks,
+Ops

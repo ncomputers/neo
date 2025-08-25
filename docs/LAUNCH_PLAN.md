@@ -1,10 +1,12 @@
 # Launch Plan
 
 ## Timeline
-- Week 1: enable pilot in staging
-- Week 2: onboard first outlet
-- Week 3: expand to remaining pilots
-- Week 4: general availability decision
+| Week | Milestone |
+|------|-----------|
+| 1 | enable pilot in staging |
+| 2 | onboard first outlet |
+| 3 | expand to remaining pilots |
+| 4 | general availability decision |
 
 ## Owners
 - Product: Dana (PM)
@@ -12,8 +14,9 @@
 - Operations: Luis
 
 ## Rollback
-- Trigger: error rate >5% or critical bug
-- Steps: disable feature flag, redeploy previous tag, notify stakeholders
-- Postmortem: document root cause and prevention actions
-
-
+1. **Trigger:** error rate >5% or critical bug
+2. **Steps:**
+   - disable feature flag
+   - redeploy previous tag
+   - notify stakeholders
+3. **Postmortem:** document root cause and prevention actions
