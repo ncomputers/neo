@@ -170,9 +170,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 settings = get_settings()
-app = FastAPI()
+app = FastAPI(
+    title="Neo API",
+    version="0.1.0",
+    servers=[{"url": "/"}],
+    openapi_url="/openapi.json",
+)
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
+postman_dir = Path(__file__).resolve().parent.parent.parent / "postman"
+app.mount("/postman", StaticFiles(directory=postman_dir), name="postman")
 init_tracing(app)
 asyncio.set_event_loop(asyncio.new_event_loop())
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
