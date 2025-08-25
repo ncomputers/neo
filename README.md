@@ -641,9 +641,10 @@ details.
 
 ## Troubleshooting Help
 
-Static help pages for staff are available under `/help/{page}`. Currently
-`printing`, `network`, and `qr` guides are bundled and will show the outlet's
-branding when a `tenant_id` is supplied.
+Static help pages for staff are available under `/help/{page}`. Guides include
+`printing`, `network`, `qr`, `owner_onboarding`, `cashier_kds_cheatsheet`, and
+`troubleshooting`, each showing the outlet's branding when a `tenant_id` is
+supplied.
 
 ## Release
 
