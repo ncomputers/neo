@@ -3,6 +3,7 @@ import pathlib
 import sys
 
 import fakeredis.aioredis
+import pytest
 from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
@@ -23,7 +24,8 @@ def test_allowed_origins_env(monkeypatch):
     assert resp_block.status_code == 403
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
-    importlib.reload(app_main)
+    with pytest.raises(RuntimeError):
+        importlib.reload(app_main)
 
 
 def test_security_headers(monkeypatch):
@@ -49,4 +51,5 @@ def test_security_headers(monkeypatch):
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
     monkeypatch.delenv("ENABLE_HSTS", raising=False)
-    importlib.reload(app_main)
+    with pytest.raises(RuntimeError):
+        importlib.reload(app_main)

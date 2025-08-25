@@ -58,7 +58,8 @@ cp .env.example .env
 ```
 
 At startup the API validates that critical variables like `DB_URL` and
-`REDIS_URL` are present. Run `scripts/env_audit.py` to compare
+`REDIS_URL` are present. CI runs `scripts/env_audit.py` during linting to
+keep `.env.example` in sync, and you can run the script locally to compare
 `.env.example` against the required list and spot missing keys.
 
 ## Quickstart
