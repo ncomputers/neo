@@ -2,8 +2,6 @@ from __future__ import annotations
 
 """Support contact information endpoints."""
 
-from fastapi import APIRouter
-
 """Support bundle export route."""
 
 import json
