@@ -39,3 +39,15 @@ The configuration enables TLS, gzip compression and proper headers for
 WebSockets and Server‑Sent Events with 60 s timeouts.
 
 After these steps the API should be available at `https://example.com`.
+
+## 5. Synthetic canary probe
+A lightweight canary places and cancels a small order to verify uptime. Install the service and timer:
+
+```bash
+sudo cp deploy/systemd/neo-canary.service /etc/systemd/system/
+sudo cp deploy/systemd/neo-canary.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now neo-canary.timer
+```
+
+The probe runs every 10 minutes and logs success or failure.
