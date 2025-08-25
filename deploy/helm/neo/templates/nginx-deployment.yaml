@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neo-nginx
+spec:
+  replicas: {{ .Values.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      app: neo
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: neo
+        component: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: {{ .Values.nginx.image }}
+          resources: {{- toYaml .Values.nginx.resources | nindent 12 }}
