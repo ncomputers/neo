@@ -34,6 +34,13 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
+  }
+  if (event.data?.type === 'QUEUE_ORDER_OP') {
+    const op = { ...event.data.op, synced: false }
+    orderQueue.push(op)
+    notifyClients()
+    event.waitUntil(self.registration.sync.register('order-queue'))
   }
 });
 
@@ -62,6 +69,39 @@ self.addEventListener('fetch', event => {
 
 self.addEventListener('sync', event => {
   if (event.tag === 'order-queue') {
-    event.waitUntil(Promise.resolve());
+    event.waitUntil(flushQueue());
   }
 });
+
+const orderQueue = []
+
+async function flushQueue() {
+  const pending = orderQueue.filter(op => !op.synced)
+  if (!pending.length) return
+  const payload = {
+    orders: pending.map(op => ({
+      op_id: op.op_id,
+      table_code: op.table_code,
+      items: op.items,
+    })),
+  }
+  try {
+    const resp = await fetch('/api/outlet/demo/orders/batch', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    if (resp.ok) {
+      pending.forEach(op => (op.synced = true))
+      notifyClients()
+    }
+  } catch (_) {
+    // remain pending on network failure
+  }
+}
+
+function notifyClients() {
+  self.clients.matchAll({ type: 'window' }).then(clients => {
+    clients.forEach(client => client.postMessage({ type: 'QUEUE_STATUS', ops: orderQueue }))
+  })
+}
