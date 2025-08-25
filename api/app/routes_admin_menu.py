@@ -22,6 +22,24 @@ from .utils.responses import ok
 router = APIRouter()
 
 
+class ItemCreate(BaseModel):
+    """Minimal payload for creating a menu item."""
+
+    name: str
+
+
+@router.post("/api/outlet/{tenant_id}/menu/items")
+@audit("create_menu_item")
+async def create_menu_item(
+    tenant_id: str,
+    payload: ItemCreate,
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
+) -> dict:
+    """Create a menu item placeholder used for limit checks."""
+
+    return ok({"name": payload.name})
+
+
 class OutOfStockToggle(BaseModel):
     """Payload for toggling the out-of-stock flag."""
 

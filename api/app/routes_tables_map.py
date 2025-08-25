@@ -26,6 +26,28 @@ class TablePosition(BaseModel):
 router = APIRouter()
 
 
+class TableCreate(BaseModel):
+    """Payload for creating a new table."""
+
+    code: str
+
+
+@router.post("/api/outlet/{tenant}/tables")
+@audit("create_table")
+async def create_table(
+    tenant: str,
+    payload: TableCreate,
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
+) -> dict:
+    """Create a table placeholder.
+
+    Actual persistence is handled elsewhere; this endpoint exists for limit
+    checks in tests.
+    """
+
+    return ok({"code": payload.code})
+
+
 @router.post("/api/outlet/{tenant}/tables/{table_id}/position")
 @audit("set_table_position")
 async def set_table_position(
