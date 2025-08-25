@@ -2,6 +2,7 @@ import importlib.util
 import uuid
 from datetime import datetime, timedelta
 
+import responses
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -100,6 +101,42 @@ def test_sms_delivery():
         session.commit()
 
     notify_worker.process_once(engine)
+
+    with Session(engine) as session:
+        evt = session.get(notify_worker.NotificationOutbox, event_id)
+        assert evt is not None
+        assert evt.status == "delivered"
+
+
+def test_slack_delivery(monkeypatch):
+    engine = create_engine("sqlite:///:memory:")
+    notify_worker.NotificationRule.__table__.create(engine)
+    notify_worker.NotificationOutbox.__table__.create(engine)
+    notify_worker.NotificationDLQ.__table__.create(engine)
+
+    rule_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    url = "http://slack.local/webhook"
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", url)
+
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, json={}, status=200)
+        with Session(engine) as session:
+            session.add(
+                notify_worker.NotificationRule(id=rule_id, channel="slack", config={})
+            )
+            session.add(
+                notify_worker.NotificationOutbox(
+                    id=event_id,
+                    rule_id=rule_id,
+                    payload={"text": "hi"},
+                    status="queued",
+                )
+            )
+            session.commit()
+
+        notify_worker.process_once(engine)
+        assert len(rsps.calls) == 1
 
     with Session(engine) as session:
         evt = session.get(notify_worker.NotificationOutbox, event_id)
