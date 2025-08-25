@@ -113,3 +113,65 @@ def test_schedule_maintenance(client):
             session.query(AuditTenant).filter_by(action="schedule_maintenance").first()
         )
         assert row is not None
+
+
+def test_close_blocks_guest(client, monkeypatch):
+    token = _admin_token(client)
+    tenant_id = uuid.uuid4()
+    with SessionLocal() as session:
+        session.add(Tenant(id=tenant_id, name="CloseDemo", status="active"))
+        session.commit()
+
+    @asynccontextmanager
+    async def _session():
+        class _Session:
+            async def get(self, model, tid):
+                with SessionLocal() as s:
+                    return s.get(model, uuid.UUID(str(tid)))
+
+        yield _Session()
+
+    monkeypatch.setattr(maint_module, "get_session", _session)
+
+    resp = client.post(
+        f"/api/outlet/{tenant_id}/close",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+
+    resp = client.get("/version", headers={"X-Tenant-ID": str(tenant_id)})
+    assert resp.status_code == 403
+    assert resp.json()["code"] == "TENANT_CLOSED"
+
+
+def test_restore_reopens(client, monkeypatch):
+    token = _admin_token(client)
+    tenant_id = uuid.uuid4()
+    with SessionLocal() as session:
+        session.add(Tenant(id=tenant_id, name="RestoreDemo", status="active"))
+        session.commit()
+
+    @asynccontextmanager
+    async def _session():
+        class _Session:
+            async def get(self, model, tid):
+                with SessionLocal() as s:
+                    return s.get(model, uuid.UUID(str(tid)))
+
+        yield _Session()
+
+    monkeypatch.setattr(maint_module, "get_session", _session)
+
+    client.post(
+        f"/api/outlet/{tenant_id}/close",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    resp = client.post(
+        f"/api/admin/tenants/{tenant_id}/restore",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+
+    resp = client.get("/version", headers={"X-Tenant-ID": str(tenant_id)})
+    assert resp.status_code == 200

@@ -148,6 +148,7 @@ from .routes_support_bundle import router as support_bundle_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
+from .routes_tenant_close import router as tenant_close_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .services import notifications
@@ -843,6 +844,7 @@ app.include_router(support_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)
 app.include_router(maintenance_router)
+app.include_router(tenant_close_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)

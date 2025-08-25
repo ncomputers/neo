@@ -34,6 +34,9 @@ class MaintenanceMiddleware(BaseHTTPMiddleware):
                 tenant = None
 
             if tenant:
+                closed_at = getattr(tenant, "closed_at", None)
+                if closed_at:
+                    return JSONResponse({"code": "TENANT_CLOSED"}, status_code=403)
                 maintenance_until = getattr(tenant, "maintenance_until", None)
                 if maintenance_until and datetime.utcnow() < maintenance_until:
                     retry = int((maintenance_until - datetime.utcnow()).total_seconds())
