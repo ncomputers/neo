@@ -379,7 +379,9 @@ Additional environment variables:
 * `WEBHOOK_BREAKER_OPEN_SECS` – seconds the breaker remains open (default: 300)
 
 Metrics exposed under `/metrics` include `webhook_attempts_total`,
-`webhook_failures_total` and `webhook_breaker_state`.
+`webhook_failures_total` and `webhook_breaker_state`. Attempts and failures
+are labelled by destination URL, and the breaker gauge reports `1` when a
+destination is open and `0` when closed.
 
 ### KDS SLA Watcher
 

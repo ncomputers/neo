@@ -1,9 +1,9 @@
 import importlib.util
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-import responses
 import pytest
+import responses
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -214,6 +214,8 @@ def test_webhook_circuit_breaker(monkeypatch):
     monkeypatch.setenv("WEBHOOK_BREAKER_THRESHOLD", "1")
     monkeypatch.setenv("WEBHOOK_BREAKER_OPEN_SECS", "1")
     monkeypatch.setenv("WEBHOOK_ALLOW_HOSTS", "example.com")
+    notify_worker.BREAKER_THRESHOLD = 1
+    notify_worker.BREAKER_OPEN_SECS = 1
     engine = create_engine("sqlite:///:memory:")
     notify_worker.NotificationRule.__table__.create(engine)
     notify_worker.NotificationOutbox.__table__.create(engine)
@@ -243,6 +245,13 @@ def test_webhook_circuit_breaker(monkeypatch):
         # first attempt fails and opens breaker
         notify_worker.process_once(engine)
         assert len(rsps.calls) == 1
+    assert (
+        notify_worker.webhook_attempts_total.labels(destination=url)._value.get() == 1
+    )
+    assert (
+        notify_worker.webhook_failures_total.labels(destination=url)._value.get() == 1
+    )
+    assert notify_worker.webhook_breaker_state.labels(destination=url)._value.get() == 1
 
     # breaker should prevent immediate retry
     with responses.RequestsMock() as rsps:
@@ -250,10 +259,12 @@ def test_webhook_circuit_breaker(monkeypatch):
         assert len(rsps.calls) == 0
 
     # allow half-open trial
-    notify_worker.BREAKERS[url]["opened_until"] = datetime.utcnow() - timedelta(seconds=1)
+    notify_worker.BREAKERS[url]["opened_until"] = datetime.now(
+        timezone.utc
+    ) - timedelta(seconds=1)
     with Session(engine) as session:
         evt = session.get(notify_worker.NotificationOutbox, event_id)
-        evt.next_attempt_at = datetime.utcnow() - timedelta(seconds=1)
+        evt.next_attempt_at = datetime.now(timezone.utc) - timedelta(seconds=1)
         session.add(evt)
         session.commit()
 
@@ -261,6 +272,13 @@ def test_webhook_circuit_breaker(monkeypatch):
         rsps.add(responses.POST, url, status=200)
         notify_worker.process_once(engine)
         assert len(rsps.calls) == 1
+    assert (
+        notify_worker.webhook_attempts_total.labels(destination=url)._value.get() == 2
+    )
+    assert (
+        notify_worker.webhook_failures_total.labels(destination=url)._value.get() == 1
+    )
+    assert notify_worker.webhook_breaker_state.labels(destination=url)._value.get() == 0
 
     with Session(engine) as session:
         evt = session.get(notify_worker.NotificationOutbox, event_id)
