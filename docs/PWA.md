@@ -14,8 +14,10 @@ basic offline support.
 * Static assets are cached on first load via `sw.js`.
 * Icons are loaded from a remote URL to avoid bundling binaries.
 * Menu API requests use a network‑first strategy with cached fallback.
-* A background sync stub named `order-queue` is registered for future offline
-  ordering.
+* The service worker queues order operations with a client-generated
+  `op_id` and uses background sync (`order-queue`) to POST them in batch.
+  The server deduplicates by `op_id` so reconnects won't double-add items,
+  and the UI shows a pending/synced badge per line.
 * Updates are picked up when the service worker changes.
 * When a new build is waiting, the service worker posts an `UPDATE_READY`
   message with the build hash. The guest app shows a **New version available**

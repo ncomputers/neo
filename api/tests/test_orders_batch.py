@@ -1,18 +1,26 @@
 """Tests for batch order ingestion with idempotency."""
 
-import sys
+import os
 import pathlib
+import sys
+import uuid
+
 import fakeredis.aioredis
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine
 
+os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("DB_URL", "postgresql://localhost/test")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("SECRET_KEY", "x" * 32)
+
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
-from api.app.main import app
-from api.app import main as app_main
-from api.app import routes_orders_batch
-from api.app.repos_sqlalchemy import orders_repo_sql
+from api.app import main as app_main  # noqa: E402
+from api.app import routes_orders_batch  # noqa: E402
+from api.app.main import app  # noqa: E402
+from api.app.repos_sqlalchemy import orders_repo_sql  # noqa: E402
 
 
 class _BypassSubGuard:
@@ -44,21 +52,25 @@ def client(monkeypatch):
     app.dependency_overrides.clear()
 
 
-def test_batch_orders_idempotent(client):
+def test_batch_orders_idempotent_by_op_id(client):
     client, calls = client
     payload = {
         "orders": [
-            {"table_code": "T1", "items": [{"item_id": "1", "qty": 1}]}
+            {
+                "op_id": str(uuid.uuid4()),
+                "table_code": "T1",
+                "items": [{"item_id": "1", "qty": 1}],
+            }
             for _ in range(10)
         ]
     }
-    headers = {"Idempotency-Key": "abc"}
 
-    resp1 = client.post("/api/outlet/demo/orders/batch", json=payload, headers=headers)
+    resp1 = client.post("/api/outlet/demo/orders/batch", json=payload)
     assert resp1.status_code == 200
     assert calls["count"] == 10
 
-    resp2 = client.post("/api/outlet/demo/orders/batch", json=payload, headers=headers)
+    # Resubmit the same payload simulating a reconnect; op_ids should dedupe
+    resp2 = client.post("/api/outlet/demo/orders/batch", json=payload)
     assert resp2.status_code == 200
     assert resp2.json() == resp1.json()
     assert calls["count"] == 10
