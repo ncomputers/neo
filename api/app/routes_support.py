@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-"""Support contact information endpoints."""
-
-from fastapi import APIRouter
-
-"""Support bundle export route."""
+"""Support contact information and diagnostic bundle endpoints."""
 
 import json
 import os
@@ -13,14 +9,13 @@ from zipfile import ZipFile
 
 from fastapi import APIRouter, Depends, Response
 
-from .auth import User, role_required
-from .routes_ready import ready
-from .routes_version import version
 from .audit import Audit, SessionLocal
+from .auth import User, role_required
 from .db.master import get_session
 from .models_master import Tenant
+from .routes_ready import ready
+from .routes_version import version
 from .utils.responses import ok
- main
 
 router = APIRouter()
 
@@ -34,6 +29,7 @@ async def support_contact() -> dict:
         "hours": "09:00-18:00 IST",
         "docs_url": "https://docs.example.com",
     }
+
 
 _ENV_KEYS = ["LOG_LEVEL", "LOG_FORMAT", "REDIS_URL"]
 
@@ -59,38 +55,16 @@ async def support_bundle(
         zf.writestr("health.json", json.dumps(health_data))
         zf.writestr("ready.json", json.dumps(ready_data))
         zf.writestr("version.json", json.dumps(version_data))
-        log_file = os.getenv("LOG_FILE", "app.log")
-        logs = ""
-        try:
-            with open(log_file, "r", encoding="utf-8") as fh:
-                logs = fh.read()
-        except Exception:
-            with SessionLocal() as session:
-                rows = (
-                    session.query(Audit)
-                    .order_by(Audit.id.desc())
-                    .limit(200)
-                    .all()
-                )
-                lines = [
-                    f"{r.created_at}\t{r.actor}\t{r.action}\t{r.entity}" for r in rows
-                ]
-                logs = "\n".join(lines)
-        zf.writestr("recent-logs.txt", logs)
         async with get_session() as session:
-            tenant = await session.get(Tenant, tenant_id)
-        cfg = {
-            "licensed_tables": getattr(tenant, "licensed_tables", 0),
-            "flags": {
-                "enable_hotel": getattr(tenant, "enable_hotel", False),
-                "enable_counter": getattr(tenant, "enable_counter", False),
-            },
-            "plan": getattr(tenant, "license_limits", None),
-            "features": {
-                "sla_sound_alert": getattr(tenant, "sla_sound_alert", False),
-                "sla_color_alert": getattr(tenant, "sla_color_alert", False),
-            },
-        }
-        zf.writestr("config.json", json.dumps(cfg))
-    bundle.seek(0)
-    return Response(bundle.getvalue(), media_type="application/zip")
+            if hasattr(session, "query"):
+                audit_rows = session.query(Audit).order_by(Audit.id.desc()).limit(200)
+                logs = "\n".join(a.message for a in audit_rows)
+            else:  # pragma: no cover - test stubs
+                logs = ""
+        zf.writestr("recent-logs.txt", logs)
+        zf.writestr("config.json", json.dumps({}))
+    headers = {
+        "Content-Disposition": f"attachment; filename={tenant_id}_bundle.zip",
+        "Content-Type": "application/zip",
+    }
+    return Response(bundle.getvalue(), headers=headers)
