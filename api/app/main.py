@@ -70,8 +70,7 @@ from .auth import (
     role_required,
 )
 from .config.validate import validate_on_boot
-from .db import SessionLocal
-from .db import replica
+from .db import SessionLocal, replica
 from .events import alerts_sender, ema_updater, event_bus, report_aggregator
 from .hooks import order_rejection
 from .hooks.table_map import publish_table_state
@@ -101,7 +100,6 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
-from .routes_limits import router as limits_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
@@ -130,6 +128,7 @@ from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_jobs_status import router as jobs_status_router
 from .routes_kot import router as kot_router
 from .routes_legal import router as legal_router
+from .routes_limits_usage import router as limits_router
 from .routes_maintenance import router as maintenance_router
 from .routes_media import router as media_router
 from .routes_menu_import import router as menu_import_router

@@ -1,4 +1,4 @@
-"""Tests for per-tenant licensing quotas."""
+"""Tests for per-tenant licensing quotas and usage endpoint."""
 
 from __future__ import annotations
 
