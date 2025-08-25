@@ -17,8 +17,10 @@ python scripts/owner_analytics.py --days 30
 An API endpoint is also available for dashboards:
 
 ```
-GET /api/admin/analytics/owners
+GET /api/admin/analytics/owners?range=30
 ```
 
-It returns a time‑series payload mirroring the CLI output and requires a
-`super_admin` role bearer token.
+The optional ``range`` parameter accepts 7, 30 or 90 days and defaults to 30.
+It returns a time‑series payload exposing D0/D7/D30 retention counts, active
+outlets and average orders per outlet. Results are cached for ten minutes and
+require a ``super_admin`` role bearer token.
