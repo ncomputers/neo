@@ -1,4 +1,5 @@
 # main.py
+# flake8: noqa: E402
 
 """In-memory FastAPI application for demo guest ordering and billing."""
 
@@ -76,7 +77,7 @@ from .middleware import RateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
     CorrelationIdMiddleware,
-    GuestBlocklistMiddleware,
+    GuestBlockMiddleware,
     GuestRateLimitMiddleware,
     HTMLErrorPagesMiddleware,
     HttpErrorCounterMiddleware,
@@ -96,6 +97,7 @@ from .otel import init_tracing
 from .routes_admin_jobs import router as admin_jobs_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
+from .routes_api_keys import router as api_keys_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
 from .routes_counter_admin import router as counter_admin_router
@@ -129,14 +131,12 @@ from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
 from .routes_security import router as security_router
-from .routes_support import router as support_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
-from .routes_api_keys import router as api_keys_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -178,7 +178,7 @@ app.add_middleware(HttpErrorCounterMiddleware)
 app.add_middleware(HTMLErrorPagesMiddleware, static_dir=static_dir)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
-app.add_middleware(GuestBlocklistMiddleware)
+app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
@@ -637,9 +637,7 @@ async def reject_order(table_id: str, index: int, request: Request) -> dict[str,
 # Billing
 
 
-@app.get(
-    "/tables/{table_id}/bill", tags=["Billing"], summary="Get table bill"
-)
+@app.get("/tables/{table_id}/bill", tags=["Billing"], summary="Get table bill")
 async def bill(table_id: str) -> dict:
     """Return the running bill for a table."""
 
@@ -648,9 +646,7 @@ async def bill(table_id: str) -> dict:
     return ok({"total": total, "orders": table["orders"]})
 
 
-@app.post(
-    "/tables/{table_id}/pay", tags=["Billing"], summary="Pay table bill"
-)
+@app.post("/tables/{table_id}/pay", tags=["Billing"], summary="Pay table bill")
 async def pay_now(table_id: str) -> dict:
     """Settle the current bill and clear outstanding orders."""
 

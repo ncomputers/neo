@@ -5,3 +5,5 @@
 - Allow unblock by Super-Admin via `POST /api/outlet/{tenant}/security/unblock_ip`.
 - Implementation uses a Redis-backed token bucket (INCR + EXPIRE) to enforce
   burst and sustained rates.
+- `GuestBlockMiddleware` consults the blocklist so abusive addresses receive
+  `IP_BLOCKED` after repeated failures.
