@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-from datetime import datetime
 import json
 import os
+from contextlib import asynccontextmanager
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from zoneinfo import ZoneInfo
 
+from .db.master import get_read_session
 from .db.tenant import get_engine
-from .db.master import get_session as get_master_session
 from .models_master import Tenant
 from .repos_sqlalchemy import dashboard_repo_sql
 
@@ -22,7 +22,9 @@ router = APIRouter()
 @asynccontextmanager
 async def _session(tenant_id: str):
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     try:
         async with sessionmaker() as session:
             yield session
@@ -31,7 +33,7 @@ async def _session(tenant_id: str):
 
 
 async def _get_timezone(tenant_id: str) -> str:
-    async with get_master_session() as session:
+    async with get_read_session() as session:
         tenant = await session.get(Tenant, tenant_id)
         if tenant is None:
             raise HTTPException(status_code=404, detail="tenant not found")
