@@ -1,0 +1,11 @@
+[Unit]
+Description=Send subscription grace/expiry reminders
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/neo
+EnvironmentFile=/etc/neo/neo-grace.env
+ExecStart=/usr/bin/python3 scripts/grace_reminder.py
+
+[Install]
+WantedBy=multi-user.target

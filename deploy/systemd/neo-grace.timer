@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily subscription grace/expiry reminders
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+Unit=neo-grace.service
+
+[Install]
+WantedBy=timers.target
