@@ -34,6 +34,11 @@ table to temporarily block their own traffic. Requests made before the
 timestamp receive the same 503 response with a `Retry-After` header.
 Administrators can schedule this window via `POST /api/outlet/{tenant}/maintenance/schedule`.
 
+Outlets can also be closed permanently. `POST /api/outlet/{tenant}/close` marks the
+outlet as closed and schedules a data purge 90 days later. During this period
+guest endpoints are blocked. Super admins may reactivate the outlet before
+purge via `POST /api/admin/tenants/{id}/restore`.
+
 Request bodies and query parameters are scrubbed of sensitive keys such as
 `pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.
 

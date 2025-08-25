@@ -52,6 +52,8 @@ class Tenant(Base):
     retention_days_customers = Column(Integer, nullable=True)
     retention_days_outbox = Column(Integer, nullable=True)
     maintenance_until = Column(DateTime, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    purge_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
