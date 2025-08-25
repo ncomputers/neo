@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from uuid import UUID
 import hashlib
+from uuid import UUID
 
-from sqlalchemy import select, update, func, insert
+from sqlalchemy import func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models_tenant import Category, MenuItem, TenantMeta
@@ -23,10 +23,15 @@ class MenuRepoSQL(MenuRepo):
         ]
 
     async def list_items(
-        self, session: AsyncSession, include_hidden: bool = False
+        self,
+        session: AsyncSession,
+        include_hidden: bool = False,
+        include_deleted: bool = False,
     ) -> list[dict]:
-        """Return menu items, optionally including those marked out of stock."""
-        stmt = select(MenuItem).where(MenuItem.deleted_at.is_(None))
+        """Return menu items with optional hidden or deleted ones."""
+        stmt = select(MenuItem)
+        if not include_deleted:
+            stmt = stmt.where(MenuItem.deleted_at.is_(None))
         if not include_hidden:
             stmt = stmt.where(MenuItem.out_of_stock.is_(False))
         result = await session.execute(stmt)
@@ -84,9 +89,8 @@ class MenuRepoSQL(MenuRepo):
 
     async def _bump_menu_version(self, session: AsyncSession) -> None:
         """Increment the tenant's menu version."""
-        stmt = (
-            update(TenantMeta)
-            .values(menu_version=TenantMeta.menu_version + 1, updated_at=func.now())
+        stmt = update(TenantMeta).values(
+            menu_version=TenantMeta.menu_version + 1, updated_at=func.now()
         )
         result = await session.execute(stmt)
         if result.rowcount == 0:

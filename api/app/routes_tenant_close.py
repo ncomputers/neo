@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import User, role_required
+from .routes_auth_2fa import stepup_guard
 from .db import SessionLocal
 from .models_master import Tenant
 from .utils.audit import audit
@@ -19,7 +20,7 @@ router = APIRouter()
 @router.post("/api/outlet/{tenant}/close")
 @audit("close_tenant")
 async def close_tenant(
-    tenant: str, user: User = Depends(role_required("super_admin", "outlet_admin"))
+    tenant: str, user: User = Depends(stepup_guard("super_admin", "outlet_admin"))
 ) -> dict:
     """Mark a tenant as closed and schedule data purge."""
 
