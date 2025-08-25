@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <body>
+    {% if logo_url %}
+    <img src="{{ logo_url }}" alt="logo" />
+    {% endif %}
+    <table>
+      {% for t in tables %}
+      <tr>
+        <td>{{ t.label }}</td>
+        <td><img src="{{ t.qr }}" alt="{{ t.label }}" /></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

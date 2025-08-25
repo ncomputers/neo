@@ -72,6 +72,21 @@ All API responses use a standard envelope:
 - Success: `{ "ok": true, "data": ... }`
 - Error: `{ "ok": false, "error": { "code": ..., "message": ... } }`
 
+### Onboarding Wizard
+
+A minimal onboarding flow captures tenant details:
+
+- `POST /api/onboarding/start` – create a session and return `onboarding_id`.
+- `POST /api/onboarding/{id}/profile` – set name, address, logo, timezone and language.
+- `POST /api/onboarding/{id}/tax` – store GST mode and registration info.
+- `POST /api/onboarding/{id}/tables` – allocate tables and assign QR tokens.
+- `POST /api/onboarding/{id}/payments` – configure payment modes and VPA.
+- `POST /api/onboarding/{id}/finish` – finalize and activate the tenant.
+
+### QR Pack
+
+- `GET /api/outlet/{tenant}/qrpack.pdf?size=A4&per_page=12` – generate a printable sheet of table labels with QR codes and the outlet logo.
+
 ### Coupons
 
 Coupons can be marked as stackable and may specify a per-invoice `max_discount` cap. When multiple stackable coupons are applied, the invoice `bill_json` records the `applied_coupons` and the combined `effective_discount`.
