@@ -8,6 +8,7 @@ from starlette.responses import JSONResponse
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from ..security import ratelimit
+from ..utils import ratelimits
 from ..utils.responses import err
 from .guest_utils import _is_guest_post
 
@@ -22,7 +23,10 @@ class GuestRateLimitMiddleware(BaseHTTPMiddleware):
         ip = request.client.host if request.client else "unknown"
         redis = request.app.state.redis
 
-        allowed = await ratelimit.allow(redis, ip, "guest", rate_per_min=60, burst=100)
+        policy = ratelimits.guest_order()
+        allowed = await ratelimit.allow(
+            redis, ip, "guest", rate_per_min=policy.rate_per_min, burst=policy.burst
+        )
         if not allowed:
             retry_after = await redis.ttl(f"ratelimit:{ip}:guest")
             return JSONResponse(

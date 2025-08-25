@@ -95,6 +95,16 @@ python scripts/i18n_lint.py
 
 The CI workflow runs this lint to prevent missing translations.
 
+## End-to-End Tests
+
+Playwright-based smoke tests cover a guest's ordering flow. Run them headlessly:
+
+```bash
+cd e2e/playwright
+npm install
+npm test
+```
+
 ## API
 
 ```bash
