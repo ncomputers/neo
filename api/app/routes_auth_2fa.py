@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from .audit import log_event
-from .auth import User, role_required
+from .auth import User, oauth2_scheme, role_required
 from .db import SessionLocal
 from .models_master import TwoFactorBackupCode, TwoFactorSecret
 from .security import ratelimit
@@ -163,6 +163,45 @@ async def verify_2fa(
     raise HTTPException(status_code=400, detail="Invalid code")
 
 
+@router.post("/auth/2fa/stepup")
+async def stepup_2fa(
+    payload: CodePayload,
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    user: User = Depends(role_required("owner", "super_admin")),
+):
+    """Verify a TOTP code for the current session."""
+
+    with SessionLocal() as db:
+        record = db.get(TwoFactorSecret, user.username)
+        if not record or not record.confirmed_at:
+            raise HTTPException(status_code=400, detail="2FA not enabled")
+        if not _verify_totp(record.secret, payload.code):
+            raise HTTPException(status_code=400, detail="Invalid code")
+
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    await request.app.state.redis.setex(f"2fa-step:{token_hash}", 300, "1")
+    return ok({"verified": True})
+
+
+def stepup_guard(*roles: str):
+    async def dependency(
+        request: Request,
+        user: User = Depends(role_required(*roles)),
+        token: str = Depends(oauth2_scheme),
+    ) -> User:
+        with SessionLocal() as db:
+            record = db.get(TwoFactorSecret, user.username)
+            if record and record.confirmed_at:
+                token_hash = hashlib.sha256(token.encode()).hexdigest()
+                key = f"2fa-step:{token_hash}"
+                if not await request.app.state.redis.get(key):
+                    raise HTTPException(status_code=401, detail="NEED_2FA")
+        return user
+
+    return dependency
+
+
 @router.get("/auth/2fa/backup")
 async def backup_codes(user: User = Depends(role_required("owner", "super_admin"))):
     with SessionLocal() as db:
@@ -179,4 +218,4 @@ async def backup_codes(user: User = Depends(role_required("owner", "super_admin"
     return ok({"codes": codes})
 
 
-__all__ = ["router"]
+__all__ = ["router", "stepup_guard", "_totp_now"]
