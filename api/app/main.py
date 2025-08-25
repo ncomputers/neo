@@ -125,6 +125,28 @@ kds_router = importlib.import_module(".routes_kds", __package__).router
 superadmin_router = importlib.import_module(".routes_superadmin", __package__).router
 
 
+def setup_tracing(app: FastAPI, engine) -> None:
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if not endpoint:
+        return
+    os.environ.setdefault("OTEL_SERVICE_NAME", "neo-api")
+    from opentelemetry import trace
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor, OTLPSpanExporter
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+    from opentelemetry.instrumentation.redis import RedisInstrumentor
+
+    resource = Resource.create({"service.name": os.getenv("OTEL_SERVICE_NAME", "neo-api")})
+    provider = TracerProvider(resource=resource)
+    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+    trace.set_tracer_provider(provider)
+    FastAPIInstrumentor().instrument_app(app)
+    SQLAlchemyInstrumentor().instrument(engine=engine)
+    RedisInstrumentor().instrument()
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
@@ -136,6 +158,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 settings = get_settings()
 app = FastAPI()
+setup_tracing(app, app_db.engine)
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
