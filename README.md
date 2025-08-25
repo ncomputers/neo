@@ -70,6 +70,8 @@ uvicorn app.main:app --reload
 ```
 
 Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
+Use `/support/contact` to fetch support email, phone, hours, and documentation links.
+Browsers requesting `text/html` receive simple static pages for 403, 404, and 500 errors.
 
 All API responses use a standard envelope:
 
