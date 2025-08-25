@@ -73,7 +73,17 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now neo-retention.timer
 ```
 
-## 8. Blue/green releases
+## 8. Grace/expiry reminders
+Send renewal nudges as licenses approach expiry or during the grace window. Install the service and timer:
+
+```bash
+sudo cp deploy/systemd/neo-grace.service /etc/systemd/system/
+sudo cp deploy/systemd/neo-grace.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now neo-grace.timer
+```
+
+## 9. Blue/green releases
 For safer deploys that avoid downtime, see the [blue/green guide](bluegreen/README.md)
 for instructions on upstream swaps, health gates and release smoke tests.
 ## Grafana dashboards
