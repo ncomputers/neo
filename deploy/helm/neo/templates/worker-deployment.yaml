@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neo-worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      app: neo
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: neo
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: {{ .Values.worker.image }}
+          env: {{- toYaml .Values.worker.env | nindent 12 }}
+          resources: {{- toYaml .Values.worker.resources | nindent 12 }}
+          livenessProbe: {{- toYaml .Values.worker.livenessProbe | nindent 12 }}
+          readinessProbe: {{- toYaml .Values.worker.readinessProbe | nindent 12 }}

@@ -1,6 +1,10 @@
 # Deployment
 
 Example steps to run Neo behind systemd and nginx on a Linux host.
+## Helm chart
+
+A Helm chart for Kubernetes deployments lives in [helm](helm/README.md).
+
 
 ## 1. Install dependencies
 - Python 3.12+
