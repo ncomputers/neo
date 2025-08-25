@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import secrets
 from typing import List
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -30,9 +31,6 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         self.max_bytes = 256 * 1024
         self.key_pattern = re.compile(r"^[A-Za-z0-9_\-=:]+$")
         self.hsts_enabled = os.getenv("ENABLE_HSTS") == "1"
-        self.csp = (
-            "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
-        )
 
     async def dispatch(self, request: Request, call_next):
         origin = request.headers.get("origin")
@@ -66,6 +64,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
             request._receive = receive
 
+        nonce = secrets.token_urlsafe(16)
+        request.state.csp_nonce = nonce
         response = await call_next(request)
         if origin:
             if self.allowed_origins == ["*"]:
@@ -75,7 +75,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 response.headers.setdefault("vary", "Origin")
         response.headers.setdefault("Referrer-Policy", "no-referrer")
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
-        response.headers.setdefault("Content-Security-Policy", self.csp)
+        csp = (
+            "default-src 'self'; "
+            "img-src 'self' data: https:; "
+            f"style-src 'self' 'nonce-{nonce}'; "
+            f"script-src 'self' 'nonce-{nonce}'"
+        )
+        response.headers.setdefault("Content-Security-Policy", csp)
         if self.hsts_enabled:
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"

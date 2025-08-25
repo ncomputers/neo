@@ -25,4 +25,5 @@ All notable changes to this project will be documented in this file.
   inclusion of deleted records via ``include_deleted``.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
+- Content-Security-Policy nonces for invoice and KOT templates to harden inline styles and scripts.
 
