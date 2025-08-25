@@ -19,6 +19,14 @@ Logging can be tuned via:
 - `LOG_LEVEL` – set log verbosity (default `INFO`)
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
 
+Media files can be persisted using either the local filesystem or S3. Configure
+storage with:
+
+- `STORAGE_BACKEND` – `local` (default) or `s3`
+- `MEDIA_DIR` – directory for local file storage
+- `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` – S3
+  connection details used when the backend is `s3`
+
 Copy the example environment file and adjust values as needed:
 
 ```bash
@@ -108,6 +116,13 @@ Outlet staff can authenticate with a numeric PIN to perform protected actions:
 
 - `POST /api/outlet/{tenant}/staff/login` – verify a PIN and receive a short-lived JWT.
 - `GET /api/outlet/{tenant}/staff/me` – example protected route requiring the JWT.
+
+### Media Uploads
+
+Admins can attach photos to items:
+
+- `POST /api/outlet/{tenant}/media/upload` – stores a file using the configured
+  storage backend and returns `{url, key}`. Requires an admin role.
 
 ### Backups
 
