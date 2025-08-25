@@ -25,26 +25,25 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "api"))
 
+from app.alerts.render import render_email, render_message  # type: ignore  # noqa: E402
 from app.models_master import (  # type: ignore  # noqa: E402
     NotificationDLQ,
     NotificationOutbox,
     NotificationRule,
 )
+from app.security.webhook_egress import is_allowed_url  # type: ignore  # noqa: E402
+from app.utils.webhook_signing import sign  # type: ignore  # noqa: E402
+
 from api.app.routes_metrics import (  # type: ignore  # noqa: E402
     notifications_outbox_delivered_total,
     notifications_outbox_failed_total,
 )
-from app.utils.webhook_signing import sign  # type: ignore  # noqa: E402
-from app.alerts.render import render_email, render_message  # type: ignore  # noqa: E402
-
 
 PROVIDER_REGISTRY = {
     "whatsapp": os.getenv("ALERTS_WHATSAPP_PROVIDER", "app.providers.whatsapp_stub"),
     "sms": os.getenv("ALERTS_SMS_PROVIDER", "app.providers.sms_stub"),
     "email": os.getenv("ALERTS_EMAIL_PROVIDER", "app.providers.email_stub"),
-    "webpush": os.getenv(
-        "ALERTS_WEBPUSH_PROVIDER", "app.providers.webpush_stub"
-    ),
+    "webpush": os.getenv("ALERTS_WEBPUSH_PROVIDER", "app.providers.webpush_stub"),
     "slack": os.getenv("ALERTS_SLACK_PROVIDER", "app.providers.slack_stub"),
 }
 
@@ -64,6 +63,8 @@ if redis is not None:
             REDIS_CLIENT = redis.from_url(redis_url)
         except Exception:  # pragma: no cover - connection issues
             REDIS_CLIENT = None
+
+
 def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
     """Send a notification according to its rule."""
     payload = event.payload
@@ -74,6 +75,9 @@ def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
         url = (rule.config or {}).get("url")
         if not url:
             raise ValueError("webhook rule missing url")
+        if not is_allowed_url(url):
+            raise PermissionError("EGRESS_BLOCKED")
+
         secret = os.getenv("WEBHOOK_SIGNING_SECRET")
         body = json.dumps(payload, separators=(",", ":"))
         headers = {"Content-Type": "application/json"}
@@ -88,7 +92,9 @@ def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
                     REDIS_CLIENT.setex(f"wh:nonce:{ts}:{digest}", 300, "1")
                 except RedisError:  # pragma: no cover - redis failure
                     pass
-        requests.post(url, data=body.encode(), headers=headers, timeout=5).raise_for_status()
+        requests.post(
+            url, data=body.encode(), headers=headers, timeout=5
+        ).raise_for_status()
     elif rule.channel == "email":
         template = payload.get("template")
         vars = payload.get("vars", {})
@@ -131,7 +137,7 @@ def process_once(engine) -> None:
             select(NotificationOutbox)
             .where(NotificationOutbox.status == "queued")
             .where(
-                (NotificationOutbox.next_attempt_at == None)
+                (NotificationOutbox.next_attempt_at == None)  # noqa: E711
                 | (NotificationOutbox.next_attempt_at <= now)
             )
             .order_by(NotificationOutbox.created_at)
@@ -146,6 +152,18 @@ def process_once(engine) -> None:
             try:
                 _deliver(rule, event)
             except Exception as exc:
+                if str(exc) == "EGRESS_BLOCKED":
+                    session.add(
+                        NotificationDLQ(
+                            original_id=event.id,
+                            rule_id=event.rule_id,
+                            payload=event.payload,
+                            error=str(exc),
+                        )
+                    )
+                    notifications_outbox_failed_total.inc()
+                    session.delete(event)
+                    continue
                 event.attempts += 1
                 if event.attempts > max_attempts:
                     session.add(

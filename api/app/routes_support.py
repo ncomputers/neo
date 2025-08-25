@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """Support contact information and diagnostic bundle endpoints."""
 
+
 import json
 import os
 from io import BytesIO
@@ -55,6 +56,20 @@ async def support_bundle(
         zf.writestr("health.json", json.dumps(health_data))
         zf.writestr("ready.json", json.dumps(ready_data))
         zf.writestr("version.json", json.dumps(version_data))
+
+        log_file = os.getenv("LOG_FILE", "app.log")
+        logs = ""
+        try:
+            with open(log_file, "r", encoding="utf-8") as fh:
+                logs = fh.read()
+        except Exception:
+            with SessionLocal() as session:
+                rows = session.query(Audit).order_by(Audit.id.desc()).limit(200).all()
+                lines = [
+                    f"{r.created_at}\t{r.actor}\t{r.action}\t{r.entity}" for r in rows
+                ]
+                logs = "\n".join(lines)
+        zf.writestr("recent-logs.txt", logs)
         async with get_session() as session:
             if hasattr(session, "query"):
                 audit_rows = session.query(Audit).order_by(Audit.id.desc()).limit(200)
