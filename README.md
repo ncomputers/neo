@@ -55,6 +55,13 @@ alembic upgrade head
 pytest -q
 ```
 
+## Database performance
+
+Migration `0010_hot_path_indexes` adds indexes on frequently queried columns
+and, when running on PostgreSQL, ensures monthly partitions for `invoices` and
+`payments` based on `created_at`. SQLite deployments skip the partition step but
+still benefit from the new indexes.
+
 ## Continuous Integration
 
 GitHub Actions runs the test suite along with `pre-commit` and `pip-audit` for
