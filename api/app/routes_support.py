@@ -20,7 +20,6 @@ from .audit import Audit, SessionLocal
 from .db.master import get_session
 from .models_master import Tenant
 from .utils.responses import ok
- main
 
 router = APIRouter()
 
