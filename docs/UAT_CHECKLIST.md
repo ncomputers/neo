@@ -28,3 +28,11 @@
 - **Expected Result:** Export jobs complete and can resume from cursor position.
 - [ ] Pass    [ ] Fail
 
+## Soft-delete table & item
+- **Expected Result:** Deleted tables or items block new orders until restored; restoring re-enables ordering.
+- [ ] Pass    [ ] Fail
+
+## Quota boundaries
+- **Expected Result:** Hitting quota limits returns FEATURE_LIMIT hints.
+- [ ] Pass    [ ] Fail
+
