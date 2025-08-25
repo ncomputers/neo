@@ -147,7 +147,7 @@ async def main(tenant: str, date_str: str | None = None, providers: Iterable[str
         provider = PROVIDERS.get(name)
         if provider:
             provider.send(line)
-            digest_sent_total.inc()
+    digest_sent_total.inc()
     return line
 
 
