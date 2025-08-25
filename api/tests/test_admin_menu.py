@@ -32,6 +32,84 @@ def _setup_teardown():
     app.dependency_overrides.clear()
 
 
+@pytest.mark.anyio
+async def test_etag_changes_after_item_toggle(monkeypatch) -> None:
+    app.state.redis = fakeredis.aioredis.FakeRedis()
+    item_id = "11111111-1111-1111-1111-111111111111"
+    items = [{"id": item_id, "out_of_stock": False}]
+    version = {"v": 0}
+
+    async def fake_list_categories(self, session):
+        return []
+
+    async def fake_list_items(self, session, include_hidden=False):
+        if include_hidden:
+            return items
+        return [i for i in items if not i["out_of_stock"]]
+
+    async def fake_toggle_out_of_stock(self, session, item_id, flag):
+        items[0]["out_of_stock"] = flag
+        version["v"] += 1
+
+    async def fake_menu_etag(self, session):
+        return f"v{version['v']}"
+
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_categories", fake_list_categories)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", fake_list_items)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "toggle_out_of_stock", fake_toggle_out_of_stock)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "menu_etag", fake_menu_etag)
+
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        class Dummy:
+            pass
+
+        yield Dummy()
+
+    async def guest_session():
+        class Dummy:
+            pass
+
+        return Dummy()
+
+    app.dependency_overrides[routes_guest_menu.get_tenant_id] = header_tenant_id
+    app.dependency_overrides[routes_guest_menu.get_tenant_session] = guest_session
+    monkeypatch.setattr(routes_admin_menu, "_session", fake_session)
+
+    token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        headers = {"X-Tenant-ID": "demo"}
+        resp = await client.get("/g/T-1/menu", headers=headers)
+        etag0 = resp.headers["etag"]
+
+        resp_cached = await client.get(
+            "/g/T-1/menu", headers={"X-Tenant-ID": "demo", "If-None-Match": etag0}
+        )
+        assert resp_cached.status_code == 304
+
+        await client.post(
+            f"/api/outlet/demo/menu/item/{item_id}/out_of_stock",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"flag": True},
+        )
+
+        resp2 = await client.get(
+            "/g/T-1/menu", headers={"X-Tenant-ID": "demo", "If-None-Match": etag0}
+        )
+        assert resp2.status_code == 200
+        etag1 = resp2.headers["etag"]
+        assert etag1 != etag0
+
+        resp3 = await client.get(
+            "/g/T-1/menu", headers={"X-Tenant-ID": "demo", "If-None-Match": etag1}
+        )
+        assert resp3.status_code == 304
+
+    app.dependency_overrides.clear()
+
+
 @pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"

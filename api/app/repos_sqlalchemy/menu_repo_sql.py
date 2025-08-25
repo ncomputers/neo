@@ -5,10 +5,10 @@ from __future__ import annotations
 from uuid import UUID
 import hashlib
 
-from sqlalchemy import select, update, func
+from sqlalchemy import select, update, func, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models_tenant import Category, MenuItem
+from ..models_tenant import Category, MenuItem, TenantMeta
 from ..repos.menu_repo import MenuRepo
 
 
@@ -52,18 +52,30 @@ class MenuRepoSQL(MenuRepo):
     async def toggle_out_of_stock(
         self, session: AsyncSession, item_id: UUID, flag: bool
     ) -> None:
-        """Set the out-of-stock flag for a menu item."""
+        """Set the out-of-stock flag for a menu item and bump menu version."""
         stmt = (
             update(MenuItem)
             .where(MenuItem.id == item_id)
             .values(out_of_stock=flag, updated_at=func.now())
         )
         await session.execute(stmt)
+        await self._bump_menu_version(session)
         await session.commit()
 
+    async def _bump_menu_version(self, session: AsyncSession) -> None:
+        """Increment the tenant's menu version."""
+        stmt = (
+            update(TenantMeta)
+            .values(menu_version=TenantMeta.menu_version + 1, updated_at=func.now())
+        )
+        result = await session.execute(stmt)
+        if result.rowcount == 0:
+            await session.execute(
+                insert(TenantMeta).values(menu_version=1, updated_at=func.now())
+            )
+
     async def menu_etag(self, session: AsyncSession) -> str:
-        """Return a hash of the latest update times for categories and items."""
-        cat_updated = await session.scalar(select(func.max(Category.updated_at)))
-        item_updated = await session.scalar(select(func.max(MenuItem.updated_at)))
-        payload = f"{cat_updated}{item_updated}".encode()
+        """Return a hash derived from the tenant's menu version."""
+        version = await session.scalar(select(TenantMeta.menu_version)) or 0
+        payload = str(version).encode()
         return hashlib.sha1(payload).hexdigest()

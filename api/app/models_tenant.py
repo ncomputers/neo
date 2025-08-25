@@ -61,6 +61,18 @@ class MenuItem(Base):
     )
 
 
+class TenantMeta(Base):
+    """Tenant metadata including a menu version for cache busting."""
+
+    __tablename__ = "tenant_meta"
+
+    id = Column(Integer, primary_key=True, default=1)
+    menu_version = Column(Integer, nullable=False, default=0)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class TableStatus(enum.Enum):
     """Lifecycle states for a dining table."""
 
@@ -383,4 +395,5 @@ __all__ = [
     "AuditTenant",
     "Staff",
     "InvoiceCounter",
+    "TenantMeta",
 ]
