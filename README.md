@@ -18,6 +18,7 @@ Logging can be tuned via:
 
 - `LOG_LEVEL` – set log verbosity (default `INFO`)
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
+- `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
 
 Media files can be persisted using either the local filesystem or S3. Configure
 storage with:
