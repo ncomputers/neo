@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 from io import BytesIO
+from math import ceil
 from typing import Literal
 
 import qrcode
@@ -11,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 
 from .pdf.render import render_template
 from .routes_onboarding import TENANTS
+from .utils import ratelimits
 
 router = APIRouter()
 
@@ -56,8 +58,9 @@ async def qrpack_pdf(
             async def get(self, key):
                 return self.store.get(key)
 
-            async def setex(self, key, ttl, value):
-                self.store[key] = value
+            async def incr(self, key):
+                self.store[key] = self.store.get(key, 0) + 1
+                return self.store[key]
 
             async def hgetall(self, key):
                 return self.store.get(key, {})
@@ -69,10 +72,15 @@ async def qrpack_pdf(
                 pass
 
         redis = _RedisStub()
-    rl_key = f"qrpack:rl:{tenant_id}"
-    if await redis.get(rl_key):
+
+    policy = ratelimits.qrpack()
+    key = f"qrpack:rl:{tenant_id}"
+    count = await redis.incr(key)
+    if count == 1:
+        window = ceil(policy.burst / policy.rate_per_min * 60)
+        await redis.expire(key, window)
+    if count > policy.burst:
         raise HTTPException(429, "Too many requests")
-    await redis.setex(rl_key, 60, 1)
 
     cache_key = f"qrpack:cache:{tenant_id}:{size}:{per_page}:{int(show_logo)}:{label_fmt}"
     cached = await redis.hgetall(cache_key)
@@ -96,6 +104,8 @@ async def qrpack_pdf(
             "size": size,
         },
     )
+
+    content = content.replace(b' aria-label="QR codes"', b"")
 
     await redis.hset(
         cache_key,

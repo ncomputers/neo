@@ -17,6 +17,7 @@ from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 from .auth import ALGORITHM, SECRET_KEY, Token, create_access_token
 from .providers import email_stub
 from .security import ratelimit
+from .utils import ratelimits
 from .utils.responses import err, ok
 
 router = APIRouter()
@@ -46,8 +47,9 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
         expected = hmac.new(secret.encode(), msg, sha256).hexdigest()
         return hmac.compare_digest(token, expected)
 
+    policy_ip = ratelimits.magic_link_ip()
     allowed_ip = await ratelimit.allow(
-        redis, ip, "magic-start", rate_per_min=2, burst=2
+        redis, ip, "magic-start", rate_per_min=policy_ip.rate_per_min, burst=policy_ip.burst
     )
     if not allowed_ip and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{ip}:magic-start")
@@ -56,8 +58,9 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
             status_code=HTTP_429_TOO_MANY_REQUESTS,
         )
 
+    policy_email = ratelimits.magic_link_email()
     allowed_email = await ratelimit.allow(
-        redis, email, "magic-email", rate_per_min=5 / 60, burst=5
+        redis, email, "magic-email", rate_per_min=policy_email.rate_per_min, burst=policy_email.burst
     )
     if not allowed_email and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{email}:magic-email")
