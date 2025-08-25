@@ -13,6 +13,7 @@ import logging
 import os
 import sys
 import uuid
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -136,6 +137,7 @@ from .routes_reports import router as reports_router
 from .routes_security import router as security_router
 from .routes_help import router as help_router
 from .routes_support import router as support_router
+from .routes_support_bundle import router as support_bundle_router
 from .routes_legal import router as legal_router
 from .routes_staff import router as staff_router
 from .routes_tables_map import router as tables_map_router
@@ -832,6 +834,7 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
+app.include_router(support_bundle_router)
 app.include_router(legal_router)
 app.include_router(backup_router)
 app.include_router(print_router)
