@@ -91,7 +91,8 @@ uvicorn app.main:app --reload
 ```
 
 Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
-Use `/support/contact` to fetch support email, phone, hours, and documentation links.
+Use `/support/contact` to fetch support email, phone, hours, documentation links, and legal policy URLs.
+Legal policy pages are available at `/legal/{page}` (for example, `/legal/privacy` or `/legal/terms`) and support optional outlet branding.
 Browsers requesting `text/html` receive simple static pages for 403, 404, and 500 errors.
 
 

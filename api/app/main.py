@@ -1,4 +1,5 @@
 # main.py
+
 # flake8: noqa
 
 """In-memory FastAPI application for demo guest ordering and billing."""
@@ -98,53 +99,54 @@ from .otel import init_tracing
 from .routes_jobs_status import router as jobs_status_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
-from .routes_api_keys import router as api_keys_router  # noqa: E402
-from .routes_auth_magic import router as auth_magic_router  # noqa: E402
-from .routes_backup import router as backup_router  # noqa: E402
-from .routes_counter_admin import router as counter_admin_router  # noqa: E402
-from .routes_counter_guest import router as counter_guest_router  # noqa: E402
-from .routes_dashboard import router as dashboard_router  # noqa: E402
-from .routes_dashboard_charts import router as dashboard_charts_router  # noqa: E402
-from .routes_daybook_pdf import router as daybook_pdf_router  # noqa: E402
-from .routes_digest import router as digest_router  # noqa: E402
-from .routes_exports import router as exports_router  # noqa: E402
-from .routes_feedback import router as feedback_router  # noqa: E402
-from .routes_gst_monthly import router as gst_monthly_router  # noqa: E402
-from .routes_guest_bill import router as guest_bill_router  # noqa: E402
-from .routes_guest_menu import router as guest_menu_router  # noqa: E402
-from .routes_guest_order import router as guest_order_router  # noqa: E402
-from .routes_help import router as help_router  # noqa: E402
-from .routes_hotel_guest import router as hotel_guest_router  # noqa: E402
-from .routes_hotel_housekeeping import router as hotel_hk_router  # noqa: E402
-from .routes_housekeeping import router as housekeeping_router  # noqa: E402
-from .routes_invoice_pdf import router as invoice_pdf_router  # noqa: E402
-from .routes_kot import router as kot_router  # noqa: E402
-from .routes_media import router as media_router  # noqa: E402
-from .routes_menu_import import router as menu_import_router  # noqa: E402
-from .routes_metrics import router as metrics_router  # noqa: E402
-from .routes_metrics import ws_messages_total  # noqa: E402
-from .routes_onboarding import router as onboarding_router  # noqa: E402
-from .routes_orders_batch import router as orders_batch_router  # noqa: E402
-from .routes_outbox_admin import router as outbox_admin_router  # noqa: E402
-from .routes_owner_aggregate import router as owner_aggregate_router  # noqa: E402
-from .routes_preflight import router as preflight_router  # noqa: E402
-from .routes_print import router as print_router  # noqa: E402
-from .routes_print_bridge import router as print_bridge_router  # noqa: E402
-from .routes_push import router as push_router  # noqa: E402
-from .routes_qrpack import router as qrpack_router  # noqa: E402
-from .routes_ready import router as ready_router  # noqa: E402
-from .routes_reports import router as reports_router  # noqa: E402
-from .routes_security import router as security_router  # noqa: E402
-from .routes_staff import router as staff_router  # noqa: E402
-from .routes_support import router as support_router  # noqa: E402
-from .routes_tables_map import router as tables_map_router  # noqa: E402
-from .routes_tables_qr import router as tables_qr_router  # noqa: E402
-from .routes_tables_sse import router as tables_sse_router  # noqa: E402
-from .routes_vapid import router as vapid_router  # noqa: E402
-from .routes_version import router as version_router  # noqa: E402
-from .services import notifications  # noqa: E402
-from .utils import PrepTimeTracker  # noqa: E402
-from .utils.responses import err, ok  # noqa: E402
+from .routes_auth_magic import router as auth_magic_router
+from .routes_backup import router as backup_router
+from .routes_counter_admin import router as counter_admin_router
+from .routes_counter_guest import router as counter_guest_router
+from .routes_dashboard import router as dashboard_router
+from .routes_dashboard_charts import router as dashboard_charts_router
+from .routes_daybook_pdf import router as daybook_pdf_router
+from .routes_digest import router as digest_router
+from .routes_exports import router as exports_router
+from .routes_gst_monthly import router as gst_monthly_router
+from .routes_guest_bill import router as guest_bill_router
+from .routes_guest_menu import router as guest_menu_router
+from .routes_guest_order import router as guest_order_router
+from .routes_hotel_guest import router as hotel_guest_router
+from .routes_hotel_housekeeping import router as hotel_hk_router
+from .routes_housekeeping import router as housekeeping_router
+from .routes_invoice_pdf import router as invoice_pdf_router
+from .routes_kot import router as kot_router
+from .routes_media import router as media_router
+from .routes_menu_import import router as menu_import_router
+from .routes_metrics import router as metrics_router
+from .routes_metrics import ws_messages_total
+from .routes_onboarding import router as onboarding_router
+from .routes_orders_batch import router as orders_batch_router
+from .routes_outbox_admin import router as outbox_admin_router
+from .routes_owner_aggregate import router as owner_aggregate_router
+from .routes_preflight import router as preflight_router
+from .routes_print import router as print_router
+from .routes_print_bridge import router as print_bridge_router
+from .routes_push import router as push_router
+from .routes_feedback import router as feedback_router
+from .routes_qrpack import router as qrpack_router
+from .routes_ready import router as ready_router
+from .routes_reports import router as reports_router
+from .routes_security import router as security_router
+from .routes_help import router as help_router
+from .routes_support import router as support_router
+from .routes_legal import router as legal_router
+from .routes_staff import router as staff_router
+from .routes_tables_map import router as tables_map_router
+from .routes_tables_sse import router as tables_sse_router
+from .routes_tables_qr_rotate import router as tables_qr_rotate_router
+from .routes_vapid import router as vapid_router
+from .routes_version import router as version_router
+from .routes_api_keys import router as api_keys_router
+from .services import notifications
+from .utils import PrepTimeTracker
+from .utils.responses import err, ok
 
 
 sys.modules.setdefault("db", app_db)
@@ -198,6 +200,11 @@ app.add_middleware(APIKeyAuthMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
+
+
+# Track active WebSocket connections per client IP
+ws_connections: dict[str, int] = defaultdict(int)
+WS_HEARTBEAT_INTERVAL = 15
 
 
 @app.middleware("http")
@@ -818,6 +825,7 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
+app.include_router(legal_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)

@@ -31,6 +31,14 @@ export default function GuestOrder() {
           <h3 className="font-semibold">Current Bill: {bill.total}</h3>
         </div>
       )}
+      <footer className="mt-8 text-sm text-gray-500">
+        <a href="/legal/privacy" className="mx-2 hover:underline">
+          Privacy
+        </a>
+        <a href="/legal/terms" className="mx-2 hover:underline">
+          Terms
+        </a>
+      </footer>
     </div>
   )
 }

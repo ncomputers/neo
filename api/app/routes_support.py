@@ -27,6 +27,8 @@ async def support_contact() -> dict:
         "phone": "+1-800-555-0199",
         "hours": "09:00-18:00 IST",
         "docs_url": "https://docs.example.com",
+        "privacy_url": "/legal/privacy",
+        "terms_url": "/legal/terms",
     }
 
 
