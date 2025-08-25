@@ -45,3 +45,9 @@ The application uses Redis Pub/Sub for real-time features:
   `event: table_map` messages with heartbeats every 15s and supports the
   `Last-Event-ID` header.
 
+## Feature Flags
+
+Feature flags may be globally toggled using environment variables prefixed
+with `FLAG_`. For example, setting `FLAG_HOTEL_MODE=1` enables hotel features
+for every tenant regardless of their individual settings.
+
