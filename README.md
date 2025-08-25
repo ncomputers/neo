@@ -307,6 +307,10 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
+## Daily Digest Scheduler
+
+`scripts/digest_scheduler.py` scans all active tenants and triggers the KPI digest once the local time passes **09:00** in each tenant's timezone. The last sent date is stored in Redis under `digest:last:{tenant}` to prevent duplicates. A systemd timer (`deploy/systemd/neo-digest.timer`) runs this script every five minutes.
+
 
 ## PWA
 

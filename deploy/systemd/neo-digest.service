@@ -1,0 +1,11 @@
+[Unit]
+Description=Per-tenant daily digest scheduler
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/neo
+EnvironmentFile=/etc/neo/neo-digest.env
+ExecStart=/usr/bin/python3 scripts/digest_scheduler.py
+
+[Install]
+WantedBy=multi-user.target
