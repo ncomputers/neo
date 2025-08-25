@@ -122,6 +122,7 @@ from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
+from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
@@ -638,9 +639,7 @@ async def reject_order(table_id: str, index: int, request: Request) -> dict[str,
 # Billing
 
 
-@app.get(
-    "/tables/{table_id}/bill", tags=["Billing"], summary="Get table bill"
-)
+@app.get("/tables/{table_id}/bill", tags=["Billing"], summary="Get table bill")
 async def bill(table_id: str) -> dict:
     """Return the running bill for a table."""
 
@@ -649,9 +648,7 @@ async def bill(table_id: str) -> dict:
     return ok({"total": total, "orders": table["orders"]})
 
 
-@app.post(
-    "/tables/{table_id}/pay", tags=["Billing"], summary="Pay table bill"
-)
+@app.post("/tables/{table_id}/pay", tags=["Billing"], summary="Pay table bill")
 async def pay_now(table_id: str) -> dict:
     """Settle the current bill and clear outstanding orders."""
 
@@ -772,6 +769,7 @@ app.include_router(metrics_router)
 app.include_router(dashboard_router)
 app.include_router(dashboard_charts_router)
 app.include_router(owner_aggregate_router)
+app.include_router(preflight_router)
 app.include_router(tables_map_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
