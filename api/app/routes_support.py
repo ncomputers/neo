@@ -1,4 +1,5 @@
 """Support contact information and bundle export."""
+
 from __future__ import annotations
 
 
@@ -12,7 +13,6 @@ from fastapi import APIRouter, Depends, Response
 from .audit import Audit, SessionLocal
 from .auth import User, role_required
 from .db.master import get_session
-from .models_master import Tenant
 from .routes_ready import ready
 from .routes_version import version
 from .utils.responses import ok

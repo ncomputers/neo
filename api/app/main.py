@@ -137,7 +137,7 @@ from .routes_support import router as support_router
 from .routes_staff import router as staff_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
-from .routes_tables_qr import router as tables_qr_router
+from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_api_keys import router as api_keys_router
@@ -820,7 +820,7 @@ app.include_router(dashboard_charts_router)
 app.include_router(owner_aggregate_router)
 app.include_router(preflight_router)
 app.include_router(tables_map_router)
-app.include_router(tables_qr_router)
+app.include_router(tables_qr_rotate_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
 app.include_router(ready_router)
