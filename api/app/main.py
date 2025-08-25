@@ -111,6 +111,7 @@ from .routes_push import router as push_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
+from .routes_support import router as support_router
 from .routes_staff import router as staff_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
@@ -729,6 +730,7 @@ app.include_router(digest_router)
 app.include_router(reports_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
+app.include_router(support_router)
 
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)
