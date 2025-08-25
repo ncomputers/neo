@@ -21,6 +21,7 @@ Logging can be tuned via:
 - `LOG_LEVEL` – set log verbosity (default `INFO`)
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
+- `ERROR_DSN` – optional Sentry-compatible DSN for centralized error reporting
 - `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
 
 Real-time streams expose additional knobs:
@@ -50,6 +51,10 @@ Copy the example environment file and adjust values as needed:
 ```bash
 cp .env.example .env
 ```
+
+At startup the API validates that critical variables like `DB_URL` and
+`REDIS_URL` are present. Run `scripts/env_audit.py` to compare
+`.env.example` against the required list and spot missing keys.
 
 ## Quickstart
 
@@ -378,6 +383,10 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 `scripts/digest_scheduler.py` scans all active tenants and triggers the KPI digest once the local time passes **09:00** in each tenant's timezone. The last sent date is stored in Redis under `digest:last:{tenant}` to prevent duplicates. A systemd timer (`deploy/systemd/neo-digest.timer`) runs this script every five minutes.
 
 
+## Grace/Expiry Reminders
+
+`scripts/grace_reminder.py` scans tenant subscriptions and enqueues owner alerts when a license is set to expire in 7, 3 or 1 days, or while it remains within the grace window. A systemd timer (`deploy/systemd/neo-grace.timer`) runs this helper daily.
+
 ## PWA
 
 ```bash
@@ -557,3 +566,7 @@ details.
 Static help pages for staff are available under `/help/{page}`. Currently
 `printing`, `network`, and `qr` guides are bundled and will show the outlet's
 branding when a `tenant_id` is supplied.
+
+## Release
+
+Run `python scripts/release_tag.py` to generate a changelog entry and tag a new version. The helper queries merged pull requests since the last tag and groups entries by label. A `release` workflow is available for manual triggering via the GitHub UI.

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neo-api
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      app: neo
+      component: api
+  template:
+    metadata:
+      labels:
+        app: neo
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: {{ .Values.api.image }}
+          env: {{- toYaml .Values.api.env | nindent 12 }}
+          resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          livenessProbe: {{- toYaml .Values.api.livenessProbe | nindent 12 }}
+          readinessProbe: {{- toYaml .Values.api.readinessProbe | nindent 12 }}

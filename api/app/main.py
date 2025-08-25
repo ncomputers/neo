@@ -69,6 +69,7 @@ from .auth import (
     create_access_token,
     role_required,
 )
+from .config import validate_on_boot
 from .db import SessionLocal
 from .events import alerts_sender, ema_updater, event_bus, report_aggregator
 from .hooks import order_rejection
@@ -96,6 +97,7 @@ from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
+from .obs import capture_exception, init_sentry
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
@@ -177,6 +179,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+validate_on_boot()
 settings = get_settings()
 app = FastAPI(
     title="Neo API",
@@ -235,6 +238,7 @@ handler.setFormatter(
 )
 logger.addHandler(handler)
 logger.setLevel(LOG_LEVEL)
+init_sentry(env=os.getenv("ENV"))
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -244,6 +248,7 @@ async def http_error_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(Exception)
 async def general_error_handler(request: Request, exc: Exception):
+    capture_exception(exc)
     return JSONResponse(err(500, "Internal Server Error"), status_code=500)
 
 

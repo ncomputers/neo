@@ -16,6 +16,7 @@ jobs:
       - name: Preflight check
         run: |
           curl -fsS "$BASE_URL/api/admin/preflight" | jq -e '.status == "ok"'
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
