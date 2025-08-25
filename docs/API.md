@@ -10,6 +10,8 @@ The running service serves the schema at `/openapi.json`. An exported copy lives
 
 A collection generated from the OpenAPI schema is available at [`postman_collection.json`](postman_collection.json) and is served by the running service at `/postman/collection.json`.
 
+The collection is regenerated on every merge to `main` and committed automatically when the schema changes. Each CI run also publishes the latest collection as a build artifact.
+
 To explore the API with Postman:
 
 1. Download the `postman_collection.json` file or point Postman at the `/postman/collection.json` URL.

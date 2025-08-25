@@ -1,0 +1,26 @@
+name: Update Postman Collection
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  gen-postman:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Generate Postman collection
+        run: python scripts/gen_postman.py openapi.json docs/postman_collection.json
+      - name: Upload collection artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: postman-collection
+          path: docs/postman_collection.json
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(api): auto-generate Postman on merge"
+          file_pattern: docs/postman_collection.json
