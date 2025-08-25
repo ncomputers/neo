@@ -110,7 +110,11 @@ async def delete_table(
 ) -> dict:
     """Soft delete a table."""
     with SessionLocal() as session:
-        table = session.query(Table).filter_by(code=code).one_or_none()
+        table = (
+            session.query(Table)
+            .filter_by(tenant_id=uuid.UUID(tenant), code=code)
+            .one_or_none()
+        )
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
         table.deleted_at = func.now()
@@ -127,7 +131,11 @@ async def restore_table(
 ) -> dict:
     """Restore a previously deleted table."""
     with SessionLocal() as session:
-        table = session.query(Table).filter_by(code=code).one_or_none()
+        table = (
+            session.query(Table)
+            .filter_by(tenant_id=uuid.UUID(tenant), code=code)
+            .one_or_none()
+        )
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
         table.deleted_at = None

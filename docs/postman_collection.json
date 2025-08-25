@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Neo API",
-    "_postman_id": "7c1fd921-ebb4-5477-b6ad-34e0c2236dd0",
+    "_postman_id": "a1936785-e42f-541b-bc9c-3b65d24e7037",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -149,6 +149,25 @@
           }
         },
         {
+          "name": "Admin Owner Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/analytics/owners",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "analytics",
+                "owners"
+              ]
+            }
+          }
+        },
+        {
           "name": "Apply Pending Prices",
           "request": {
             "method": "POST",
@@ -162,6 +181,24 @@
                 "menu",
                 "items",
                 "apply-pending"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Backup Codes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/backup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "2fa",
+                "backup"
               ]
             }
           }
@@ -181,6 +218,84 @@
                 "outlet",
                 "{tenant_id}",
                 "backup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Checkout Start",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/checkout/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "checkout",
+                "start"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Checkout Webhook",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/checkout/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "checkout",
+                "webhook"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close Tenant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/close",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "close"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Api Key",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "api-keys"
               ]
             }
           }
@@ -231,6 +346,26 @@
                 "{{baseUrl}}"
               ],
               "path": [
+                "menu",
+                "items"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Menu Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/menu/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
                 "menu",
                 "items"
               ]
@@ -310,6 +445,25 @@
           }
         },
         {
+          "name": "Create Table",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/tables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "tables"
+              ]
+            }
+          }
+        },
+        {
           "name": "Create Tenant",
           "request": {
             "method": "POST",
@@ -361,6 +515,26 @@
                 "{tenant_id}",
                 "reports",
                 "z"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Api Key",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/api-keys/{key_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "api-keys",
+                "{key_id}"
               ]
             }
           }
@@ -422,6 +596,105 @@
           }
         },
         {
+          "name": "Delete Menu Item",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/menu/items/{item_id}/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "menu",
+                "items",
+                "{item_id}",
+                "delete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Table",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/tables/{code}/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "tables",
+                "{code}",
+                "delete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Disable 2Fa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/disable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "2fa",
+                "disable"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Enable 2Fa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/enable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "2fa",
+                "enable"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export All",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/export/all.zip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "export",
+                "all.zip"
+              ]
+            }
+          }
+        },
+        {
           "name": "Export Items",
           "request": {
             "method": "GET",
@@ -435,6 +708,26 @@
                 "menu",
                 "items",
                 "export"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Feedback Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/feedback/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "feedback",
+                "summary"
               ]
             }
           }
@@ -526,6 +819,26 @@
                 "g",
                 "{table_token}",
                 "bill"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Api Key",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/api-keys/{key_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "api-keys",
+                "{key_id}"
               ]
             }
           }
@@ -623,6 +936,23 @@
           }
         },
         {
+          "name": "Help Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/help/{page}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "help",
+                "{page}"
+              ]
+            }
+          }
+        },
+        {
           "name": "Import Items",
           "request": {
             "method": "POST",
@@ -698,6 +1028,27 @@
           }
         },
         {
+          "name": "Kds Sla Breach",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/sla/breach",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "sla",
+                "breach"
+              ]
+            }
+          }
+        },
+        {
           "name": "Kot Pdf",
           "request": {
             "method": "GET",
@@ -713,6 +1064,62 @@
                 "{tenant_id}",
                 "kot",
                 "{order_id}.pdf"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Legal Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/legal/{page}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "legal",
+                "{page}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Licensing Usage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/limits/usage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "limits",
+                "usage"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Api Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "api-keys"
               ]
             }
           }
@@ -764,6 +1171,26 @@
                 "{{baseUrl}}"
               ],
               "path": [
+                "menu",
+                "items"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Menu Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/menu/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
                 "menu",
                 "items"
               ]
@@ -1007,6 +1434,27 @@
           }
         },
         {
+          "name": "Menu Import Dryrun",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/menu/import/dryrun",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "menu",
+                "import",
+                "dryrun"
+              ]
+            }
+          }
+        },
+        {
           "name": "Metrics Endpoint",
           "request": {
             "method": "GET",
@@ -1142,6 +1590,41 @@
           }
         },
         {
+          "name": "Postman Collection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/postman/collection.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "postman",
+                "collection.json"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Preflight",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/preflight",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "preflight"
+              ]
+            }
+          }
+        },
+        {
           "name": "Print Test",
           "request": {
             "method": "GET",
@@ -1201,6 +1684,23 @@
                 "order",
                 "{order_id}",
                 "progress"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pwa Version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pwa/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pwa",
+                "version"
               ]
             }
           }
@@ -1388,6 +1888,69 @@
           }
         },
         {
+          "name": "Restore Menu Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/menu/items/{item_id}/restore",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "menu",
+                "items",
+                "{item_id}",
+                "restore"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Restore Table",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/tables/{code}/restore",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "tables",
+                "{code}",
+                "restore"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Restore Tenant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tenants/{tenant}/restore",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tenants",
+                "{tenant}",
+                "restore"
+              ]
+            }
+          }
+        },
+        {
           "name": "Retry Outbox",
           "request": {
             "method": "POST",
@@ -1446,6 +2009,26 @@
                 "{tenant_id}",
                 "digest",
                 "run"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Schedule Maintenance",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/maintenance/schedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "maintenance",
+                "schedule"
               ]
             }
           }
@@ -1613,6 +2196,24 @@
           }
         },
         {
+          "name": "Setup 2Fa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/setup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "2fa",
+                "setup"
+              ]
+            }
+          }
+        },
+        {
           "name": "Staff Area",
           "request": {
             "method": "GET",
@@ -1624,6 +2225,26 @@
               ],
               "path": [
                 "staff"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Staff Shifts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/staff/shifts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "staff",
+                "shifts"
               ]
             }
           }
@@ -1712,6 +2333,24 @@
           }
         },
         {
+          "name": "Stepup 2Fa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/stepup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "2fa",
+                "stepup"
+              ]
+            }
+          }
+        },
+        {
           "name": "Stream Table Map",
           "request": {
             "method": "GET",
@@ -1728,6 +2367,25 @@
                 "tables",
                 "map",
                 "stream"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Feedback",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "feedback"
               ]
             }
           }
@@ -1753,6 +2411,43 @@
           }
         },
         {
+          "name": "Support Bundle",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/support/bundle.zip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "support",
+                "bundle.zip"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Support Contact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/support/contact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "support",
+                "contact"
+              ]
+            }
+          }
+        },
+        {
           "name": "Toggle Out Of Stock",
           "request": {
             "method": "POST",
@@ -1770,6 +2465,26 @@
                 "item",
                 "{item_id}",
                 "out_of_stock"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unblock Ip",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/security/unblock_ip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "security",
+                "unblock_ip"
               ]
             }
           }
@@ -1853,6 +2568,24 @@
           }
         },
         {
+          "name": "Verify 2Fa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "2fa",
+                "verify"
+              ]
+            }
+          }
+        },
+        {
           "name": "Verify Payment",
           "request": {
             "method": "POST",
@@ -1885,6 +2618,47 @@
               ],
               "path": [
                 "version"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Webhook Replay",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/webhooks/{item_id}/replay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "webhooks",
+                "{item_id}",
+                "replay"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Webhook Test",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/webhooks/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "webhooks",
+                "test"
               ]
             }
           }
