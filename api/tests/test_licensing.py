@@ -1,3 +1,5 @@
+"""Tests for licensing middleware enforcing plan gates and grace windows."""
+
 from __future__ import annotations
 
 import pathlib
@@ -38,7 +40,8 @@ def test_grace_window(client, monkeypatch):
                 class _Tenant:
                     plan = "starter"
                     status = "expired"
-                    grace_until = datetime.utcnow() + timedelta(days=1)
+                    grace_until = datetime.utcnow() + timedelta(days=2)
+                    features = {"exports": False}
 
                 return _Tenant()
 
@@ -57,6 +60,7 @@ def test_grace_window(client, monkeypatch):
                     plan = "starter"
                     status = "expired"
                     grace_until = datetime.utcnow() - timedelta(seconds=1)
+                    features = {"exports": False}
 
                 return _Tenant()
 
@@ -76,7 +80,8 @@ def test_exports_feature_blocked(client, monkeypatch):
                 class _Tenant:
                     plan = "starter"
                     status = "active"
-                    grace_until = None
+                    grace_until = datetime.utcnow() + timedelta(days=2)
+                    features = {"exports": False}
 
                 return _Tenant()
 
