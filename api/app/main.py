@@ -9,7 +9,6 @@ import os
 import sys
 import uuid
 import logging
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -56,6 +55,7 @@ from .middlewares import (
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
     FeatureFlagsMiddleware,
+    LoggingMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
     IdempotencyMiddleware,
@@ -151,6 +151,7 @@ app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(LoggingMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
 
@@ -163,27 +164,15 @@ async def subscription_guard_middleware(request: Request, call_next):
 app.include_router(menu_router, prefix="/menu")
 
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
 logger = logging.getLogger("api")
 handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter("%(message)s"))
+handler.setFormatter(
+    logging.Formatter("%(message)s" if LOG_FORMAT == "json" else "[%(levelname)s] %(message)s")
+)
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
-
-
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start = time.perf_counter()
-    response = await call_next(request)
-    latency = time.perf_counter() - start
-    log_data = {
-        "method": request.method,
-        "path": request.url.path,
-        "status": response.status_code,
-        "latency": round(latency, 4),
-        "correlation_id": getattr(request.state, "correlation_id", None),
-    }
-    logger.info(json.dumps(log_data))
-    return response
+logger.setLevel(LOG_LEVEL)
 
 
 @app.exception_handler(StarletteHTTPException)

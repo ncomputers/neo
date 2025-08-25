@@ -37,3 +37,4 @@ def test_not_found_returns_err():
     body = resp.json()
     assert body["ok"] is False
     assert body["error"]["code"] == 404
+    assert "request_id" in body

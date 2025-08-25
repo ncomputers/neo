@@ -1,4 +1,5 @@
 from .correlation import CorrelationIdMiddleware
+from .logging import LoggingMiddleware
 from .guest_ratelimit import GuestRateLimitMiddleware
 from .guest_blocklist import GuestBlocklistMiddleware
 from .prometheus import PrometheusMiddleware
@@ -11,6 +12,7 @@ from .security import SecurityMiddleware
 
 __all__ = [
     "CorrelationIdMiddleware",
+    "LoggingMiddleware",
     "GuestRateLimitMiddleware",
     "GuestBlocklistMiddleware",
     "PrometheusMiddleware",
