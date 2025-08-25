@@ -79,7 +79,7 @@ all pull requests. To mirror these checks locally:
 ```bash
 pip install pre-commit pip-audit gitleaks
 pre-commit run --all-files
-npx pa11y-ci
+npx pa11y-ci -c pa11y-ci.json
 pip-audit
 gitleaks detect -c .gitleaks.toml
 ```
