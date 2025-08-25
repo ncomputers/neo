@@ -51,3 +51,7 @@ sudo systemctl enable --now neo-canary.timer
 ```
 
 The probe runs every 10 minutes and logs success or failure.
+
+## 6. Blue/green releases
+For safer deploys that avoid downtime, see the [blue/green guide](bluegreen/README.md)
+for instructions on upstream swaps, health gates and release smoke tests.
