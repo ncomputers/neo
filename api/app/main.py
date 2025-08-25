@@ -77,6 +77,7 @@ from .routes_exports import router as exports_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_alerts import router as alerts_router
 from .routes_outbox_admin import router as outbox_admin_router
+from .routes_orders_batch import router as orders_batch_router
 from .routes_housekeeping import router as housekeeping_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
@@ -707,6 +708,7 @@ app.include_router(staff_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
 app.include_router(outbox_admin_router)
+app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)

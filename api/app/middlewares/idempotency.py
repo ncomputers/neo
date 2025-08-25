@@ -33,7 +33,9 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if (
             request.method == "POST"
-            and request.url.path.startswith(("/g/", "/h/", "/c/"))
+            and request.url.path.startswith(
+                ("/g/", "/h/", "/c/", "/api/outlet/")
+            )
             and (key := request.headers.get("Idempotency-Key"))
         ):
             redis = request.app.state.redis
