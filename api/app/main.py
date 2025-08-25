@@ -103,6 +103,7 @@ from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_magic import router as auth_magic_router
+from .routes_auth_2fa import router as auth_2fa_router
 from .routes_backup import router as backup_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
@@ -802,6 +803,7 @@ async def mark_clean(table_id: str) -> dict:
 
 # Auth domain
 app.include_router(auth_magic_router)
+app.include_router(auth_2fa_router)
 
 # Guest domain
 app.include_router(guest_menu_router)
