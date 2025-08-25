@@ -19,9 +19,13 @@ basic offline support.
   badge until the service worker syncs them, after which they are marked
   **synced**.
 * Updates are picked up when the service worker changes.
-* When a new build is waiting, the service worker posts an `UPDATE_READY`
-  message with the build hash. The guest app shows a **New version available**
-  button; tapping it activates the update and reloads the app.
+
+## Update UX
+
+When a new build is waiting, the service worker posts an `UPDATE_READY` message
+with the build hash. A small banner with a **Refresh** button appears. Clicking
+**Refresh** sends `SKIP_WAITING` to the waiting worker and reloads the page,
+activating the updated build.
 
 ## Version
 
