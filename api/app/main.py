@@ -78,6 +78,7 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
+from .routes_admin_jobs import router as admin_jobs_router
 from .routes_alerts import router as alerts_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
@@ -702,6 +703,7 @@ app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
+app.include_router(admin_jobs_router)
 app.include_router(outbox_admin_router)
 app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)

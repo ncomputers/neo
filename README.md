@@ -304,6 +304,8 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `ws_messages_total`: WebSocket messages delivered
 - `sse_clients_gauge`: currently connected SSE clients
 - `digest_sent_total`: daily KPI digests sent (via route or CLI)
+- Background job status: `/api/admin/jobs/status` returns worker heartbeats,
+  processed counts, recent failures, and queue depths.
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
