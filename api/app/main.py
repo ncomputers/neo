@@ -99,6 +99,7 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
+from .routes_admin_analytics import router as admin_analytics_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
@@ -831,6 +832,7 @@ app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
+app.include_router(admin_analytics_router)
 app.include_router(dashboard_router)
 app.include_router(dashboard_charts_router)
 app.include_router(owner_aggregate_router)
