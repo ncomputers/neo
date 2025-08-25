@@ -370,21 +370,22 @@ The worker drains `notifications_outbox` rows and currently supports
 `*_stub` channels simply log the payload and are placeholders for future
 provider adapters. Each outbox row tracks delivery `attempts` and schedules
 retries via `next_attempt_at`. Failed deliveries use exponential backoff with
-jitter (roughly 1s, 5s, 30s, 2m and 10m). A per-destination circuit breaker
-opens after consecutive failures and retries once the open timeout elapses.
+jitter (roughly 1s, 5s, 30s, 2m and 10m). A Redis-backed circuit breaker tracks
+consecutive failures per destination, opens after the threshold is exceeded and
+stays open for a cooldown period before a half-open probe is attempted.
 The retry count is capped by the `OUTBOX_MAX_ATTEMPTS` environment variable
 (default: 5). Events that exceed this limit are moved to a `notifications_dlq`
 table for inspection, which records the original event and error.
 
 Additional environment variables:
 
-* `WEBHOOK_BREAKER_THRESHOLD` – failures before opening the breaker (default: 5)
-* `WEBHOOK_BREAKER_OPEN_SECS` – seconds the breaker remains open (default: 300)
+* `WEBHOOK_BREAKER_THRESHOLD` – failures before opening the breaker (default: 8)
+* `WEBHOOK_BREAKER_OPEN_SECS` – seconds the breaker remains open (default: 600)
 
 Metrics exposed under `/metrics` include `webhook_attempts_total`,
 `webhook_failures_total` and `webhook_breaker_state`. Attempts and failures
-are labelled by destination URL, and the breaker gauge reports `1` when a
-destination is open and `0` when closed.
+are labelled by destination URL, while the breaker gauge uses a hashed URL
+label and reports `0` when closed, `1` when open and `2` when half-open.
 
 ### KDS SLA Watcher
 
