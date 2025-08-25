@@ -5,6 +5,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+import fakeredis.aioredis
 
 import fakeredis.aioredis
 
