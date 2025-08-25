@@ -4,41 +4,47 @@
 
 from __future__ import annotations
 
+import asyncio
+import importlib
 import json
+import logging
 import os
 import sys
 import uuid
-import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import asyncio
+import redis.asyncio as redis
 from fastapi import (
     Depends,
     FastAPI,
     File,
+    Header,
     HTTPException,
     Request,
-    Header,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
     status,
 )
-import importlib
-import redis.asyncio as redis
 from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.gzip import GZipMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from redis.asyncio import from_url
-from .db import SessionLocal
 from sqlalchemy import func
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 
 from config import get_settings
+
+from . import db as app_db
+from . import domain as app_domain
+from . import models_tenant as app_models_tenant
+from . import repos_sqlalchemy as app_repos_sqlalchemy
+from . import utils as app_utils
+from .audit import log_event
 from .auth import (
     Token,
     User,
@@ -47,77 +53,66 @@ from .auth import (
     create_access_token,
     role_required,
 )
-from .audit import log_event
+from .db import SessionLocal
+from .events import alerts_sender, ema_updater, event_bus, report_aggregator
+from .hooks import order_rejection
+from .hooks.table_map import publish_table_state
+from .i18n import get_msg, resolve_lang
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (
     CorrelationIdMiddleware,
+    FeatureFlagsMiddleware,
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
-    FeatureFlagsMiddleware,
+    HttpErrorCounterMiddleware,
+    IdempotencyMetricsMiddleware,
+    IdempotencyMiddleware,
     LoggingMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
-    IdempotencyMiddleware,
-    IdempotencyMetricsMiddleware,
-    HttpErrorCounterMiddleware,
 )
+from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
-from .routes_guest_menu import router as guest_menu_router
-from .routes_guest_order import router as guest_order_router
-from .routes_guest_bill import router as guest_bill_router
-from .routes_invoice_pdf import router as invoice_pdf_router
-from .routes_kot import router as kot_router
+from .middlewares.subscription_guard import SubscriptionGuard
+from .models_tenant import Table
+from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
-from .routes_backup import router as backup_router
-from .routes_daybook_pdf import router as daybook_pdf_router
-from .routes_digest import router as digest_router
-from .routes_reports import router as reports_router
-from .routes_exports import router as exports_router
-from .routes_gst_monthly import router as gst_monthly_router
 from .routes_alerts import router as alerts_router
-from .routes_outbox_admin import router as outbox_admin_router
-from .routes_orders_batch import router as orders_batch_router
-from .routes_housekeeping import router as housekeeping_router
-from .routes_hotel_guest import router as hotel_guest_router
-from .routes_hotel_housekeeping import router as hotel_hk_router
-from .routes_counter_guest import router as counter_guest_router
+from .routes_backup import router as backup_router
 from .routes_counter_admin import router as counter_admin_router
-from .routes_metrics import router as metrics_router, ws_messages_total
-from .routes_tables_map import router as tables_map_router
-from .routes_tables_sse import router as tables_sse_router
-from .routes_version import router as version_router
-from .routes_staff import router as staff_router
+from .routes_counter_guest import router as counter_guest_router
 from .routes_dashboard import router as dashboard_router
 from .routes_dashboard_charts import router as dashboard_charts_router
-from .routes_ready import router as ready_router
+from .routes_daybook_pdf import router as daybook_pdf_router
+from .routes_digest import router as digest_router
+from .routes_exports import router as exports_router
+from .routes_gst_monthly import router as gst_monthly_router
+from .routes_guest_bill import router as guest_bill_router
+from .routes_guest_menu import router as guest_menu_router
+from .routes_guest_order import router as guest_order_router
+from .routes_hotel_guest import router as hotel_guest_router
+from .routes_hotel_housekeeping import router as hotel_hk_router
+from .routes_housekeeping import router as housekeeping_router
+from .routes_invoice_pdf import router as invoice_pdf_router
+from .routes_kot import router as kot_router
+from .routes_media import router as media_router
+from .routes_metrics import router as metrics_router
+from .routes_metrics import ws_messages_total
+from .routes_orders_batch import router as orders_batch_router
+from .routes_outbox_admin import router as outbox_admin_router
 from .routes_print import router as print_router
 from .routes_push import router as push_router
-from .routes_media import router as media_router
-
-from .middlewares.subscription_guard import SubscriptionGuard
-from .utils.responses import ok, err
-from .i18n import resolve_lang, get_msg
-from .hooks import order_rejection
-from .events import (
-    alerts_sender,
-    ema_updater,
-    event_bus,
-    report_aggregator,
-)
+from .routes_ready import router as ready_router
+from .routes_reports import router as reports_router
+from .routes_staff import router as staff_router
+from .routes_tables_map import router as tables_map_router
+from .routes_tables_sse import router as tables_sse_router
+from .routes_vapid import router as vapid_router
+from .routes_version import router as version_router
 from .services import notifications
-from .otel import init_tracing
-
 from .utils import PrepTimeTracker
-from .models_tenant import Table
-from .hooks.table_map import publish_table_state
-from .middlewares.room_state_guard import RoomStateGuard
-
-from . import db as app_db
-from . import domain as app_domain
-from . import models_tenant as app_models_tenant
-from . import repos_sqlalchemy as app_repos_sqlalchemy
-from . import utils as app_utils
+from .utils.responses import err, ok
 
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)
@@ -126,6 +121,14 @@ sys.modules.setdefault("repos_sqlalchemy", app_repos_sqlalchemy)
 sys.modules.setdefault("utils", app_utils)
 kds_router = importlib.import_module(".routes_kds", __package__).router
 superadmin_router = importlib.import_module(".routes_superadmin", __package__).router
+
+
+class SWStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if path == "sw.js":
+            response.headers["Service-Worker-Allowed"] = "/"
+        return response
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -139,6 +142,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 settings = get_settings()
 app = FastAPI()
+static_dir = Path(__file__).resolve().parent.parent.parent / "static"
+app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
 init_tracing(app)
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
@@ -173,7 +178,9 @@ LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
 logger = logging.getLogger("api")
 handler = logging.StreamHandler()
 handler.setFormatter(
-    logging.Formatter("%(message)s" if LOG_FORMAT == "json" else "[%(levelname)s] %(message)s")
+    logging.Formatter(
+        "%(message)s" if LOG_FORMAT == "json" else "[%(levelname)s] %(message)s"
+    )
 )
 logger.addHandler(handler)
 logger.setLevel(LOG_LEVEL)
@@ -702,6 +709,7 @@ app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(push_router)
 app.include_router(media_router)
+app.include_router(vapid_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)
