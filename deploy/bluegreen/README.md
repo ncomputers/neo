@@ -21,7 +21,15 @@ warmed caches.
 curl -f https://example.com/ready
 ```
 
-## 3. Smoke suite
+## 3. Preflight check
+After deployment, verify overall system readiness via the consolidated preflight
+API. The endpoint must report status `ok`:
+
+```bash
+curl -fsS https://example.com/api/admin/preflight | jq -e '.status == "ok"'
+```
+
+## 4. Smoke suite
 Run a tiny canary order to confirm end‑to‑end functionality. The helper script
 places and then voids an order:
 
@@ -30,3 +38,13 @@ python scripts/smoke_release.py --tenant TENANT --table TABLE
 ```
 
 If the script exits with code 0 the release is considered healthy.
+
+## 5. Canary probe
+Perform a full synthetic canary round‑trip which also exercises KOT generation
+and the digest endpoint:
+
+```bash
+python scripts/canary_probe.py --tenant TENANT --table TABLE
+```
+
+The probe exits non‑zero on failure and should block the release pipeline.

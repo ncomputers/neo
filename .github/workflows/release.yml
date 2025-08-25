@@ -4,20 +4,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  tag:
+  release:
     runs-on: ubuntu-latest
+    env:
+      BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+      TENANT_ID: ${{ secrets.STAGING_TENANT }}
+      TABLE_TOKEN: ${{ secrets.STAGING_TABLE }}
+      JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Preflight check
+        run: |
+          curl -fsS "$BASE_URL/api/admin/preflight" | jq -e '.status == "ok"'
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
-      - name: Tag release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/release_tag.py
+          pip install -r api/requirements.txt
+      - name: Smoke test
+        run: python scripts/smoke_release.py --tenant "$TENANT_ID" --table "$TABLE_TOKEN" --base-url "$BASE_URL"
+      - name: Canary probe
+        run: python scripts/canary_probe.py --tenant "$TENANT_ID" --table "$TABLE_TOKEN" --base-url "$BASE_URL"
