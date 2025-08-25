@@ -49,7 +49,8 @@ async def check_replica(app: FastAPI) -> None:
             healthy = True
     _healthy = healthy
     app.state.replica_healthy = healthy
-    db_replica_healthy.set(1 if healthy else 0)
+    # expose health as 1 for healthy and 0 for unhealthy
+    db_replica_healthy.set(int(healthy))
 
 
 async def monitor(app: FastAPI) -> None:

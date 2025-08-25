@@ -35,7 +35,7 @@ Logging can be tuned via:
   replica. Health is checked on startup and every 30 s; if the replica
   becomes unreachable the app falls back to the primary. The current state is
   exposed via `app.state.replica_healthy` and Prometheus gauge
-  `db_replica_healthy`.
+  `db_replica_healthy` (1 healthy, 0 unhealthy).
 
 
 Real-time streams expose additional knobs:
