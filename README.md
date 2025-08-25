@@ -141,6 +141,13 @@ Outlet staff can authenticate with a numeric PIN to perform protected actions:
 - `POST /api/outlet/{tenant}/staff/login` – verify a PIN and receive a short-lived JWT.
 - `GET /api/outlet/{tenant}/staff/me` – example protected route requiring the JWT.
 
+### Magic Link Login
+
+Owners can authenticate using a passwordless email flow:
+
+- `POST /auth/magic/start` – request a single-use login link. Throttled to 3/min per IP and 10/hour per email.
+- `GET /auth/magic/consume?token=...` – exchange the link for a session JWT.
+
 ### Media Uploads
 
 Admins can attach photos to items:
