@@ -1,5 +1,8 @@
 # Staff PIN Management
 
+The `PinSecurityMiddleware` enforces login lockout and PIN rotation policies for
+staff accounts.
+
 ## Set PIN
 
 `POST /api/outlet/{tenant}/staff/{staff_id}/set_pin`
@@ -23,4 +26,5 @@ also clears any lockout state.
 
 Staff PINs must be rotated every **90 days**. Logins using a PIN older than 90
 days are rejected with HTTP 403 and `PIN expired`. After 80 days logins still
-succeed but include `"rotation_warning": true` in the response payload.
+succeed but include `"rotation_warning": true` in the response payload. Rotation
+events are also recorded in the audit log.

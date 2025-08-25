@@ -90,6 +90,7 @@ from .middlewares import (
     LoggingMiddleware,
     MaintenanceMiddleware,
     PrometheusMiddleware,
+    PinSecurityMiddleware,
     TableStateGuardMiddleware,
     realtime_guard,
 )
@@ -216,6 +217,7 @@ app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(MaintenanceMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(PinSecurityMiddleware)
 app.add_middleware(APIKeyAuthMiddleware)
 app.add_middleware(LoggingMiddleware)
 
