@@ -28,7 +28,7 @@ The API can route read-heavy requests to a replica database by setting
 `READ_REPLICA_URL`. Health is checked on startup and every 30 s. If the
 replica is unreachable, reads automatically fall back to the primary. The
 current status is exported via `app.state.replica_healthy` and the Prometheus
-gauge `db_replica_healthy`.
+gauge `db_replica_healthy` (1 healthy, 0 unhealthy).
 
 ## 3. systemd service
 ```bash
