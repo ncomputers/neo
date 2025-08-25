@@ -97,9 +97,9 @@ from .middlewares.security import SecurityMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .otel import init_tracing
-from .routes_jobs_status import router as jobs_status_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
+from .routes_api_keys import router as api_keys_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
 from .routes_counter_admin import router as counter_admin_router
@@ -109,15 +109,19 @@ from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_daybook_pdf import router as daybook_pdf_router
 from .routes_digest import router as digest_router
 from .routes_exports import router as exports_router
+from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
+from .routes_help import router as help_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_housekeeping import router as housekeeping_router
 from .routes_invoice_pdf import router as invoice_pdf_router
+from .routes_jobs_status import router as jobs_status_router
 from .routes_kot import router as kot_router
+from .routes_legal import router as legal_router
 from .routes_media import router as media_router
 from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
@@ -126,30 +130,26 @@ from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
+from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
-from .routes_feedback import router as feedback_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
 from .routes_security import router as security_router
-from .routes_help import router as help_router
+from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
-from .routes_legal import router as legal_router
-from .routes_staff import router as staff_router
 from .routes_tables_map import router as tables_map_router
-from .routes_tables_sse import router as tables_sse_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
+from .routes_tables_sse import router as tables_sse_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
-from .routes_api_keys import router as api_keys_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
-
 
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)
@@ -184,8 +184,6 @@ app = FastAPI(
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
-postman_dir = Path(__file__).resolve().parent.parent.parent / "postman"
-app.mount("/postman", StaticFiles(directory=postman_dir), name="postman")
 init_tracing(app)
 asyncio.set_event_loop(asyncio.new_event_loop())
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
@@ -844,6 +842,7 @@ app.include_router(feedback_router)
 app.include_router(media_router)
 app.include_router(api_keys_router)
 app.include_router(vapid_router)
+app.include_router(postman_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)
