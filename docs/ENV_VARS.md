@@ -12,11 +12,13 @@ The application relies on the following environment variables:
 | `JWKS_URL` (optional) | JWKS endpoint for verifying JWT signatures. | `https://auth.example.com/jwks.json` |
 | `REDIS_URL` | URL for Redis instance. | `redis://localhost:6379/0` |
 | `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Defaults to `*`. | `https://example.com,https://app.com` |
+| `BODY_MAX_KB` | Maximum request body size accepted by the API. | `128` |
 | `ADMIN_API_ENABLED` | Enables superadmin endpoints when set to `true`. | `false` |
 | `SSE_KEEPALIVE_INTERVAL` | Seconds between SSE keepalive comments. | `15` |
 | `EXPORT_MAX_ROWS` | Maximum rows included in export files. Defaults to `10000`. | `10000` |
 | `VAPID_PUBLIC_KEY` (optional) | Public key for Web Push authentication. | `BASE64_KEY` |
 | `VAPID_PRIVATE_KEY` (optional) | Private key for Web Push authentication. | `BASE64_KEY` |
+| `WEBHOOK_SIGNING_SECRET` (optional) | Shared secret for signing outbound webhook requests. | `supersecret` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` (optional) | OTLP trace exporter endpoint. Tracing is disabled when unset. | `http://otel-collector:4318/v1/traces` |
 | `OTEL_SERVICE_NAME` (optional) | Service name used for OpenTelemetry traces. Defaults to `neo-api`. | `neo-api` |
 
