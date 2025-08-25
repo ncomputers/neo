@@ -84,6 +84,16 @@ pip-audit
 gitleaks detect -c .gitleaks.toml
 ```
 
+## End-to-End Tests
+
+Playwright-based smoke tests cover a guest's ordering flow. Run them headlessly:
+
+```bash
+cd e2e/playwright
+npm install
+npm test
+```
+
 ## API
 
 ```bash
