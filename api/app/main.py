@@ -11,6 +11,7 @@ import logging
 import os
 import sys
 import uuid
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -196,6 +197,10 @@ app.add_middleware(LoggingMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
 
+
+# Track active WebSocket connections per client IP
+ws_connections: dict[str, int] = defaultdict(int)
+WS_HEARTBEAT_INTERVAL = 15
 
 @app.middleware("http")
 async def subscription_guard_middleware(request: Request, call_next):
@@ -451,26 +456,69 @@ async def health() -> dict:
 async def table_ws(websocket: WebSocket, table_code: str) -> None:
     """Stream order status updates for ``table_code``."""
 
+    ip = websocket.client.host if websocket.client else "?"
+    if ws_connections[ip] >= settings.max_conn_per_ip:
+        await websocket.close(code=status.WS_1013_TRY_AGAIN_LATER)
+        return
+    ws_connections[ip] += 1
+
     await websocket.accept()
     channel = f"rt:update:{table_code}"
     pubsub = redis_client.pubsub()
     await pubsub.subscribe(channel)
     tracker = _tracker(table_code)
+    queue: asyncio.Queue[dict | None] = asyncio.Queue(maxsize=100)
+
+    async def reader():
+        try:
+            async for message in pubsub.listen():
+                if message["type"] != "message":
+                    continue
+                data = json.loads(message["data"])
+                try:
+                    queue.put_nowait(data)
+                except asyncio.QueueFull:
+                    try:
+                        queue.get_nowait()
+                    except asyncio.QueueEmpty:
+                        pass
+                    await queue.put(None)
+                    await websocket.close(
+                        code=status.WS_1013_TRY_AGAIN_LATER, reason="RETRY"
+                    )
+                    break
+        finally:
+            await queue.put(None)
+
+    async def heartbeat():
+        try:
+            while True:
+                await asyncio.sleep(WS_HEARTBEAT_INTERVAL)
+                await websocket.send_json({"type": "ping"})
+        except Exception:
+            pass
+
+    reader_task = asyncio.create_task(reader())
+    hb_task = asyncio.create_task(heartbeat())
+
     try:
-        async for message in pubsub.listen():
-            if message["type"] != "message":
-                continue
-            data = json.loads(message["data"])
-            prep_time = data.get("prep_time")
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+            prep_time = item.get("prep_time")
             if prep_time is not None:
-                data["eta"] = tracker.add_prep_time(float(prep_time))
-            await websocket.send_json(data)
+                item["eta"] = tracker.add_prep_time(float(prep_time))
+            await websocket.send_json(item)
             ws_messages_total.inc()
     except WebSocketDisconnect:  # pragma: no cover - network disconnect
         pass
     finally:
+        reader_task.cancel()
+        hb_task.cancel()
         await pubsub.unsubscribe(channel)
         await pubsub.close()
+        ws_connections[ip] -= 1
 
 
 def _table_state(table_id: str) -> Dict[str, List[CartItem]]:

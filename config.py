@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     audit_retention_days: int = 30
     vapid_public_key: str | None = None
     vapid_private_key: str | None = None
+    max_conn_per_ip: int = 20
 
 
 # Cached singleton to avoid repeated file reads
