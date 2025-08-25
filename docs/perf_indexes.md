@@ -11,16 +11,13 @@ Migration `0006_perf_indexes` adds several indexes to speed up common list and q
 - `room_orders(status, placed_at)` *(if the table exists)*
 - `counter_orders(status, placed_at)` *(if the table exists)*
 
-Migration `0010_hot_indexes_partitions` extends these with additional hot-path indexes and optional monthly partitions:
+Migration `0008_hot_path_indexes` extends these with additional hot-path
+composite indexes optimised for tenant queries:
 
-- `invoices(created_at, tenant_id)`
-- `payments(invoice_id, created_at)`
-- `orders(status, created_at)`
-- `order_items(order_id)` *(ensures the index exists)*
-- `audit_tenant(created_at)`
-
-On PostgreSQL deployments, the migration also attempts to create a monthly
-partition for the `invoices` and `payments` tables based on `created_at`.
+- `invoices(tenant_id, created_at DESC)`
+- `payments(invoice_id, created_at DESC)`
+- `orders(tenant_id, status, created_at DESC)`
+- `audit_tenant(tenant_id, created_at DESC)`
 
 Run tenant migrations as usual to apply the indexes:
 
