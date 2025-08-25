@@ -57,8 +57,18 @@ async def owner_dashboard_charts(
     start = today - timedelta(days=range - 1)
     async with _session(tenant_id) as session:
         data = await dashboard_repo_sql.charts_range(session, start, today, tz)
-    sales = [pt["v"] for pt in data.get("series", {}).get("sales", [])]
-    dates = [pt["d"] for pt in data.get("series", {}).get("sales", [])]
+    sales_series = data.get("series", {}).get("sales", [])
+    sales = [pt["v"] for pt in sales_series]
+    dates = [pt["d"] for pt in sales_series]
+    ma7 = []
+    ma30 = []
+    for i, d in enumerate(dates):
+        w7 = sales[max(0, i - 6) : i + 1]
+        w30 = sales[max(0, i - 29) : i + 1]
+        ma7.append({"d": d, "v": statistics.mean(w7) if w7 else 0.0})
+        ma30.append({"d": d, "v": statistics.mean(w30) if w30 else 0.0})
+    data.setdefault("series", {})["sales_ma7"] = ma7
+    data.setdefault("series", {})["sales_ma30"] = ma30
     anomalies = []
     for i in builtins.range(6, len(sales)):
         window = sales[i - 6 : i + 1]

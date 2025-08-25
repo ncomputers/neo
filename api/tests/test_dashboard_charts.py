@@ -86,6 +86,9 @@ async def test_dashboard_charts_range(seeded_session, monkeypatch):
     assert len(data["series"]["sales"]) == 7
     assert len(data["series"]["orders"]) == 7
     assert len(data["series"]["avg_ticket"]) == 7
+    assert len(data["series"]["sales_ma7"]) == 7
+    assert len(data["series"]["sales_ma30"]) == 7
+    assert len(data["series"]["hourly_heatmap"]) == 24 * 7
 
 
 @pytest.mark.anyio

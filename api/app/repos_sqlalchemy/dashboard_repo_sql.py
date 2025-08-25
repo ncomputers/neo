@@ -68,6 +68,8 @@ async def charts_range(
     sales_series = []
     orders_series = []
     avg_series = []
+    # hourly heatmap accumulates sales per day/hour
+    heatmap: dict[tuple[str, int], float] = {}
     for i in range(days):
         day = start + timedelta(days=i)
         s = datetime.combine(day, time.min, tzinfo).astimezone(timezone.utc)
@@ -96,6 +98,24 @@ async def charts_range(
     range_start = datetime.combine(start, time.min, tzinfo).astimezone(timezone.utc)
     range_end = datetime.combine(end, time.max, tzinfo).astimezone(timezone.utc)
 
+    # gather invoice totals to build hourly heatmap
+    result = await session.execute(
+        select(Invoice.created_at, Invoice.total).where(
+            Invoice.created_at >= range_start, Invoice.created_at <= range_end
+        )
+    )
+    for created_at, total in result.all():
+        local_dt = created_at.astimezone(tzinfo)
+        key = (local_dt.date().isoformat(), local_dt.hour)
+        heatmap[key] = heatmap.get(key, 0.0) + float(total or 0)
+
+    heatmap_series = []
+    for i in range(days):
+        d = (start + timedelta(days=i)).isoformat()
+        for h in range(24):
+            v = heatmap.get((d, h), 0.0)
+            heatmap_series.append({"d": d, "h": h, "v": v})
+
     result = await session.execute(
         select(Payment.mode, func.coalesce(func.sum(Payment.amount), 0))
         .where(Payment.created_at >= range_start, Payment.created_at <= range_end)
@@ -110,6 +130,7 @@ async def charts_range(
             "sales": sales_series,
             "orders": orders_series,
             "avg_ticket": avg_series,
+            "hourly_heatmap": heatmap_series,
         },
         "modes": modes,
     }
