@@ -23,6 +23,9 @@ The application relies on the following environment variables:
 | `OTEL_EXPORTER_OTLP_ENDPOINT` (optional) | OTLP trace exporter endpoint. Tracing is disabled when unset. | `http://otel-collector:4318/v1/traces` |
 | `OTEL_SERVICE_NAME` (optional) | Service name used for OpenTelemetry traces. Defaults to `neo-api`. | `neo-api` |
 | `OTEL_SAMPLER_RATIO` (optional) | Sampling ratio between 0 and 1. Defaults to `0.1`. | `0.25` |
+| `GIT_SHA` (optional) | Git commit SHA exposed by the `/version` endpoint. | `c0ffee` |
+| `BUILT_AT` (optional) | Build timestamp exposed by the `/version` endpoint. | `2024-01-01T00:00:00Z` |
+| `ENV` (optional) | Deployment environment (`prod`, `staging`, or `dev`). | `prod` |
 
 ## JWT/JOSE
 
