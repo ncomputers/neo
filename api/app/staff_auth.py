@@ -20,6 +20,7 @@ class StaffToken(BaseModel):
     token_type: str = "bearer"
     role: str
     staff_id: int
+    rotation_warning: bool | None = None
 
 
 class StaffTokenData(BaseModel):
@@ -33,7 +34,9 @@ def create_staff_token(staff_id: int, role: str) -> str:
     """Return a short-lived JWT for ``staff_id`` and ``role``."""
 
     data = {"staff_id": staff_id, "role": role}
-    return create_access_token(data, expires_delta=timedelta(minutes=TOKEN_EXPIRE_MINUTES))
+    return create_access_token(
+        data, expires_delta=timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    )
 
 
 async def get_current_staff(
@@ -62,7 +65,9 @@ async def get_current_staff(
 def role_required(*roles: str):
     """Dependency enforcing that the current staff has one of ``roles``."""
 
-    def dependency(staff: StaffTokenData = Depends(get_current_staff)) -> StaffTokenData:
+    def dependency(
+        staff: StaffTokenData = Depends(get_current_staff),
+    ) -> StaffTokenData:
         if staff.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
