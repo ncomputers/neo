@@ -1,36 +1,37 @@
 import asyncio
-import json
 import pathlib
 import sys
 from contextlib import asynccontextmanager
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))  # noqa: E402
 
-import os
-import types
+import os  # noqa: E402
+import types  # noqa: E402
+
 os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 os.environ.setdefault("ALLOWED_ORIGINS", "*")
+
 sys.modules.setdefault("PIL", types.ModuleType("PIL"))
 sys.modules.setdefault("PIL.Image", types.ModuleType("Image"))
 sys.modules.setdefault("PIL.ImageOps", types.ModuleType("ImageOps"))
 
-import fakeredis.aioredis
-import httpx
-import pytest
-from httpx import ASGITransport, AsyncClient
+import fakeredis.aioredis  # noqa: E402
+import httpx  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 
-from api.app.auth import create_access_token
-from api.app.main import app
-from api.app import routes_webhooks
-from api.app.models_tenant import NotificationOutbox
-from api.app.utils.scrub import scrub_payload
+from api.app import routes_webhook_tools  # noqa: E402
+from api.app.auth import create_access_token  # noqa: E402
+from api.app.main import app  # noqa: E402
+from api.app.models_tenant import NotificationOutbox  # noqa: E402
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
 def test_scrub_payload_removes_secrets():
+    from api.app.utils.scrub import scrub_payload
+
     data = {"token": "abc", "nested": {"password": "p", "ok": 1}}
     scrubbed = scrub_payload(data)
     assert scrubbed["token"] == "***"
@@ -55,18 +56,20 @@ def test_webhook_test_endpoint(monkeypatch):
             called["url"] = url
             called["body"] = content
             called["headers"] = headers
-            return httpx.Response(200)
+            return httpx.Response(200, text="ok")
 
     class FakeHttpx:
         AsyncClient = DummyClient
 
-    monkeypatch.setattr(routes_webhooks, "httpx", FakeHttpx)
-    monkeypatch.setattr(routes_webhooks, "is_allowed_url", lambda url: True)
+    monkeypatch.setattr(routes_webhook_tools, "httpx", FakeHttpx)
+    monkeypatch.setattr(routes_webhook_tools, "is_allowed_url", lambda url: True)
 
     token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
 
     async def _run():
-        async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app), base_url="http://test"
+        ) as client:
             app.state.redis = fakeredis.aioredis.FakeRedis()
             resp = await client.post(
                 "/api/outlet/t1/webhooks/test",
@@ -77,8 +80,32 @@ def test_webhook_test_endpoint(monkeypatch):
 
     resp = asyncio.run(_run())
     assert resp.status_code == 200
-    body = json.loads(called["body"].decode())
-    assert body["event"] == "ping"
+    data = resp.json()["data"]
+    assert data["status"] == "success"
+    assert data["http_code"] == 200
+    assert "latency_ms" in data
+    assert data["response_snippet"] == "ok"
+
+
+def test_webhook_test_blocked(monkeypatch):
+    token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
+
+    async def _run():
+        async with AsyncClient(
+            transport=ASGITransport(app), base_url="http://test"
+        ) as client:
+            app.state.redis = fakeredis.aioredis.FakeRedis()
+            return await client.post(
+                "/api/outlet/t1/webhooks/test",
+                json={"url": "http://evil.com/hook", "event": "ping"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+    monkeypatch.setattr(routes_webhook_tools, "is_allowed_url", lambda url: False)
+
+    resp = asyncio.run(_run())
+    assert resp.status_code == 400
+    assert resp.json()["error"]["message"] == "EGRESS_BLOCKED"
 
 
 def test_webhook_replay(monkeypatch):
@@ -111,12 +138,14 @@ def test_webhook_replay(monkeypatch):
         holder["session"] = session
         yield session
 
-    monkeypatch.setattr(routes_webhooks, "_session", fake_session)
+    monkeypatch.setattr(routes_webhook_tools, "_session", fake_session)
 
     token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
 
     async def _run():
-        async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app), base_url="http://test"
+        ) as client:
             app.state.redis = fakeredis.aioredis.FakeRedis()
             return await client.post(
                 "/api/outlet/t1/webhooks/1/replay",
