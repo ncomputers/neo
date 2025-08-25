@@ -171,6 +171,9 @@ A minimal onboarding flow captures tenant details:
 - `POST /api/onboarding/start` – create a session and return `onboarding_id`.
 - `POST /api/onboarding/{id}/profile` – set name, address, logo, timezone and language.
 - `POST /api/onboarding/{id}/tax` – store GST mode and registration info.
+- Tenants may also define rounding policies:
+  - `gst_rounding` – either `item-wise` or `invoice-total`
+  - `rounding_mode` – one of `half-up`, `bankers`, `ceil` or `floor`
 - `POST /api/onboarding/{id}/tables` – allocate tables and assign QR tokens.
 - `POST /api/onboarding/{id}/payments` – configure payment modes and VPA.
 - `POST /api/onboarding/{id}/finish` – finalize and activate the tenant.
