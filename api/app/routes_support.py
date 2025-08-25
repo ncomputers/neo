@@ -1,5 +1,4 @@
 """Support contact information and bundle export."""
-=======
 from __future__ import annotations
 
 
