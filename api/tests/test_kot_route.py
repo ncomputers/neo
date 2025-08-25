@@ -60,4 +60,4 @@ def test_kot_route_html_fallback():
     m = re.search(r"nonce-([^']+)'", csp)
     assert m is not None
     nonce = m.group(1)
-    assert f'nonce="{nonce}"' in resp.text
+    assert f'<style nonce="{nonce}">' in resp.text
