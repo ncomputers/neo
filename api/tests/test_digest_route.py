@@ -38,6 +38,9 @@ def anyio_backend() -> str:
 async def tenant_session() -> AsyncSession:
     tenant_id = "demo"
     engine = get_engine(tenant_id)
+    db_path = engine.url.database
+    if db_path and os.path.exists(db_path):
+        os.remove(db_path)
     async with engine.begin() as conn:
         await conn.run_sync(models_tenant.Base.metadata.create_all)
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
