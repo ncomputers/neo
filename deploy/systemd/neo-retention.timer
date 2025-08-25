@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tenant retention enforcement daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+Unit=neo-retention.service
+
+[Install]
+WantedBy=timers.target

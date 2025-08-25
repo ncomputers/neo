@@ -63,7 +63,17 @@ sudo systemctl enable --now neo-rollup.timer
 ```
 
 
-## 7. Blue/green releases
+## 7. Retention enforcement
+Run the data retention helper daily for all tenants. Install the service and timer:
+
+```bash
+sudo cp deploy/systemd/neo-retention.service /etc/systemd/system/
+sudo cp deploy/systemd/neo-retention.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now neo-retention.timer
+```
+
+## 8. Blue/green releases
 For safer deploys that avoid downtime, see the [blue/green guide](bluegreen/README.md)
 for instructions on upstream swaps, health gates and release smoke tests.
 ## Grafana dashboards
