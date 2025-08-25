@@ -41,9 +41,12 @@ async def create_order(
     item_ids = [int(l["item_id"]) for l in lines]
     if item_ids:
         result = await session.execute(
-            select(MenuItem.id, MenuItem.name, MenuItem.price).where(
-                MenuItem.id.in_(item_ids)
-            )
+            select(
+                MenuItem.id,
+                MenuItem.name,
+                MenuItem.price,
+                MenuItem.deleted_at,
+            ).where(MenuItem.id.in_(item_ids))
         )
         items = {row.id: row for row in result}
     else:  # pragma: no cover - empty order
@@ -54,6 +57,8 @@ async def create_order(
         data = items.get(key)
         if data is None:  # pragma: no cover - menu item missing
             raise ValueError(f"menu item {line['item_id']!r} not found")
+        if data.deleted_at is not None:
+            raise ValueError("GONE_RESOURCE")
         session.add(
             CounterOrderItem(
                 order_id=order.id,

@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib
 import json
 import os
+import random
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -38,6 +39,9 @@ from app.utils.webhook_signing import sign  # type: ignore  # noqa: E402
 from api.app.routes_metrics import (  # type: ignore  # noqa: E402
     notifications_outbox_delivered_total,
     notifications_outbox_failed_total,
+    webhook_attempts_total,
+    webhook_failures_total,
+    webhook_breaker_state,
 )
 
 PROVIDER_REGISTRY = {
@@ -47,6 +51,12 @@ PROVIDER_REGISTRY = {
     "webpush": os.getenv("ALERTS_WEBPUSH_PROVIDER", "app.providers.webpush_stub"),
     "slack": os.getenv("ALERTS_SLACK_PROVIDER", "app.providers.slack_stub"),
 }
+
+BACKOFF = [1, 5, 30, 120, 600]  # seconds: 1s, 5s, 30s, 2m, 10m
+
+BREAKER_THRESHOLD = int(os.getenv("WEBHOOK_BREAKER_THRESHOLD", "5"))
+BREAKER_OPEN_SECS = int(os.getenv("WEBHOOK_BREAKER_OPEN_SECS", "300"))
+BREAKERS: dict[str, dict] = {}
 
 
 def _format_sla_breach(channel: str, payload: dict) -> dict:
@@ -143,12 +153,10 @@ def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
         raise ValueError(f"unsupported channel {rule.channel}")
 
 
-BACKOFF = [60, 300, 1800]  # 1m, 5m, 30m
-
-
 def _next_attempt(attempts: int) -> datetime:
     delay = BACKOFF[min(attempts - 1, len(BACKOFF) - 1)]
-    return datetime.now(timezone.utc) + timedelta(seconds=delay)
+    jitter = random.uniform(0, delay * 0.1)
+    return datetime.now(timezone.utc) + timedelta(seconds=delay + jitter)
 
 
 def process_once(engine) -> None:
@@ -172,9 +180,34 @@ def process_once(engine) -> None:
                 notifications_outbox_delivered_total.inc()
                 session.add(event)
                 continue
+
+            url = (rule.config or {}).get("url") if rule.channel == "webhook" else None
+            if url:
+                breaker = BREAKERS.get(url)
+                if breaker and breaker.get("state") == "open" and breaker.get("opened_until"):
+                    if breaker["opened_until"] > now:
+                        event.next_attempt_at = breaker["opened_until"]
+                        session.add(event)
+                        continue
+                    breaker["state"] = "half-open"
+
+                webhook_attempts_total.labels(destination=url).inc()
+
             try:
                 _deliver(rule, event)
             except Exception as exc:
+                if url:
+                    webhook_failures_total.labels(destination=url).inc()
+                    breaker = BREAKERS.setdefault(
+                        url, {"failures": 0, "state": "closed", "opened_until": None}
+                    )
+                    breaker["failures"] += 1
+                    if breaker["failures"] >= BREAKER_THRESHOLD:
+                        breaker["state"] = "open"
+                        breaker["opened_until"] = datetime.now(timezone.utc) + timedelta(
+                            seconds=BREAKER_OPEN_SECS
+                        )
+                        webhook_breaker_state.labels(destination=url).set(1)
                 if str(exc) == "EGRESS_BLOCKED":
                     session.add(
                         NotificationDLQ(
@@ -194,7 +227,7 @@ def process_once(engine) -> None:
                             original_id=event.id,
                             rule_id=event.rule_id,
                             payload=event.payload,
-                            error=str(exc),
+                            error=f"max attempts exceeded: {exc}",
                         )
                     )
                     notifications_outbox_failed_total.inc()
@@ -203,6 +236,13 @@ def process_once(engine) -> None:
                     event.next_attempt_at = _next_attempt(event.attempts)
                     session.add(event)
                 continue
+            if url:
+                breaker = BREAKERS.get(url)
+                if breaker:
+                    breaker["failures"] = 0
+                    breaker["state"] = "closed"
+                    breaker["opened_until"] = None
+                    webhook_breaker_state.labels(destination=url).set(0)
             event.status = "delivered"
             notifications_outbox_delivered_total.inc()
             session.add(event)

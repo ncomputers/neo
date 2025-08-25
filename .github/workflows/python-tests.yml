@@ -39,6 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install pre-commit
           pip install -r api/requirements.txt
           pip install pytest
           if [ "${{ matrix.db }}" = "postgres" ]; then pip install asyncpg; fi
@@ -60,6 +61,6 @@ jobs:
       - name: Audit environment
         run: python scripts/env_audit.py
       - name: Check i18n keys
-        run: python scripts/i18n_lint.py
+        run: pre-commit run --hook-stage manual i18n-lint --all-files
       - name: Test
         run: pytest -q

@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .pdf.render import render_template
-from .routes_counter import get_session_from_path
 from .models_tenant import (
     Counter,
     CounterOrder,
@@ -19,6 +17,8 @@ from .models_tenant import (
     RoomOrderItem,
     Table,
 )
+from .pdf.render import render_template
+from .routes_counter import get_session_from_path
 
 router = APIRouter(prefix="/api/outlet/{tenant_id}")
 
@@ -27,6 +27,7 @@ router = APIRouter(prefix="/api/outlet/{tenant_id}")
 async def kot_pdf(
     tenant_id: str,
     order_id: int,
+    request: Request,
     size: Literal["80mm"] = "80mm",
     session: AsyncSession = Depends(get_session_from_path),
 ) -> Response:
@@ -39,8 +40,8 @@ async def kot_pdf(
     row = (
         await session.execute(
             select(CounterOrder.id, CounterOrder.placed_at, Counter.code)
-                .join(Counter, Counter.id == CounterOrder.counter_id)
-                .where(CounterOrder.id == order_id)
+            .join(Counter, Counter.id == CounterOrder.counter_id)
+            .where(CounterOrder.id == order_id)
         )
     ).first()
 
@@ -53,15 +54,14 @@ async def kot_pdf(
             )
         )
         items = [
-            {"name": name, "qty": qty, "notes": ""}
-            for name, qty in item_rows.all()
+            {"name": name, "qty": qty, "notes": ""} for name, qty in item_rows.all()
         ]
     else:
         row = (
             await session.execute(
                 select(Order.id, Order.placed_at, Table.code)
-                    .join(Table, Table.id == Order.table_id)
-                    .where(Order.id == order_id)
+                .join(Table, Table.id == Order.table_id)
+                .where(Order.id == order_id)
             )
         ).first()
         if row:
@@ -73,15 +73,14 @@ async def kot_pdf(
                 )
             )
             items = [
-                {"name": name, "qty": qty, "notes": ""}
-                for name, qty in item_rows.all()
+                {"name": name, "qty": qty, "notes": ""} for name, qty in item_rows.all()
             ]
         else:
             row = (
                 await session.execute(
                     select(RoomOrder.id, RoomOrder.placed_at, Room.code)
-                        .join(Room, Room.id == RoomOrder.room_id)
-                        .where(RoomOrder.id == order_id)
+                    .join(Room, Room.id == RoomOrder.room_id)
+                    .where(RoomOrder.id == order_id)
                 )
             ).first()
             if row:
@@ -107,5 +106,7 @@ async def kot_pdf(
         "items": items,
     }
 
-    content, mimetype = render_template("kot_80mm.html", {"kot": kot})
+    content, mimetype = render_template(
+        "kot_80mm.html", {"kot": kot}, nonce=request.state.csp_nonce
+    )
     return Response(content, media_type=mimetype)

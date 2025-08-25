@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import responses
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -12,6 +13,13 @@ spec = importlib.util.spec_from_file_location(
 )
 notify_worker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(notify_worker)
+
+
+@pytest.fixture(autouse=True)
+def clear_breakers():
+    notify_worker.BREAKERS.clear()
+    yield
+    notify_worker.BREAKERS.clear()
 
 
 def test_console_delivery():
@@ -200,3 +208,61 @@ def test_webhook_failures_move_to_dlq(monkeypatch):
         assert evt is None
         dlq = session.scalars(select(notify_worker.NotificationDLQ)).one()
         assert dlq.original_id == event_id
+
+
+def test_webhook_circuit_breaker(monkeypatch):
+    monkeypatch.setenv("WEBHOOK_BREAKER_THRESHOLD", "1")
+    monkeypatch.setenv("WEBHOOK_BREAKER_OPEN_SECS", "1")
+    monkeypatch.setenv("WEBHOOK_ALLOW_HOSTS", "example.com")
+    engine = create_engine("sqlite:///:memory:")
+    notify_worker.NotificationRule.__table__.create(engine)
+    notify_worker.NotificationOutbox.__table__.create(engine)
+    notify_worker.NotificationDLQ.__table__.create(engine)
+
+    rule_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    url = "http://example.com/hook"
+    with Session(engine) as session:
+        session.add(
+            notify_worker.NotificationRule(
+                id=rule_id, channel="webhook", config={"url": url}
+            )
+        )
+        session.add(
+            notify_worker.NotificationOutbox(
+                id=event_id,
+                rule_id=rule_id,
+                payload={"msg": "hi"},
+                status="queued",
+            )
+        )
+        session.commit()
+
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, status=500)
+        # first attempt fails and opens breaker
+        notify_worker.process_once(engine)
+        assert len(rsps.calls) == 1
+
+    # breaker should prevent immediate retry
+    with responses.RequestsMock() as rsps:
+        notify_worker.process_once(engine)
+        assert len(rsps.calls) == 0
+
+    # allow half-open trial
+    notify_worker.BREAKERS[url]["opened_until"] = datetime.utcnow() - timedelta(seconds=1)
+    with Session(engine) as session:
+        evt = session.get(notify_worker.NotificationOutbox, event_id)
+        evt.next_attempt_at = datetime.utcnow() - timedelta(seconds=1)
+        session.add(evt)
+        session.commit()
+
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, status=200)
+        notify_worker.process_once(engine)
+        assert len(rsps.calls) == 1
+
+    with Session(engine) as session:
+        evt = session.get(notify_worker.NotificationOutbox, event_id)
+        assert evt is not None
+        assert evt.status == "delivered"
