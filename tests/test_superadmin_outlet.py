@@ -63,7 +63,7 @@ def test_outlet_creates_master_row(tmp_path, monkeypatch) -> None:
     tenant = asyncio.run(_fetch())
     assert tenant is not None
     assert tenant.name == "Cafe Test"
-    assert tenant.invoice_prefix == data["invoice_prefix"]
+    assert tenant.inv_prefix == data["inv_prefix"]
     assert tenant.timezone == "UTC"
     assert tenant.licensed_tables == 4
     assert tenant.status == "active"

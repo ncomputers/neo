@@ -19,6 +19,11 @@ Logging can be tuned via:
 - `LOG_LEVEL` – set log verbosity (default `INFO`)
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
+- `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
+
+Tenants may also set a future `maintenance_until` timestamp in the `tenants`
+table to temporarily block their own traffic. Requests made before the
+timestamp receive the same 503 response with a `Retry-After` header.
 
 Request bodies and query parameters are scrubbed of sensitive keys such as
 `pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.
@@ -69,7 +74,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
+Visit <http://localhost:8000/health> for liveness, <http://localhost:8000/ready> for readiness, and <http://localhost:8000/version> for build metadata.
 
 All API responses use a standard envelope:
 
@@ -304,8 +309,14 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `ws_messages_total`: WebSocket messages delivered
 - `sse_clients_gauge`: currently connected SSE clients
 - `digest_sent_total`: daily KPI digests sent (via route or CLI)
+- Background job status: `/api/admin/jobs/status` returns worker heartbeats,
+  processed counts, recent failures, and queue depths.
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
+
+## Daily Digest Scheduler
+
+`scripts/digest_scheduler.py` scans all active tenants and triggers the KPI digest once the local time passes **09:00** in each tenant's timezone. The last sent date is stored in Redis under `digest:last:{tenant}` to prevent duplicates. A systemd timer (`deploy/systemd/neo-digest.timer`) runs this script every five minutes.
 
 
 ## PWA
@@ -342,9 +353,9 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema. Invoice
-numbering for each tenant can be customised via ``invoice_prefix`` and an
-``invoice_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
-reset, numbers include the year and month, e.g. ``INV/2024/02/000001``.
+numbering for each tenant can be customised via ``inv_prefix`` and an
+``inv_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
+reset, numbers include the year and month, e.g. ``INV-ABC-202402-0001``.
 
 ### Invoice PDFs
 
@@ -411,6 +422,16 @@ python scripts/retention_sweep.py --tenant TENANT_ID --days 30
 
 The sweep deletes `audit_tenant` rows, delivered `notifications_outbox`
 entries and `access_logs` records older than the specified retention window.
+
+To anonymize stale guest PII for a tenant, use:
+
+```bash
+python scripts/anonymize_pii.py --tenant TENANT_ID --days 30
+```
+
+This helper nulls the `name`, `phone` and `email` columns in `invoices` and
+`customers` beyond the retention window and records a summary in
+`audit_tenant`.
 
 
 ## Audit Logging

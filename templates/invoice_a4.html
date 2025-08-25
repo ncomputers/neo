@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <body>
-    <h1>Invoice {{ invoice['number'] }}</h1>
+    <h1>Invoice #{{ invoice['number'] }}</h1>
     {% if invoice['gst_mode'] != 'unreg' and invoice.get('gstin') %}
       <p>GSTIN: {{ invoice['gstin'] }}{% if invoice['gst_mode'] == 'comp' %} (Composition Scheme){% endif %}</p>
     {% endif %}

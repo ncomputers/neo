@@ -28,8 +28,8 @@ def create_tenant(
     logo_url: str | None = None,
     primary_color: str | None = None,
     gst_mode: bool = False,
-    invoice_prefix: str | None = None,
-    invoice_reset: str = "never",
+    inv_prefix: str | None = None,
+    inv_reset: str = "never",
     ema_window: int | None = None,
     kds_sla_secs: int | None = None,
     license_limits: dict[str, int] | None = None,
@@ -40,7 +40,7 @@ def create_tenant(
     ----------
     name, domain:
         Basic tenant identifiers.
-    logo_url, primary_color, gst_mode, invoice_prefix, ema_window,
+    logo_url, primary_color, gst_mode, inv_prefix, ema_window,
     kds_sla_secs, license_limits:
         Optional branding and configuration overrides stored alongside the
         tenant record. ``kds_sla_secs`` defines the time in seconds an order
@@ -95,8 +95,8 @@ def create_tenant(
             logo_url=logo_url,
             primary_color=primary_color,
             gst_mode=gst_mode,
-            invoice_prefix=invoice_prefix,
-            invoice_reset=invoice_reset,
+            inv_prefix=inv_prefix,
+            inv_reset=inv_reset,
             ema_window=ema_window,
             kds_sla_secs=kds_sla_secs,
             license_limits=license_limits or {},

@@ -50,8 +50,8 @@ async def test_invoice_persists_coupon_details(monkeypatch):
         class Dummy:
             async def get(self, model, tenant_id):
                 class T:
-                    invoice_prefix = "INV"
-                    invoice_reset = "never"
+                    inv_prefix = "INV"
+                    inv_reset = "never"
 
                 return T()
 
