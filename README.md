@@ -14,6 +14,11 @@ The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
 notification is triggered.
 
+Logging can be tuned via:
+
+- `LOG_LEVEL` – set log verbosity (default `INFO`)
+- `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
+
 Copy the example environment file and adjust values as needed:
 
 ```bash
