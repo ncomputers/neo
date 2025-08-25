@@ -10,7 +10,7 @@ from zipfile import ZipFile
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import select, case
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from .audit import log_event
@@ -42,7 +42,7 @@ def _iter_bytes(buffer: BytesIO) -> Iterator[bytes]:
 async def _export_table(
     session,
     model,
-    columns: list[str],
+    columns,
     filename: str,
     zf: ZipFile,
     limit: int,
@@ -50,13 +50,15 @@ async def _export_table(
 ) -> int:
     buf = StringIO()
     writer = csv.writer(buf)
-    writer.writerow(columns)
+    headers = [c[0] if isinstance(c, tuple) else c for c in columns]
+    writer.writerow(headers)
     exported = 0
     last_id = cursor
     while exported < limit:
         chunk = min(SCAN_LIMIT, limit - exported)
+        select_cols = [c[1] if isinstance(c, tuple) else getattr(model, c) for c in columns]
         stmt = (
-            select(*[getattr(model, c) for c in columns])
+            select(*select_cols)
             .where(getattr(model, "id") > last_id)
             .order_by(getattr(model, "id"))
             .limit(chunk)
@@ -120,15 +122,22 @@ async def export_all(
                     session,
                     MenuItem,
                     [
-                        "id",
-                        "category_id",
-                        "name",
-                        "price",
-                        "is_veg",
-                        "gst_rate",
-                        "hsn_sac",
-                        "show_fssai",
-                        "out_of_stock",
+                        ("id", MenuItem.id),
+                        ("category_id", MenuItem.category_id),
+                        ("name", MenuItem.name),
+                        ("price", MenuItem.price),
+                        ("is_veg", MenuItem.is_veg),
+                        ("gst_rate", MenuItem.gst_rate),
+                        ("hsn_sac", MenuItem.hsn_sac),
+                        ("show_fssai", MenuItem.show_fssai),
+                        ("out_of_stock", MenuItem.out_of_stock),
+                        (
+                            "status",
+                            case(
+                                (MenuItem.deleted_at.isnot(None), "deleted"),
+                                else_="active",
+                            ),
+                        ),
                     ],
                     "items.csv",
                     zf,

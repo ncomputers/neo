@@ -8,10 +8,13 @@
 | 3 | expand to remaining pilots |
 | 4 | general availability decision |
 
+
 ## Owners
-- Product: Dana (PM)
-- Engineering: Ravi (backend), Mei (frontend)
-- Operations: Luis
+| Area | Owner(s) |
+|------|------------------------|
+| Product | Dana (PM) |
+| Engineering | Ravi (backend), Mei (frontend) |
+| Operations | Luis |
 
 ## Rollback
 1. **Trigger:** error rate >5% or critical bug
@@ -20,3 +23,4 @@
    - redeploy previous tag
    - notify stakeholders
 3. **Postmortem:** document root cause and prevention actions
+

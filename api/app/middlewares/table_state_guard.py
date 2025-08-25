@@ -23,7 +23,11 @@ class TableStateGuardMiddleware(BaseHTTPMiddleware):
             if len(parts) > 2 and parts[2]:
                 token = parts[2]
                 with SessionLocal() as session:
-                    table = session.query(Table).filter_by(code=token).one_or_none()
+                    table = (
+                        session.query(Table)
+                        .filter_by(code=token, deleted_at=None)
+                        .one_or_none()
+                    )
                     tenant_lang = None
                     if table is not None:
                         try:

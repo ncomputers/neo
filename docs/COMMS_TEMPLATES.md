@@ -1,17 +1,17 @@
 # Comms Templates
 
 ## Planned Outage Notice
-Subject: Scheduled Maintenance
+**Subject:** Scheduled Maintenance
 
 Hi team,
 
-We will perform maintenance on <date> from <start> to <end>. Ordering and payments will be unavailable. Please inform guests and complete pending orders before the window.
+We will perform maintenance on <date> from <start> to <end>. Ordering and payments will be unavailable during this window. Please inform guests and complete pending orders beforehand.
 
 Thanks,
 Ops
 
 ## Incident Update
-Subject: Service Incident Update
+**Subject:** Service Incident Update
 
 Hi team,
 
@@ -29,3 +29,4 @@ Service has been restored as of <time>. Monitor for any follow-up issues and rep
 
 Thanks,
 Ops
+

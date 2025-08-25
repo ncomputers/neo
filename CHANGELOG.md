@@ -19,4 +19,6 @@ All notable changes to this project will be documented in this file.
 - Lock out staff PIN login for 15 minutes after 5 failed attempts per user/IP
   and log lock/unlock events.
 - Require staff PIN rotation every 90 days with a warning emitted after 80 days.
+- Soft-delete support for menu items and tables with restore endpoints and
+  status included in exports.
 
