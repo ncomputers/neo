@@ -17,6 +17,8 @@ The application relies on the following environment variables:
 | `EXPORT_MAX_ROWS` | Maximum rows included in export files. Defaults to `10000`. | `10000` |
 | `VAPID_PUBLIC_KEY` (optional) | Public key for Web Push authentication. | `BASE64_KEY` |
 | `VAPID_PRIVATE_KEY` (optional) | Private key for Web Push authentication. | `BASE64_KEY` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` (optional) | OTLP trace exporter endpoint. Tracing is disabled when unset. | `http://otel-collector:4318/v1/traces` |
+| `OTEL_SERVICE_NAME` (optional) | Service name used for OpenTelemetry traces. Defaults to `neo-api`. | `neo-api` |
 
 ## JWT/JOSE
 
