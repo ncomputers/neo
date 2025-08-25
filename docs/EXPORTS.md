@@ -2,6 +2,15 @@
 
 Big export endpoints support cursor-based pagination so interrupted downloads can resume.
 
+## Owner data export
+
+```
+GET /api/outlet/{tenant}/export/all.zip
+```
+
+This admin-only endpoint streams a ZIP containing CSV files for menu, orders,
+invoices, payments, customers and settings, along with a `schema.json` manifest.
+
 ## Resuming
 
 To resume an export, pass the `cursor` query parameter returned from the previous request.
