@@ -28,16 +28,13 @@ def anyio_backend():
 
 
 @pytest.mark.anyio
-async def test_invoice_numbering_series_resets(session):
-    series_a = invoice_counter.build_series("PFX", "never", date(2024, 1, 1))
-    n1 = await invoice_counter.next_invoice_number(session, series_a)
-    n2 = await invoice_counter.next_invoice_number(session, series_a)
-    assert n1.endswith("/000001")
-    assert n2.endswith("/000002")
-
-    series_b = invoice_counter.build_series("NEW", "never", date(2024, 1, 1))
-    n3 = await invoice_counter.next_invoice_number(session, series_b)
-    assert n3.endswith("/000001")
+async def test_invoice_numbering_never_runs(session):
+    jan = invoice_counter.build_series("NEV", "never", date(2024, 1, 1))
+    feb = invoice_counter.build_series("NEV", "never", date(2024, 2, 1))
+    n1 = await invoice_counter.next_invoice_number(session, jan)
+    n2 = await invoice_counter.next_invoice_number(session, feb)
+    assert n1 == "INV-NEV-0001"
+    assert n2 == "INV-NEV-0002"
 
 
 @pytest.mark.anyio
@@ -49,6 +46,6 @@ async def test_invoice_numbering_monthly_reset(session):
     jan_2 = await invoice_counter.next_invoice_number(session, jan)
     feb_1 = await invoice_counter.next_invoice_number(session, feb)
 
-    assert jan_1.endswith("/000001")
-    assert jan_2.endswith("/000002")
-    assert feb_1.endswith("/000001")
+    assert jan_1 == "INV-MON-202401-0001"
+    assert jan_2 == "INV-MON-202401-0002"
+    assert feb_1 == "INV-MON-202402-0001"
