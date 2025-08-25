@@ -29,9 +29,17 @@ class S3Backend:
 
     async def save(self, tenant: str, file: UploadFile) -> Tuple[str, str]:
         key = f"{tenant}/{uuid4().hex}_{file.filename}"
+        params = {
+            "Bucket": self.bucket,
+            "Key": key,
+            "CacheControl": "public, max-age=86400",
+        }
+        etag = file.headers.get("ETag") or file.headers.get("etag")
+        if etag:
+            params["Metadata"] = {"etag": etag}
         url = self.client.generate_presigned_url(
             "put_object",
-            Params={"Bucket": self.bucket, "Key": key},
+            Params=params,
             ExpiresIn=3600,
         )
         return url, key
@@ -42,5 +50,11 @@ class S3Backend:
 
     def url(self, key: str) -> str:
         return self.client.generate_presigned_url(
-            "get_object", Params={"Bucket": self.bucket, "Key": key}, ExpiresIn=3600
+            "get_object",
+            Params={
+                "Bucket": self.bucket,
+                "Key": key,
+                "ResponseCacheControl": "public, max-age=86400",
+            },
+            ExpiresIn=3600,
         )

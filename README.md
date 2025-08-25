@@ -51,6 +51,23 @@ storage with:
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` – S3
   connection details used when the backend is `s3`
 
+To cut storage costs, apply an S3 lifecycle rule that transitions objects to
+infrequent access after 30 days and purges delete markers after a week:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "media-ia",
+      "Filter": {"Prefix": ""},
+      "Status": "Enabled",
+      "Transitions": [{"Days": 30, "StorageClass": "STANDARD_IA"}],
+      "Expiration": {"Days": 7, "ExpiredObjectDeleteMarker": true}
+    }
+  ]
+}
+```
+
 Copy the example environment file and adjust values as needed:
 
 ```bash
