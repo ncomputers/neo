@@ -45,3 +45,30 @@ The application uses Redis Pub/Sub for real-time features:
   `event: table_map` messages with heartbeats every 15s and supports the
   `Last-Event-ID` header.
 
+
+## Secret Rotation
+
+Use `scripts/rotate_secrets.py` to rotate secrets without downtime. The script manages three suffixes for supported variables:
+
+- `<VAR>_NEXT` – upcoming value used during the dual verification period
+- `<VAR>` – active value
+- `<VAR>_PREV` – previous value, safe to remove after cutover
+
+Supported kinds:
+
+- `jwt` for `JWT_SECRET`
+- `webhook` for `WEBHOOK_SIGNING_SECRET`
+- `vapid` for `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`
+
+Example workflow:
+
+```bash
+# generate next value(s)
+python scripts/rotate_secrets.py prepare jwt
+
+# after propagating, switch over
+python scripts/rotate_secrets.py cutover jwt
+
+# once old value is no longer needed
+python scripts/rotate_secrets.py purge jwt
+```
