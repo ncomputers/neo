@@ -9,6 +9,7 @@ from .logging import LoggingMiddleware
 from .prometheus import PrometheusMiddleware
 from .security import SecurityMiddleware
 from .table_state_guard import TableStateGuardMiddleware
+from .api_key_auth import APIKeyAuthMiddleware
 
 __all__ = [
     "CorrelationIdMiddleware",
@@ -23,4 +24,5 @@ __all__ = [
     "FeatureFlagsMiddleware",
     "LicensingMiddleware",
     "SecurityMiddleware",
+    "APIKeyAuthMiddleware",
 ]
