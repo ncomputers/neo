@@ -100,7 +100,7 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
-from .routes_admin_licensing import router as admin_licensing_router
+from .routes_limits import router as limits_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
@@ -832,7 +832,7 @@ app.include_router(kds_sla_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
-app.include_router(admin_licensing_router)
+app.include_router(limits_router)
 app.include_router(menu_import_router)
 app.include_router(alerts_router)
 app.include_router(security_router)
