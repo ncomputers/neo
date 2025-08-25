@@ -16,5 +16,14 @@ basic offline support.
 * Menu API requests use a network‑first strategy with cached fallback.
 * A background sync stub named `order-queue` is registered for future offline
   ordering.
-* Updates are picked up when the service worker changes; closing all tabs will
-  activate the new version.
+* Updates are picked up when the service worker changes.
+* When a new build is available, a **New version available** button appears;
+  tapping it activates the update and reloads the app.
+
+## Version
+
+`GET /pwa/version` returns build metadata:
+
+```
+{"build": "<git sha>", "time": "<build time>"}
+```

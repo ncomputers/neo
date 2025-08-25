@@ -46,6 +46,11 @@ def exports() -> Policy:
     return _policy("exports", 5 / 60, 5)
 
 
+def two_factor_verify() -> Policy:
+    """Throttle 2FA verification attempts."""
+    return _policy("two_factor_verify", 5, 5)
+
+
 __all__ = [
     "Policy",
     "guest_order",
@@ -53,4 +58,5 @@ __all__ = [
     "magic_link_email",
     "qrpack",
     "exports",
+    "two_factor_verify",
 ]

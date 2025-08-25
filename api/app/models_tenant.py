@@ -26,7 +26,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 
-
 Base = declarative_base()
 
 
@@ -60,6 +59,7 @@ class MenuItem(Base):
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class TenantMeta(Base):
@@ -114,6 +114,7 @@ class Table(Base):
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class Room(Base):
@@ -356,6 +357,12 @@ class Staff(Base):
     name = Column(String, nullable=False)
     role = Column(String, nullable=False)
     pin_hash = Column(String, nullable=False)
+    pin_set_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+    )
     active = Column(Boolean, nullable=False, default=True)
 
 

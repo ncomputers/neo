@@ -26,7 +26,7 @@ class MenuRepoSQL(MenuRepo):
         self, session: AsyncSession, include_hidden: bool = False
     ) -> list[dict]:
         """Return menu items, optionally including those marked out of stock."""
-        stmt = select(MenuItem)
+        stmt = select(MenuItem).where(MenuItem.deleted_at.is_(None))
         if not include_hidden:
             stmt = stmt.where(MenuItem.out_of_stock.is_(False))
         result = await session.execute(stmt)
@@ -57,6 +57,26 @@ class MenuRepoSQL(MenuRepo):
             update(MenuItem)
             .where(MenuItem.id == item_id)
             .values(out_of_stock=flag, updated_at=func.now())
+        )
+        await session.execute(stmt)
+        await self._bump_menu_version(session)
+        await session.commit()
+
+    async def soft_delete_item(self, session: AsyncSession, item_id: UUID) -> None:
+        stmt = (
+            update(MenuItem)
+            .where(MenuItem.id == item_id)
+            .values(deleted_at=func.now(), updated_at=func.now())
+        )
+        await session.execute(stmt)
+        await self._bump_menu_version(session)
+        await session.commit()
+
+    async def restore_item(self, session: AsyncSession, item_id: UUID) -> None:
+        stmt = (
+            update(MenuItem)
+            .where(MenuItem.id == item_id)
+            .values(deleted_at=None, updated_at=func.now())
         )
         await session.execute(stmt)
         await self._bump_menu_version(session)

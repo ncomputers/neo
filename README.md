@@ -8,6 +8,10 @@ This repository contains three main services:
 
 Invoices support optional FSSAI license details when provided.
 
+## Security
+
+Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
@@ -24,6 +28,10 @@ Logging can be tuned via:
 - `ERROR_DSN` – optional Sentry-compatible DSN for centralized error reporting
 - `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
 - `ENABLE_GATEWAY` – enable Razorpay/Stripe checkout routes (defaults to manual UTR when off)
+- `READ_REPLICA_URL` – optional PostgreSQL DSN for read-only queries. When
+  reachable, menu fetch, dashboard charts and export endpoints use this
+  replica.
+
 
 Real-time streams expose additional knobs:
 
@@ -51,6 +59,23 @@ storage with:
 - `MEDIA_DIR` – directory for local file storage
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` – S3
   connection details used when the backend is `s3`
+
+To cut storage costs, apply an S3 lifecycle rule that transitions objects to
+infrequent access after 30 days and purges delete markers after a week:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "media-ia",
+      "Filter": {"Prefix": ""},
+      "Status": "Enabled",
+      "Transitions": [{"Days": 30, "StorageClass": "STANDARD_IA"}],
+      "Expiration": {"Days": 7, "ExpiredObjectDeleteMarker": true}
+    }
+  ]
+}
+```
 
 Copy the example environment file and adjust values as needed:
 
@@ -279,9 +304,13 @@ Configure and inspect notification rules:
 - `GET /api/outlet/{tenant_id}/alerts/outbox?status=queued|delivered` – list recent notifications.
 - `GET /api/outlet/{tenant_id}/outbox?status=pending|delivered|failed&limit=100` – inspect notification outbox.
 - `POST /api/outlet/{tenant_id}/outbox/{id}/retry` – reset a notification for another delivery attempt.
+- `POST /api/outlet/{tenant_id}/webhooks/test` – send a sample webhook payload to a URL.
+- `POST /api/outlet/{tenant_id}/webhooks/{id}/replay` – re-enqueue a webhook from outbox history.
 - `GET /api/outlet/{tenant_id}/dlq?limit=100` – view dead-lettered notifications.
 - `POST /api/outlet/{tenant_id}/dlq/{id}/requeue` – move a dead-lettered event back to the outbox.
 - `DELETE /api/outlet/{tenant_id}/dlq/{id}` – discard a dead-lettered event.
+
+Webhook payloads returned via these endpoints are scrubbed of secret fields for safe display.
 
 ### Table Map
 
