@@ -10,7 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from api.app.models_tenant import Base, NotificationOutbox, NotificationDLQ
+from api.app.models_tenant import (  # noqa: E402
+    Base,
+    NotificationDLQ,
+    NotificationOutbox,
+)
 
 
 def _setup(tmp_path, monkeypatch):
@@ -36,7 +40,9 @@ def _setup(tmp_path, monkeypatch):
     app.include_router(routes_outbox_admin.router)
     client = TestClient(app)
 
-    SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    SessionLocal = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     return client, tenant_id, SessionLocal
 
 
@@ -59,9 +65,7 @@ def test_outbox_list_and_retry(tmp_path, monkeypatch):
 
     event_id = asyncio.run(seed())
 
-    resp = client.get(
-        f"/api/outlet/{tenant_id}/outbox", params={"status": "delivered"}
-    )
+    resp = client.get(f"/api/outlet/{tenant_id}/outbox", params={"status": "delivered"})
     data = resp.json()["data"]
     assert len(data) == 1
     assert data[0]["id"] == event_id
@@ -108,8 +112,8 @@ def test_dlq_list_and_requeue(tmp_path, monkeypatch):
     async def check() -> None:
         async with SessionLocal() as session:
             outbox_rows = (
-                await session.execute(select(NotificationOutbox))
-            ).scalars().all()
+                (await session.execute(select(NotificationOutbox))).scalars().all()
+            )
             dlq = await session.get(NotificationDLQ, dlq_id)
             assert len(outbox_rows) == 1
             assert dlq is None
