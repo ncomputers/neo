@@ -12,12 +12,12 @@ pytestmark = pytest.mark.skipif(
 def test_explain_uses_hot_path_indexes() -> None:
     queries = [
         (
-            "idx_invoices_tenant_created",
+            "idx_inv_tenant_created",
             "EXPLAIN SELECT * FROM invoices "
             "WHERE tenant_id = 1 ORDER BY created_at DESC",
         ),
         (
-            "idx_payments_invoice_created",
+            "idx_pay_invoice_created",
             "EXPLAIN SELECT * FROM payments "
             "WHERE invoice_id = 1 ORDER BY created_at DESC",
         ),
