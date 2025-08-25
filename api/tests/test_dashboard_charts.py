@@ -15,6 +15,7 @@ from api.app import models_tenant
 from api.app.models_tenant import Order, Invoice, Payment, OrderStatus
 from api.app import routes_dashboard_charts
 from api.app.repos_sqlalchemy import dashboard_repo_sql
+from scripts import rollup_daily
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
@@ -29,7 +30,9 @@ async def seeded_session() -> AsyncSession:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(models_tenant.Base.metadata.create_all)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with sessionmaker() as session:
         base = datetime(2024, 1, 1, 23, 0, tzinfo=timezone.utc)
         modes = ["cash", "upi", "card"]
@@ -105,11 +108,11 @@ async def test_dashboard_charts_cached(seeded_session, monkeypatch):
     calls = 0
     original = dashboard_repo_sql.charts_range
 
-    async def slow_charts(session, start, end, tz):
+    async def slow_charts(session, start, end, tz, **kwargs):
         nonlocal calls
         calls += 1
         await asyncio.sleep(0.1)
-        return await original(session, start, end, tz)
+        return await original(session, start, end, tz, **kwargs)
 
     monkeypatch.setattr(routes_dashboard_charts, "_session", fake_session)
     monkeypatch.setattr(routes_dashboard_charts, "_get_timezone", fake_tz)
@@ -129,11 +132,28 @@ async def test_dashboard_charts_cached(seeded_session, monkeypatch):
 
 
 @pytest.mark.anyio
+async def test_sales_rollup_matches_raw(seeded_session):
+    day = datetime(2024, 1, 2, tzinfo=timezone.utc).date()
+    await rollup_daily.rollup_day(seeded_session, "demo", day, "UTC")
+    rolled = await dashboard_repo_sql.charts_range(
+        seeded_session, day, day, "UTC", use_rollup=True
+    )
+    live = await dashboard_repo_sql.charts_range(
+        seeded_session, day, day, "UTC", use_rollup=False
+    )
+    assert rolled["series"]["sales"][0]["v"] == live["series"]["sales"][0]["v"]
+    assert rolled["series"]["orders"][0]["v"] == live["series"]["orders"][0]["v"]
+    assert rolled["modes"] == live["modes"]
+
+
+@pytest.mark.anyio
 async def test_dashboard_charts_anomalies(monkeypatch):
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(models_tenant.Base.metadata.create_all)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with sessionmaker() as session:
         base = datetime(2025, 8, 4, 23, 0, tzinfo=timezone.utc)
         for i in range(7):
