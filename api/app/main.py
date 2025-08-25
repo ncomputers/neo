@@ -30,7 +30,20 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class _LoopPolicy(asyncio.DefaultEventLoopPolicy):
+    def get_event_loop(self):
+        try:
+            return super().get_event_loop()
+        except RuntimeError:
+            loop = self.new_event_loop()
+            self.set_event_loop(loop)
+            return loop
+
+
+asyncio.set_event_loop_policy(_LoopPolicy())
 from redis.asyncio import from_url
 from sqlalchemy import func
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -232,18 +245,18 @@ async def start_event_consumers() -> None:
 class EmailLogin(BaseModel):
     """Email/password login payload."""
 
-    username: str
-    password: str
+    username: str = Field(..., example="alice@example.com")
+    password: str = Field(..., example="secret123")
 
 
 class PinLogin(BaseModel):
     """PIN login payload."""
 
-    username: str
-    pin: str
+    username: str = Field(..., example="alice")
+    pin: str = Field(..., example="1234")
 
 
-@app.post("/login/email")
+@app.post("/login/email", tags=["Auth"], summary="Login with email")
 async def email_login(credentials: EmailLogin) -> dict:
     """Authenticate using username/password and return a JWT."""
 
@@ -257,7 +270,7 @@ async def email_login(credentials: EmailLogin) -> dict:
     return ok(Token(access_token=token, role=user.role))
 
 
-@app.post("/login/pin")
+@app.post("/login/pin", tags=["Auth"], summary="Login with PIN")
 async def pin_login(credentials: PinLogin) -> dict:
     """Authenticate using a short numeric PIN."""
 
@@ -297,11 +310,11 @@ async def staff_area(
 class CartItem(BaseModel):
     """An item added by a guest to the cart."""
 
-    item: str
-    price: float
-    quantity: int
-    guest_id: Optional[str] = None
-    status: str = "pending"
+    item: str = Field(..., example="Coffee")
+    price: float = Field(..., example=2.5)
+    quantity: int = Field(..., example=1)
+    guest_id: Optional[str] = Field(None, example="guest-1")
+    status: str = Field("pending", example="pending")
 
 
 class UpdateQuantity(BaseModel):
@@ -311,16 +324,16 @@ class UpdateQuantity(BaseModel):
     soft-cancel.
     """
 
-    quantity: int
-    admin: bool = False
+    quantity: int = Field(..., example=0)
+    admin: bool = Field(False, example=True)
 
 
 class StaffOrder(BaseModel):
     """Order item placed directly by staff."""
 
-    item: str
-    price: float
-    quantity: int
+    item: str = Field(..., example="Tea")
+    price: float = Field(..., example=1.5)
+    quantity: int = Field(..., example=1)
 
 
 tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
@@ -491,7 +504,7 @@ async def list_tables() -> dict[str, list[dict[str, str]]]:
     return {"tables": data}
 
 
-@app.post("/tables/{table_id}/cart")
+@app.post("/tables/{table_id}/cart", tags=["Orders"], summary="Add item to cart")
 async def add_to_cart(
     table_id: str,
     item: CartItem,
@@ -511,7 +524,7 @@ async def add_to_cart(
     return ok({"cart": table["cart"]})
 
 
-@app.post("/tables/{table_id}/order")
+@app.post("/tables/{table_id}/order", tags=["Orders"], summary="Place order")
 async def place_order(
     table_id: str,
     accept_language: str | None = Header(default=None, alias="Accept-Language"),
@@ -530,7 +543,11 @@ async def place_order(
     return ok({"orders": table["orders"]})
 
 
-@app.patch("/tables/{table_id}/order/{index}")
+@app.patch(
+    "/tables/{table_id}/order/{index}",
+    tags=["Orders"],
+    summary="Update order line",
+)
 async def update_order(table_id: str, index: int, payload: UpdateQuantity) -> dict:
     """Allow an admin to soft-cancel an order line by setting ``quantity`` to 0."""
 
@@ -550,7 +567,11 @@ async def update_order(table_id: str, index: int, payload: UpdateQuantity) -> di
     return ok({"orders": table["orders"]})
 
 
-@app.post("/tables/{table_id}/staff-order")
+@app.post(
+    "/tables/{table_id}/staff-order",
+    tags=["Orders"],
+    summary="Staff place order",
+)
 async def staff_place_order(table_id: str, item: StaffOrder) -> dict:
     """Staff directly place an order for a guest without a phone."""
 
@@ -560,7 +581,7 @@ async def staff_place_order(table_id: str, item: StaffOrder) -> dict:
     return ok({"orders": table["orders"]})
 
 
-@app.get("/orders")
+@app.get("/orders", tags=["Orders"], summary="List all orders")
 async def list_orders() -> dict[str, list[dict]]:
     """Return all orders across tables for staff views."""
 
@@ -573,7 +594,11 @@ async def list_orders() -> dict[str, list[dict]]:
     return {"orders": data}
 
 
-@app.post("/orders/{table_id}/{index}/accept")
+@app.post(
+    "/orders/{table_id}/{index}/accept",
+    tags=["Orders"],
+    summary="Accept order line",
+)
 async def accept_order(table_id: str, index: int) -> dict[str, str]:
     """Mark an order line as accepted."""
 
@@ -587,7 +612,11 @@ async def accept_order(table_id: str, index: int) -> dict[str, str]:
     return {"status": "accepted"}
 
 
-@app.post("/orders/{table_id}/{index}/reject")
+@app.post(
+    "/orders/{table_id}/{index}/reject",
+    tags=["Orders"],
+    summary="Reject order line",
+)
 async def reject_order(table_id: str, index: int, request: Request) -> dict[str, str]:
     """Mark an order line as rejected."""
 
@@ -608,7 +637,9 @@ async def reject_order(table_id: str, index: int, request: Request) -> dict[str,
 # Billing
 
 
-@app.get("/tables/{table_id}/bill")
+@app.get(
+    "/tables/{table_id}/bill", tags=["Billing"], summary="Get table bill"
+)
 async def bill(table_id: str) -> dict:
     """Return the running bill for a table."""
 
@@ -617,7 +648,9 @@ async def bill(table_id: str) -> dict:
     return ok({"total": total, "orders": table["orders"]})
 
 
-@app.post("/tables/{table_id}/pay")
+@app.post(
+    "/tables/{table_id}/pay", tags=["Billing"], summary="Pay table bill"
+)
 async def pay_now(table_id: str) -> dict:
     """Settle the current bill and clear outstanding orders."""
 
@@ -641,7 +674,11 @@ async def pay_now(table_id: str) -> dict:
 VALID_ACTIONS = {"waiter", "water", "bill"}
 
 
-@app.post("/tables/{table_id}/call/{action}")
+@app.post(
+    "/tables/{table_id}/call/{action}",
+    tags=["Staff"],
+    summary="Call staff",
+)
 async def call_staff(table_id: str, action: str) -> dict:
     """Queue a staff call request for the given table."""
 
@@ -651,7 +688,11 @@ async def call_staff(table_id: str, action: str) -> dict:
     return ok({"table_id": table_id, "action": action, "status": "queued"})
 
 
-@app.post("/tables/{table_id}/lock")
+@app.post(
+    "/tables/{table_id}/lock",
+    tags=["Tables"],
+    summary="Lock table",
+)
 async def lock_table(table_id: str) -> dict:
     """Lock a table after settlement until cleaned."""
 
@@ -670,7 +711,11 @@ async def lock_table(table_id: str) -> dict:
     return ok({"table_id": table_id, "state": table.state})
 
 
-@app.post("/tables/{table_id}/mark-clean")
+@app.post(
+    "/tables/{table_id}/mark-clean",
+    tags=["Tables"],
+    summary="Mark table clean",
+)
 async def mark_clean(table_id: str) -> dict:
     """Mark a table as cleaned and ready for new guests."""
     await event_bus.publish("table.cleaned", {"table_id": table_id})

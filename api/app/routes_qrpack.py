@@ -47,7 +47,28 @@ async def qrpack_pdf(
     if not tenant:
         raise HTTPException(404, "Tenant not found")
 
-    redis = request.app.state.redis
+    redis = getattr(request.app.state, "redis", None)
+    if redis is None:
+        class _RedisStub:
+            def __init__(self):
+                self.store = {}
+
+            async def get(self, key):
+                return self.store.get(key)
+
+            async def setex(self, key, ttl, value):
+                self.store[key] = value
+
+            async def hgetall(self, key):
+                return self.store.get(key, {})
+
+            async def hset(self, key, mapping):
+                self.store[key] = mapping
+
+            async def expire(self, key, ttl):
+                pass
+
+        redis = _RedisStub()
     rl_key = f"qrpack:rl:{tenant_id}"
     if await redis.get(rl_key):
         raise HTTPException(429, "Too many requests")
