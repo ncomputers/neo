@@ -67,7 +67,7 @@ async def upload_media(
 
     tenant_obj = getattr(request.state, "tenant", None)
     limit_mb = (getattr(tenant_obj, "license_limits", {}) or {}).get(
-        "max_image_storage_mb"
+        "max_images_mb"
     )
     if limit_mb is not None:
         used = lic_module.storage_bytes(tenant)

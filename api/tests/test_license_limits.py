@@ -101,7 +101,7 @@ def test_menu_item_limit(client, monkeypatch):
 
 def test_image_storage_limit(client, monkeypatch):
     monkeypatch.setattr(
-        lic_module, "get_session", _tenant_with_limits({"max_image_storage_mb": 1})
+        lic_module, "get_session", _tenant_with_limits({"max_images_mb": 1})
     )
     monkeypatch.setattr(lic_module, "storage_bytes", lambda tenant_id: 1024 * 1024)
     headers = {"X-Tenant-ID": "demo", "Authorization": "Bearer t"}
@@ -130,7 +130,7 @@ def test_usage_endpoint(client, monkeypatch):
     limits = {
         "max_tables": 5,
         "max_menu_items": 10,
-        "max_image_storage_mb": 1,
+        "max_images_mb": 1,
         "max_daily_exports": 2,
     }
     monkeypatch.setattr(lic_module, "get_session", _tenant_with_limits(limits))
@@ -146,10 +146,13 @@ def test_usage_endpoint(client, monkeypatch):
     monkeypatch.setattr(lic_module, "storage_bytes", lambda tenant_id: 512 * 1024)
     app.state.redis = fakeredis.aioredis.FakeRedis()
     headers = {"X-Tenant-ID": "demo", "Authorization": "Bearer t"}
-    resp = client.get("/api/admin/licensing/usage", headers=headers)
+    resp = client.get("/api/outlet/demo/limits/usage", headers=headers)
     data = resp.json()["data"]
     assert data["tables"]["used"] == 2
     assert data["tables"]["limit"] == 5
+    assert data["tables"]["remaining"] == 3
     assert data["menu_items"]["used"] == 3
-    assert data["image_storage_mb"]["used"] == 0.5
+    assert data["images_mb"]["used"] == 0.5
+    assert data["images_mb"]["limit"] == 1
+    assert data["images_mb"]["remaining"] == 0.5
     assert data["daily_exports"]["limit"] == 2
