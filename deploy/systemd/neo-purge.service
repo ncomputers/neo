@@ -1,0 +1,14 @@
+[Unit]
+Description=Hard delete long-soft-deleted tables and menu items
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/neo/tenants.env
+WorkingDirectory=/opt/neo
+ExecStart=/bin/bash -c '\
+for t in $TENANTS; do \
+  /usr/bin/python3 scripts/purge_soft_deleted.py --tenant "$t"; \
+done'
+
+[Install]
+WantedBy=multi-user.target
