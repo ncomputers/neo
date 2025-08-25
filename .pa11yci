@@ -1,0 +1,7 @@
+{
+  "urls": [
+    "http://localhost:8000/help/qr",
+    "http://localhost:8000/help/network",
+    "http://localhost:8000/help/printing"
+  ]
+}

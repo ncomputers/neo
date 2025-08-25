@@ -1,10 +1,17 @@
 <!doctype html>
-<html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { color: #000; background: #fff; }
+      a:focus, button:focus { outline: 2px solid #005fcc; }
+    </style>
+  </head>
   <body>
     <h1>KOT {{ kot['order_id'] }}</h1>
     <p>{{ kot['source_type'] }}: {{ kot['source_code'] }}</p>
     <p>Placed: {{ kot['placed_at'] }}</p>
-    <table>
+    <table aria-label="KOT items">
       <tr><th>Item</th><th>Qty</th><th>Notes</th></tr>
       {% for item in kot['items'] %}
       <tr>
