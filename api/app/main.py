@@ -76,7 +76,7 @@ from .middleware import RateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
     CorrelationIdMiddleware,
-    GuestBlocklistMiddleware,
+    GuestBlockMiddleware,
     GuestRateLimitMiddleware,
     HTMLErrorPagesMiddleware,
     HttpErrorCounterMiddleware,
@@ -181,7 +181,7 @@ app.add_middleware(HttpErrorCounterMiddleware)
 app.add_middleware(HTMLErrorPagesMiddleware, static_dir=static_dir)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
-app.add_middleware(GuestBlocklistMiddleware)
+app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)

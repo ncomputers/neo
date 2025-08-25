@@ -3,7 +3,7 @@
 The API tracks repeated request failures per tenant and IP address using a
 Redis-backed blocklist. Call
 `api.app.hooks.order_rejection.on_rejected(tenant, ip, redis)` whenever an
-order is rejected to increment the counter. Middleware can later consult
+order is rejected to increment the counter. The `GuestBlockMiddleware` consults
 `security.blocklist.is_blocked(redis, tenant, ip)` to determine if the address
 should be blocked.
 
