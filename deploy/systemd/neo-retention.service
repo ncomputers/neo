@@ -1,0 +1,14 @@
+[Unit]
+Description=Enforce tenant data retention
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/neo/tenants.env
+WorkingDirectory=/opt/neo
+ExecStart=/bin/bash -c '\
+for t in $TENANTS; do \
+  /usr/bin/python3 scripts/retention_enforce.py --tenant "$t"; \
+done'
+
+[Install]
+WantedBy=multi-user.target

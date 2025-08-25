@@ -467,6 +467,15 @@ This helper nulls the `name`, `phone` and `email` columns in `invoices` and
 `customers` beyond the retention window and records a summary in
 `audit_tenant`.
 
+To apply the configured retention policy for a tenant, run:
+
+```bash
+python scripts/retention_enforce.py --tenant TENANT_NAME
+```
+
+The command looks up retention windows in the master database and invokes the
+anonymization and sweep helpers accordingly.
+
 
 ## Audit Logging
 
