@@ -3,6 +3,7 @@
 ## Cache headers
 
 Media files are served with a `Cache-Control: public, max-age=86400` header. If an `ETag` is present when uploading, it is stored and returned so clients can issue conditional requests and leverage browser caching.
+Automated tests verify that these headers are always included to support effective client caching.
 
 ### CloudFront / NGINX
 
