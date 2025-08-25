@@ -103,8 +103,8 @@ from .routes_admin_analytics import router as admin_analytics_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
-from .routes_auth_magic import router as auth_magic_router
 from .routes_auth_2fa import router as auth_2fa_router
+from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
 from .routes_checkout import router as checkout_router
 from .routes_counter_admin import router as counter_admin_router
@@ -136,7 +136,6 @@ from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
-from .routes_webhooks import router as webhooks_router
 from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
@@ -156,6 +155,7 @@ from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
+from .routes_webhook_tools import router as webhook_tools_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -832,7 +832,7 @@ app.include_router(alerts_router)
 app.include_router(security_router)
 app.include_router(jobs_status_router)
 app.include_router(outbox_admin_router)
-app.include_router(webhooks_router)
+app.include_router(webhook_tools_router)
 app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
