@@ -209,7 +209,7 @@ POSTGRES_URL=sqlite:///dev_master.db python scripts/notify_worker.py
 ```
 
 The worker drains `notifications_outbox` rows and currently supports
-`console`, `webhook`, `whatsapp_stub` and `sms_stub` channels. The
+`console`, `webhook`, `whatsapp_stub`, `sms_stub` and `email_stub` channels. The
 `*_stub` channels simply log the payload and are placeholders for future
 provider adapters. Each outbox row tracks delivery `attempts` and schedules
 retries via `next_attempt_at`. Failed deliveries are retried with backoff
