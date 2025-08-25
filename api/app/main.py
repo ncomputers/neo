@@ -142,6 +142,7 @@ from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
+from .routes_pwa_version import router as pwa_version_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
@@ -155,7 +156,8 @@ from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
-from .routes_webhook_tools import router as webhook_tools_router
+from .routes_webhooks import router as webhooks_router
+
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -845,6 +847,7 @@ app.include_router(preflight_router)
 app.include_router(tables_map_router)
 app.include_router(tables_qr_rotate_router)
 app.include_router(tables_sse_router)
+app.include_router(pwa_version_router)
 app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(help_router)

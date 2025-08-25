@@ -14,13 +14,27 @@ self.addEventListener('activate', event => {
     if (newSW) {
       newSW.addEventListener('statechange', () => {
         if (newSW.state === 'installed') {
-          self.clients.matchAll({ type: 'window' }).then(clients => {
-            clients.forEach(client => client.postMessage({ type: 'UPDATE_READY' }));
-          });
+          fetch('/pwa/version')
+            .then(res => res.json())
+            .then(data => data.build)
+            .catch(() => undefined)
+            .then(build => {
+              self.clients.matchAll({ type: 'window' }).then(clients => {
+                clients.forEach(client =>
+                  client.postMessage({ type: 'UPDATE_READY', build })
+                );
+              });
+            });
         }
       });
     }
   });
+});
+
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', event => {

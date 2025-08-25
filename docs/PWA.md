@@ -17,8 +17,9 @@ basic offline support.
 * A background sync stub named `order-queue` is registered for future offline
   ordering.
 * Updates are picked up when the service worker changes.
-* When a new build is available, a **New version available** button appears;
-  tapping it activates the update and reloads the app.
+* When a new build is waiting, the service worker posts an `UPDATE_READY`
+  message with the build hash. The guest app shows a **New version available**
+  button; tapping it activates the update and reloads the app.
 
 ## Version
 
