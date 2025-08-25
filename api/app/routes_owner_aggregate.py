@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
+import json
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-import json
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from .db.master import get_read_session
 from .db.tenant import get_engine
-from .db.master import get_session as get_master_session
 from .models_master import Tenant
-from .repos_sqlalchemy import dashboard_repo_sql, invoices_repo_sql
 from .pdf.render import render_template
+from .repos_sqlalchemy import dashboard_repo_sql, invoices_repo_sql
 
 router = APIRouter()
 
@@ -23,7 +23,9 @@ router = APIRouter()
 @asynccontextmanager
 async def _session(tenant_id: str):
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     try:
         async with sessionmaker() as session:
             yield session
@@ -32,9 +34,11 @@ async def _session(tenant_id: str):
 
 
 async def _get_tenants_info(tenant_ids: Iterable[str]) -> dict[str, dict]:
-    async with get_master_session() as session:
+    async with get_read_session() as session:
         result = await session.execute(
-            select(Tenant.id, Tenant.name, Tenant.timezone).where(Tenant.id.in_(tenant_ids))
+            select(Tenant.id, Tenant.name, Tenant.timezone).where(
+                Tenant.id.in_(tenant_ids)
+            )
         )
         rows = result.all()
     info: dict[str, dict] = {}
@@ -87,7 +91,14 @@ async def owner_dashboard_charts(owner_id: str, request: Request, range: int = 7
         o = agg_orders.get(d, 0)
         avg_series.append({"d": d, "v": float(s / o) if o else 0.0})
 
-    result = {"series": {"sales": sales_series, "orders": orders_series, "avg_ticket": avg_series}, "modes": modes}
+    result = {
+        "series": {
+            "sales": sales_series,
+            "orders": orders_series,
+            "avg_ticket": avg_series,
+        },
+        "modes": modes,
+    }
     await redis.set(cache_key, json.dumps(result), ex=300)
     return result
 
