@@ -26,7 +26,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 
-
 Base = declarative_base()
 
 
@@ -356,6 +355,12 @@ class Staff(Base):
     name = Column(String, nullable=False)
     role = Column(String, nullable=False)
     pin_hash = Column(String, nullable=False)
+    pin_set_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+    )
     active = Column(Boolean, nullable=False, default=True)
 
 
