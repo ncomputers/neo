@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
 - Printable invoice and KOT templates consume middleware-provided CSP nonces on inline styles to harden rendering.
+- Add tests ensuring CSP nonces are applied on printable invoice and KOT pages.
 - Slow query logging with WARNs above the configurable threshold and 1% sampling
   of regular queries.
 - Idempotent offline order queue using client-side `op_id` dedupe.
