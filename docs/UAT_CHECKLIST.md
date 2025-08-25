@@ -29,10 +29,10 @@
 - [ ] Pass    [ ] Fail
 
 ## Soft-delete table & item
-- **Expected Result:** Deleted tables or items block new orders until restored; restoring re-enables ordering.
+- **Expected Result:** Delete a table and a menu item; orders are blocked while deleted and succeed once restored.
 - [ ] Pass    [ ] Fail
 
 ## Quota boundaries
-- **Expected Result:** Hitting quota limits returns FEATURE_LIMIT hints.
+- **Expected Result:** Hit quotas for tables, menu items, images, and exports; expect 403 FEATURE_LIMIT with an upgrade hint.
 - [ ] Pass    [ ] Fail
 
