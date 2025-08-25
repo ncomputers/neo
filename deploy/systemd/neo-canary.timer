@@ -1,0 +1,10 @@
+[Unit]
+Description=Run synthetic canary probe every 10 minutes
+
+[Timer]
+OnCalendar=*:0/10
+Persistent=true
+Unit=neo-canary.service
+
+[Install]
+WantedBy=timers.target
