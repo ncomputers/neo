@@ -110,6 +110,7 @@ from .routes_dashboard import router as dashboard_router
 from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_daybook_pdf import router as daybook_pdf_router
 from .routes_digest import router as digest_router
+from .routes_export_all import router as export_all_router
 from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
@@ -861,6 +862,7 @@ app.include_router(digest_router)
 app.include_router(reports_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
+app.include_router(export_all_router)
 
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)
