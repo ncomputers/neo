@@ -1,0 +1,14 @@
+[Unit]
+Description=Tenant database backups
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/neo/tenants.env
+WorkingDirectory=/opt/neo
+ExecStart=/bin/bash -c '\
+for t in $TENANTS; do \
+  /usr/bin/python3 scripts/tenant_backup.py --tenant "$t" --out /var/backups/neo/"$t"-$(date +%F).sql; \
+done'
+
+[Install]
+WantedBy=multi-user.target
