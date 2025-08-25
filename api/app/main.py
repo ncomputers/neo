@@ -29,6 +29,7 @@ from fastapi import (
 import importlib
 import redis.asyncio as redis
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -92,6 +93,7 @@ from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_ready import router as ready_router
 from .routes_print import router as print_router
 from .routes_push import router as push_router
+from .routes_vapid import router as vapid_router
 
 from .middlewares.subscription_guard import SubscriptionGuard
 from .utils.responses import ok, err
@@ -138,7 +140,9 @@ def setup_tracing(app: FastAPI, engine) -> None:
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
     from opentelemetry.instrumentation.redis import RedisInstrumentor
 
-    resource = Resource.create({"service.name": os.getenv("OTEL_SERVICE_NAME", "neo-api")})
+    resource = Resource.create(
+        {"service.name": os.getenv("OTEL_SERVICE_NAME", "neo-api")}
+    )
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
     trace.set_tracer_provider(provider)
@@ -156,8 +160,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class ServiceWorkerStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if path == "sw.js":
+            response.headers.setdefault("Service-Worker-Allowed", "/")
+        return response
+
+
 settings = get_settings()
 app = FastAPI()
+app.mount("/static", ServiceWorkerStaticFiles(directory="static"), name="static")
 setup_tracing(app, app_db.engine)
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
@@ -192,7 +205,9 @@ LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
 logger = logging.getLogger("api")
 handler = logging.StreamHandler()
 handler.setFormatter(
-    logging.Formatter("%(message)s" if LOG_FORMAT == "json" else "[%(levelname)s] %(message)s")
+    logging.Formatter(
+        "%(message)s" if LOG_FORMAT == "json" else "[%(levelname)s] %(message)s"
+    )
 )
 logger.addHandler(handler)
 logger.setLevel(LOG_LEVEL)
@@ -719,6 +734,7 @@ app.include_router(ready_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(push_router)
+app.include_router(vapid_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)
