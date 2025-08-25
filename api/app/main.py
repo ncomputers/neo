@@ -122,16 +122,18 @@ from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
+from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
+from .routes_feedback import router as feedback_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
 from .routes_security import router as security_router
+from .routes_help import router as help_router
 from .routes_support import router as support_router
 from .routes_staff import router as staff_router
-from .routes_support import router as support_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_tables_qr import router as tables_qr_router
@@ -768,16 +770,19 @@ app.include_router(metrics_router)
 app.include_router(dashboard_router)
 app.include_router(dashboard_charts_router)
 app.include_router(owner_aggregate_router)
+app.include_router(preflight_router)
 app.include_router(tables_map_router)
 app.include_router(tables_qr_router)
 app.include_router(tables_sse_router)
 app.include_router(version_router)
 app.include_router(ready_router)
+app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
+app.include_router(feedback_router)
 app.include_router(media_router)
 app.include_router(api_keys_router)
 app.include_router(vapid_router)
@@ -788,7 +793,6 @@ app.include_router(digest_router)
 app.include_router(reports_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
-app.include_router(support_router)
 
 if os.getenv("ADMIN_API_ENABLED", "").lower() in {"1", "true", "yes"}:
     app.include_router(superadmin_router)

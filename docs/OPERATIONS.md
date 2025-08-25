@@ -35,3 +35,16 @@ The ZIP includes:
 - `recent-logs.txt` – recent log lines or last 200 audit records
 - `config.json` – tenant plan, feature flags, and limits
 
+## Preflight Checklist
+
+Operators can verify service readiness before go‑live using a consolidated
+checklist:
+
+```
+GET /api/admin/preflight
+```
+
+The endpoint returns overall status and results for individual checks covering
+database and Redis connectivity, migration state, storage backend, webhook
+configuration, Alertmanager reachability, and backup recency.
+

@@ -119,6 +119,11 @@ Coupons can be marked as stackable and may specify a per-invoice `max_discount` 
 
 Attempts to combine a non-stackable coupon with others raise a `CouponError` with code `NON_STACKABLE`.
 
+### Feedback
+
+- `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
+- `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregate ratings for admins over the last `range` days (default 30).
+
 ### Super Admin
 
 The backend exposes a super-admin endpoint used for tenant provisioning:
@@ -495,3 +500,9 @@ counters. Guests can scan a counter's QR to browse the menu and place an order.
 Staff can mark orders as ready or delivered, which triggers invoice generation
 suitable for 80 mm thermal printers. See `docs/counter_takeaway.md` for more
 details.
+
+## Troubleshooting Help
+
+Static help pages for staff are available under `/help/{page}`. Currently
+`printing`, `network`, and `qr` guides are bundled and will show the outlet's
+branding when a `tenant_id` is supplied.
