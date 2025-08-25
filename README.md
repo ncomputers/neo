@@ -143,10 +143,12 @@ Trigger a JSON backup of a tenant's database:
 
 Download a ZIP bundle of invoices, payments and per-day totals over a date range:
 
-- `GET /api/outlet/{tenant}/exports/daily?start=YYYY-MM-DD&end=YYYY-MM-DD&limit=10000`
+- `GET /api/outlet/{tenant}/exports/daily?start=YYYY-MM-DD&end=YYYY-MM-DD&limit=10000&cursor=0`
   – returns `invoices.csv`, `payments.csv` and `z-report.csv` plus individual invoice
   PDFs (or HTML when the PDF engine is unavailable). The range is capped at 31 days
-  and each CSV includes at most `limit` rows (default 10k).
+  and each CSV includes at most `limit` rows (default 10k). When more rows are available
+  the response includes an `X-Cursor` header that can be supplied as the `cursor`
+  query parameter to resume the export.
 
 ### GST Reports
 
