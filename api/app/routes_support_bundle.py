@@ -11,6 +11,7 @@ from zipfile import ZipFile
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
+from . import flags
 from .audit import Audit, SessionLocal
 from .auth import User, role_required
 from .db.master import get_session
@@ -47,8 +48,8 @@ async def support_bundle(
         config = {
             "plan": (tenant.license_limits or {}).get("plan"),
             "feature_flags": {
-                "enable_hotel": bool(tenant.enable_hotel),
-                "enable_counter": bool(tenant.enable_counter),
+                "enable_hotel": flags.get("hotel_mode", tenant),
+                "enable_counter": flags.get("counter_mode", tenant),
                 "sla_sound_alert": bool(tenant.sla_sound_alert),
                 "sla_color_alert": bool(tenant.sla_color_alert),
             },
@@ -94,7 +95,5 @@ async def support_bundle(
         while chunk := buffer.read(8192):
             yield chunk
 
-    headers = {
-        "Content-Disposition": f"attachment; filename={tenant_id}_bundle.zip"
-    }
+    headers = {"Content-Disposition": f"attachment; filename={tenant_id}_bundle.zip"}
     return StreamingResponse(build_zip(), media_type="application/zip", headers=headers)

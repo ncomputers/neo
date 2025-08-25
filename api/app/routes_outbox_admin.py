@@ -14,6 +14,7 @@ from .models_tenant import NotificationDLQ, NotificationOutbox
 from .utils.pagination import Pagination
 from .utils.pagination import pagination as paginate
 from .utils.responses import ok
+from .utils.scrub import scrub_payload
 
 router = APIRouter()
 
@@ -54,7 +55,7 @@ async def list_outbox(
             {
                 "id": o.id,
                 "event": o.event,
-                "payload": o.payload,
+                "payload": scrub_payload(o.payload),
                 "channel": o.channel,
                 "target": o.target,
                 "status": o.status,
@@ -108,7 +109,7 @@ async def list_dlq(
                 "event": d.event,
                 "channel": d.channel,
                 "target": d.target,
-                "payload": d.payload,
+                "payload": scrub_payload(d.payload),
                 "error": d.error,
                 "failed_at": d.failed_at,
             }

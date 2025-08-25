@@ -1,15 +1,18 @@
 import pathlib
 import sys
+from datetime import datetime, timedelta
 
-from argon2 import PasswordHasher
 import fakeredis.aioredis
+from argon2 import PasswordHasher
 from fastapi.testclient import TestClient
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))  # noqa: E402
 
-from api.app.main import app, SessionLocal
-from api.app.models_tenant import AuditTenant, Staff
-from api.app.staff_auth import create_staff_token
+from api.app.audit import Audit  # noqa: E402
+from api.app.audit import SessionLocal as AuditSession  # noqa: E402
+from api.app.main import SessionLocal, app  # noqa: E402
+from api.app.models_tenant import AuditTenant, Staff  # noqa: E402
+from api.app.staff_auth import create_staff_token  # noqa: E402
 
 client = TestClient(app)
 
@@ -18,10 +21,15 @@ def setup_module():
     app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
-def seed_staff() -> int:
+def seed_staff(pin_set_at: datetime | None = None) -> int:
     ph = PasswordHasher()
     with SessionLocal() as session:
-        staff = Staff(name="Alice", role="waiter", pin_hash=ph.hash("1234"))
+        staff = Staff(
+            name="Alice",
+            role="waiter",
+            pin_hash=ph.hash("1234"),
+            pin_set_at=pin_set_at or datetime.utcnow(),
+        )
         session.add(staff)
         session.commit()
         return staff.id
@@ -41,30 +49,35 @@ def test_staff_pin_login_happy_path():
     """Waiter can log in with PIN and retrieve their role."""
     staff_id = seed_staff()
     resp = client.post(
-        f"/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "1234"}
+        "/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "1234"}
     )
     assert resp.status_code == 200
     token = resp.json()["data"]["access_token"]
     assert token
+    assert resp.json()["data"].get("rotation_warning") is None
     headers = {"Authorization": f"Bearer {token}"}
-    resp = client.get(f"/api/outlet/demo/staff/me", headers=headers)
+    resp = client.get("/api/outlet/demo/staff/me", headers=headers)
     assert resp.status_code == 200
     assert resp.json()["data"]["role"] == "waiter"
 
 
-def test_pin_throttle_and_reset():
-    """After too many failures login is throttled until PIN reset."""
+def test_pin_lockout_and_reset():
+    """After too many failures login is locked until PIN reset."""
     staff_id = seed_staff()
     for _ in range(5):
         resp = client.post(
-            f"/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "0000"}
+            "/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "0000"}
         )
         assert resp.status_code == 400
     resp = client.post(
-        f"/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "0000"}
+        "/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "0000"}
     )
     assert resp.status_code == 403
-    assert resp.json()["error"]["code"] == "AUTH_THROTTLED"
+    assert resp.json()["error"]["code"] == "AUTH_LOCKED"
+
+    with AuditSession() as session:
+        row = session.query(Audit).filter_by(action="pin_lock").first()
+        assert row is not None
 
     manager_id = seed_manager()
     token = create_staff_token(manager_id, "manager")
@@ -82,7 +95,28 @@ def test_pin_throttle_and_reset():
         assert row.actor == f"{manager_id}:manager"
         assert row.meta["target"]["staff_id"] == str(staff_id)
 
+    with AuditSession() as session:
+        row = session.query(Audit).filter_by(action="pin_unlock").first()
+        assert row is not None
+
     resp = client.post(
-        f"/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "4321"}
+        "/api/outlet/demo/staff/login", json={"code": staff_id, "pin": "4321"}
     )
     assert resp.status_code == 200
+
+
+def test_pin_rotation_policy():
+    """Warn at 80 days and reject after 90 days."""
+    warn_id = seed_staff(pin_set_at=datetime.utcnow() - timedelta(days=85))
+    resp = client.post(
+        "/api/outlet/demo/staff/login", json={"code": warn_id, "pin": "1234"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["data"]["rotation_warning"] is True
+
+    expire_id = seed_staff(pin_set_at=datetime.utcnow() - timedelta(days=91))
+    resp = client.post(
+        "/api/outlet/demo/staff/login", json={"code": expire_id, "pin": "1234"}
+    )
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == "PIN expired"

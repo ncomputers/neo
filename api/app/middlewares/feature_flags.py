@@ -7,10 +7,11 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_403_FORBIDDEN
 
+from .. import flags
 from ..db.master import get_session
+from ..i18n import get_msg, resolve_lang
 from ..models_master import Tenant
 from ..utils.responses import err
-from ..i18n import resolve_lang, get_msg
 
 
 class FeatureFlagsMiddleware(BaseHTTPMiddleware):
@@ -25,7 +26,7 @@ class FeatureFlagsMiddleware(BaseHTTPMiddleware):
                     tenant = await session.get(Tenant, tenant_id)
                 if tenant:
                     tenant_lang = getattr(tenant, "default_language", None)
-                    if path.startswith("/h/") and not getattr(tenant, "enable_hotel", False):
+                    if path.startswith("/h/") and not flags.get("hotel_mode", tenant):
                         lang = resolve_lang(
                             request.headers.get("Accept-Language"), tenant_lang
                         )
@@ -34,9 +35,7 @@ class FeatureFlagsMiddleware(BaseHTTPMiddleware):
                             err("FEATURE_OFF", msg),
                             status_code=HTTP_403_FORBIDDEN,
                         )
-                    if path.startswith("/c/") and not getattr(
-                        tenant, "enable_counter", False
-                    ):
+                    if path.startswith("/c/") and not flags.get("counter_mode", tenant):
                         lang = resolve_lang(
                             request.headers.get("Accept-Language"), tenant_lang
                         )
