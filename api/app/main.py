@@ -568,7 +568,7 @@ async def list_tables() -> dict[str, list[dict[str, str]]]:
     """Return all tables and their statuses."""
 
     with SessionLocal() as session:
-        records = session.query(Table).all()
+        records = session.query(Table).filter(Table.deleted_at.is_(None)).all()
         data = [{"id": str(t.id), "name": t.name, "state": t.state} for t in records]
     return {"tables": data}
 

@@ -62,3 +62,35 @@ async def toggle_out_of_stock(
         await repo.toggle_out_of_stock(session, item_id, payload.flag)
     await request.app.state.redis.delete(f"menu:{tenant_id}")
     return ok(None)
+
+
+@router.delete("/api/outlet/{tenant_id}/menu/item/{item_id}")
+@audit("delete_menu_item")
+async def delete_menu_item(
+    tenant_id: str,
+    item_id: UUID,
+    request: Request,
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
+) -> dict:
+    """Soft delete a menu item."""
+    repo = MenuRepoSQL()
+    async with _session(tenant_id) as session:
+        await repo.soft_delete_item(session, item_id)
+    await request.app.state.redis.delete(f"menu:{tenant_id}")
+    return ok(None)
+
+
+@router.post("/api/outlet/{tenant_id}/menu/item/{item_id}/restore")
+@audit("restore_menu_item")
+async def restore_menu_item(
+    tenant_id: str,
+    item_id: UUID,
+    request: Request,
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
+) -> dict:
+    """Restore a previously deleted menu item."""
+    repo = MenuRepoSQL()
+    async with _session(tenant_id) as session:
+        await repo.restore_item(session, item_id)
+    await request.app.state.redis.delete(f"menu:{tenant_id}")
+    return ok(None)

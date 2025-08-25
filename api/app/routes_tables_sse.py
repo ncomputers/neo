@@ -88,7 +88,9 @@ async def stream_table_map(
         try:
             # send full snapshot first
             with SessionLocal() as session:
-                records = session.query(Table).all()
+                records = (
+                    session.query(Table).filter(Table.deleted_at.is_(None)).all()
+                )
                 data = [
                     {
                         "id": str(t.id),
