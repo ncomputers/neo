@@ -26,3 +26,28 @@ def test_rounding_adjustment_calculation_and_rendering():
     invoice_int["number"] = "INV-RND2"
     html_bytes_int, _ = render_invoice(invoice_int, size="80mm")
     assert "Rounding Adj." not in html_bytes_int.decode("utf-8")
+
+
+def test_rounding_modes():
+    items = [{"name": "Item", "qty": 1, "price": 2.5}]
+    half_up = billing_service.compute_bill(items, "unreg", rounding_mode="half-up")
+    bankers = billing_service.compute_bill(items, "unreg", rounding_mode="bankers")
+    ceil = billing_service.compute_bill(items, "unreg", rounding_mode="ceil")
+    floor = billing_service.compute_bill(items, "unreg", rounding_mode="floor")
+    assert half_up["total"] == 3.0
+    assert bankers["total"] == 2.0
+    assert ceil["total"] == 3.0
+    assert floor["total"] == 2.0
+
+
+def test_gst_rounding_styles():
+    items = [
+        {"name": "A", "qty": 1, "price": 0.5, "gst": 5},
+        {"name": "B", "qty": 1, "price": 0.5, "gst": 5},
+    ]
+    itemwise = billing_service.compute_bill(items, "reg", gst_rounding="item-wise")
+    invoice_total = billing_service.compute_bill(
+        items, "reg", gst_rounding="invoice-total"
+    )
+    assert itemwise["tax_breakup"][5] == 0.06
+    assert invoice_total["tax_breakup"][5] == 0.05

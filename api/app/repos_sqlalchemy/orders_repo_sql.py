@@ -41,9 +41,15 @@ async def create_order(
     Returns the newly created order's identifier.
     """
 
-    table_id = await session.scalar(select(Table.id).where(Table.code == table_code))
-    if table_id is None:  # pragma: no cover - defensive check
+    result = await session.execute(
+        select(Table.id, Table.deleted_at).where(Table.code == table_code)
+    )
+    row = result.one_or_none()
+    if row is None:  # pragma: no cover - defensive check
         raise ValueError(f"table {table_code!r} not found")
+    if row.deleted_at is not None:
+        raise ValueError("GONE_RESOURCE")
+    table_id = row.id
 
     order = Order(table_id=table_id, status=OrderStatus.PLACED.value)
     session.add(order)
@@ -52,9 +58,12 @@ async def create_order(
     item_ids = [l["item_id"] for l in lines]
     if item_ids:
         result = await session.execute(
-            select(MenuItem.id, MenuItem.name, MenuItem.price).where(
-                MenuItem.id.in_(item_ids)
-            )
+            select(
+                MenuItem.id,
+                MenuItem.name,
+                MenuItem.price,
+                MenuItem.deleted_at,
+            ).where(MenuItem.id.in_(item_ids))
         )
         items = {row.id: row for row in result}
     else:  # pragma: no cover - empty order
@@ -64,6 +73,8 @@ async def create_order(
         data = items.get(line["item_id"])
         if data is None:  # pragma: no cover - menu item missing
             raise ValueError(f"menu item {line['item_id']!r} not found")
+        if data.deleted_at is not None:
+            raise ValueError("GONE_RESOURCE")
         session.add(
             OrderItem(
                 order_id=order.id,
@@ -182,9 +193,12 @@ async def add_round(
         return
 
     result = await session.execute(
-        select(MenuItem.id, MenuItem.name, MenuItem.price).where(
-            MenuItem.id.in_(item_ids)
-        )
+        select(
+            MenuItem.id,
+            MenuItem.name,
+            MenuItem.price,
+            MenuItem.deleted_at,
+        ).where(MenuItem.id.in_(item_ids))
     )
     items = {row.id: row for row in result}
 
@@ -192,6 +206,8 @@ async def add_round(
         data = items.get(line["item_id"])
         if data is None:  # pragma: no cover - menu item missing
             raise ValueError(f"menu item {line['item_id']!r} not found")
+        if data.deleted_at is not None:
+            raise ValueError("GONE_RESOURCE")
         session.add(
             OrderItem(
                 order_id=order_id,
