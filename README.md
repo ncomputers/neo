@@ -79,6 +79,20 @@ infrequent access after 30 days and purges delete markers after a week:
 }
 ```
 
+## Licensing limits
+
+Tenants can be assigned quotas via the `license_limits` JSON column in the
+`tenants` table. Supported keys include:
+
+- `max_tables`
+- `max_menu_items`
+- `max_image_storage_mb`
+- `max_daily_exports`
+
+Exceeding any quota results in a `403 FEATURE_LIMIT` response with a helpful
+hint. Administrators may inspect current usage and limits via
+`GET /api/admin/licensing/usage` when providing an `X-Tenant-ID` header.
+
 Copy the example environment file and adjust values as needed:
 
 ```bash

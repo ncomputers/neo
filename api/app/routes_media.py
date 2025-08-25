@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from io import BytesIO
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi.responses import JSONResponse
 from PIL import Image, ImageOps
 
 from .auth import User, role_required
+from .middlewares import licensing as lic_module
 from .storage import storage
-from .utils.responses import ok
+from .utils.responses import err, ok
 
 router = APIRouter()
 
@@ -25,6 +27,7 @@ MAX_DIM = 4096
 @router.post("/api/outlet/{tenant}/media/upload")
 async def upload_media(
     tenant: str,
+    request: Request,
     file: UploadFile = File(...),
     user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
 ) -> dict:
@@ -61,6 +64,18 @@ async def upload_media(
 
     img.save(out, **save_kwargs)
     out.seek(0)
+
+    tenant_obj = getattr(request.state, "tenant", None)
+    limit_mb = (getattr(tenant_obj, "license_limits", {}) or {}).get(
+        "max_image_storage_mb"
+    )
+    if limit_mb is not None:
+        used = lic_module.storage_bytes(tenant)
+        if used + len(out.getvalue()) > limit_mb * 1024 * 1024:
+            return JSONResponse(
+                err("FEATURE_LIMIT", "image storage limit reached"),
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
 
     processed = UploadFile(
         filename=file.filename, file=out, headers={"content-type": file.content_type}
