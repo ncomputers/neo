@@ -53,23 +53,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/static/sw.js')
-  navigator.serviceWorker.addEventListener('message', async (event) => {
-    if (event.data?.type === 'UPDATE_READY') {
-      const reg = await navigator.serviceWorker.getRegistration()
-      if (!reg?.waiting) {
-        return
-      }
-      const btn = document.createElement('button')
-      btn.textContent = 'New version available'
-      btn.style.position = 'fixed'
-      btn.style.bottom = '1rem'
-      btn.style.right = '1rem'
-      btn.style.zIndex = '1000'
-      btn.addEventListener('click', async () => {
-        await reg.waiting?.skipWaiting()
-        window.location.reload()
-      })
-      document.body.appendChild(btn)
-    }
-  })
 }
