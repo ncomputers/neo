@@ -371,8 +371,9 @@ The worker drains `notifications_outbox` rows and currently supports
 provider adapters. Each outbox row tracks delivery `attempts` and schedules
 retries via `next_attempt_at`. Failed deliveries use exponential backoff with
 jitter (roughly 1s, 5s, 30s, 2m and 10m). A Redis-backed circuit breaker tracks
-consecutive failures per destination, opens after the threshold is exceeded and
-stays open for a cooldown period before a half-open probe is attempted.
+consecutive failures per destination at key `cb:{hash}`, opens after the
+threshold is exceeded and stays open for a cooldown period before a half-open
+probe is attempted.
 The retry count is capped by the `OUTBOX_MAX_ATTEMPTS` environment variable
 (default: 5). Events that exceed this limit are moved to a `notifications_dlq`
 table for inspection, which records the original event and error.

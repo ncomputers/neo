@@ -104,7 +104,7 @@ if redis is not None:
 
 def _get_breaker_state(url_hash: str) -> str | None:
     if REDIS_CLIENT is not None:
-        state = REDIS_CLIENT.get(f"wh:breaker:{url_hash}")
+        state = REDIS_CLIENT.get(f"cb:{url_hash}:state")
         return state.decode() if state else None
     breaker = BREAKERS.get(url_hash)
     return breaker.get("state") if breaker else None
@@ -113,9 +113,9 @@ def _get_breaker_state(url_hash: str) -> str | None:
 def _set_breaker_state(url_hash: str, state: str, ttl: int | None = None) -> None:
     if REDIS_CLIENT is not None:
         if ttl:
-            REDIS_CLIENT.set(f"wh:breaker:{url_hash}", state, ex=ttl)
+            REDIS_CLIENT.set(f"cb:{url_hash}:state", state, ex=ttl)
         else:
-            REDIS_CLIENT.set(f"wh:breaker:{url_hash}", state)
+            REDIS_CLIENT.set(f"cb:{url_hash}:state", state)
     else:
         br = BREAKERS.setdefault(url_hash, {"failures": 0, "state": "closed", "opened_until": None})
         br["state"] = state
@@ -126,7 +126,7 @@ def _set_breaker_state(url_hash: str, state: str, ttl: int | None = None) -> Non
 
 def _breaker_ttl(url_hash: str) -> int:
     if REDIS_CLIENT is not None:
-        return int(REDIS_CLIENT.ttl(f"wh:breaker:{url_hash}"))
+        return int(REDIS_CLIENT.ttl(f"cb:{url_hash}:state"))
     br = BREAKERS.get(url_hash)
     if br and br.get("opened_until"):
         return int((br["opened_until"] - datetime.now(timezone.utc)).total_seconds())
@@ -135,7 +135,7 @@ def _breaker_ttl(url_hash: str) -> int:
 
 def _incr_failures(url_hash: str) -> int:
     if REDIS_CLIENT is not None:
-        return int(REDIS_CLIENT.incr(f"wh:fail:{url_hash}"))
+        return int(REDIS_CLIENT.incr(f"cb:{url_hash}"))
     br = BREAKERS.setdefault(url_hash, {"failures": 0, "state": "closed", "opened_until": None})
     br["failures"] += 1
     return br["failures"]
@@ -143,14 +143,14 @@ def _incr_failures(url_hash: str) -> int:
 
 def _get_failures(url_hash: str) -> int:
     if REDIS_CLIENT is not None:
-        return int(REDIS_CLIENT.get(f"wh:fail:{url_hash}") or 0)
+        return int(REDIS_CLIENT.get(f"cb:{url_hash}") or 0)
     br = BREAKERS.get(url_hash)
     return br.get("failures", 0) if br else 0
 
 
 def _reset_failures(url_hash: str) -> None:
     if REDIS_CLIENT is not None:
-        REDIS_CLIENT.delete(f"wh:fail:{url_hash}")
+        REDIS_CLIENT.delete(f"cb:{url_hash}")
     else:
         br = BREAKERS.get(url_hash)
         if br:
@@ -159,7 +159,7 @@ def _reset_failures(url_hash: str) -> None:
 
 def _clear_breaker(url_hash: str) -> None:
     if REDIS_CLIENT is not None:
-        REDIS_CLIENT.delete(f"wh:breaker:{url_hash}")
+        REDIS_CLIENT.delete(f"cb:{url_hash}:state")
     else:
         BREAKERS.pop(url_hash, None)
 
