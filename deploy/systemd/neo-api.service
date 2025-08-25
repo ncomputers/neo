@@ -1,0 +1,14 @@
+[Unit]
+Description=Neo API service
+After=network.target
+
+[Service]
+User=neo
+WorkingDirectory=/srv/neo
+EnvironmentFile=/etc/neo/neo-api.env
+ExecStart=/usr/bin/env uvicorn api.app.main:app --host 127.0.0.1 --port 8000 --proxy-headers
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
