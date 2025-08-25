@@ -3,8 +3,8 @@
 
 This helper is intended to run on the staging environment after a
 production restore. It replaces customer and invoice PII with obviously
-fake placeholders, clears payment UTRs, rotates QR tokens, and marks all
-invoices as demo via a custom field.
+fake placeholders, clears payment UTRs, rotates table, room, and counter
+QR tokens, and marks all invoices as demo via a custom field.
 
 Environment variables:
 - ``POSTGRES_MASTER_URL``: SQLAlchemy URL for the master database.
@@ -57,9 +57,15 @@ async def scrub_tenant(tenant_id: str) -> None:
         # Clear UTRs from payments
         await session.execute(text("UPDATE payments SET utr = NULL"))
 
-        # Rotate QR tokens for counters
+        # Rotate QR tokens
         await session.execute(
             text("UPDATE counters SET qr_token = md5(random()::text || id::text)")
+        )
+        await session.execute(
+            text("UPDATE tables SET qr_token = md5(random()::text || id::text)")
+        )
+        await session.execute(
+            text("UPDATE rooms SET qr_token = md5(random()::text || id::text)")
         )
 
         await session.commit()
