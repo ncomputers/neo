@@ -343,11 +343,20 @@ The worker drains `notifications_outbox` rows and currently supports
 `console`, `webhook`, `whatsapp_stub`, `sms_stub` and `email_stub` channels. The
 `*_stub` channels simply log the payload and are placeholders for future
 provider adapters. Each outbox row tracks delivery `attempts` and schedules
-retries via `next_attempt_at`. Failed deliveries are retried with backoff
-delays of 1, 5 and 30 minutes. The retry count is capped by the
-`OUTBOX_MAX_ATTEMPTS` environment variable (default: 5). Events that exceed
-this limit are moved to a `notifications_dlq` table for inspection, which
-records the original event and error.
+retries via `next_attempt_at`. Failed deliveries use exponential backoff with
+jitter (roughly 1s, 5s, 30s, 2m and 10m). A per-destination circuit breaker
+opens after consecutive failures and retries once the open timeout elapses.
+The retry count is capped by the `OUTBOX_MAX_ATTEMPTS` environment variable
+(default: 5). Events that exceed this limit are moved to a `notifications_dlq`
+table for inspection, which records the original event and error.
+
+Additional environment variables:
+
+* `WEBHOOK_BREAKER_THRESHOLD` – failures before opening the breaker (default: 5)
+* `WEBHOOK_BREAKER_OPEN_SECS` – seconds the breaker remains open (default: 300)
+
+Metrics exposed under `/metrics` include `webhook_attempts_total`,
+`webhook_failures_total` and `webhook_breaker_state`.
 
 ### KDS SLA Watcher
 
