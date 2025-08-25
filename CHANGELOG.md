@@ -29,4 +29,5 @@ All notable changes to this project will be documented in this file.
 - Slow query logging with WARNs above the configurable threshold and 1% sampling
   of regular queries.
 - Idempotent offline order queue using client-side `op_id` dedupe.
+- Dry-run mode for soft-deleted purge script with nightly CI report.
 

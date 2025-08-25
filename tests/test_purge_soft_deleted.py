@@ -15,6 +15,7 @@ sys.path.append(str(ROOT))
 sys.path.append(str(ROOT / "api"))
 
 from app.db.tenant import get_engine  # type: ignore  # noqa: E402
+
 from api.app.models_tenant import AuditTenant  # type: ignore  # noqa: E402
 
 
@@ -23,8 +24,7 @@ def anyio_backend() -> str:
     return "asyncio"
 
 
-@pytest.mark.anyio
-async def test_purge_soft_deleted(tmp_path, monkeypatch):
+async def _prepare(tmp_path, monkeypatch):
     tenant = "t1"
     monkeypatch.setenv(
         "POSTGRES_TENANT_DSN_TEMPLATE",
@@ -37,7 +37,9 @@ async def test_purge_soft_deleted(tmp_path, monkeypatch):
             text("CREATE TABLE tables (id INTEGER PRIMARY KEY, deleted_at DATETIME)")
         )
         await conn.execute(
-            text("CREATE TABLE menu_items (id INTEGER PRIMARY KEY, deleted_at DATETIME)")
+            text(
+                "CREATE TABLE menu_items (id INTEGER PRIMARY KEY, deleted_at DATETIME)"
+            )
         )
         await conn.run_sync(AuditTenant.__table__.create)
 
@@ -58,10 +60,18 @@ async def test_purge_soft_deleted(tmp_path, monkeypatch):
         await session.commit()
 
     spec = importlib.util.spec_from_file_location(
-        "purge_soft_deleted", ROOT / "scripts/purge_soft_deleted.py"
+        "purge_soft_deleted",
+        ROOT / "scripts/purge_soft_deleted.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
+
+    return tenant, Session, mod, engine
+
+
+@pytest.mark.anyio
+async def test_purge_soft_deleted(tmp_path, monkeypatch):
+    tenant, Session, mod, engine = await _prepare(tmp_path, monkeypatch)
     await mod.purge(tenant, 90)
 
     async with Session() as session:
@@ -81,5 +91,31 @@ async def test_purge_soft_deleted(tmp_path, monkeypatch):
     assert audit.action == "purge_soft_deleted"
     assert meta["tables"] == 1
     assert meta["menu_items"] == 1
+
+    await engine.dispose()
+
+
+@pytest.mark.anyio
+async def test_purge_soft_deleted_dry_run(tmp_path, monkeypatch, capsys):
+    tenant, Session, mod, engine = await _prepare(tmp_path, monkeypatch)
+    await mod.purge(tenant, 90, dry_run=True)
+    out = capsys.readouterr().out
+
+    async with Session() as session:
+        table_count = (
+            await session.execute(text("SELECT COUNT(*) FROM tables"))
+        ).scalar()
+        item_count = (
+            await session.execute(text("SELECT COUNT(*) FROM menu_items"))
+        ).scalar()
+        audit_count = (
+            await session.execute(text("SELECT COUNT(*) FROM audit_tenant"))
+        ).scalar()
+
+    assert table_count == 3
+    assert item_count == 3
+    assert audit_count == 0
+    assert "tables=1" in out
+    assert "menu_items=1" in out
 
     await engine.dispose()
