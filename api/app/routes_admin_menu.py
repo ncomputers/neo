@@ -16,8 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from .auth import User, role_required
 from .db.tenant import get_engine
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
-from .utils.responses import ok
 from .utils.audit import audit
+from .utils.responses import ok
 
 router = APIRouter()
 
@@ -43,6 +43,23 @@ async def _session(tenant_id: str):
         await engine.dispose()
 
 
+@router.get("/api/outlet/{tenant_id}/menu/items")
+@audit("list_menu_items")
+async def list_menu_items(
+    tenant_id: str,
+    include_deleted: bool = False,
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
+) -> dict:
+    """Return menu items for admins with optional deleted records."""
+
+    repo = MenuRepoSQL()
+    async with _session(tenant_id) as session:
+        items = await repo.list_items(
+            session, include_hidden=True, include_deleted=include_deleted
+        )
+    return ok(items)
+
+
 @router.post("/api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock")
 @audit("toggle_out_of_stock")
 async def toggle_out_of_stock(
@@ -64,7 +81,7 @@ async def toggle_out_of_stock(
     return ok(None)
 
 
-@router.delete("/api/outlet/{tenant_id}/menu/item/{item_id}")
+@router.patch("/api/outlet/{tenant_id}/menu/item/{item_id}/delete")
 @audit("delete_menu_item")
 async def delete_menu_item(
     tenant_id: str,

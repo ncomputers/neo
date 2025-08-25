@@ -5,14 +5,14 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
 from pydantic import BaseModel
+from sqlalchemy import func
 
 from .auth import User, role_required
 from .db import SessionLocal
 from .models_tenant import Table
-from .utils.responses import ok
 from .utils.audit import audit
+from .utils.responses import ok
 
 
 class TablePosition(BaseModel):
@@ -57,11 +57,14 @@ async def set_table_position(
 
 @router.get("/api/outlet/{tenant}/tables/map")
 @audit("get_table_map")
-async def get_table_map(tenant: str) -> dict:
+async def get_table_map(tenant: str, include_deleted: bool = False) -> dict:
     """Return coordinates and states for all tables."""
 
     with SessionLocal() as session:
-        records = session.query(Table).filter(Table.deleted_at.is_(None)).all()
+        query = session.query(Table)
+        if not include_deleted:
+            query = query.filter(Table.deleted_at.is_(None))
+        records = query.all()
         data = [
             {
                 "id": str(t.id),
@@ -76,16 +79,16 @@ async def get_table_map(tenant: str) -> dict:
     return ok(data)
 
 
-@router.delete("/api/outlet/{tenant}/tables/{table_id}")
+@router.patch("/api/outlet/{tenant}/tables/{code}/delete")
 @audit("delete_table")
 async def delete_table(
     tenant: str,
-    table_id: uuid.UUID,
+    code: str,
     user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
 ) -> dict:
     """Soft delete a table."""
     with SessionLocal() as session:
-        table = session.get(Table, table_id)
+        table = session.query(Table).filter_by(code=code).one_or_none()
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
         table.deleted_at = func.now()
@@ -93,16 +96,16 @@ async def delete_table(
     return ok(None)
 
 
-@router.post("/api/outlet/{tenant}/tables/{table_id}/restore")
+@router.post("/api/outlet/{tenant}/tables/{code}/restore")
 @audit("restore_table")
 async def restore_table(
     tenant: str,
-    table_id: uuid.UUID,
+    code: str,
     user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
 ) -> dict:
     """Restore a previously deleted table."""
     with SessionLocal() as session:
-        table = session.get(Table, table_id)
+        table = session.query(Table).filter_by(code=code).one_or_none()
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
         table.deleted_at = None
