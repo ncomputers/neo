@@ -6,14 +6,14 @@ The API exposes an OpenAPI description and a ready-to-use Postman collection.
 
 The running service serves the schema at `/openapi.json`. An exported copy lives at [`openapi.json`](../openapi.json) and includes the API title, version and server base URL.
 
-## Postman
+## Import to Postman
 
-A collection generated from the OpenAPI schema is available at [`postman/collection.json`](../postman/collection.json).
+A collection generated from the OpenAPI schema is available at [`postman_collection.json`](postman_collection.json) and is served by the running service at `/postman/collection.json`.
 
 To explore the API with Postman:
 
-1. Open Postman and click **Import**.
-2. Select the `postman/collection.json` file from this repository.
+1. Download the `postman_collection.json` file or point Postman at the `/postman/collection.json` URL.
+2. In Postman click **Import**.
 3. Postman will create a collection with requests organised by tags for easy browsing.
 
 ### Authentication

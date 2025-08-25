@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 import sys
 
+from collections import Counter
+
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
@@ -24,7 +26,7 @@ sys.path.append(str(BASE_DIR / "api"))
 
 from app.db.tenant import get_tenant_session  # type: ignore  # noqa: E402
 from app.models_master import Tenant  # type: ignore  # noqa: E402
-from app.models_tenant import OrderItem  # type: ignore  # noqa: E402
+from app.models_tenant import Order, OrderItem  # type: ignore  # noqa: E402
 from app.services import notifications  # type: ignore  # noqa: E402
 
 
@@ -50,12 +52,14 @@ async def scan(tenant: str) -> int:
 
     now = _now()
     breaches = 0
+    delayed: list[tuple[int, int, float]] = []
     async with get_tenant_session(tenant) as session:
         result = await session.execute(
-            select(OrderItem.id).where(OrderItem.status == "in_progress")
+            select(OrderItem.id, Order.table_id)
+                .join(Order, Order.id == OrderItem.order_id)
+                .where(OrderItem.status == "in_progress")
         )
-        item_ids = [row[0] for row in result.all()]
-        for item_id in item_ids:
+        for item_id, table_id in result.all():
             path = f"/api/outlet/{tenant}/kds/item/{item_id}/progress"
             last = await session.execute(
                 text(
@@ -72,13 +76,26 @@ async def scan(tenant: str) -> int:
                 continue
             if last_at.tzinfo is None:
                 last_at = last_at.replace(tzinfo=timezone.utc)
-            if (now - last_at).total_seconds() > sla:
+            delay = (now - last_at).total_seconds()
+            if delay > sla:
                 await notifications.enqueue(
                     tenant,
                     "kds.sla_breach",
                     {"order_item_id": item_id, "status": "in_progress"},
                 )
+                delayed.append((item_id, table_id, delay))
                 breaches += 1
+    if delayed:
+        top_items = [
+            i for i, _, _ in sorted(delayed, key=lambda x: x[2], reverse=True)[:3]
+        ]
+        table_counts = Counter(t for _, t, _ in delayed)
+        top_tables = [t for t, _ in table_counts.most_common(3)]
+        await notifications.enqueue(
+            tenant,
+            "kds.sla_breach.owner",
+            {"items": top_items, "tables": top_tables},
+        )
     return breaches
 
 

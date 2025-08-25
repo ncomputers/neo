@@ -1,0 +1,14 @@
+[Unit]
+Description=Anonymize tenant PII
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/neo/tenants.env
+WorkingDirectory=/opt/neo
+ExecStart=/bin/bash -c '\
+for t in $TENANTS; do \
+  /usr/bin/python3 scripts/anonymize_pii.py --tenant "$t" --days ${PII_DAYS:-30}; \
+done'
+
+[Install]
+WantedBy=multi-user.target

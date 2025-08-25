@@ -131,6 +131,7 @@ from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
+from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
@@ -184,8 +185,6 @@ app = FastAPI(
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
-postman_dir = Path(__file__).resolve().parent.parent.parent / "postman"
-app.mount("/postman", StaticFiles(directory=postman_dir), name="postman")
 init_tracing(app)
 asyncio.set_event_loop(asyncio.new_event_loop())
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
@@ -845,6 +844,7 @@ app.include_router(feedback_router)
 app.include_router(media_router)
 app.include_router(api_keys_router)
 app.include_router(vapid_router)
+app.include_router(postman_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)

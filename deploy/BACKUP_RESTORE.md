@@ -51,6 +51,19 @@ A simple cron job::
         find /var/backups/neo -name '*.sql' -mtime +7 -delete
         find /var/backups/neo/weekly -name '*.sql' -mtime +28 -delete
 
+## Anonymize rotation
+
+Systemd unit and timer files scrub aged guest PII for all tenants.
+
+1. Copy `systemd/neo-anonymize.service` and `systemd/neo-anonymize.timer`
+   to `/etc/systemd/system/`.
+2. Ensure `/etc/neo/tenants.env` defines `TENANTS` and optionally
+   `PII_DAYS` to override the 30‑day default.
+3. Enable the timer::
+
+       sudo systemctl daemon-reload
+       sudo systemctl enable --now neo-anonymize.timer
+
 ## Verification
 
 Regularly verify that backups can be restored::
