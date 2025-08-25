@@ -54,6 +54,23 @@ notifications_outbox_failed_total = Counter(
 )
 notifications_outbox_failed_total.inc(0)
 
+webhook_attempts_total = Counter(
+    "webhook_attempts_total", "Total webhook delivery attempts", ["destination"]
+)
+webhook_attempts_total.labels(destination="sample").inc(0)
+
+webhook_failures_total = Counter(
+    "webhook_failures_total", "Total webhook delivery failures", ["destination"]
+)
+webhook_failures_total.labels(destination="sample").inc(0)
+
+webhook_breaker_state = Gauge(
+    "webhook_breaker_state",
+    "Circuit breaker state for webhook destinations (0 closed, 1 open)",
+    ["destination"],
+)
+webhook_breaker_state.labels(destination="sample").set(0)
+
 sse_clients_gauge = Gauge(
     "sse_clients_gauge", "Current number of connected SSE clients"
 )
