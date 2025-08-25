@@ -7,6 +7,7 @@ The application relies on the following environment variables:
 | `POSTGRES_MASTER_URL` | Connection string for the master database. Defaults to a local SQLite file for development. | `sqlite+aiosqlite:///./dev_master.db` |
 | `POSTGRES_TENANT_DSN_TEMPLATE` | Template DSN for tenant databases, with `{tenant_id}` placeholder. Defaults to local SQLite files. | `sqlite+aiosqlite:///./tenant_{tenant_id}.db` |
 | `POSTGRES_SUPER_URL` (optional) | Superuser connection URL used when creating databases. Not required for SQLite. |  |
+| `DB_SLOW_QUERY_MS` (optional) | Emit a warning when a DB query exceeds this many milliseconds. Defaults to `200`. | `250` |
 | `DEFAULT_TZ` | Default timezone for application processes. | `UTC` |
 | `JWT_SECRET` | Secret key used to sign JWT tokens. | `your_jwt_secret_key` |
 | `JWKS_URL` (optional) | JWKS endpoint for verifying JWT signatures. | `https://auth.example.com/jwks.json` |
@@ -19,6 +20,9 @@ The application relies on the following environment variables:
 | `MAX_CONN_PER_IP` | Maximum concurrent real-time connections allowed per client IP. | `20` |
 | `EXPORT_MAX_ROWS` | Maximum rows included in export files. Defaults to `10000`. | `10000` |
 | `ENABLE_GATEWAY` | Enable Razorpay/Stripe payment gateway routes. | `false` |
+| `GATEWAY_SANDBOX` | Use test credentials for gateway integration. | `false` |
+| `RAZORPAY_SECRET` / `RAZORPAY_SECRET_TEST` | Razorpay webhook secret for live/test modes. | `secret` |
+| `STRIPE_SECRET` / `STRIPE_SECRET_TEST` | Stripe webhook secret for live/test modes. | `secret` |
 | `VAPID_PUBLIC_KEY` (optional) | Public key for Web Push authentication. | `BASE64_KEY` |
 | `VAPID_PRIVATE_KEY` (optional) | Private key for Web Push authentication. | `BASE64_KEY` |
 | `WEBHOOK_SIGNING_SECRET` (optional) | Shared secret for signing outbound webhook requests. | `supersecret` |

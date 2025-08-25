@@ -1,23 +1,31 @@
 import pathlib
+import re
 import sys
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
-
-from api.app.routes_invoice_pdf import router
-from api.app.pdf import render as pdf_render
+from api.app.middlewares.security import SecurityMiddleware  # noqa: E402
+from api.app.pdf import render as pdf_render  # noqa: E402
+from api.app.routes_invoice_pdf import router  # noqa: E402
 
 
 def test_invoice_pdf_route_html_fallback():
     app = FastAPI()
+    app.add_middleware(SecurityMiddleware)
     app.include_router(router)
     client = TestClient(app)
     resp = client.get("/invoice/123/pdf?size=80mm")
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("text/html")
     assert "Invoice #INV-123" in resp.text
+    csp = resp.headers["content-security-policy"]
+    m = re.search(r"nonce-([^']+)'", csp)
+    assert m is not None
+    nonce = m.group(1)
+    assert f'nonce="{nonce}"' in resp.text
 
 
 def test_render_invoice_pdf_with_fake_weasyprint(monkeypatch):
@@ -42,3 +50,25 @@ def test_render_invoice_pdf_with_fake_weasyprint(monkeypatch):
     )
     assert content.startswith(b"%PDF")
     assert mimetype == "application/pdf"
+
+
+def test_kot_template_nonce(monkeypatch):
+    def fake_import(name):
+        raise ImportError
+
+    monkeypatch.setattr(pdf_render.importlib, "import_module", fake_import)
+    html_bytes, mimetype = pdf_render.render_template(
+        "kot_80mm.html",
+        {
+            "kot": {
+                "order_id": 1,
+                "placed_at": "",
+                "source_type": "Counter",
+                "source_code": "1",
+                "items": [],
+            }
+        },
+        nonce="abc",
+    )
+    assert mimetype == "text/html"
+    assert b'<style nonce="abc">' in html_bytes

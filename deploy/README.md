@@ -49,7 +49,7 @@ WebSockets and Server‑Sent Events with 60 s timeouts.
 After these steps the API should be available at `https://example.com`.
 
 ## 5. Synthetic canary probe
-A lightweight canary places and cancels a small order, verifies KOT generation and triggers the daily digest endpoint. Install the service and timer:
+A lightweight canary places and settles a small order, verifies KOT and invoice PDF generation, exercises the checkout flow and triggers the daily digest endpoint. Install the service and timer:
 
 ```bash
 sudo cp deploy/systemd/neo-canary.service /etc/systemd/system/

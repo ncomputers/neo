@@ -99,8 +99,8 @@ async def toggle_out_of_stock(
     return ok(None)
 
 
-@router.patch("/api/outlet/{tenant_id}/menu/item/{item_id}/delete")
-@audit("delete_menu_item")
+@router.patch("/api/outlet/{tenant_id}/menu/items/{item_id}/delete")
+@audit("item.soft_delete")
 async def delete_menu_item(
     tenant_id: str,
     item_id: UUID,
@@ -115,8 +115,8 @@ async def delete_menu_item(
     return ok(None)
 
 
-@router.post("/api/outlet/{tenant_id}/menu/item/{item_id}/restore")
-@audit("restore_menu_item")
+@router.post("/api/outlet/{tenant_id}/menu/items/{item_id}/restore")
+@audit("item.restore")
 async def restore_menu_item(
     tenant_id: str,
     item_id: UUID,

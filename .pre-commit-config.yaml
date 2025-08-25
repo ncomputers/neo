@@ -16,7 +16,16 @@ repos:
     hooks:
       - id: bandit
         args: ["-q", "-ll"]
+        additional_dependencies: [pbr]
   - repo: https://github.com/pypa/pip-audit
     rev: v2.9.0
     hooks:
       - id: pip-audit
+  - repo: local
+    hooks:
+      - id: i18n-lint
+        name: i18n-lint
+        entry: python scripts/i18n_lint.py
+        language: system
+        pass_filenames: false
+        files: ^api/app/i18n/.*\.json$

@@ -8,10 +8,13 @@ Optional Razorpay/Stripe checkout can be enabled per deployment.
 2. In the master database, set `gateway_provider` for the tenant to either `razorpay` or `stripe`.
    When unset or `none`, the application falls back to manual UPI/UTR flow.
 
+Set `GATEWAY_SANDBOX=true` to use sandbox credentials globally or set
+`gateway_sandbox=true` for an individual tenant.
+
 ## Test mode
 
-Gateways usually provide a sandbox environment. Configure your Razorpay/Stripe
-credentials for test mode and trigger checkout:
+Configure Razorpay/Stripe credentials for the appropriate environment. When in
+sandbox mode, use the `*_SECRET_TEST` variables and trigger checkout:
 
 ```bash
 curl -X POST https://localhost:8000/api/outlet/demo/checkout/start \

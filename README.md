@@ -12,6 +12,8 @@ Invoices support optional FSSAI license details when provided.
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
@@ -137,14 +139,16 @@ gitleaks detect -c .gitleaks.toml
 
 ## Localization
 
-Translation files live in `api/app/i18n`. Verify that English, Hindi and Gujarati
-JSON files share the same keys:
+Translation files live in `api/app/i18n`. A pre-commit hook verifies that English,
+Hindi and Gujarati JSON files share the same keys:
 
 ```bash
+pre-commit run --hook-stage manual i18n-lint --all-files
+# or run directly:
 python scripts/i18n_lint.py
 ```
 
-The CI workflow runs this lint to prevent missing translations.
+The CI workflow also runs this lint to prevent missing translations.
 
 ## End-to-End Tests
 
@@ -183,6 +187,9 @@ A minimal onboarding flow captures tenant details:
 - `POST /api/onboarding/start` – create a session and return `onboarding_id`.
 - `POST /api/onboarding/{id}/profile` – set name, address, logo, timezone and language.
 - `POST /api/onboarding/{id}/tax` – store GST mode and registration info.
+- Tenants may also define rounding policies:
+  - `gst_rounding` – either `item-wise` or `invoice-total`
+  - `rounding_mode` – one of `half-up`, `bankers`, `ceil` or `floor`
 - `POST /api/onboarding/{id}/tables` – allocate tables and assign QR tokens.
 - `POST /api/onboarding/{id}/payments` – configure payment modes and VPA.
 - `POST /api/onboarding/{id}/finish` – finalize and activate the tenant.
@@ -357,11 +364,20 @@ The worker drains `notifications_outbox` rows and currently supports
 `console`, `webhook`, `whatsapp_stub`, `sms_stub` and `email_stub` channels. The
 `*_stub` channels simply log the payload and are placeholders for future
 provider adapters. Each outbox row tracks delivery `attempts` and schedules
-retries via `next_attempt_at`. Failed deliveries are retried with backoff
-delays of 1, 5 and 30 minutes. The retry count is capped by the
-`OUTBOX_MAX_ATTEMPTS` environment variable (default: 5). Events that exceed
-this limit are moved to a `notifications_dlq` table for inspection, which
-records the original event and error.
+retries via `next_attempt_at`. Failed deliveries use exponential backoff with
+jitter (roughly 1s, 5s, 30s, 2m and 10m). A per-destination circuit breaker
+opens after consecutive failures and retries once the open timeout elapses.
+The retry count is capped by the `OUTBOX_MAX_ATTEMPTS` environment variable
+(default: 5). Events that exceed this limit are moved to a `notifications_dlq`
+table for inspection, which records the original event and error.
+
+Additional environment variables:
+
+* `WEBHOOK_BREAKER_THRESHOLD` – failures before opening the breaker (default: 5)
+* `WEBHOOK_BREAKER_OPEN_SECS` – seconds the breaker remains open (default: 300)
+
+Metrics exposed under `/metrics` include `webhook_attempts_total`,
+`webhook_failures_total` and `webhook_breaker_state`.
 
 ### KDS SLA Watcher
 

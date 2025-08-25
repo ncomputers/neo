@@ -102,7 +102,7 @@ async def get_table_map(tenant: str, include_deleted: bool = False) -> dict:
 
 
 @router.patch("/api/outlet/{tenant}/tables/{code}/delete")
-@audit("delete_table")
+@audit("table.soft_delete")
 async def delete_table(
     tenant: str,
     code: str,
@@ -119,7 +119,7 @@ async def delete_table(
 
 
 @router.post("/api/outlet/{tenant}/tables/{code}/restore")
-@audit("restore_table")
+@audit("table.restore")
 async def restore_table(
     tenant: str,
     code: str,

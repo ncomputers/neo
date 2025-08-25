@@ -57,7 +57,8 @@ async def create_guest_order(
     except ValueError as exc:
         ip = request.client.host if request.client else "unknown"
         await order_rejection.on_rejected(tenant_id, ip, request.app.state.redis)
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        status = 403 if str(exc) == "GONE_RESOURCE" else 400
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
 
     try:  # optional pubsub notification
         await event_bus.publish(

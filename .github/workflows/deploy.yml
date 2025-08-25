@@ -49,6 +49,8 @@ jobs:
           helm upgrade --install neo deploy/helm/neo \
             --namespace staging \
             --set image.tag=${{ github.sha }}
+      - name: Scrub staging data
+        run: python scripts/scrub_staging.py
       - name: Audit env examples
         run: python scripts/env_audit.py
       - name: Preflight health

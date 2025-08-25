@@ -9,6 +9,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from api.app.obs import add_query_logger
+
 from . import master
 
 READ_REPLICA_URL = os.getenv("READ_REPLICA_URL")
@@ -27,6 +29,7 @@ def _init_replica() -> None:
     if not READ_REPLICA_URL:
         return
     engine = create_async_engine(READ_REPLICA_URL, future=True)
+    add_query_logger(engine, "replica")
     try:
         asyncio.run(_ping(engine))
     except Exception:

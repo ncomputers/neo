@@ -79,7 +79,7 @@ async def test_delete_and_restore_menu_item(monkeypatch) -> None:
         resp1 = await client.get("/api/outlet/demo/menu/items", headers=headers)
         assert resp1.json()["data"] == [{"id": item_id}]
         await client.patch(
-            f"/api/outlet/demo/menu/item/{item_id}/delete", headers=headers
+            f"/api/outlet/demo/menu/items/{item_id}/delete", headers=headers
         )
         resp2 = await client.get("/api/outlet/demo/menu/items", headers=headers)
         assert resp2.json()["data"] == []
@@ -88,7 +88,7 @@ async def test_delete_and_restore_menu_item(monkeypatch) -> None:
         )
         assert resp3.json()["data"] == [{"id": item_id}]
         await client.post(
-            f"/api/outlet/demo/menu/item/{item_id}/restore", headers=headers
+            f"/api/outlet/demo/menu/items/{item_id}/restore", headers=headers
         )
         resp4 = await client.get("/api/outlet/demo/menu/items", headers=headers)
         assert resp4.json()["data"] == [{"id": item_id}]

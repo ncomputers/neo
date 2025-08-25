@@ -1,13 +1,18 @@
 import asyncio
+import fnmatch
+import os
 import sys
 import time
-import fnmatch
+import types
 from pathlib import Path
 from typing import Any
 
 import pytest
-from fastapi import FastAPI
-import os
+from fastapi import APIRouter, FastAPI
+
+_webhooks_stub = types.ModuleType("routes_webhooks")
+_webhooks_stub.router = APIRouter()
+sys.modules.setdefault("api.app.routes_webhooks", _webhooks_stub)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
