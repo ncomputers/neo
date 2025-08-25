@@ -4,13 +4,15 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header, Request, Response
-from sqlalchemy.ext.asyncio import AsyncSession
 import json
 
+from fastapi import APIRouter, Depends, Header, Request, Response
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .db.replica import read_only
+from .i18n import get_msg, resolve_lang
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.responses import ok
-from .i18n import resolve_lang, get_msg
 
 router = APIRouter()
 
@@ -32,6 +34,7 @@ async def get_tenant_session(tenant_id: str) -> AsyncSession:
 
 
 @router.get("/g/{table_token}/menu")
+@read_only
 async def fetch_menu(
     table_token: str,
     request: Request,

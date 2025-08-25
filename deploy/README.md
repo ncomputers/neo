@@ -24,6 +24,10 @@ sudo mkdir -p /etc/neo
 sudo nano /etc/neo/neo-api.env
 ```
 
+The API can route read-heavy requests to a replica database by setting
+`READ_REPLICA_URL`. During startup the replica is health‑checked and the
+primary is used automatically if the replica is unreachable.
+
 ## 3. systemd service
 ```bash
 sudo cp deploy/systemd/neo-api.service /etc/systemd/system/
