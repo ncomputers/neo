@@ -40,6 +40,7 @@ async def test_support_bundle(monkeypatch) -> None:
         licensed_tables = 5
         enable_hotel = True
         enable_counter = False
+        enable_gateway = False
         license_limits = {"plan": "basic"}
         sla_sound_alert = False
         sla_color_alert = True

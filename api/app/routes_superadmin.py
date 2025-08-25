@@ -2,20 +2,19 @@ from __future__ import annotations
 
 """Superadmin routes for provisioning outlets."""
 
-from pathlib import Path
-from uuid import uuid4
 import asyncio
 import subprocess
 import sys
+from pathlib import Path
+from uuid import uuid4
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-
-from utils.responses import ok
 from utils.audit import audit
+from utils.responses import ok
+
 from .db.master import get_session
 from .models_master import Tenant
-
 
 router = APIRouter(prefix="/api/super")
 
@@ -29,6 +28,7 @@ class OutletPayload(BaseModel):
     plan_tables: int | None = None
     enable_hotel: bool = False
     enable_counter: bool = False
+    enable_gateway: bool = False
 
 
 @router.post("/outlet")
@@ -48,6 +48,7 @@ async def create_outlet(payload: OutletPayload) -> dict:
             status="active",
             enable_hotel=payload.enable_hotel,
             enable_counter=payload.enable_counter,
+            enable_gateway=payload.enable_gateway,
         )
         session.add(tenant)
         await session.commit()
@@ -56,7 +57,12 @@ async def create_outlet(payload: OutletPayload) -> dict:
     scripts_dir = Path(__file__).resolve().parents[2] / "scripts"
     await asyncio.to_thread(
         subprocess.run,
-        [sys.executable, str(scripts_dir / "tenant_create_db.py"), "--tenant", tenant_id],
+        [
+            sys.executable,
+            str(scripts_dir / "tenant_create_db.py"),
+            "--tenant",
+            tenant_id,
+        ],
         check=True,
     )
     await asyncio.to_thread(
@@ -65,12 +71,13 @@ async def create_outlet(payload: OutletPayload) -> dict:
         check=True,
     )
     return ok(
-        { 
+        {
             "tenant_id": tenant_id,
             "inv_prefix": inv_prefix,
             "tz": payload.tz,
             "licensed_tables": payload.plan_tables,
             "enable_hotel": payload.enable_hotel,
             "enable_counter": payload.enable_counter,
+            "enable_gateway": payload.enable_gateway,
         }
     )

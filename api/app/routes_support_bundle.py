@@ -49,6 +49,7 @@ async def support_bundle(
             "feature_flags": {
                 "enable_hotel": bool(tenant.enable_hotel),
                 "enable_counter": bool(tenant.enable_counter),
+                "enable_gateway": bool(getattr(tenant, "enable_gateway", False)),
                 "sla_sound_alert": bool(tenant.sla_sound_alert),
                 "sla_color_alert": bool(tenant.sla_color_alert),
             },
@@ -94,7 +95,5 @@ async def support_bundle(
         while chunk := buffer.read(8192):
             yield chunk
 
-    headers = {
-        "Content-Disposition": f"attachment; filename={tenant_id}_bundle.zip"
-    }
+    headers = {"Content-Disposition": f"attachment; filename={tenant_id}_bundle.zip"}
     return StreamingResponse(build_zip(), media_type="application/zip", headers=headers)
