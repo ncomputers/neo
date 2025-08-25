@@ -6,6 +6,7 @@ from .http_errors import HttpErrorCounterMiddleware
 from .idempotency import IdempotencyMetricsMiddleware, IdempotencyMiddleware
 from .licensing import LicensingMiddleware
 from .logging import LoggingMiddleware
+from .maintenance import MaintenanceMiddleware
 from .prometheus import PrometheusMiddleware
 from .security import SecurityMiddleware
 from .table_state_guard import TableStateGuardMiddleware
@@ -24,5 +25,6 @@ __all__ = [
     "FeatureFlagsMiddleware",
     "LicensingMiddleware",
     "SecurityMiddleware",
+    "MaintenanceMiddleware",
     "APIKeyAuthMiddleware",
 ]

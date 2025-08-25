@@ -70,6 +70,7 @@ from .middlewares import (
     IdempotencyMiddleware,
     LicensingMiddleware,
     LoggingMiddleware,
+    MaintenanceMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
 )
@@ -166,6 +167,7 @@ app.add_middleware(GuestRateLimitMiddleware)
 app.add_middleware(LicensingMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
+app.add_middleware(MaintenanceMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SecurityMiddleware)
 app.add_middleware(APIKeyAuthMiddleware)

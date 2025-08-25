@@ -19,6 +19,11 @@ Logging can be tuned via:
 - `LOG_LEVEL` – set log verbosity (default `INFO`)
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
+- `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
+
+Tenants may also set a future `maintenance_until` timestamp in the `tenants`
+table to temporarily block their own traffic. Requests made before the
+timestamp receive the same 503 response with a `Retry-After` header.
 
 Request bodies and query parameters are scrubbed of sensitive keys such as
 `pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.
