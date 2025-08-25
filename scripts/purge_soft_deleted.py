@@ -3,16 +3,17 @@
 
 Rows in ``tables`` and ``menu_items`` with a ``deleted_at`` timestamp older
 than the specified retention window are permanently removed. A summary of the
-operation is recorded in ``audit_tenant`` for each tenant.
+operation is recorded in ``audit_tenant`` for each tenant. A dry-run mode is
+available to log would-delete counts without modifying data.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-import sys
 
 from sqlalchemy import text
 
@@ -25,7 +26,7 @@ from app.db.tenant import get_tenant_session  # type: ignore  # noqa: E402
 from app.models_tenant import AuditTenant  # type: ignore  # noqa: E402
 
 
-async def purge(tenant: str, days: int = 90) -> None:
+async def purge(tenant: str, days: int = 90, dry_run: bool = False) -> None:
     """Hard delete long-soft-deleted rows for ``tenant``.
 
     Parameters
@@ -34,11 +35,29 @@ async def purge(tenant: str, days: int = 90) -> None:
         Tenant identifier whose database should be purged.
     days:
         Rows with ``deleted_at`` older than this many days will be removed.
+    dry_run:
+        If ``True``, only log counts of rows that would be deleted.
     """
 
     cutoff = datetime.utcnow() - timedelta(days=days)
 
     async with get_tenant_session(tenant) as session:
+        if dry_run:
+            tables_count = (
+                await session.execute(
+                    text("SELECT COUNT(*) FROM tables WHERE deleted_at < :cutoff"),
+                    {"cutoff": cutoff},
+                )
+            ).scalar() or 0
+            items_count = (
+                await session.execute(
+                    text("SELECT COUNT(*) FROM menu_items WHERE deleted_at < :cutoff"),
+                    {"cutoff": cutoff},
+                )
+            ).scalar() or 0
+            print(f"[dry-run] tables={tables_count} menu_items={items_count}")
+            return
+
         tables_res = await session.execute(
             text("DELETE FROM tables WHERE deleted_at < :cutoff"),
             {"cutoff": cutoff},
@@ -59,6 +78,11 @@ async def purge(tenant: str, days: int = 90) -> None:
             )
         )
         await session.commit()
+        print(
+            "Deleted tables={} menu_items={}".format(
+                tables_res.rowcount or 0, items_res.rowcount or 0
+            )
+        )
 
 
 def _cli() -> None:
@@ -72,8 +96,13 @@ def _cli() -> None:
         default=90,
         help="Retention window in days (default: 90)",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only log counts without deleting",
+    )
     args = parser.parse_args()
-    asyncio.run(purge(args.tenant, args.days))
+    asyncio.run(purge(args.tenant, args.days, args.dry_run))
 
 
 if __name__ == "__main__":
