@@ -1,0 +1,65 @@
+{
+  "id": null,
+  "uid": "api-overview",
+  "title": "API Overview",
+  "timezone": "",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Request Rate",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(rate(api_requests_total{service=\"$service\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(rate(api_requests_total{service=\"$service\",status=~\"5..\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "graph",
+      "title": "Latency p95",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95,sum(rate(api_request_duration_seconds_bucket{service=\"$service\"}[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "id": 3
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Datasource"
+      },
+      {
+        "name": "service",
+        "type": "query",
+        "datasource": "$datasource",
+        "query": "label_values(api_requests_total, service)",
+        "refresh": 1,
+        "label": "Service"
+      }
+    ]
+  }
+}
