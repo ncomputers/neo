@@ -128,7 +128,7 @@ def test_per_page_affects_page_count_and_label_fmt():
     )
 
     assert resp_small.status_code == 200 and resp_large.status_code == 200
-    # Count occurrences of "<table" to account for attributes on the table tag
+
     count_small = resp_small.content.count(b"<table")
     count_large = resp_large.content.count(b"<table")
     assert count_small > count_large

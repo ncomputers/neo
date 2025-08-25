@@ -1,30 +1,13 @@
 {
   "info": {
     "name": "Neo API",
-    "_postman_id": "b7a74e67-f938-4ade-8c9a-e1f53f2c04e6",
+    "_postman_id": "7c1fd921-ebb4-5477-b6ad-34e0c2236dd0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "Auth",
       "item": [
-        {
-          "name": "Login with email",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/login/email",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "login",
-                "email"
-              ]
-            }
-          }
-        },
         {
           "name": "Login with PIN",
           "request": {
@@ -38,6 +21,23 @@
               "path": [
                 "login",
                 "pin"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login with email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login/email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login",
+                "email"
               ]
             }
           }
@@ -89,734 +89,12 @@
       "name": "General",
       "item": [
         {
-          "name": "List Categories",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/categories",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "categories"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Category",
+          "name": "Accept Item",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/menu/categories",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "categories"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Category",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/categories/{category_id}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "categories",
-                "{category_id}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Items",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Export Items",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/export",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "export"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Import Items",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "import"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Item",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "{item_id}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update Item",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "{item_id}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Item",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "{item_id}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Apply Pending Prices",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/apply-pending",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "apply-pending"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Upload Image",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}/image",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "{item_id}",
-                "image"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Admin Area",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/admin",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Staff Area",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/staff",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "staff"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Tenant",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/tenants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "tenants"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Renew Subscription",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/tenants/{tenant_id}/subscription/renew",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "tenants",
-                "{tenant_id}",
-                "subscription",
-                "renew"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Verify Payment",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/tenants/{tenant_id}/subscription/payments/{payment_id}/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "tenants",
-                "{tenant_id}",
-                "subscription",
-                "payments",
-                "{payment_id}",
-                "verify"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Health",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Tables",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/tables",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "tables"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Magic Start",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/auth/magic/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "magic",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Magic Consume",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/auth/magic/consume",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "magic",
-                "consume"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Fetch Menu",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/g/{table_token}/menu",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "g",
-                "{table_token}",
-                "menu"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Guest Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/g/{table_token}/order",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "g",
-                "{table_token}",
-                "order"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Generate Bill",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/g/{table_token}/bill",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "g",
-                "{table_token}",
-                "bill"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Fetch Menu",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/c/{counter_token}/menu",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "c",
-                "{counter_token}",
-                "menu"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/c/{counter_token}/order",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "c",
-                "{counter_token}",
-                "order"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Fetch Menu",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/h/{room_token}/menu",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "h",
-                "{room_token}",
-                "menu"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/h/{room_token}/order",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "h",
-                "{room_token}",
-                "order"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Request Cleaning",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/h/{room_token}/request/cleaning",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "h",
-                "{room_token}",
-                "request",
-                "cleaning"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Invoice Pdf",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/invoice/{invoice_id}/pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "invoice",
-                "{invoice_id}",
-                "pdf"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Start Onboarding",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/onboarding/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "onboarding",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Set Profile",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/profile",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "onboarding",
-                "{onboarding_id}",
-                "profile"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Set Tax",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/tax",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "onboarding",
-                "{onboarding_id}",
-                "tax"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Set Tables",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/tables",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "onboarding",
-                "{onboarding_id}",
-                "tables"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Set Payments",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/payments",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "onboarding",
-                "{onboarding_id}",
-                "payments"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Finish Onboarding",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/finish",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "onboarding",
-                "{onboarding_id}",
-                "finish"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Qrpack Pdf",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/qrpack.pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "qrpack.pdf"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Rotate Table Qr",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/tables/{code}/qr/rotate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant}",
-                "tables",
-                "{code}",
-                "qr",
-                "rotate"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Kot Pdf",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kot/{order_id}.pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kot",
-                "{order_id}.pdf"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Queue",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/queue",
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -825,7 +103,9 @@
                 "outlet",
                 "{tenant_id}",
                 "kds",
-                "queue"
+                "item",
+                "{order_item_id}",
+                "accept"
               ]
             }
           }
@@ -853,292 +133,46 @@
           }
         },
         {
-          "name": "Progress Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/progress",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "order",
-                "{order_id}",
-                "progress"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Ready Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/ready",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "order",
-                "{order_id}",
-                "ready"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Serve Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/serve",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "order",
-                "{order_id}",
-                "serve"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Reject Order",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "order",
-                "{order_id}",
-                "reject"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Accept Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "item",
-                "{order_item_id}",
-                "accept"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Progress Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/progress",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "item",
-                "{order_item_id}",
-                "progress"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Ready Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/ready",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "item",
-                "{order_item_id}",
-                "ready"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Serve Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/serve",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "item",
-                "{order_item_id}",
-                "serve"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Reject Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "kds",
-                "item",
-                "{order_item_id}",
-                "reject"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update Status",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/counters/{order_id}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "counters",
-                "{order_id}",
-                "status"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/staff/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant}",
-                "staff",
-                "login"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Set Pin",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/staff/{staff_id}/set_pin",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant}",
-                "staff",
-                "{staff_id}",
-                "set_pin"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Me",
+          "name": "Admin Area",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/staff/me",
+              "raw": "{{baseUrl}}/admin",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
-                "outlet",
-                "{tenant}",
-                "staff",
-                "me"
+                "admin"
               ]
             }
           }
         },
         {
-          "name": "Toggle Out Of Stock",
+          "name": "Apply Pending Prices",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock",
+              "raw": "{{baseUrl}}/menu/items/apply-pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items",
+                "apply-pending"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Backup Tenant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/backup",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1146,10 +180,111 @@
                 "api",
                 "outlet",
                 "{tenant_id}",
+                "backup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
                 "menu",
-                "item",
-                "{item_id}",
-                "out_of_stock"
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Guest Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/g/{table_token}/order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "g",
+                "{table_token}",
+                "order"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/c/{counter_token}/order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "c",
+                "{counter_token}",
+                "order"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/h/{room_token}/order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "h",
+                "{room_token}",
+                "order"
               ]
             }
           }
@@ -1175,111 +310,28 @@
           }
         },
         {
-          "name": "List Rules",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/alerts/rules",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "alerts",
-                "rules"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Outbox",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/alerts/outbox",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "alerts",
-                "outbox"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Jobs Status",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/jobs/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "jobs",
-                "status"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Outbox",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/outbox",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "outbox"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Retry Outbox",
+          "name": "Create Tenant",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/outbox/{item_id}/retry",
+              "raw": "{{baseUrl}}/tenants",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "outbox",
-                "{item_id}",
-                "retry"
+                "tenants"
               ]
             }
           }
         },
         {
-          "name": "List Dlq",
+          "name": "Daily Export",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/dlq",
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/exports/daily",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1287,18 +339,19 @@
                 "api",
                 "outlet",
                 "{tenant_id}",
-                "dlq"
+                "exports",
+                "daily"
               ]
             }
           }
         },
         {
-          "name": "Requeue Dlq",
+          "name": "Daily Z Report",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/dlq/{item_id}/requeue",
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/reports/z",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1306,9 +359,26 @@
                 "api",
                 "outlet",
                 "{tenant_id}",
-                "dlq",
-                "{item_id}",
-                "requeue"
+                "reports",
+                "z"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/categories/{category_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "categories",
+                "{category_id}"
               ]
             }
           }
@@ -1334,6 +404,243 @@
           }
         },
         {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items/{item_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items",
+                "{item_id}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items",
+                "export"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Fetch Menu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/g/{table_token}/menu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "g",
+                "{table_token}",
+                "menu"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Fetch Menu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/c/{counter_token}/menu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "c",
+                "{counter_token}",
+                "menu"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Fetch Menu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/h/{room_token}/menu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "h",
+                "{room_token}",
+                "menu"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Finish Onboarding",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/finish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "onboarding",
+                "{onboarding_id}",
+                "finish"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Generate Bill",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/g/{table_token}/bill",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "g",
+                "{table_token}",
+                "bill"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Item",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items/{item_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items",
+                "{item_id}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Table Map",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/tables/map",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "tables",
+                "map"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vapid Public Key",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vapid/public_key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vapid",
+                "public_key"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Gst Monthly Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/reports/gst/monthly",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "reports",
+                "gst",
+                "monthly"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Import Items",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items",
+                "import"
+              ]
+            }
+          }
+        },
+        {
           "name": "Ingest Orders Batch",
           "request": {
             "method": "POST",
@@ -1354,34 +661,217 @@
           }
         },
         {
-          "name": "Start Clean",
+          "name": "Invoice Pdf",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/housekeeping/table/{table_id}/start_clean",
+              "raw": "{{baseUrl}}/invoice/{invoice_id}/pdf",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
-                "outlet",
-                "{tenant}",
-                "housekeeping",
-                "table",
-                "{table_id}",
-                "start_clean"
+                "invoice",
+                "{invoice_id}",
+                "pdf"
               ]
             }
           }
         },
         {
-          "name": "Start Clean Room",
+          "name": "Jobs Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/jobs/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "jobs",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kot Pdf",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kot/{order_id}.pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kot",
+                "{order_id}.pdf"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Dlq",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/dlq",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "dlq"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Outbox",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/alerts/outbox",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "alerts",
+                "outbox"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Outbox",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/outbox",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "outbox"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/queue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "queue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/alerts/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "alerts",
+                "rules"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Tables",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tables"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/housekeeping/room/{room_id}/start_clean",
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/staff/login",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1389,10 +879,44 @@
                 "api",
                 "outlet",
                 "{tenant}",
-                "housekeeping",
-                "room",
-                "{room_id}",
-                "start_clean"
+                "staff",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Magic Consume",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/magic/consume",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "magic",
+                "consume"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Magic Start",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/magic/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "magic",
+                "start"
               ]
             }
           }
@@ -1442,27 +966,6 @@
           }
         },
         {
-          "name": "Start Clean Room",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/housekeeping/room/{room_id}/start_clean",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "housekeeping",
-                "room",
-                "{room_id}",
-                "start_clean"
-              ]
-            }
-          }
-        },
-        {
           "name": "Mark Room Ready",
           "request": {
             "method": "POST",
@@ -1484,6 +987,26 @@
           }
         },
         {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/staff/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "staff",
+                "me"
+              ]
+            }
+          }
+        },
+        {
           "name": "Metrics Endpoint",
           "request": {
             "method": "GET",
@@ -1500,21 +1023,21 @@
           }
         },
         {
-          "name": "Owner Dashboard Tiles",
+          "name": "Notify Print",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/dashboard/tiles",
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/print/notify",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "outlet",
-                "{tenant_id}",
-                "dashboard",
-                "tiles"
+                "{tenant}",
+                "print",
+                "notify"
               ]
             }
           }
@@ -1560,6 +1083,26 @@
           }
         },
         {
+          "name": "Owner Dashboard Tiles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/dashboard/tiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "dashboard",
+                "tiles"
+              ]
+            }
+          }
+        },
+        {
           "name": "Owner Daybook Pdf",
           "request": {
             "method": "GET",
@@ -1574,6 +1117,438 @@
                 "owner",
                 "{owner_id}",
                 "daybook.pdf"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Owner Daybook Pdf",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/reports/daybook.pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "reports",
+                "daybook.pdf"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Print Test",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/print/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "print",
+                "test"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Progress Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "item",
+                "{order_item_id}",
+                "progress"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Progress Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "order",
+                "{order_id}",
+                "progress"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Qrpack Pdf",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/qrpack.pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "qrpack.pdf"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ready"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ready Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "item",
+                "{order_item_id}",
+                "ready"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ready Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "order",
+                "{order_id}",
+                "ready"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "item",
+                "{order_item_id}",
+                "reject"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "order",
+                "{order_id}",
+                "reject"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Renew Subscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tenants/{tenant_id}/subscription/renew",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenants",
+                "{tenant_id}",
+                "subscription",
+                "renew"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request Cleaning",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/h/{room_token}/request/cleaning",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "h",
+                "{room_token}",
+                "request",
+                "cleaning"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Requeue Dlq",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/dlq/{item_id}/requeue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "dlq",
+                "{item_id}",
+                "requeue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retry Outbox",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/outbox/{item_id}/retry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "outbox",
+                "{item_id}",
+                "retry"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rotate Table Qr",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/tables/{code}/qr/rotate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "tables",
+                "{code}",
+                "qr",
+                "rotate"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Run Digest",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/digest/run",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "digest",
+                "run"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Serve Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/item/{order_item_id}/serve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "item",
+                "{order_item_id}",
+                "serve"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Serve Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/kds/order/{order_id}/serve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "kds",
+                "order",
+                "{order_id}",
+                "serve"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Payments",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "onboarding",
+                "{onboarding_id}",
+                "payments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Pin",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/staff/{staff_id}/set_pin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "staff",
+                "{staff_id}",
+                "set_pin"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Profile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "onboarding",
+                "{onboarding_id}",
+                "profile"
               ]
             }
           }
@@ -1600,12 +1575,66 @@
           }
         },
         {
-          "name": "Get Table Map",
+          "name": "Set Tables",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/tables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "onboarding",
+                "{onboarding_id}",
+                "tables"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Tax",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/onboarding/{onboarding_id}/tax",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "onboarding",
+                "{onboarding_id}",
+                "tax"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Staff Area",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/tables/map",
+              "raw": "{{baseUrl}}/staff",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Clean",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/housekeeping/table/{table_id}/start_clean",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1613,8 +1642,71 @@
                 "api",
                 "outlet",
                 "{tenant}",
-                "tables",
-                "map"
+                "housekeeping",
+                "table",
+                "{table_id}",
+                "start_clean"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Clean Room",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/housekeeping/room/{room_id}/start_clean",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "housekeeping",
+                "room",
+                "{room_id}",
+                "start_clean"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Clean Room",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/housekeeping/room/{room_id}/start_clean",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "housekeeping",
+                "room",
+                "{room_id}",
+                "start_clean"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Onboarding",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/onboarding/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "onboarding",
+                "start"
               ]
             }
           }
@@ -1641,97 +1733,6 @@
           }
         },
         {
-          "name": "Version",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/version",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "version"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Ready",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/ready",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ready"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Backup Tenant",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/backup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "backup"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Print Test",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/print/test",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant}",
-                "print",
-                "test"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Notify Print",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant}/print/notify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant}",
-                "print",
-                "notify"
-              ]
-            }
-          }
-        },
-        {
           "name": "Subscribe",
           "request": {
             "method": "POST",
@@ -1747,6 +1748,86 @@
                 "{tenant}",
                 "push",
                 "subscribe"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle Out Of Stock",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "menu",
+                "item",
+                "{item_id}",
+                "out_of_stock"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items/{item_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items",
+                "{item_id}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Status",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/counters/{order_id}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "counters",
+                "{order_id}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/items/{item_id}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menu",
+                "items",
+                "{item_id}",
+                "image"
               ]
             }
           }
@@ -1772,119 +1853,38 @@
           }
         },
         {
-          "name": "Get Vapid Public Key",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/vapid/public_key",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "vapid",
-                "public_key"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Owner Daybook Pdf",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/reports/daybook.pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "reports",
-                "daybook.pdf"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Run Digest",
+          "name": "Verify Payment",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/digest/run",
+              "raw": "{{baseUrl}}/tenants/{tenant_id}/subscription/payments/{payment_id}/verify",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
-                "outlet",
+                "tenants",
                 "{tenant_id}",
-                "digest",
-                "run"
+                "subscription",
+                "payments",
+                "{payment_id}",
+                "verify"
               ]
             }
           }
         },
         {
-          "name": "Daily Z Report",
+          "name": "Version",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/reports/z",
+              "raw": "{{baseUrl}}/version",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "reports",
-                "z"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Gst Monthly Report",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/reports/gst/monthly",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "reports",
-                "gst",
-                "monthly"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Daily Export",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/exports/daily",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "outlet",
-                "{tenant_id}",
-                "exports",
-                "daily"
+                "version"
               ]
             }
           }
@@ -1895,17 +1895,20 @@
       "name": "Orders",
       "item": [
         {
-          "name": "List all orders",
+          "name": "Accept order line",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/orders",
+              "raw": "{{baseUrl}}/orders/{table_id}/{index}/accept",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "orders"
+                "orders",
+                "{table_id}",
+                "{index}",
+                "accept"
               ]
             }
           }
@@ -1929,6 +1932,22 @@
           }
         },
         {
+          "name": "List all orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          }
+        },
+        {
           "name": "Place order",
           "request": {
             "method": "POST",
@@ -1947,20 +1966,20 @@
           }
         },
         {
-          "name": "Update order line",
+          "name": "Reject order line",
           "request": {
-            "method": "PATCH",
+            "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tables/{table_id}/order/{index}",
+              "raw": "{{baseUrl}}/orders/{table_id}/{index}/reject",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "tables",
+                "orders",
                 "{table_id}",
-                "order",
-                "{index}"
+                "{index}",
+                "reject"
               ]
             }
           }
@@ -1984,39 +2003,20 @@
           }
         },
         {
-          "name": "Accept order line",
+          "name": "Update order line",
           "request": {
-            "method": "POST",
+            "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/orders/{table_id}/{index}/accept",
+              "raw": "{{baseUrl}}/tables/{table_id}/order/{index}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "orders",
+                "tables",
                 "{table_id}",
-                "{index}",
-                "accept"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Reject order line",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/orders/{table_id}/{index}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "{table_id}",
-                "{index}",
-                "reject"
+                "order",
+                "{index}"
               ]
             }
           }

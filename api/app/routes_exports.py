@@ -10,8 +10,9 @@ from io import BytesIO, StringIO, TextIOWrapper
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
+from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -19,6 +20,8 @@ from .db.tenant import get_engine
 from .models_tenant import Invoice, Payment
 from .pdf.render import render_invoice
 from .repos_sqlalchemy import invoices_repo_sql
+from .security import ratelimit
+from .utils import ratelimits
 from .utils.responses import err
 
 router = APIRouter()
@@ -47,6 +50,7 @@ async def daily_export(
     tenant_id: str,
     start: str,
     end: str,
+    request: Request,
     limit: int = DEFAULT_LIMIT,
     cursor: int | None = None,
 ) -> Response:
@@ -63,6 +67,19 @@ async def daily_export(
 
     limit = min(limit, DEFAULT_LIMIT)
     cursor = cursor or 0
+
+    redis = request.app.state.redis
+    ip = request.client.host if request.client else "unknown"
+    policy = ratelimits.exports()
+    allowed = await ratelimit.allow(
+        redis, ip, "exports", rate_per_min=policy.rate_per_min, burst=policy.burst
+    )
+    if not allowed:
+        retry_after = await redis.ttl(f"ratelimit:{ip}:exports")
+        return JSONResponse(
+            err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
+            status_code=HTTP_429_TOO_MANY_REQUESTS,
+        )
 
     tz = os.getenv("DEFAULT_TZ", "UTC")
     tzinfo = ZoneInfo(tz)

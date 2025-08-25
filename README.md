@@ -79,9 +79,30 @@ all pull requests. To mirror these checks locally:
 ```bash
 pip install pre-commit pip-audit gitleaks
 pre-commit run --all-files
-npx pa11y-ci
+npx pa11y-ci -c pa11y-ci.json
 pip-audit
 gitleaks detect -c .gitleaks.toml
+```
+
+## Localization
+
+Translation files live in `api/app/i18n`. Verify that English, Hindi and Gujarati
+JSON files share the same keys:
+
+```bash
+python scripts/i18n_lint.py
+```
+
+The CI workflow runs this lint to prevent missing translations.
+
+## End-to-End Tests
+
+Playwright-based smoke tests cover a guest's ordering flow. Run them headlessly:
+
+```bash
+cd e2e/playwright
+npm install
+npm test
 ```
 
 ## API
@@ -295,6 +316,10 @@ records the original event and error.
 `kds.sla_breach.owner` event summarises the most delayed items and tables for
 delivery via owner alert channels (WhatsApp, email or Slack). Schedule it
 periodically:
+
+An internal endpoint `/api/outlet/{tenant}/kds/sla/breach` lets the KDS push
+breach summaries with a time window and delayed items. Owner notifications are
+queued across email, WhatsApp or Slack based on alert rules.
 
 ```bash
 POSTGRES_URL=sqlite:///dev_master.db \

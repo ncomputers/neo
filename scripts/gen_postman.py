@@ -8,11 +8,12 @@ def generate(
     openapi_path: Path = Path("openapi.json"),
     output_path: Path = Path("docs/postman_collection.json"),
 ) -> None:
-    spec = json.loads(openapi_path.read_text())
+    spec_text = openapi_path.read_text()
+    spec = json.loads(spec_text)
     collection = {
         "info": {
             "name": spec.get("info", {}).get("title", "API"),
-            "_postman_id": str(uuid.uuid4()),
+            "_postman_id": str(uuid.uuid5(uuid.NAMESPACE_URL, spec_text)),
             "schema": (
                 "https://schema.getpostman.com/json/collection/v2.1.0/"
                 "collection.json"
@@ -40,7 +41,8 @@ def generate(
             by_tag.setdefault(tag, []).append(item)
 
     collection["item"] = [
-        {"name": tag, "item": items} for tag, items in sorted(by_tag.items())
+        {"name": tag, "item": sorted(items, key=lambda x: x["name"])}
+        for tag, items in sorted(by_tag.items())
     ]
     output_path.write_text(json.dumps(collection, indent=2))
 
