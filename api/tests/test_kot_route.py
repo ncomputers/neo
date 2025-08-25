@@ -1,17 +1,19 @@
 import asyncio
 import pathlib
+import re
 import sys
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from api.app.routes_kot import router, get_session_from_path
-from api.app.models_tenant import Base, Category, MenuItem, Counter
+from api.app.middlewares.security import SecurityMiddleware
+from api.app.models_tenant import Base, Category, Counter, MenuItem
 from api.app.repos_sqlalchemy import counter_orders_repo_sql
+from api.app.routes_kot import get_session_from_path, router
 
 
 async def _setup_db():
@@ -44,6 +46,7 @@ async def _session_dep(tenant_id: str):
 
 def test_kot_route_html_fallback():
     app = FastAPI()
+    app.add_middleware(SecurityMiddleware)
     app.include_router(router)
     app.dependency_overrides[get_session_from_path] = _session_dep
     client = TestClient(app)
@@ -53,3 +56,8 @@ def test_kot_route_html_fallback():
     assert "Tea" in resp.text
     assert ">2<" in resp.text
     assert "C1" in resp.text
+    csp = resp.headers["content-security-policy"]
+    m = re.search(r"nonce-([^']+)'", csp)
+    assert m is not None
+    nonce = m.group(1)
+    assert f'nonce="{nonce}"' in resp.text
