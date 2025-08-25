@@ -32,7 +32,10 @@ Logging can be tuned via:
 - `ENABLE_GATEWAY` – enable Razorpay/Stripe checkout routes (defaults to manual UTR when off)
 - `READ_REPLICA_URL` – optional PostgreSQL DSN for read-only queries. When
   reachable, menu fetch, dashboard charts and export endpoints use this
-  replica.
+  replica. Health is checked on startup and every 30 s; if the replica
+  becomes unreachable the app falls back to the primary. The current state is
+  exposed via `app.state.replica_healthy` and Prometheus gauge
+  `db_replica_healthy`.
 
 
 Real-time streams expose additional knobs:

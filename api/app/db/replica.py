@@ -5,11 +5,13 @@ import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from api.app.obs import add_query_logger
+from api.app.routes_metrics import db_replica_healthy
 
 from . import master
 
@@ -17,6 +19,7 @@ READ_REPLICA_URL = os.getenv("READ_REPLICA_URL")
 
 _engine: AsyncEngine | None = None
 _sessionmaker: sessionmaker[AsyncSession] | None = None
+_healthy = False
 
 
 async def _ping(engine: AsyncEngine) -> None:
@@ -24,27 +27,42 @@ async def _ping(engine: AsyncEngine) -> None:
         await conn.execute(text("SELECT 1"))
 
 
-def _init_replica() -> None:
-    global _engine, _sessionmaker
-    if not READ_REPLICA_URL:
-        return
-    engine = create_async_engine(READ_REPLICA_URL, future=True)
-    add_query_logger(engine, "replica")
-    try:
-        asyncio.run(_ping(engine))
-    except Exception:
-        return
-    _engine = engine
-    _sessionmaker = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+async def check_replica(app: FastAPI) -> None:
+    """Verify replica health and update state/metrics."""
+    global _engine, _sessionmaker, _healthy
+    healthy = False
+    if READ_REPLICA_URL:
+        engine = _engine or create_async_engine(READ_REPLICA_URL, future=True)
+        try:
+            await _ping(engine)
+        except Exception:
+            await engine.dispose()
+            _engine = None
+            _sessionmaker = None
+        else:
+            if _engine is None:
+                add_query_logger(engine, "replica")
+                _engine = engine
+            _sessionmaker = sessionmaker(
+                _engine, expire_on_commit=False, class_=AsyncSession
+            )
+            healthy = True
+    _healthy = healthy
+    app.state.replica_healthy = healthy
+    db_replica_healthy.set(1 if healthy else 0)
 
 
-_init_replica()
+async def monitor(app: FastAPI) -> None:
+    """Background task for periodic replica health checks."""
+    while True:
+        await check_replica(app)
+        await asyncio.sleep(30)
 
 
 @asynccontextmanager
 async def replica_session() -> AsyncGenerator[AsyncSession, None]:
     """Yield a replica session, falling back to primary."""
-    if _sessionmaker is None:
+    if _sessionmaker is None or not _healthy:
         async with master.get_session() as session:
             yield session
         return
@@ -60,4 +78,4 @@ def read_only(func):
     return func
 
 
-__all__ = ["replica_session", "read_only"]
+__all__ = ["replica_session", "read_only", "monitor", "check_replica"]

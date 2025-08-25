@@ -1,7 +1,13 @@
+import os
 import pathlib
 import sys
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
+
+os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("DB_URL", "postgresql://localhost/db")
+os.environ.setdefault("REDIS_URL", "redis://localhost/0")
+os.environ.setdefault("SECRET_KEY", "x" * 32)
 
 from fastapi.testclient import TestClient
 import fakeredis.aioredis
@@ -24,3 +30,4 @@ def test_metrics_endpoint():
     assert "sse_clients_gauge" in body
     assert "ws_messages_total" in body
     assert "digest_sent_total" in body
+    assert "db_replica_healthy" in body

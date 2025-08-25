@@ -71,6 +71,11 @@ webhook_breaker_state = Gauge(
 )
 webhook_breaker_state.labels(destination="sample").set(0)
 
+db_replica_healthy = Gauge(
+    "db_replica_healthy", "Replica database health (1 healthy, 0 unhealthy)"
+)
+db_replica_healthy.set(0)
+
 sse_clients_gauge = Gauge(
     "sse_clients_gauge", "Current number of connected SSE clients"
 )

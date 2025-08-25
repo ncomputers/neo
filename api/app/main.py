@@ -71,6 +71,7 @@ from .auth import (
 )
 from .config.validate import validate_on_boot
 from .db import SessionLocal
+from .db import replica
 from .events import alerts_sender, ema_updater, event_bus, report_aggregator
 from .hooks import order_rejection
 from .hooks.table_map import publish_table_state
@@ -275,6 +276,13 @@ async def start_event_consumers() -> None:
     asyncio.create_task(alerts_sender(event_bus.subscribe("order.placed")))
     asyncio.create_task(ema_updater(event_bus.subscribe("payment.verified")))
     asyncio.create_task(report_aggregator(event_bus.subscribe("table.cleaned")))
+
+
+# Replica health monitoring
+@app.on_event("startup")
+async def start_replica_monitor() -> None:
+    await replica.check_replica(app)
+    asyncio.create_task(replica.monitor(app))
 
 
 # Auth Routes
