@@ -9,10 +9,18 @@ from fastapi import APIRouter
 from fastapi.testclient import TestClient
 
 sys.modules.setdefault("api.app.metrics", types.SimpleNamespace(router=APIRouter()))
+sys.modules.setdefault(
+    "api.app.routes_support", types.SimpleNamespace(router=APIRouter())
+)
 
-from api.app.main import app, SessionLocal
-from api.app.models_tenant import Category, MenuItem, Room, NotificationOutbox
-from api.app.db import engine
+from api.app.db import engine  # noqa: E402
+from api.app.main import SessionLocal, app  # noqa: E402
+from api.app.models_tenant import (  # noqa: E402
+    Category,
+    MenuItem,
+    NotificationOutbox,
+    Room,
+)
 
 client = TestClient(app)
 
@@ -29,7 +37,13 @@ def seed():
         session.add(category)
         session.flush()
         items = [
-            MenuItem(category_id=category.id, name="Tea", price=10.0, is_veg=True),
+            MenuItem(
+                category_id=category.id,
+                name="Tea",
+                price=10.0,
+                is_veg=True,
+                show_fssai=True,
+            ),
             MenuItem(category_id=category.id, name="Coffee", price=20.0, is_veg=True),
         ]
         session.add_all(items)
@@ -44,7 +58,9 @@ def test_room_menu_order_cleaning():
 
     resp = client.get("/h/R-101/menu")
     assert resp.status_code == 200
-    assert resp.json()["ok"] is True
+    data = resp.json()
+    assert data["ok"] is True
+    assert any(item["show_fssai"] for item in data["data"]["items"])
 
     resp = client.post(
         "/h/R-101/order",

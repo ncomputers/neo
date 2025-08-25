@@ -6,6 +6,8 @@ This repository contains three main services:
 - `pwa/` – React + Tailwind front end with a placeholder home page.
 - `ops/` – Docker Compose for local development.
 
+Invoices support optional FSSAI license details when provided.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.

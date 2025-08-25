@@ -5,6 +5,14 @@
     {% if invoice['gst_mode'] != 'unreg' and invoice.get('gstin') %}
       <p>GSTIN: {{ invoice['gstin'] }}{% if invoice['gst_mode'] == 'comp' %} (Composition Scheme){% endif %}</p>
     {% endif %}
+    {% if invoice.get('fssai') %}
+      <!-- Optional FSSAI license number -->
+      <p>FSSAI: {{ invoice['fssai'] }}</p>
+    {% endif %}
+    {% if invoice.get('show_fssai_logo') %}
+      <!-- Optional FSSAI logo -->
+      <p>FSSAI Logo</p>
+    {% endif %}
     <table>
       <tr>
         <th>Item</th>
