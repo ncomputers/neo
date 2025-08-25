@@ -1,4 +1,5 @@
 # main.py
+# flake8: noqa
 
 """In-memory FastAPI application for demo guest ordering and billing."""
 
@@ -11,7 +12,6 @@ import logging
 import os
 import sys
 import uuid
-from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -88,6 +88,7 @@ from .middlewares import (
     MaintenanceMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
+    realtime_guard,
 )
 from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
@@ -97,53 +98,54 @@ from .otel import init_tracing
 from .routes_jobs_status import router as jobs_status_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
-from .routes_auth_magic import router as auth_magic_router
-from .routes_backup import router as backup_router
-from .routes_counter_admin import router as counter_admin_router
-from .routes_counter_guest import router as counter_guest_router
-from .routes_dashboard import router as dashboard_router
-from .routes_dashboard_charts import router as dashboard_charts_router
-from .routes_daybook_pdf import router as daybook_pdf_router
-from .routes_digest import router as digest_router
-from .routes_exports import router as exports_router
-from .routes_gst_monthly import router as gst_monthly_router
-from .routes_guest_bill import router as guest_bill_router
-from .routes_guest_menu import router as guest_menu_router
-from .routes_guest_order import router as guest_order_router
-from .routes_hotel_guest import router as hotel_guest_router
-from .routes_hotel_housekeeping import router as hotel_hk_router
-from .routes_housekeeping import router as housekeeping_router
-from .routes_invoice_pdf import router as invoice_pdf_router
-from .routes_kot import router as kot_router
-from .routes_media import router as media_router
-from .routes_menu_import import router as menu_import_router
-from .routes_metrics import router as metrics_router
-from .routes_metrics import ws_messages_total
-from .routes_onboarding import router as onboarding_router
-from .routes_orders_batch import router as orders_batch_router
-from .routes_outbox_admin import router as outbox_admin_router
-from .routes_owner_aggregate import router as owner_aggregate_router
-from .routes_preflight import router as preflight_router
-from .routes_print import router as print_router
-from .routes_print_bridge import router as print_bridge_router
-from .routes_push import router as push_router
-from .routes_feedback import router as feedback_router
-from .routes_qrpack import router as qrpack_router
-from .routes_ready import router as ready_router
-from .routes_reports import router as reports_router
-from .routes_security import router as security_router
-from .routes_help import router as help_router
-from .routes_support import router as support_router
-from .routes_staff import router as staff_router
-from .routes_tables_map import router as tables_map_router
-from .routes_tables_sse import router as tables_sse_router
-from .routes_tables_qr_rotate import router as tables_qr_rotate_router
-from .routes_vapid import router as vapid_router
-from .routes_version import router as version_router
-from .routes_api_keys import router as api_keys_router
-from .services import notifications
-from .utils import PrepTimeTracker
-from .utils.responses import err, ok
+from .routes_api_keys import router as api_keys_router  # noqa: E402
+from .routes_auth_magic import router as auth_magic_router  # noqa: E402
+from .routes_backup import router as backup_router  # noqa: E402
+from .routes_counter_admin import router as counter_admin_router  # noqa: E402
+from .routes_counter_guest import router as counter_guest_router  # noqa: E402
+from .routes_dashboard import router as dashboard_router  # noqa: E402
+from .routes_dashboard_charts import router as dashboard_charts_router  # noqa: E402
+from .routes_daybook_pdf import router as daybook_pdf_router  # noqa: E402
+from .routes_digest import router as digest_router  # noqa: E402
+from .routes_exports import router as exports_router  # noqa: E402
+from .routes_feedback import router as feedback_router  # noqa: E402
+from .routes_gst_monthly import router as gst_monthly_router  # noqa: E402
+from .routes_guest_bill import router as guest_bill_router  # noqa: E402
+from .routes_guest_menu import router as guest_menu_router  # noqa: E402
+from .routes_guest_order import router as guest_order_router  # noqa: E402
+from .routes_help import router as help_router  # noqa: E402
+from .routes_hotel_guest import router as hotel_guest_router  # noqa: E402
+from .routes_hotel_housekeeping import router as hotel_hk_router  # noqa: E402
+from .routes_housekeeping import router as housekeeping_router  # noqa: E402
+from .routes_invoice_pdf import router as invoice_pdf_router  # noqa: E402
+from .routes_kot import router as kot_router  # noqa: E402
+from .routes_media import router as media_router  # noqa: E402
+from .routes_menu_import import router as menu_import_router  # noqa: E402
+from .routes_metrics import router as metrics_router  # noqa: E402
+from .routes_metrics import ws_messages_total  # noqa: E402
+from .routes_onboarding import router as onboarding_router  # noqa: E402
+from .routes_orders_batch import router as orders_batch_router  # noqa: E402
+from .routes_outbox_admin import router as outbox_admin_router  # noqa: E402
+from .routes_owner_aggregate import router as owner_aggregate_router  # noqa: E402
+from .routes_preflight import router as preflight_router  # noqa: E402
+from .routes_print import router as print_router  # noqa: E402
+from .routes_print_bridge import router as print_bridge_router  # noqa: E402
+from .routes_push import router as push_router  # noqa: E402
+from .routes_qrpack import router as qrpack_router  # noqa: E402
+from .routes_ready import router as ready_router  # noqa: E402
+from .routes_reports import router as reports_router  # noqa: E402
+from .routes_security import router as security_router  # noqa: E402
+from .routes_staff import router as staff_router  # noqa: E402
+from .routes_support import router as support_router  # noqa: E402
+from .routes_tables_map import router as tables_map_router  # noqa: E402
+from .routes_tables_qr import router as tables_qr_router  # noqa: E402
+from .routes_tables_sse import router as tables_sse_router  # noqa: E402
+from .routes_vapid import router as vapid_router  # noqa: E402
+from .routes_version import router as version_router  # noqa: E402
+from .services import notifications  # noqa: E402
+from .utils import PrepTimeTracker  # noqa: E402
+from .utils.responses import err, ok  # noqa: E402
+
 
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)
@@ -197,10 +199,6 @@ app.add_middleware(LoggingMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
 
-
-# Track active WebSocket connections per client IP
-ws_connections: dict[str, int] = defaultdict(int)
-WS_HEARTBEAT_INTERVAL = 15
 
 @app.middleware("http")
 async def subscription_guard_middleware(request: Request, call_next):
@@ -457,17 +455,18 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
     """Stream order status updates for ``table_code``."""
 
     ip = websocket.client.host if websocket.client else "?"
-    if ws_connections[ip] >= settings.max_conn_per_ip:
+    try:
+        realtime_guard.register(ip)
+    except HTTPException:
         await websocket.close(code=status.WS_1013_TRY_AGAIN_LATER)
         return
-    ws_connections[ip] += 1
 
     await websocket.accept()
     channel = f"rt:update:{table_code}"
     pubsub = redis_client.pubsub()
     await pubsub.subscribe(channel)
     tracker = _tracker(table_code)
-    queue: asyncio.Queue[dict | None] = asyncio.Queue(maxsize=100)
+    queue: asyncio.Queue[dict | None] = realtime_guard.queue()
 
     async def reader():
         try:
@@ -478,28 +477,21 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
                 try:
                     queue.put_nowait(data)
                 except asyncio.QueueFull:
-                    try:
-                        queue.get_nowait()
-                    except asyncio.QueueEmpty:
-                        pass
-                    await queue.put(None)
                     await websocket.close(
                         code=status.WS_1013_TRY_AGAIN_LATER, reason="RETRY"
                     )
+                    while True:
+                        try:
+                            queue.get_nowait()
+                        except asyncio.QueueEmpty:
+                            break
+                    await queue.put(None)
                     break
         finally:
             await queue.put(None)
 
-    async def heartbeat():
-        try:
-            while True:
-                await asyncio.sleep(WS_HEARTBEAT_INTERVAL)
-                await websocket.send_json({"type": "ping"})
-        except Exception:
-            pass
-
     reader_task = asyncio.create_task(reader())
-    hb_task = asyncio.create_task(heartbeat())
+    hb_task = realtime_guard.heartbeat_task(websocket)
 
     try:
         while True:
@@ -518,7 +510,7 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
         hb_task.cancel()
         await pubsub.unsubscribe(channel)
         await pubsub.close()
-        ws_connections[ip] -= 1
+        realtime_guard.unregister(ip)
 
 
 def _table_state(table_id: str) -> Dict[str, List[CartItem]]:
