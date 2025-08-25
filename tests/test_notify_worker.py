@@ -262,7 +262,7 @@ def test_webhook_circuit_breaker(monkeypatch):
         assert len(rsps.calls) == 0
 
     # expire breaker and allow half-open trial
-    notify_worker.REDIS_CLIENT.delete(f"wh:breaker:{url_hash}")
+    notify_worker.REDIS_CLIENT.delete(f"cb:{url_hash}:state")
     with Session(engine) as session:
         evt = session.get(notify_worker.NotificationOutbox, event_id)
         evt.next_attempt_at = datetime.now(timezone.utc) - timedelta(seconds=1)
