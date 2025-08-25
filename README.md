@@ -51,6 +51,10 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
+At startup the API validates that critical variables like `DB_URL` and
+`REDIS_URL` are present. Run `scripts/env_audit.py` to compare
+`.env.example` against the required list and spot missing keys.
+
 ## Quickstart
 
 The following commands install dependencies, set up the environment, apply

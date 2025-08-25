@@ -69,6 +69,7 @@ from .auth import (
     create_access_token,
     role_required,
 )
+from .config import validate_on_boot
 from .db import SessionLocal
 from .events import alerts_sender, ema_updater, event_bus, report_aggregator
 from .hooks import order_rejection
@@ -177,6 +178,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+validate_on_boot()
 settings = get_settings()
 app = FastAPI(
     title="Neo API",
