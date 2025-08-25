@@ -32,21 +32,23 @@ router = APIRouter()
 )
 async def stream_table_map(
     tenant: str,
-    request: Request,
+    request: Request = None,  # type: ignore[assignment]
     last_event_id: str | None = Header(None, convert_underscores=False),
 ) -> StreamingResponse:
     """Stream table state changes via SSE."""
 
     from .main import redis_client  # lazy import to avoid circular deps
 
-    ip = request.client.host if request.client else "?"
+    ip = request.client.host if request and request.client else "?"
     register(ip)
 
     channel = f"rt:table_map:{tenant}"
     pubsub = redis_client.pubsub()
     await pubsub.subscribe(channel)
 
-    seq = int(last_event_id) + 1 if last_event_id and last_event_id.isdigit() else 1
+    seq = (
+        int(last_event_id) + 2 if isinstance(last_event_id, str) and last_event_id.isdigit() else 2
+    )
     sse_clients_gauge.inc()
 
     async def event_gen():
@@ -99,8 +101,7 @@ async def stream_table_map(
                     for t in records
                 ]
             snapshot = json.dumps({"tables": data})
-            yield f"event: table_map\nid: {seq}\ndata: {snapshot}\n\n"
-            seq += 1
+            yield f"event: table_map\nid: {seq - 1}\ndata: {snapshot}\n\n"
 
             while True:
                 item = await queue.get()

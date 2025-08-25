@@ -41,7 +41,7 @@ WebSockets and Server‑Sent Events with 60 s timeouts.
 After these steps the API should be available at `https://example.com`.
 
 ## 5. Synthetic canary probe
-A lightweight canary places and cancels a small order to verify uptime. Install the service and timer:
+A lightweight canary places and cancels a small order, verifies KOT generation and triggers the daily digest endpoint. Install the service and timer:
 
 ```bash
 sudo cp deploy/systemd/neo-canary.service /etc/systemd/system/
