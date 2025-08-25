@@ -25,7 +25,7 @@ def test_invoice_pdf_route_html_fallback():
     m = re.search(r"nonce-([^']+)'", csp)
     assert m is not None
     nonce = m.group(1)
-    assert f'nonce="{nonce}"' in resp.text
+    assert f'<style nonce="{nonce}">' in resp.text
 
 
 def test_render_invoice_pdf_with_fake_weasyprint(monkeypatch):
@@ -72,3 +72,23 @@ def test_kot_template_nonce(monkeypatch):
     )
     assert mimetype == "text/html"
     assert b'<style nonce="abc">' in html_bytes
+
+
+def test_invoice_template_nonce(monkeypatch):
+    def fake_import(name):
+        raise ImportError
+
+    monkeypatch.setattr(pdf_render.importlib, "import_module", fake_import)
+    content, mimetype = pdf_render.render_invoice(
+        {
+            "number": "1",
+            "items": [],
+            "subtotal": 0,
+            "grand_total": 0,
+            "gst_mode": "unreg",
+        },
+        size="80mm",
+        nonce="abc",
+    )
+    assert mimetype == "text/html"
+    assert b'<style nonce="abc">' in content
