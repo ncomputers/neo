@@ -55,3 +55,9 @@ The probe runs every 10 minutes and logs success or failure.
 ## 6. Blue/green releases
 For safer deploys that avoid downtime, see the [blue/green guide](bluegreen/README.md)
 for instructions on upstream swaps, health gates and release smoke tests.
+## Grafana dashboards
+
+Prebuilt dashboards for API, background workers and tenant KPIs are located in
+[`deploy/grafana`](grafana/README.md). Import them into Grafana to get instant
+metrics visibility.
+
