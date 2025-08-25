@@ -80,7 +80,11 @@ def test_s3_presign(monkeypatch):
     monkeypatch.setenv("S3_BUCKET", "bkt")
 
     class DummyClient:
+        def __init__(self):
+            self.last = {}
+
         def generate_presigned_url(self, op, Params, ExpiresIn):
+            self.last = {"op": op, "Params": Params, "ExpiresIn": ExpiresIn}
             return f"https://example.com/{op}/{Params['Key']}"
 
         def get_object(self, Bucket, Key):
@@ -88,9 +92,13 @@ def test_s3_presign(monkeypatch):
 
     import api.app.storage.s3_backend as s3_backend
 
-    backend = s3_backend.S3Backend(client=DummyClient())
-    upload = UploadFile(filename="foo.txt", file=BytesIO(b"x"))
+    client = DummyClient()
+    backend = s3_backend.S3Backend(client=client)
+    upload = UploadFile(filename="foo.txt", file=BytesIO(b"x"), headers={"ETag": "abc"})
     url, key = asyncio.run(backend.save("t1", upload))
+    assert client.last["Params"]["CacheControl"] == "public, max-age=86400"
+    assert client.last["Params"]["Metadata"]["etag"] == "abc"
     assert url == f"https://example.com/put_object/{key}"
     get_url = backend.url(key)
+    assert client.last["Params"]["ResponseCacheControl"] == "public, max-age=86400"
     assert get_url == f"https://example.com/get_object/{key}"
