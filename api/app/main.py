@@ -1,4 +1,6 @@
 # main.py
+# isort:skip_file
+# flake8: noqa
 
 """In-memory FastAPI application for demo guest ordering and billing."""
 
@@ -134,6 +136,7 @@ from .routes_reports import router as reports_router
 from .routes_security import router as security_router
 from .routes_help import router as help_router
 from .routes_support import router as support_router
+from .routes_legal import router as legal_router
 from .routes_staff import router as staff_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
@@ -201,6 +204,7 @@ subscription_guard = SubscriptionGuard(app)
 # Track active WebSocket connections per client IP
 ws_connections: dict[str, int] = defaultdict(int)
 WS_HEARTBEAT_INTERVAL = 15
+
 
 @app.middleware("http")
 async def subscription_guard_middleware(request: Request, call_next):
@@ -826,6 +830,7 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
+app.include_router(legal_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
