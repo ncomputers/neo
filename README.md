@@ -317,6 +317,10 @@ records the original event and error.
 delivery via owner alert channels (WhatsApp, email or Slack). Schedule it
 periodically:
 
+An internal endpoint `/api/outlet/{tenant}/kds/sla/breach` lets the KDS push
+breach summaries with a time window and delayed items. Owner notifications are
+queued across email, WhatsApp or Slack based on alert rules.
+
 ```bash
 POSTGRES_URL=sqlite:///dev_master.db \
 POSTGRES_TENANT_DSN_TEMPLATE=sqlite+aiosqlite:///tenant_{tenant_id}.db \

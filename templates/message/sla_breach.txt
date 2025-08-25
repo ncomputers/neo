@@ -1,0 +1,1 @@
+SLA breach alert for the last {{ window }}: {{ items|join(', ') }}

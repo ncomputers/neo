@@ -48,6 +48,26 @@ PROVIDER_REGISTRY = {
 }
 
 
+def _format_sla_breach(channel: str, payload: dict) -> dict:
+    items = [b.get("item") for b in payload.get("breaches", [])[:3]]
+    vars = {"items": items, "window": payload.get("window", "")}
+    if channel == "email":
+        return {
+            "template": "sla_breach.html",
+            "subject": "SLA breach alert",
+            "vars": vars,
+        }
+    if channel == "whatsapp":
+        return {"template": "sla_breach.txt", "vars": vars}
+    if channel == "slack":
+        text = render_message("sla_breach.txt", vars)
+        return {"text": text}
+    return payload
+
+
+FORMATTERS = {"sla_breach": _format_sla_breach}
+
+
 try:  # Optional Redis client for replay protection
     import redis  # type: ignore
     from redis.exceptions import RedisError  # type: ignore
@@ -67,7 +87,9 @@ if redis is not None:
 
 def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
     """Send a notification according to its rule."""
-    payload = event.payload
+    event_name = getattr(event, "event", None)
+    formatter = FORMATTERS.get(event_name)
+    payload = formatter(rule.channel, event.payload) if formatter else event.payload
     target = (rule.config or {}).get("target")
     if rule.channel == "console":
         print(json.dumps(payload))
