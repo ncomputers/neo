@@ -86,7 +86,12 @@ A minimal onboarding flow captures tenant details:
 
 ### QR Pack
 
-- `GET /api/outlet/{tenant}/qrpack.pdf?size=A4&per_page=12` – generate a printable sheet of table labels with QR codes and the outlet logo.
+- `GET /api/outlet/{tenant}/qrpack.pdf?size=A4&per_page=12&show_logo=true&label_fmt=Table%20{n}` – generate a printable sheet of table labels with QR codes and the outlet logo.
+  - `size` may be `A4`, `A3` or `Letter`
+  - `per_page` accepts `6`, `12` or `24` (max `24`)
+  - `show_logo` toggles the outlet logo on each page
+  - `label_fmt` customises table labels; `{n}` is replaced with the table number
+  - generation is rate-limited to one request per minute per tenant and the result is cached for ten minutes
 
 ### Coupons
 
