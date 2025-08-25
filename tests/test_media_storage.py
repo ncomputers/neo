@@ -90,6 +90,9 @@ def test_s3_presign(monkeypatch):
         def get_object(self, Bucket, Key):
             return {"Body": BytesIO(b"data")}
 
+        def head_object(self, Bucket, Key):
+            return {"Metadata": {"etag": "abc"}, "ETag": '"abc"'}
+
     import api.app.storage.s3_backend as s3_backend
 
     client = DummyClient()
@@ -99,6 +102,7 @@ def test_s3_presign(monkeypatch):
     assert client.last["Params"]["CacheControl"] == "public, max-age=86400"
     assert client.last["Params"]["Metadata"]["etag"] == "abc"
     assert url == f"https://example.com/put_object/{key}"
-    get_url = backend.url(key)
+    get_url, etag = backend.url(key)
     assert client.last["Params"]["ResponseCacheControl"] == "public, max-age=86400"
     assert get_url == f"https://example.com/get_object/{key}"
+    assert etag == "abc"
