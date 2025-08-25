@@ -32,6 +32,7 @@ Real-time streams expose additional knobs:
 Tenants may also set a future `maintenance_until` timestamp in the `tenants`
 table to temporarily block their own traffic. Requests made before the
 timestamp receive the same 503 response with a `Retry-After` header.
+Administrators can schedule this window via `POST /api/outlet/{tenant}/maintenance/schedule`.
 
 Request bodies and query parameters are scrubbed of sensitive keys such as
 `pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.
@@ -72,12 +73,13 @@ still benefit from the new indexes.
 
 ## Continuous Integration
 
-GitHub Actions runs the test suite along with `pre-commit`, `pip-audit`, and `gitleaks` for
+GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-audit`, and `gitleaks` for
 all pull requests. To mirror these checks locally:
 
 ```bash
 pip install pre-commit pip-audit gitleaks
 pre-commit run --all-files
+npx pa11y-ci
 pip-audit
 gitleaks detect -c .gitleaks.toml
 ```
@@ -289,7 +291,10 @@ records the original event and error.
 
 `scripts/kds_sla_watch.py` scans a tenant's queue and enqueues
 `kds.sla_breach` events when an item remains `in_progress` longer than the
-`kds_sla_secs` setting. Schedule it periodically:
+`kds_sla_secs` setting. When breaches occur an additional
+`kds.sla_breach.owner` event summarises the most delayed items and tables for
+delivery via owner alert channels (WhatsApp, email or Slack). Schedule it
+periodically:
 
 ```bash
 POSTGRES_URL=sqlite:///dev_master.db \

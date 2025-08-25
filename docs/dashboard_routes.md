@@ -11,3 +11,6 @@ fall back to live aggregation when a day's rollup is missing. The
 `scripts/rollup_daily.py` job recomputes yesterday and today's rollups hourly.
 It uses a Redis lock (`rollup:{tenant}:{date}`) to avoid double runs and emits
 Prometheus counters `rollup_runs_total` and `rollup_failures_total`.
+`scripts/rollup_daily.py` job recomputes yesterday and today's rollups hourly,
+uses a Redis lock (`rollup:{tenant}:{date}`) to avoid double execution and
+exposes `rollup_runs_total`/`rollup_failures_total` Prometheus counters.

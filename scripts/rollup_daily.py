@@ -15,7 +15,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 try:  # Optional Redis client
@@ -34,7 +34,22 @@ sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "api"))
 
 from app.db.tenant import get_engine as get_tenant_engine  # type: ignore  # noqa: E402
-from app.models_tenant import SalesRollup, Order, Invoice, Payment  # type: ignore  # noqa: E402
+from app.models_tenant import (  # type: ignore  # noqa: E402
+    Invoice,
+    Order,
+    Payment,
+    SalesRollup,
+)
+
+from api.app.routes_metrics import (  # type: ignore  # noqa: E402
+    rollup_failures_total,
+    rollup_runs_total,
+)
+
+try:  # Optional Redis client for idempotency lock
+    import redis.asyncio as redis  # type: ignore
+except Exception:  # pragma: no cover - redis not installed
+    redis = None  # type: ignore
 
 
 registry = CollectorRegistry() if CollectorRegistry else None
@@ -127,6 +142,7 @@ async def main(tenant: str) -> None:
         raise RuntimeError("redis client not available")
     redis_client = redis.from_url(redis_url)
 
+
     try:
         async with sessionmaker() as session:
             for day in days:
@@ -155,6 +171,7 @@ async def main(tenant: str) -> None:
                 push_to_gateway(gateway, job="rollup_daily", registry=registry)
             except Exception:  # pragma: no cover - best effort
                 pass
+
 
 
 def _cli() -> None:

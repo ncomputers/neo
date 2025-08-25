@@ -5,20 +5,13 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Response
-from prometheus_client import (
-    Counter,
-    Gauge,
-    CONTENT_TYPE_LATEST,
-    generate_latest,
-)
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
 
 # Counters
 http_requests_total = Counter(
     "http_requests_total", "Total HTTP requests", ["path", "method", "status"]
 )
-orders_created_total = Counter(
-    "orders_created_total", "Total orders created"
-)
+orders_created_total = Counter("orders_created_total", "Total orders created")
 orders_created_total.inc(0)
 
 invoices_generated_total = Counter(
@@ -46,9 +39,7 @@ room_locked_denied_total = Counter(
 )
 room_locked_denied_total.inc(0)
 
-http_errors_total = Counter(
-    "http_errors_total", "Total HTTP errors", ["status"]
-)
+http_errors_total = Counter("http_errors_total", "Total HTTP errors", ["status"])
 http_errors_total.labels(status="0").inc(0)
 
 notifications_outbox_delivered_total = Counter(
@@ -68,15 +59,17 @@ sse_clients_gauge = Gauge(
 )
 sse_clients_gauge.set(0)
 
-ws_messages_total = Counter(
-    "ws_messages_total", "Total WebSocket messages sent"
-)
+ws_messages_total = Counter("ws_messages_total", "Total WebSocket messages sent")
 ws_messages_total.inc(0)
 
-digest_sent_total = Counter(
-    "digest_sent_total", "Total digests sent"
-)
+digest_sent_total = Counter("digest_sent_total", "Total digests sent")
 digest_sent_total.inc(0)
+
+rollup_runs_total = Counter("rollup_runs_total", "Total rollup runs")
+rollup_runs_total.inc(0)
+
+rollup_failures_total = Counter("rollup_failures_total", "Total rollup failures")
+rollup_failures_total.inc(0)
 
 router = APIRouter()
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import sys
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
@@ -12,8 +13,11 @@ from fastapi.testclient import TestClient
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from api.app import main as app_main  # noqa: E402
+from api.app.db import SessionLocal  # noqa: E402
 from api.app.main import app  # noqa: E402
 from api.app.middlewares import maintenance as maint_module  # noqa: E402
+from api.app.models_master import Tenant  # noqa: E402
+from api.app.models_tenant import AuditTenant  # noqa: E402
 
 
 @pytest.fixture
@@ -80,3 +84,32 @@ def test_tenant_maintenance(client, monkeypatch):
         },
     )
     assert resp.status_code == 200
+
+
+def test_schedule_maintenance(client):
+    token = _admin_token(client)
+    tenant_id = uuid.uuid4()
+    with SessionLocal() as session:
+        session.add(Tenant(id=tenant_id, name="Demo", status="active"))
+        session.commit()
+
+    until = datetime.utcnow() + timedelta(minutes=30)
+    resp = client.post(
+        f"/api/outlet/{tenant_id}/maintenance/schedule",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"until": until.isoformat(), "note": "upgrade"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()["data"]["maintenance_until"]  # type: ignore[index]
+    returned = datetime.fromisoformat(data)
+    assert returned == until.replace(tzinfo=None)
+
+    with SessionLocal() as session:
+        tenant = session.get(Tenant, tenant_id)
+        assert tenant is not None and tenant.maintenance_until == until.replace(
+            tzinfo=None
+        )
+        row = (
+            session.query(AuditTenant).filter_by(action="schedule_maintenance").first()
+        )
+        assert row is not None
