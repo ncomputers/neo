@@ -418,6 +418,16 @@ python scripts/retention_sweep.py --tenant TENANT_ID --days 30
 The sweep deletes `audit_tenant` rows, delivered `notifications_outbox`
 entries and `access_logs` records older than the specified retention window.
 
+To anonymize stale guest PII for a tenant, use:
+
+```bash
+python scripts/anonymize_pii.py --tenant TENANT_ID --days 30
+```
+
+This helper nulls the `name`, `phone` and `email` columns in `invoices` and
+`customers` beyond the retention window and records a summary in
+`audit_tenant`.
+
 
 ## Audit Logging
 
