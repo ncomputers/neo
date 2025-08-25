@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db.master import get_session
@@ -25,6 +26,7 @@ class CheckoutStart(BaseModel):
 
 
 class WebhookPayload(BaseModel):
+    event_id: str | None = None
     order_id: str
     invoice_id: int
     amount: float
@@ -88,6 +90,12 @@ async def checkout_webhook(
     expected = hmac.new(secret.encode(), body.encode(), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected, payload.signature):
         raise HTTPException(status_code=400, detail="invalid signature")
+    if payload.event_id:
+        existing = await session.scalar(
+            select(Payment.id).where(Payment.utr == payload.event_id)
+        )
+        if existing:
+            return ok({"duplicate": True})
     invoice = await session.get(Invoice, payload.invoice_id)
     if not invoice:
         raise HTTPException(status_code=404)
@@ -98,7 +106,7 @@ async def checkout_webhook(
             invoice_id=payload.invoice_id,
             mode="gateway",
             amount=payload.amount,
-            utr=payload.order_id,
+            utr=payload.event_id or payload.order_id,
             verified=True,
         )
         session.add(payment)
@@ -113,7 +121,7 @@ async def checkout_webhook(
             invoice_id=payload.invoice_id,
             mode="gateway_refund",
             amount=-payload.amount,
-            utr=payload.order_id,
+            utr=payload.event_id or payload.order_id,
             verified=True,
         )
         session.add(payment)
