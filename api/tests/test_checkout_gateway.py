@@ -1,4 +1,6 @@
 import builtins
+import hashlib
+import hmac
 import os
 import pathlib
 import sys
@@ -40,11 +42,12 @@ def client():
     app.dependency_overrides.clear()
 
 
-def _master_session(enabled: bool):
+def _master_session(provider: str | None = "razorpay", sandbox: bool = False):
     @asynccontextmanager
     async def _session():
         class _Tenant:
-            gateway_provider = "razorpay" if enabled else "none"
+            gateway_provider = provider or "none"
+            gateway_sandbox = sandbox
 
         class _Session:
             async def get(self, model, pk):
@@ -57,7 +60,7 @@ def _master_session(enabled: bool):
 
 def test_start_disabled_env(client, monkeypatch):
     monkeypatch.delenv("ENABLE_GATEWAY", raising=False)
-    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(True))
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session())
     resp = client.post(
         "/api/outlet/demo/checkout/start", json={"invoice_id": 1, "amount": 10}
     )
@@ -66,7 +69,9 @@ def test_start_disabled_env(client, monkeypatch):
 
 def test_start_disabled_tenant(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
-    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(False))
+    monkeypatch.setattr(
+        routes_checkout_gateway, "get_session", _master_session(provider=None)
+    )
     resp = client.post(
         "/api/outlet/demo/checkout/start", json={"invoice_id": 1, "amount": 10}
     )
@@ -75,7 +80,7 @@ def test_start_disabled_tenant(client, monkeypatch):
 
 def test_start_success(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
-    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(True))
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session())
     resp = client.post(
         "/api/outlet/demo/checkout/start", json={"invoice_id": 1, "amount": 10}
     )
@@ -83,14 +88,26 @@ def test_start_success(client, monkeypatch):
     assert resp.json()["data"]["pay_url"]
 
 
-def test_webhook_attaches_payment(client, monkeypatch):
+@pytest.mark.parametrize(
+    "provider,secret_env",
+    [("razorpay", "RAZORPAY_SECRET_TEST"), ("stripe", "STRIPE_SECRET_TEST")],
+)
+def test_webhook_signature_validation(provider, secret_env, client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
-    monkeypatch.setattr(routes_checkout_gateway, "get_session", _master_session(True))
+    monkeypatch.setenv("GATEWAY_SANDBOX", "true")
+    monkeypatch.setenv(secret_env, "secret")
+    monkeypatch.setattr(
+        routes_checkout_gateway, "get_session", _master_session(provider, True)
+    )
 
     payments: list = []
+    invoice = types.SimpleNamespace(settled=False, settled_at=None)
 
     async def _tenant_session(tenant: str):
         class _Session:
+            async def get(self, model, pk):
+                return invoice
+
             def add(self, obj):
                 payments.append(obj)
 
@@ -103,9 +120,73 @@ def test_webhook_attaches_payment(client, monkeypatch):
         routes_checkout_gateway.get_tenant_session
     ] = _tenant_session
 
+    amount = 10.0
+    body = f"o1|1|{amount}"
+    sig = hmac.new(b"secret", body.encode(), hashlib.sha256).hexdigest()
+
     resp = client.post(
         "/api/outlet/demo/checkout/webhook",
-        json={"order_id": "o1", "invoice_id": 1, "amount": 10, "signature": "s"},
+        json={"order_id": "o1", "invoice_id": 1, "amount": 10, "signature": sig},
     )
     assert resp.status_code == 200
     assert payments and payments[0].invoice_id == 1
+
+    resp_bad = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={"order_id": "o1", "invoice_id": 1, "amount": 10, "signature": "bad"},
+    )
+    assert resp_bad.status_code == 400
+
+
+def test_e2e_start_webhook_flow(client, monkeypatch):
+    monkeypatch.setenv("ENABLE_GATEWAY", "true")
+    monkeypatch.setenv("GATEWAY_SANDBOX", "true")
+    monkeypatch.setenv("RAZORPAY_SECRET_TEST", "secret")
+    monkeypatch.setattr(
+        routes_checkout_gateway, "get_session", _master_session("razorpay", True)
+    )
+
+    payments: list = []
+    invoice = types.SimpleNamespace(settled=False, settled_at=None)
+
+    async def _tenant_session(tenant: str):
+        class _Session:
+            async def get(self, model, pk):
+                return invoice
+
+            def add(self, obj):
+                payments.append(obj)
+
+            async def commit(self):
+                pass
+
+        return _Session()
+
+    app.dependency_overrides[
+        routes_checkout_gateway.get_tenant_session
+    ] = _tenant_session
+
+    # start checkout
+    resp = client.post(
+        "/api/outlet/demo/checkout/start", json={"invoice_id": 1, "amount": 10}
+    )
+    order_id = resp.json()["data"]["order_id"]
+
+    sig = hmac.new(b"secret", f"{order_id}|1|10.0".encode(), hashlib.sha256).hexdigest()
+
+    # first webhook
+    resp1 = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={"order_id": order_id, "invoice_id": 1, "amount": 10, "signature": sig},
+    )
+    assert resp1.status_code == 200
+    assert invoice.settled
+    assert len(payments) == 1
+
+    # duplicate webhook should be idempotent
+    resp2 = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={"order_id": order_id, "invoice_id": 1, "amount": 10, "signature": sig},
+    )
+    assert resp2.status_code == 200
+    assert len(payments) == 1
