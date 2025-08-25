@@ -2490,6 +2490,48 @@
         }
       }
     },
+    "/api/outlet/{tenant}/tables/{code}/qr/rotate": {
+      "post": {
+        "summary": "Rotate Table Qr",
+        "description": "Rotate the QR token for a table and return a new deeplink.",
+        "operationId": "rotate_table_qr_api_outlet__tenant__tables__code__qr_rotate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          },
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/kot/{order_id}.pdf": {
       "get": {
         "summary": "Kot Pdf",
