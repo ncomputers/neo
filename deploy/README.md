@@ -1,0 +1,41 @@
+# Deployment
+
+Example steps to run Neo behind systemd and nginx on a Linux host.
+
+## 1. Install dependencies
+- Python 3.12+
+- `uvicorn` and project requirements: `pip install -r api/requirements.txt`
+- nginx and systemd (usually preinstalled on most distributions)
+
+## 2. Set up the application
+```bash
+# place the code somewhere, e.g.
+sudo mkdir -p /srv/neo
+sudo chown $USER /srv/neo
+cp -r . /srv/neo
+```
+Create an environment file with the required variables:
+```bash
+sudo mkdir -p /etc/neo
+sudo nano /etc/neo/neo-api.env
+```
+
+## 3. systemd service
+```bash
+sudo cp deploy/systemd/neo-api.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now neo-api
+```
+This starts Uvicorn on `127.0.0.1:8000` and restarts it automatically on failure.
+
+## 4. nginx reverse proxy
+```bash
+sudo cp deploy/nginx/neo.conf /etc/nginx/sites-available/neo.conf
+sudo ln -s /etc/nginx/sites-available/neo.conf /etc/nginx/sites-enabled/
+# obtain TLS certificates via certbot or other means
+sudo nginx -t && sudo systemctl reload nginx
+```
+The configuration enables TLS, gzip compression and proper headers for
+WebSockets and Server‑Sent Events with 60 s timeouts.
+
+After these steps the API should be available at `https://example.com`.
