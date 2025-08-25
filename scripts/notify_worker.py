@@ -15,6 +15,7 @@ import os
 import random
 import sys
 import time
+import hashlib
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -54,9 +55,14 @@ PROVIDER_REGISTRY = {
 
 BACKOFF = [1, 5, 30, 120, 600]  # seconds: 1s, 5s, 30s, 2m, 10m
 
-BREAKER_THRESHOLD = int(os.getenv("WEBHOOK_BREAKER_THRESHOLD", "5"))
-BREAKER_OPEN_SECS = int(os.getenv("WEBHOOK_BREAKER_OPEN_SECS", "300"))
+BREAKER_THRESHOLD = int(os.getenv("WEBHOOK_BREAKER_THRESHOLD", "8"))
+BREAKER_OPEN_SECS = int(os.getenv("WEBHOOK_BREAKER_OPEN_SECS", "600"))
 BREAKERS: dict[str, dict] = {}
+
+
+def _url_hash(url: str) -> str:
+    """Stable hash for metric labels and Redis keys."""
+    return hashlib.sha256(url.encode()).hexdigest()[:8]
 
 
 def _format_sla_breach(channel: str, payload: dict) -> dict:
@@ -94,6 +100,68 @@ if redis is not None:
             REDIS_CLIENT = redis.from_url(redis_url)
         except Exception:  # pragma: no cover - connection issues
             REDIS_CLIENT = None
+
+
+def _get_breaker_state(url_hash: str) -> str | None:
+    if REDIS_CLIENT is not None:
+        state = REDIS_CLIENT.get(f"wh:breaker:{url_hash}")
+        return state.decode() if state else None
+    breaker = BREAKERS.get(url_hash)
+    return breaker.get("state") if breaker else None
+
+
+def _set_breaker_state(url_hash: str, state: str, ttl: int | None = None) -> None:
+    if REDIS_CLIENT is not None:
+        if ttl:
+            REDIS_CLIENT.set(f"wh:breaker:{url_hash}", state, ex=ttl)
+        else:
+            REDIS_CLIENT.set(f"wh:breaker:{url_hash}", state)
+    else:
+        br = BREAKERS.setdefault(url_hash, {"failures": 0, "state": "closed", "opened_until": None})
+        br["state"] = state
+        br["opened_until"] = (
+            datetime.now(timezone.utc) + timedelta(seconds=ttl) if ttl else None
+        )
+
+
+def _breaker_ttl(url_hash: str) -> int:
+    if REDIS_CLIENT is not None:
+        return int(REDIS_CLIENT.ttl(f"wh:breaker:{url_hash}"))
+    br = BREAKERS.get(url_hash)
+    if br and br.get("opened_until"):
+        return int((br["opened_until"] - datetime.now(timezone.utc)).total_seconds())
+    return -1
+
+
+def _incr_failures(url_hash: str) -> int:
+    if REDIS_CLIENT is not None:
+        return int(REDIS_CLIENT.incr(f"wh:fail:{url_hash}"))
+    br = BREAKERS.setdefault(url_hash, {"failures": 0, "state": "closed", "opened_until": None})
+    br["failures"] += 1
+    return br["failures"]
+
+
+def _get_failures(url_hash: str) -> int:
+    if REDIS_CLIENT is not None:
+        return int(REDIS_CLIENT.get(f"wh:fail:{url_hash}") or 0)
+    br = BREAKERS.get(url_hash)
+    return br.get("failures", 0) if br else 0
+
+
+def _reset_failures(url_hash: str) -> None:
+    if REDIS_CLIENT is not None:
+        REDIS_CLIENT.delete(f"wh:fail:{url_hash}")
+    else:
+        br = BREAKERS.get(url_hash)
+        if br:
+            br["failures"] = 0
+
+
+def _clear_breaker(url_hash: str) -> None:
+    if REDIS_CLIENT is not None:
+        REDIS_CLIENT.delete(f"wh:breaker:{url_hash}")
+    else:
+        BREAKERS.pop(url_hash, None)
 
 
 def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
@@ -182,32 +250,40 @@ def process_once(engine) -> None:
                 continue
 
             url = (rule.config or {}).get("url") if rule.channel == "webhook" else None
-            if url:
-                breaker = BREAKERS.get(url)
-                if breaker and breaker.get("state") == "open" and breaker.get("opened_until"):
-                    if breaker["opened_until"] > now:
-                        event.next_attempt_at = breaker["opened_until"]
-                        session.add(event)
-                        continue
-                    breaker["state"] = "half-open"
-
+            url_hash = _url_hash(url) if url else None
+            if url_hash:
+                state = _get_breaker_state(url_hash)
+                if state == "open":
+                    ttl = _breaker_ttl(url_hash)
+                    if ttl > 0:
+                        event.next_attempt_at = now + timedelta(seconds=ttl)
+                    else:
+                        event.next_attempt_at = now + timedelta(seconds=BREAKER_OPEN_SECS)
+                    session.add(event)
+                    webhook_breaker_state.labels(url_hash=url_hash).set(1)
+                    continue
+                failures = _get_failures(url_hash)
+                if state is None and failures >= BREAKER_THRESHOLD:
+                    _set_breaker_state(url_hash, "half")
+                    webhook_breaker_state.labels(url_hash=url_hash).set(2)
+                elif state == "half":
+                    webhook_breaker_state.labels(url_hash=url_hash).set(2)
+                else:
+                    webhook_breaker_state.labels(url_hash=url_hash).set(0)
                 webhook_attempts_total.labels(destination=url).inc()
 
             try:
                 _deliver(rule, event)
             except Exception as exc:
-                if url:
+                if url_hash:
                     webhook_failures_total.labels(destination=url).inc()
-                    breaker = BREAKERS.setdefault(
-                        url, {"failures": 0, "state": "closed", "opened_until": None}
-                    )
-                    breaker["failures"] += 1
-                    if breaker["failures"] >= BREAKER_THRESHOLD:
-                        breaker["state"] = "open"
-                        breaker["opened_until"] = datetime.now(timezone.utc) + timedelta(
-                            seconds=BREAKER_OPEN_SECS
-                        )
-                        webhook_breaker_state.labels(destination=url).set(1)
+                    failures = _incr_failures(url_hash)
+                    state = _get_breaker_state(url_hash)
+                    if state == "half" or failures >= BREAKER_THRESHOLD:
+                        _set_breaker_state(url_hash, "open", BREAKER_OPEN_SECS)
+                        webhook_breaker_state.labels(url_hash=url_hash).set(1)
+                    else:
+                        webhook_breaker_state.labels(url_hash=url_hash).set(0)
                 if str(exc) == "EGRESS_BLOCKED":
                     session.add(
                         NotificationDLQ(
@@ -236,13 +312,10 @@ def process_once(engine) -> None:
                     event.next_attempt_at = _next_attempt(event.attempts)
                     session.add(event)
                 continue
-            if url:
-                breaker = BREAKERS.get(url)
-                if breaker:
-                    breaker["failures"] = 0
-                    breaker["state"] = "closed"
-                    breaker["opened_until"] = None
-                    webhook_breaker_state.labels(destination=url).set(0)
+            if url_hash:
+                _reset_failures(url_hash)
+                _clear_breaker(url_hash)
+                webhook_breaker_state.labels(url_hash=url_hash).set(0)
             event.status = "delivered"
             notifications_outbox_delivered_total.inc()
             session.add(event)

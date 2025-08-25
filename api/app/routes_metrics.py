@@ -66,10 +66,10 @@ webhook_failures_total.labels(destination="sample").inc(0)
 
 webhook_breaker_state = Gauge(
     "webhook_breaker_state",
-    "Circuit breaker state for webhook destinations (0 closed, 1 open)",
-    ["destination"],
+    "Circuit breaker state for webhook destinations (0 closed, 1 open, 2 half-open)",
+    ["url_hash"],
 )
-webhook_breaker_state.labels(destination="sample").set(0)
+webhook_breaker_state.labels(url_hash="sample").set(0)
 
 db_replica_healthy = Gauge(
     "db_replica_healthy", "Replica database health (1 healthy, 0 unhealthy)"
