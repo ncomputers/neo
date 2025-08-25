@@ -109,6 +109,7 @@ from .routes_push import router as push_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
+from .routes_security import router as security_router
 from .routes_staff import router as staff_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
@@ -586,7 +587,7 @@ async def reject_order(table_id: str, index: int, request: Request) -> dict[str,
     await _broadcast(table_id, {"status": "rejected", "index": index})
 
     ip = request.client.host if request.client else "unknown"
-    await order_rejection.on_rejected(ip, request.app.state.redis)
+    await order_rejection.on_rejected("demo", ip, request.app.state.redis)
 
     return {"status": "rejected"}
 
@@ -701,6 +702,7 @@ app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
 app.include_router(alerts_router)
+app.include_router(security_router)
 app.include_router(outbox_admin_router)
 app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)

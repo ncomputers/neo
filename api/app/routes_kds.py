@@ -133,7 +133,7 @@ async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
     """Mark an order as rejected."""
     result = await _transition_order(tenant_id, order_id, OrderStatus.REJECTED)
     ip = request.client.host if request.client else "unknown"
-    await order_rejection.on_rejected(ip, request.app.state.redis)
+    await order_rejection.on_rejected(tenant_id, ip, request.app.state.redis)
     return result
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept")
 @audit("accept_item")
@@ -168,5 +168,5 @@ async def reject_item(tenant_id: str, order_item_id: int, request: Request) -> d
     """Mark an order item as rejected."""
     result = await _transition_item(tenant_id, order_item_id, OrderStatus.REJECTED)
     ip = request.client.host if request.client else "unknown"
-    await order_rejection.on_rejected(ip, request.app.state.redis)
+    await order_rejection.on_rejected(tenant_id, ip, request.app.state.redis)
     return result
