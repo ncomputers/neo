@@ -2,16 +2,24 @@ from __future__ import annotations
 
 """Staff login and protected routes using PIN-based auth."""
 
-from datetime import datetime
+from datetime import datetime, time, timezone
+from io import StringIO
+import csv
+import os
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from argon2 import PasswordHasher
-from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from .audit import log_event
 from .db import SessionLocal
-from .models_tenant import Staff
+from zoneinfo import ZoneInfo
+from sqlalchemy import select
+
+from .models_tenant import Staff, AuditTenant
 from .staff_auth import StaffToken, create_staff_token, role_required
 from .utils.audit import audit
 from .utils.responses import err, ok
@@ -85,6 +93,7 @@ async def login(tenant: str, payload: LoginPayload, request: Request) -> dict:
         warn = 80 <= age_days < 90
 
     token = create_staff_token(staff.id, staff.role)
+    log_event(str(staff.id), "login", tenant)
     return ok(
         StaffToken(
             access_token=token,
@@ -132,6 +141,95 @@ async def me(staff=Depends(role_required("waiter", "kitchen", "cleaner"))):
     """Return authenticated staff details."""
 
     return ok({"staff_id": staff.staff_id, "role": staff.role})
+
+
+@router.get("/shifts")
+async def staff_shifts(tenant: str, date: str, format: str = "json"):
+    """Return staff activity summary for ``date``.
+
+    Aggregates logins, KOT accepted, tables cleaned, voids and total time
+    logged in for each staff member. Supports CSV via ``format=csv``.
+    """
+
+    tz = os.getenv("DEFAULT_TZ", "UTC")
+    day = datetime.strptime(date, "%Y-%m-%d").date()
+    tzinfo = ZoneInfo(tz)
+    start = datetime.combine(day, time.min, tzinfo).astimezone(timezone.utc)
+    end = datetime.combine(day, time.max, tzinfo).astimezone(timezone.utc)
+
+    with SessionLocal() as session:
+        rows = session.execute(
+            select(AuditTenant.actor, AuditTenant.action, AuditTenant.at).where(
+                AuditTenant.at >= start, AuditTenant.at <= end
+            )
+        ).all()
+
+    stats: dict[str, dict[str, Any]] = {}
+    for actor, action, at in rows:
+        staff_id = actor.split(":")[0]
+        if not staff_id.isdigit():
+            continue
+        entry = stats.setdefault(
+            staff_id,
+            {
+                "logins": 0,
+                "kot_accepted": 0,
+                "tables_cleaned": 0,
+                "voids": 0,
+                "_logins": [],
+            },
+        )
+        if action == "login":
+            entry["logins"] += 1
+            entry["_logins"].append(at)
+        elif action == "kot_accept":
+            entry["kot_accepted"] += 1
+        elif action == "mark_table_ready":
+            entry["tables_cleaned"] += 1
+        elif action == "void":
+            entry["voids"] += 1
+
+    result: list[dict[str, Any]] = []
+    for sid, entry in stats.items():
+        times = sorted(entry.pop("_logins"))
+        total = (
+            (times[-1] - times[0]).total_seconds()
+            if len(times) >= 2
+            else 0.0
+        )
+        entry["total_time"] = total
+        entry["staff_id"] = int(sid)
+        result.append(entry)
+
+    if format == "csv":
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "staff_id",
+                "logins",
+                "kot_accepted",
+                "tables_cleaned",
+                "voids",
+                "total_time",
+            ]
+        )
+        for row in result:
+            writer.writerow(
+                [
+                    row["staff_id"],
+                    row["logins"],
+                    row["kot_accepted"],
+                    row["tables_cleaned"],
+                    row["voids"],
+                    row["total_time"],
+                ]
+            )
+        response = Response(content=output.getvalue(), media_type="text/csv")
+        response.headers["Content-Disposition"] = "attachment; filename=staff-shifts.csv"
+        return response
+
+    return ok(result)
 
 
 __all__ = ["router"]

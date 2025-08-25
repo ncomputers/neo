@@ -27,7 +27,7 @@ sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "api"))
 
 from app.db.tenant import get_engine as get_tenant_engine  # type: ignore
-from app.models_tenant import Order, OrderItem, Invoice, Payment  # type: ignore
+from app.models_tenant import AuditTenant, Order, OrderItem, Invoice, Payment  # type: ignore
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from zoneinfo import ZoneInfo
@@ -73,6 +73,7 @@ async def build_digest_line(tenant: str, day: date) -> str:
             avg_ticket = float(sales / orders) if orders else 0.0
             top_items = await _top_items(session, start, end)
             payments = await _payment_split(session, start, end)
+            logins, cleaned = await _staff_activity(session, start, end)
     finally:
         await engine.dispose()
 
@@ -82,7 +83,8 @@ async def build_digest_line(tenant: str, day: date) -> str:
     )
     return (
         f"{day.isoformat()} | orders={orders} | sales={sales:.2f} | "
-        f"avg_ticket={avg_ticket:.2f} | top_items={top_str} | payments={pay_str}"
+        f"avg_ticket={avg_ticket:.2f} | top_items={top_str} | payments={pay_str} | "
+        f"staff_logins={logins} | tables_cleaned={cleaned}"
     )
 
 
@@ -127,6 +129,26 @@ async def _payment_split(
         .group_by(Payment.mode)
     )
     return {mode: float(amount or 0) for mode, amount in result.all()}
+
+
+async def _staff_activity(
+    session: AsyncSession, start: datetime, end: datetime
+) -> tuple[int, int]:
+    logins = await session.scalar(
+        select(func.count()).where(
+            AuditTenant.at >= start,
+            AuditTenant.at <= end,
+            AuditTenant.action == "login",
+        )
+    )
+    cleaned = await session.scalar(
+        select(func.count()).where(
+            AuditTenant.at >= start,
+            AuditTenant.at <= end,
+            AuditTenant.action == "mark_table_ready",
+        )
+    )
+    return int(logins or 0), int(cleaned or 0)
 
 
 async def main(tenant: str, date_str: str | None = None, providers: Iterable[str] | None = None) -> str:
