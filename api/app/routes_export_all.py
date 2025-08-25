@@ -14,7 +14,8 @@ from sqlalchemy import select, case
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from .audit import log_event
-from .auth import User, role_required
+from .auth import User
+from .routes_auth_2fa import stepup_guard
 from .models_tenant import (
     Category,
     Customer,
@@ -80,7 +81,7 @@ async def _export_table(
 async def export_all(
     tenant_id: str,
     request: Request,
-    user: User = Depends(role_required("super_admin", "outlet_admin")),
+    user: User = Depends(stepup_guard("super_admin", "outlet_admin")),
     limit: int = DEFAULT_LIMIT,
     cursor: int | None = None,
 ) -> StreamingResponse:
