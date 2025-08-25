@@ -23,10 +23,11 @@ class LocalBackend:
         path.parent.mkdir(parents=True, exist_ok=True)
         contents = await file.read()
         path.write_bytes(contents)
-        return self.url(key), key
+        url, _ = self.url(key)
+        return url, key
 
     def read(self, key: str) -> bytes:
         return (self.base_dir / key).read_bytes()
 
-    def url(self, key: str) -> str:
-        return f"/media/{key}"
+    def url(self, key: str) -> Tuple[str, str | None]:
+        return f"/media/{key}", None

@@ -21,8 +21,8 @@ class StorageBackend(Protocol):
     def read(self, key: str) -> bytes:
         """Return raw bytes for ``key``."""
 
-    def url(self, key: str) -> str:
-        """Return a public URL for ``key``."""
+    def url(self, key: str) -> Tuple[str, str | None]:
+        """Return a public URL and optional ETag for ``key``."""
 
 
 backend = os.getenv("STORAGE_BACKEND", "local").lower()

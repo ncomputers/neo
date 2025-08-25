@@ -48,8 +48,10 @@ class S3Backend:
         obj = self.client.get_object(Bucket=self.bucket, Key=key)
         return obj["Body"].read()
 
-    def url(self, key: str) -> str:
-        return self.client.generate_presigned_url(
+    def url(self, key: str) -> Tuple[str, str | None]:
+        obj = self.client.head_object(Bucket=self.bucket, Key=key)
+        etag = obj.get("Metadata", {}).get("etag") or obj.get("ETag", "").strip('"')
+        url = self.client.generate_presigned_url(
             "get_object",
             Params={
                 "Bucket": self.bucket,
@@ -58,3 +60,4 @@ class S3Backend:
             },
             ExpiresIn=3600,
         )
+        return url, etag
