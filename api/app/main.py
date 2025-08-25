@@ -1,4 +1,5 @@
 # main.py
+# flake8: noqa
 
 """In-memory FastAPI application for demo guest ordering and billing."""
 
@@ -97,6 +98,7 @@ from .otel import init_tracing
 from .routes_admin_jobs import router as admin_jobs_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
+from .routes_api_keys import router as api_keys_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
 from .routes_counter_admin import router as counter_admin_router
@@ -106,10 +108,12 @@ from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_daybook_pdf import router as daybook_pdf_router
 from .routes_digest import router as digest_router
 from .routes_exports import router as exports_router
+from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
+from .routes_help import router as help_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_housekeeping import router as housekeeping_router
@@ -127,20 +131,18 @@ from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
 from .routes_push import router as push_router
-from .routes_feedback import router as feedback_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
 from .routes_security import router as security_router
-from .routes_help import router as help_router
-from .routes_support import router as support_router
 from .routes_staff import router as staff_router
+from .routes_support import router as support_router
+from .routes_support_bundle import router as support_bundle_router
 from .routes_tables_map import router as tables_map_router
-from .routes_tables_sse import router as tables_sse_router
 from .routes_tables_qr import router as tables_qr_router
+from .routes_tables_sse import router as tables_sse_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
-from .routes_api_keys import router as api_keys_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -201,6 +203,7 @@ subscription_guard = SubscriptionGuard(app)
 # Track active WebSocket connections per client IP
 ws_connections: dict[str, int] = defaultdict(int)
 WS_HEARTBEAT_INTERVAL = 15
+
 
 @app.middleware("http")
 async def subscription_guard_middleware(request: Request, call_next):
@@ -826,6 +829,7 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
+app.include_router(support_bundle_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)

@@ -14,7 +14,7 @@ from httpx import ASGITransport, AsyncClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 from api.app.auth import create_access_token  # noqa: E402
-from api.app.routes_support import router as support_router  # noqa: E402
+from api.app.routes_support_bundle import router as support_router  # noqa: E402
 
 
 @pytest.fixture
@@ -33,16 +33,14 @@ async def test_support_bundle(monkeypatch) -> None:
     async def fake_version() -> dict:
         return {"sha": "abc", "built_at": "now"}
 
-    monkeypatch.setattr("api.app.routes_support.ready", fake_ready)
-    monkeypatch.setattr("api.app.routes_support.version", fake_version)
+    monkeypatch.setattr("api.app.routes_support_bundle.ready", fake_ready)
+    monkeypatch.setattr("api.app.routes_support_bundle.version", fake_version)
 
     class DummyTenant:
         licensed_tables = 5
         enable_hotel = True
         enable_counter = False
         license_limits = {"plan": "basic"}
-        sla_sound_alert = False
-        sla_color_alert = True
 
     class DummySession:
         async def get(self, model, pk):
@@ -55,7 +53,7 @@ async def test_support_bundle(monkeypatch) -> None:
     async def fake_get_session():
         yield DummySession()
 
-    monkeypatch.setattr("api.app.routes_support.get_session", fake_get_session)
+    monkeypatch.setattr("api.app.routes_support_bundle.get_session", fake_get_session)
 
     token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
 
@@ -74,7 +72,7 @@ async def test_support_bundle(monkeypatch) -> None:
             "health.json",
             "ready.json",
             "version.json",
-            "recent-logs.txt",
             "config.json",
+            "recent_audit.json",
         }
         assert expected.issubset(names)
