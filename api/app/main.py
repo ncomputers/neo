@@ -61,6 +61,7 @@ from .i18n import get_msg, resolve_lang
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (
+    APIKeyAuthMiddleware,
     CorrelationIdMiddleware,
     GuestBlocklistMiddleware,
     GuestRateLimitMiddleware,
@@ -117,6 +118,7 @@ from .routes_tables_map import router as tables_map_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
+from .routes_api_keys import router as api_keys_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -165,6 +167,7 @@ app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(APIKeyAuthMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 subscription_guard = SubscriptionGuard(app)
@@ -722,6 +725,7 @@ app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
 app.include_router(media_router)
+app.include_router(api_keys_router)
 app.include_router(vapid_router)
 
 # Reports domain
