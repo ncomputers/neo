@@ -16,6 +16,7 @@ repos:
     hooks:
       - id: bandit
         args: ["-q", "-ll"]
+        additional_dependencies: [pbr]
   - repo: https://github.com/pypa/pip-audit
     rev: v2.9.0
     hooks:

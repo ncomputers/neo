@@ -19,6 +19,9 @@ The application relies on the following environment variables:
 | `MAX_CONN_PER_IP` | Maximum concurrent real-time connections allowed per client IP. | `20` |
 | `EXPORT_MAX_ROWS` | Maximum rows included in export files. Defaults to `10000`. | `10000` |
 | `ENABLE_GATEWAY` | Enable Razorpay/Stripe payment gateway routes. | `false` |
+| `GATEWAY_SANDBOX` | Use test credentials for gateway integration. | `false` |
+| `RAZORPAY_SECRET` / `RAZORPAY_SECRET_TEST` | Razorpay webhook secret for live/test modes. | `secret` |
+| `STRIPE_SECRET` / `STRIPE_SECRET_TEST` | Stripe webhook secret for live/test modes. | `secret` |
 | `VAPID_PUBLIC_KEY` (optional) | Public key for Web Push authentication. | `BASE64_KEY` |
 | `VAPID_PRIVATE_KEY` (optional) | Private key for Web Push authentication. | `BASE64_KEY` |
 | `WEBHOOK_SIGNING_SECRET` (optional) | Shared secret for signing outbound webhook requests. | `supersecret` |
