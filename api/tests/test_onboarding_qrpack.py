@@ -1,0 +1,85 @@
+import pathlib
+import sys
+
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from api.app.routes_onboarding import router as onboarding_router, TENANTS
+from api.app.routes_qrpack import router as qrpack_router
+
+
+def _setup_app():
+    app = FastAPI()
+    app.include_router(onboarding_router)
+    app.include_router(qrpack_router)
+    return app
+
+
+def test_onboarding_persists_all_fields():
+    app = _setup_app()
+    client = TestClient(app)
+
+    start = client.post("/api/onboarding/start").json()["data"]
+    oid = start["onboarding_id"]
+
+    profile = {
+        "name": "Cafe Neo",
+        "address": "1, Example St",
+        "logo_url": "http://logo/neo.png",
+        "timezone": "UTC",
+        "language": "en",
+    }
+    assert client.post(f"/api/onboarding/{oid}/profile", json=profile).status_code == 200
+
+    tax = {"mode": "regular", "gstin": "GST123", "hsn_required": True}
+    assert client.post(f"/api/onboarding/{oid}/tax", json=tax).status_code == 200
+
+    tables = {"count": 2}
+    table_resp = client.post(f"/api/onboarding/{oid}/tables", json=tables).json()["data"]
+    assert len(table_resp) == 2
+
+    payments = {
+        "vpa": "neo@upi",
+        "central_vpa": True,
+        "modes": {"cash": True, "upi": True, "card": False},
+    }
+    assert client.post(f"/api/onboarding/{oid}/payments", json=payments).status_code == 200
+
+    finish = client.post(f"/api/onboarding/{oid}/finish").json()["data"]
+    tid = finish["tenant_id"]
+
+    tenant = TENANTS[tid]
+    assert tenant["profile"]["name"] == "Cafe Neo"
+    assert tenant["tax"]["mode"] == "regular"
+    assert len(tenant["tables"]) == 2
+    assert tenant["payments"]["modes"]["upi"] is True
+
+
+def test_qrpack_pdf_includes_all_codes():
+    app = _setup_app()
+    client = TestClient(app)
+
+    oid = client.post("/api/onboarding/start").json()["data"]["onboarding_id"]
+    client.post(
+        f"/api/onboarding/{oid}/profile",
+        json={
+            "name": "Cafe",
+            "address": "1 St",
+            "logo_url": "",
+            "timezone": "UTC",
+            "language": "en",
+        },
+    )
+    client.post(f"/api/onboarding/{oid}/tables", json={"count": 3})
+    client.post(f"/api/onboarding/{oid}/finish")
+
+    resp = client.get(f"/api/outlet/{oid}/qrpack.pdf")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("application/pdf") or resp.headers[
+        "content-type"
+    ].startswith("text/html")
+    content = resp.content
+    for label in [b"Table 1", b"Table 2", b"Table 3"]:
+        assert label in content
