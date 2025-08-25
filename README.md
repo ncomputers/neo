@@ -113,12 +113,18 @@ A minimal onboarding flow captures tenant details:
   - `show_logo` toggles the outlet logo on each page
   - `label_fmt` customises table labels; `{n}` is replaced with the table number and `{label}` with the base label
   - responses are cached in Redis for ten minutes and the endpoint is rate-limited to one request per minute per tenant
+- `POST /api/outlet/{tenant}/tables/{code}/qr/rotate` – rotate a table's QR token and return a new deeplink.
 
 ### Coupons
 
 Coupons can be marked as stackable and may specify a per-invoice `max_discount` cap. When multiple stackable coupons are applied, the invoice `bill_json` records the `applied_coupons` and the combined `effective_discount`.
 
 Attempts to combine a non-stackable coupon with others raise a `CouponError` with code `NON_STACKABLE`.
+
+### Feedback
+
+- `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
+- `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregate ratings for admins over the last `range` days (default 30).
 
 ### Super Admin
 
@@ -171,15 +177,17 @@ Outlet staff can authenticate with a numeric PIN to perform protected actions:
 
 Owners can authenticate using a passwordless email flow:
 
-- `POST /auth/magic/start` – request a single-use login link. Throttled to 3/min per IP and 10/hour per email.
+- `POST /auth/magic/start` – request a single-use login link. Throttled to 2/min per IP and 5/hour per email. When rate limited, clients may include an `X-Captcha-Token` HMAC generated with `CAPTCHA_SECRET` to bypass.
 - `GET /auth/magic/consume?token=...` – exchange the link for a session JWT.
 
 ### Media Uploads
 
 Admins can attach photos to items:
 
-- `POST /api/outlet/{tenant}/media/upload` – stores a file using the configured
-  storage backend and returns `{url, key}`. Requires an admin role.
+- `POST /api/outlet/{tenant}/media/upload` – accepts PNG, JPEG, or WebP up to
+  2 MB and 4096×4096 pixels, strips EXIF metadata, re-encodes the image, and
+  stores it via the configured backend. Returns `{url, key}`. Requires an admin
+  role.
 
 ### Backups
 
@@ -496,3 +504,9 @@ counters. Guests can scan a counter's QR to browse the menu and place an order.
 Staff can mark orders as ready or delivered, which triggers invoice generation
 suitable for 80 mm thermal printers. See `docs/counter_takeaway.md` for more
 details.
+
+## Troubleshooting Help
+
+Static help pages for staff are available under `/help/{page}`. Currently
+`printing`, `network`, and `qr` guides are bundled and will show the outlet's
+branding when a `tenant_id` is supplied.

@@ -1,0 +1,52 @@
+{
+  "id": null,
+  "uid": "workers-overview",
+  "title": "Workers Overview",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Jobs Processed",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(rate(worker_jobs_processed_total{worker=\"$worker\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "Job Failures",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(rate(worker_jobs_failed_total{worker=\"$worker\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "id": 2
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Datasource"
+      },
+      {
+        "name": "worker",
+        "type": "query",
+        "datasource": "$datasource",
+        "query": "label_values(worker_jobs_processed_total, worker)",
+        "refresh": 1,
+        "label": "Worker"
+      }
+    ]
+  }
+}
