@@ -19,7 +19,6 @@ router = APIRouter()
 class CheckoutStart(BaseModel):
     invoice_id: int
     amount: float
-    provider: str = "razorpay"
 
 
 class WebhookPayload(BaseModel):
@@ -46,9 +45,10 @@ async def checkout_start(tenant: str, payload: CheckoutStart) -> dict:
         raise HTTPException(status_code=404)
     async with get_session() as session:
         tenant_row = await session.get(Tenant, tenant)
-    if not tenant_row or not getattr(tenant_row, "enable_gateway", False):
+    provider = getattr(tenant_row, "gateway_provider", "none") if tenant_row else "none"
+    if provider in (None, "none"):
         raise HTTPException(status_code=404)
-    order_id = f"{payload.provider}_{payload.invoice_id}"
+    order_id = f"{provider}_{payload.invoice_id}"
     pay_url = f"https://pay.example/{order_id}"
     return ok({"order_id": order_id, "pay_url": pay_url})
 
@@ -59,11 +59,12 @@ async def checkout_webhook(
     payload: WebhookPayload,
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
-    if not _gateway_enabled():
+    if not _gateway_enabled() or not payload.signature:
         raise HTTPException(status_code=404)
     async with get_session() as m_session:
         tenant_row = await m_session.get(Tenant, tenant)
-    if not tenant_row or not getattr(tenant_row, "enable_gateway", False):
+    provider = getattr(tenant_row, "gateway_provider", "none") if tenant_row else "none"
+    if provider in (None, "none"):
         raise HTTPException(status_code=404)
     payment = Payment(
         invoice_id=payload.invoice_id,

@@ -89,8 +89,8 @@ from .middlewares import (
     LicensingMiddleware,
     LoggingMiddleware,
     MaintenanceMiddleware,
-    PrometheusMiddleware,
     PinSecurityMiddleware,
+    PrometheusMiddleware,
     TableStateGuardMiddleware,
     realtime_guard,
 )
@@ -100,14 +100,13 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
-from .routes_owner_analytics import router as owner_analytics_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
-from .routes_checkout import router as checkout_router
+from .routes_checkout_gateway import router as checkout_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
 from .routes_dashboard import router as dashboard_router
@@ -138,6 +137,7 @@ from .routes_onboarding import router as onboarding_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
+from .routes_owner_analytics import router as owner_analytics_router
 from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
@@ -158,7 +158,6 @@ from .routes_tenant_close import router as tenant_close_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhooks import router as webhooks_router
-
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
