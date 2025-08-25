@@ -494,3 +494,9 @@ counters. Guests can scan a counter's QR to browse the menu and place an order.
 Staff can mark orders as ready or delivered, which triggers invoice generation
 suitable for 80 mm thermal printers. See `docs/counter_takeaway.md` for more
 details.
+
+## Troubleshooting Help
+
+Static help pages for staff are available under `/help/{page}`. Currently
+`printing`, `network`, and `qr` guides are bundled and will show the outlet's
+branding when a `tenant_id` is supplied.
