@@ -5,7 +5,10 @@ from datetime import timedelta
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 import asyncio  # noqa: E402
+import hmac  # noqa: E402
+import os  # noqa: E402
 import uuid  # noqa: E402
+from hashlib import sha256  # noqa: E402
 
 import fakeredis.aioredis  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -32,21 +35,49 @@ def test_magic_login_happy_path():
     assert resp3.status_code == 400
 
 
-def test_magic_login_throttling_and_expiry():
+def test_magic_login_throttling_and_captcha():
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    os.environ["CAPTCHA_SECRET"] = "test-secret"
     local_client = TestClient(app)
+    email = "ip@example.com"
+    ip = "testclient"
+    token_hmac = hmac.new(
+        os.environ["CAPTCHA_SECRET"].encode(), f"{ip}:{email}".encode(), sha256
+    ).hexdigest()
+
+    for _ in range(2):
+        assert (
+            local_client.post("/auth/magic/start", json={"email": email}).status_code
+            == 200
+        )
+
+    assert (
+        local_client.post("/auth/magic/start", json={"email": email}).status_code == 429
+    )
+
     for _ in range(3):
         assert (
             local_client.post(
-                "/auth/magic/start", json={"email": "ip@example.com"}
+                "/auth/magic/start",
+                json={"email": email},
+                headers={"X-Captcha-Token": token_hmac},
             ).status_code
             == 200
         )
+
+    asyncio.run(app.state.redis.delete(f"ratelimit:{ip}:magic-start"))
+
+    assert (
+        local_client.post("/auth/magic/start", json={"email": email}).status_code == 429
+    )
+
     assert (
         local_client.post(
-            "/auth/magic/start", json={"email": "ip@example.com"}
+            "/auth/magic/start",
+            json={"email": email},
+            headers={"X-Captcha-Token": token_hmac},
         ).status_code
-        == 429
+        == 200
     )
 
     jti = str(uuid.uuid4())

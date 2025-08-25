@@ -2,8 +2,11 @@ from __future__ import annotations
 
 """Passwordless owner authentication via email magic links."""
 
+import hmac
+import os
 import uuid
 from datetime import timedelta
+from hashlib import sha256
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -33,10 +36,20 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
     ip = request.client.host if request.client else "unknown"
     email = payload.email.lower()
 
+    secret = os.getenv("CAPTCHA_SECRET", "")
+
+    def _captcha_ok() -> bool:
+        token = request.headers.get("X-Captcha-Token")
+        if not token or not secret:
+            return False
+        msg = f"{ip}:{email}".encode()
+        expected = hmac.new(secret.encode(), msg, sha256).hexdigest()
+        return hmac.compare_digest(token, expected)
+
     allowed_ip = await ratelimit.allow(
-        redis, ip, "magic-start", rate_per_min=3, burst=3
+        redis, ip, "magic-start", rate_per_min=2, burst=2
     )
-    if not allowed_ip:
+    if not allowed_ip and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{ip}:magic-start")
         return JSONResponse(
             err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
@@ -44,9 +57,9 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
         )
 
     allowed_email = await ratelimit.allow(
-        redis, email, "magic-email", rate_per_min=10 / 60, burst=10
+        redis, email, "magic-email", rate_per_min=5 / 60, burst=5
     )
-    if not allowed_email:
+    if not allowed_email and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{email}:magic-email")
         return JSONResponse(
             err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
