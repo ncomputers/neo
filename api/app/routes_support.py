@@ -1,6 +1,6 @@
+"""Support contact information and bundle export."""
+=======
 from __future__ import annotations
-
-"""Support contact and bundle export endpoints."""
 
 
 import json
