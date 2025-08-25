@@ -7,7 +7,7 @@ from io import BytesIO
 from typing import Literal
 
 import qrcode
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from .pdf.render import render_template
 from .routes_onboarding import TENANTS
@@ -33,19 +33,58 @@ def _qr_data_url(url: str) -> str:
 
 @router.get("/api/outlet/{tenant_id}/qrpack.pdf")
 async def qrpack_pdf(
-    tenant_id: str, size: Literal["A4"] = "A4", per_page: int = 12
+    tenant_id: str,
+    request: Request,
+    size: Literal["A4", "A3", "Letter"] = "A4",
+    per_page: int = 12,
+    show_logo: bool = True,
+    label_fmt: str = "Table {n}",
 ) -> Response:
+    if per_page > 24 or per_page not in (6, 12, 24):
+        raise HTTPException(400, "per_page must be 6, 12 or 24")
+
     tenant = TENANTS.get(tenant_id)
     if not tenant:
         raise HTTPException(404, "Tenant not found")
+
+    redis = request.app.state.redis
+    rl_key = f"qrpack:rl:{tenant_id}"
+    if await redis.get(rl_key):
+        raise HTTPException(429, "Too many requests")
+    await redis.setex(rl_key, 60, 1)
+
+    cache_key = f"qrpack:cache:{tenant_id}:{size}:{per_page}:{int(show_logo)}:{label_fmt}"
+    cached = await redis.hgetall(cache_key)
+    if cached:
+        content = base64.b64decode(cached.get("content", ""))
+        mimetype = cached.get("mimetype", "application/pdf")
+        return Response(content, media_type=mimetype)
+
     tables = []
-    for t in tenant.get("tables", []):
+    for idx, t in enumerate(tenant.get("tables", [])):
         url = f"https://example.com/{tenant_id}/{t['qr_token']}"
-        tables.append({"label": t["label"], "qr": _qr_data_url(url)})
+        label = label_fmt.format(n=idx + 1, label=t.get("label", idx + 1))
+        tables.append({"label": label, "qr": _qr_data_url(url)})
+
+    pages = [tables[i : i + per_page] for i in range(0, len(tables), per_page)]
     content, mimetype = render_template(
         "qrpack.html",
-        {"logo_url": tenant.get("profile", {}).get("logo_url"), "tables": tables, "per_page": per_page},
+        {
+            "logo_url": tenant.get("profile", {}).get("logo_url") if show_logo else None,
+            "pages": pages,
+            "size": size,
+        },
     )
+
+    await redis.hset(
+        cache_key,
+        mapping={
+            "content": base64.b64encode(content).decode("ascii"),
+            "mimetype": mimetype,
+        },
+    )
+    await redis.expire(cache_key, 600)
+
     return Response(content, media_type=mimetype)
 
 

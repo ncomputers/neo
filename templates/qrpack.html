@@ -1,16 +1,26 @@
 <!doctype html>
 <html>
+  <head>
+    <style>
+      @page { size: {{ size }}; }
+    </style>
+  </head>
   <body>
-    {% if logo_url %}
-    <img src="{{ logo_url }}" alt="logo" />
-    {% endif %}
-    <table>
-      {% for t in tables %}
-      <tr>
-        <td>{{ t.label }}</td>
-        <td><img src="{{ t.qr }}" alt="{{ t.label }}" /></td>
-      </tr>
-      {% endfor %}
-    </table>
+    {% for page in pages %}
+      {% if logo_url %}
+      <img src="{{ logo_url }}" alt="logo" />
+      {% endif %}
+      <table>
+        {% for t in page %}
+        <tr>
+          <td>{{ t.label }}</td>
+          <td><img src="{{ t.qr }}" alt="{{ t.label }}" /></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% if not loop.last %}
+      <div style="page-break-after: always"></div>
+      {% endif %}
+    {% endfor %}
   </body>
 </html>

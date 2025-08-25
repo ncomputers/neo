@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
+import fakeredis.aioredis
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -12,6 +13,7 @@ from api.app.routes_qrpack import router as qrpack_router
 
 def _setup_app():
     app = FastAPI()
+    app.state.redis = fakeredis.aioredis.FakeRedis()
     app.include_router(onboarding_router)
     app.include_router(qrpack_router)
     return app
@@ -83,3 +85,34 @@ def test_qrpack_pdf_includes_all_codes():
     content = resp.content
     for label in [b"Table 1", b"Table 2", b"Table 3"]:
         assert label in content
+
+
+def test_per_page_affects_page_count_and_label_fmt():
+    app = _setup_app()
+    client = TestClient(app)
+
+    def onboard(count: int) -> str:
+        oid = client.post("/api/onboarding/start").json()["data"]["onboarding_id"]
+        client.post(
+            f"/api/onboarding/{oid}/profile",
+            json={"name": "Cafe", "address": "1 St", "logo_url": "", "timezone": "UTC", "language": "en"},
+        )
+        client.post(f"/api/onboarding/{oid}/tables", json={"count": count})
+        client.post(f"/api/onboarding/{oid}/finish")
+        return oid
+
+    oid_small = onboard(30)
+    resp_small = client.get(
+        f"/api/outlet/{oid_small}/qrpack.pdf?per_page=6&label_fmt=Desk%20{{n}}"
+    )
+
+    oid_large = onboard(30)
+    resp_large = client.get(
+        f"/api/outlet/{oid_large}/qrpack.pdf?per_page=24&label_fmt=Desk%20{{n}}"
+    )
+
+    assert resp_small.status_code == 200 and resp_large.status_code == 200
+    count_small = resp_small.content.count(b"<table>")
+    count_large = resp_large.content.count(b"<table>")
+    assert count_small > count_large
+    assert b"Desk 1" in resp_small.content
