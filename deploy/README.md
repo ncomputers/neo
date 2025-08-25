@@ -102,3 +102,13 @@ Prebuilt dashboards for API, background workers and tenant KPIs are located in
 [`deploy/grafana`](grafana/README.md). Import them into Grafana to get instant
 metrics visibility.
 
+
+## 10. Enable purge
+Remove long-deleted tables and menu items daily. Install the service and timer:
+
+```bash
+sudo cp deploy/systemd/neo-purge.service /etc/systemd/system/
+sudo cp deploy/systemd/neo-purge.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now neo-purge.timer
+```

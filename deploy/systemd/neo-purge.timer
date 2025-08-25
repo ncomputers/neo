@@ -1,0 +1,10 @@
+[Unit]
+Description=Run soft-deleted purge daily
+
+[Timer]
+OnCalendar=*-*-* 03:30
+Persistent=true
+Unit=neo-purge.service
+
+[Install]
+WantedBy=timers.target
