@@ -35,11 +35,13 @@ from api.app.routes_metrics import (  # type: ignore  # noqa: E402
     notifications_outbox_failed_total,
 )
 from app.utils.webhook_signing import sign  # type: ignore  # noqa: E402
+from app.alerts.render import render_email, render_message  # type: ignore  # noqa: E402
 
 
 PROVIDER_REGISTRY = {
     "whatsapp": os.getenv("ALERTS_WHATSAPP_PROVIDER", "app.providers.whatsapp_stub"),
     "sms": os.getenv("ALERTS_SMS_PROVIDER", "app.providers.sms_stub"),
+    "email": os.getenv("ALERTS_EMAIL_PROVIDER", "app.providers.email_stub"),
     "webpush": os.getenv(
         "ALERTS_WEBPUSH_PROVIDER", "app.providers.webpush_stub"
     ),
@@ -86,6 +88,24 @@ def _deliver(rule: NotificationRule, event: NotificationOutbox) -> None:
                 except RedisError:  # pragma: no cover - redis failure
                     pass
         requests.post(url, data=body.encode(), headers=headers, timeout=5).raise_for_status()
+    elif rule.channel == "email":
+        template = payload.get("template")
+        vars = payload.get("vars", {})
+        subject_tpl = payload.get("subject", "")
+        if not template:
+            raise ValueError("email payload missing template")
+        subject, html = render_email(template, vars, subject_tpl)
+        module = importlib.import_module(PROVIDER_REGISTRY["email"])
+        module.send(event, {"subject": subject, "html": html}, target)
+    elif rule.channel == "whatsapp":
+        template = payload.get("template")
+        if template:
+            text = render_message(template, payload.get("vars", {}))
+            module = importlib.import_module(PROVIDER_REGISTRY["whatsapp"])
+            module.send(event, {"text": text}, target)
+        else:
+            module = importlib.import_module(PROVIDER_REGISTRY["whatsapp"])
+            module.send(event, payload, target)
     elif rule.channel in PROVIDER_REGISTRY:
         module = importlib.import_module(PROVIDER_REGISTRY[rule.channel])
         module.send(event, payload, target)

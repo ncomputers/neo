@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family:Arial,sans-serif;margin:0;padding:20px;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <img src="{{ outlet_logo }}" alt="{{ outlet_name }}" style="max-width:150px;"/>
+    </div>
+    <p>Hello {{ customer_name }},</p>
+    <p>Your invoice <strong>#{{ invoice_number }}</strong> for {{ amount }} has been paid.</p>
+    <p>Thank you for dining with {{ outlet_name }}.</p>
+  </body>
+</html>
