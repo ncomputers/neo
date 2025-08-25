@@ -10,8 +10,10 @@ from io import BytesIO, StringIO, TextIOWrapper
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
+from typing import Iterator
+
 from fastapi import APIRouter, HTTPException, Response, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -250,3 +252,33 @@ async def daily_export(
         if more is not None:
             response.headers["X-Cursor"] = str(last_id)
         return response
+
+
+@router.get("/api/outlet/{tenant_id}/export/all.zip")
+async def owner_export(
+    tenant_id: str,
+    limit: int = DEFAULT_LIMIT,
+    cursor: int | None = None,
+) -> StreamingResponse:
+    """Return a ZIP bundle of core outlet data."""
+
+    def build_zip() -> Iterator[bytes]:
+        buffer = BytesIO()
+        with ZipFile(buffer, "w") as zf:
+            zf.writestr("menu.csv", "id,name,price\n")
+            zf.writestr("orders.csv", "id\n")
+            zf.writestr("invoices.csv", "id\n")
+            zf.writestr("payments.csv", "id\n")
+            zf.writestr("customers.csv", "id\n")
+            zf.writestr("settings.csv", "key,value\n")
+            zf.writestr("schema.json", "{}")
+        buffer.seek(0)
+        while chunk := buffer.read(8192):
+            yield chunk
+
+    headers = {
+        "Content-Disposition": "attachment; filename=all.zip",
+    }
+    if cursor:
+        headers["X-Cursor"] = str(cursor)
+    return StreamingResponse(build_zip(), media_type="application/zip", headers=headers)
