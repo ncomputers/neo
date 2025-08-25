@@ -7,7 +7,7 @@ from importlib import resources
 from typing import Any, Dict
 
 _DEFAULT_LANG = "en"
-_SUPPORTED_LANGS = {"en", "hi"}
+_SUPPORTED_LANGS = {"en", "hi", "gu"}
 _catalog_cache: Dict[str, Dict[str, Any]] = {}
 
 
@@ -16,7 +16,9 @@ def _load_catalog(lang: str) -> Dict[str, Any]:
         with resources.open_text(__name__, f"{lang}.json", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        with resources.open_text(__name__, f"{_DEFAULT_LANG}.json", encoding="utf-8") as f:
+        with resources.open_text(
+            __name__, f"{_DEFAULT_LANG}.json", encoding="utf-8"
+        ) as f:
             return json.load(f)
 
 

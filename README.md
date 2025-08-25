@@ -131,7 +131,7 @@ This router relies on tenant-specific databases and is not wired into the
 application yet.
 Guest endpoints honor the `Accept-Language` header and return localized UI labels
 for menu actions such as **Order**, **Pay**, and **Get Bill**. English is the
-default with a Hindi stub included.
+default with Hindi and Gujarati stubs included.
 
 ### Admin Menu
 
