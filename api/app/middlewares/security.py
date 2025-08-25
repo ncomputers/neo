@@ -29,10 +29,18 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             self.allowed_origins = [o.strip() for o in allowed.split(",") if o.strip()]
         self.max_bytes = 256 * 1024
         self.key_pattern = re.compile(r"^[A-Za-z0-9_\-=:]+$")
+        self.hsts_enabled = os.getenv("ENABLE_HSTS") == "1"
+        self.csp = (
+            "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+        )
 
     async def dispatch(self, request: Request, call_next):
         origin = request.headers.get("origin")
-        if self.allowed_origins != ["*"] and origin and origin not in self.allowed_origins:
+        if (
+            self.allowed_origins != ["*"]
+            and origin
+            and origin not in self.allowed_origins
+        ):
             return JSONResponse(
                 err("FORBIDDEN_ORIGIN", "ForbiddenOrigin"),
                 status_code=HTTP_403_FORBIDDEN,
@@ -65,4 +73,11 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             elif origin in self.allowed_origins:
                 response.headers.setdefault("access-control-allow-origin", origin)
                 response.headers.setdefault("vary", "Origin")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Content-Security-Policy", self.csp)
+        if self.hsts_enabled:
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
         return response
