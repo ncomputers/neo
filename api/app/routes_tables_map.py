@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from pydantic import BaseModel
 
 from .auth import User, role_required
@@ -37,7 +38,7 @@ async def set_table_position(
 
     with SessionLocal() as session:
         table = session.get(Table, table_id)
-        if table is None:
+        if table is None or table.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Table not found")
         table.pos_x = pos.x
         table.pos_y = pos.y
@@ -60,7 +61,7 @@ async def get_table_map(tenant: str) -> dict:
     """Return coordinates and states for all tables."""
 
     with SessionLocal() as session:
-        records = session.query(Table).all()
+        records = session.query(Table).filter(Table.deleted_at.is_(None)).all()
         data = [
             {
                 "id": str(t.id),
@@ -73,3 +74,37 @@ async def get_table_map(tenant: str) -> dict:
             for t in records
         ]
     return ok(data)
+
+
+@router.delete("/api/outlet/{tenant}/tables/{table_id}")
+@audit("delete_table")
+async def delete_table(
+    tenant: str,
+    table_id: uuid.UUID,
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
+) -> dict:
+    """Soft delete a table."""
+    with SessionLocal() as session:
+        table = session.get(Table, table_id)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.deleted_at = func.now()
+        session.commit()
+    return ok(None)
+
+
+@router.post("/api/outlet/{tenant}/tables/{table_id}/restore")
+@audit("restore_table")
+async def restore_table(
+    tenant: str,
+    table_id: uuid.UUID,
+    user: User = Depends(role_required("super_admin", "outlet_admin", "manager")),
+) -> dict:
+    """Restore a previously deleted table."""
+    with SessionLocal() as session:
+        table = session.get(Table, table_id)
+        if table is None:
+            raise HTTPException(status_code=404, detail="Table not found")
+        table.deleted_at = None
+        session.commit()
+    return ok(None)
