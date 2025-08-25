@@ -27,12 +27,18 @@ export ALERTS_SMS_PROVIDER=myapp.providers.twilio_sms
 
 ## Webhook Signing
 
-The notification worker signs outbound webhook requests when `WEBHOOK_SIGNING_SECRET` is set. Each request includes:
+The notification worker signs outbound webhook requests when `WEBHOOK_SIGNING_SECRET` is set.
+
+### HMAC Headers
+
+Each request includes:
 
 - `X-Webhook-Timestamp`: UNIX timestamp in seconds.
 - `X-Webhook-Signature`: `sha256=` followed by an HMAC-SHA256 digest of `timestamp.body` using the shared secret.
 
-### Verifier pseudocode
+### Verify snippets
+
+#### Python
 
 ```python
 import hmac, hashlib, time
@@ -54,6 +60,8 @@ def verify(secret: str, body: bytes, headers: dict, redis):
     redis.setex(nonce_key, 300, 1)
     return True
 ```
+
+#### JavaScript
 
 ```javascript
 const crypto = require('crypto');
