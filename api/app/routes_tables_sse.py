@@ -8,26 +8,21 @@ falls back to sending a full snapshot before incremental updates.
 
 from __future__ import annotations
 
-import json
-
 import asyncio
-from collections import defaultdict
+import json
 
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from config import get_settings
-from .routes_metrics import sse_clients_gauge
-
 from .db import SessionLocal
+from .middlewares.realtime_guard import queue as rt_queue
+from .middlewares.realtime_guard import register, unregister
 from .models_tenant import Table
+from .routes_metrics import sse_clients_gauge
 
 KEEPALIVE_INTERVAL = 15
 
 router = APIRouter()
-
-settings = get_settings()
-sse_connections: dict[str, int] = defaultdict(int)
 
 
 @router.get(
@@ -45,9 +40,7 @@ async def stream_table_map(
     from .main import redis_client  # lazy import to avoid circular deps
 
     ip = request.client.host if request.client else "?"
-    if sse_connections[ip] >= settings.max_conn_per_ip:
-        raise HTTPException(status_code=429, detail="RETRY")
-    sse_connections[ip] += 1
+    register(ip)
 
     channel = f"rt:table_map:{tenant}"
     pubsub = redis_client.pubsub()
@@ -58,7 +51,7 @@ async def stream_table_map(
 
     async def event_gen():
         nonlocal seq
-        queue: asyncio.Queue[str | None] = asyncio.Queue(maxsize=100)
+        queue: asyncio.Queue[str | None] = rt_queue()
 
         async def reader():
             nonlocal seq
@@ -121,6 +114,6 @@ async def stream_table_map(
             await pubsub.unsubscribe(channel)
             await pubsub.close()
             sse_clients_gauge.dec()
-            sse_connections[ip] -= 1
+            unregister(ip)
 
     return StreamingResponse(event_gen(), media_type="text/event-stream")

@@ -1,5 +1,5 @@
 # main.py
-# isort:skip_file
+
 # flake8: noqa
 
 """In-memory FastAPI application for demo guest ordering and billing."""
@@ -13,7 +13,6 @@ import logging
 import os
 import sys
 import uuid
-from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -90,6 +89,7 @@ from .middlewares import (
     MaintenanceMiddleware,
     PrometheusMiddleware,
     TableStateGuardMiddleware,
+    realtime_guard,
 )
 from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
@@ -147,6 +147,7 @@ from .routes_api_keys import router as api_keys_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
+
 
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)
@@ -461,17 +462,18 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
     """Stream order status updates for ``table_code``."""
 
     ip = websocket.client.host if websocket.client else "?"
-    if ws_connections[ip] >= settings.max_conn_per_ip:
+    try:
+        realtime_guard.register(ip)
+    except HTTPException:
         await websocket.close(code=status.WS_1013_TRY_AGAIN_LATER)
         return
-    ws_connections[ip] += 1
 
     await websocket.accept()
     channel = f"rt:update:{table_code}"
     pubsub = redis_client.pubsub()
     await pubsub.subscribe(channel)
     tracker = _tracker(table_code)
-    queue: asyncio.Queue[dict | None] = asyncio.Queue(maxsize=100)
+    queue: asyncio.Queue[dict | None] = realtime_guard.queue()
 
     async def reader():
         try:
@@ -482,28 +484,21 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
                 try:
                     queue.put_nowait(data)
                 except asyncio.QueueFull:
-                    try:
-                        queue.get_nowait()
-                    except asyncio.QueueEmpty:
-                        pass
-                    await queue.put(None)
                     await websocket.close(
                         code=status.WS_1013_TRY_AGAIN_LATER, reason="RETRY"
                     )
+                    while True:
+                        try:
+                            queue.get_nowait()
+                        except asyncio.QueueEmpty:
+                            break
+                    await queue.put(None)
                     break
         finally:
             await queue.put(None)
 
-    async def heartbeat():
-        try:
-            while True:
-                await asyncio.sleep(WS_HEARTBEAT_INTERVAL)
-                await websocket.send_json({"type": "ping"})
-        except Exception:
-            pass
-
     reader_task = asyncio.create_task(reader())
-    hb_task = asyncio.create_task(heartbeat())
+    hb_task = realtime_guard.heartbeat_task(websocket)
 
     try:
         while True:
@@ -522,7 +517,7 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
         hb_task.cancel()
         await pubsub.unsubscribe(channel)
         await pubsub.close()
-        ws_connections[ip] -= 1
+        realtime_guard.unregister(ip)
 
 
 def _table_state(table_id: str) -> Dict[str, List[CartItem]]:

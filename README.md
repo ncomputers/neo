@@ -23,6 +23,12 @@ Logging can be tuned via:
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
 - `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
 
+Real-time streams expose additional knobs:
+
+- `MAX_CONN_PER_IP` – cap concurrent SSE/WS connections per client IP (default `20`)
+- `HEARTBEAT_TIMEOUT_SEC` – seconds between WebSocket pings and heartbeat timeout (default `30`)
+- `QUEUE_MAX` – maximum pending messages per connection before dropping the client (default `100`)
+
 Tenants may also set a future `maintenance_until` timestamp in the `tenants`
 table to temporarily block their own traffic. Requests made before the
 timestamp receive the same 503 response with a `Retry-After` header.
