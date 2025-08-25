@@ -17,7 +17,7 @@ def test_invoice_pdf_route_html_fallback():
     resp = client.get("/invoice/123/pdf?size=80mm")
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("text/html")
-    assert "Invoice INV-123" in resp.text
+    assert "Invoice #INV-123" in resp.text
 
 
 def test_render_invoice_pdf_with_fake_weasyprint(monkeypatch):

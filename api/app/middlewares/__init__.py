@@ -7,9 +7,11 @@ from .http_errors import HttpErrorCounterMiddleware
 from .idempotency import IdempotencyMetricsMiddleware, IdempotencyMiddleware
 from .licensing import LicensingMiddleware
 from .logging import LoggingMiddleware
+from .maintenance import MaintenanceMiddleware
 from .prometheus import PrometheusMiddleware
 from .security import SecurityMiddleware
 from .table_state_guard import TableStateGuardMiddleware
+from .api_key_auth import APIKeyAuthMiddleware
 
 __all__ = [
     "CorrelationIdMiddleware",
@@ -25,4 +27,6 @@ __all__ = [
     "FeatureFlagsMiddleware",
     "LicensingMiddleware",
     "SecurityMiddleware",
+    "MaintenanceMiddleware",
+    "APIKeyAuthMiddleware",
 ]

@@ -1,0 +1,9 @@
+title = "neo gitleaks config"
+
+[allowlist]
+  description = "Allowlist for dummy data and test credentials"
+  regexes = [
+    '''(?i)dummy''',
+    '''(?i)example''',
+    '''(?i)test''',
+  ]

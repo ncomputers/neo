@@ -5,7 +5,7 @@ from __future__ import annotations
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from ..security import blocklist
 from ..utils.responses import err
@@ -18,9 +18,11 @@ class GuestBlocklistMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if _is_guest_post(request.url.path, request.method):
             ip = request.client.host if request.client else "unknown"
+            tenant = request.headers.get("X-Tenant-ID", "demo")
             redis = request.app.state.redis
-            if await blocklist.is_blocked(redis, ip):
+            if await blocklist.is_blocked(redis, tenant, ip):
                 return JSONResponse(
-                    err("SUB_403", "Blocked"), status_code=HTTP_403_FORBIDDEN
+                    err("IP_BLOCKED", "TooManyRequests"),
+                    status_code=HTTP_429_TOO_MANY_REQUESTS,
                 )
         return await call_next(request)

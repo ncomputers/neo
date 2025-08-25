@@ -48,5 +48,22 @@ and writes dumps to `/var/backups/neo`.
 Prune old dumps to keep seven daily backups and four weekly snapshots.
 A simple cron job::
 
-       find /var/backups/neo -name '*.sql' -mtime +7 -delete
-       find /var/backups/neo/weekly -name '*.sql' -mtime +28 -delete
+        find /var/backups/neo -name '*.sql' -mtime +7 -delete
+        find /var/backups/neo/weekly -name '*.sql' -mtime +28 -delete
+
+## Verification
+
+Regularly verify that backups can be restored::
+
+    python scripts/backup_verify.py --file "/var/backups/TENANT-*.sql" --sqlite-tmp /tmp/verify.db
+
+The command loads the latest matching dump into a temporary SQLite database and
+executes basic sanity queries, including `PRAGMA integrity_check`. It prints
+`PASS` or `FAIL` and returns a non‑zero exit status on failure.
+
+### Cron
+
+Schedule a weekly check via cron::
+
+    0 4 * * 0 python /path/to/scripts/backup_verify.py \
+        --file "/var/backups/TENANT-*.sql" --sqlite-tmp /tmp/verify.db

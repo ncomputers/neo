@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+import pathlib
+import sys
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
+
+import fakeredis.aioredis
+import pytest
+from fastapi.testclient import TestClient
+
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
+
+from api.app import main as app_main  # noqa: E402
+from api.app.main import app  # noqa: E402
+from api.app.middlewares import maintenance as maint_module  # noqa: E402
+
+
+@pytest.fixture
+def client():
+    app.state.redis = fakeredis.aioredis.FakeRedis()
+    original_guard = app_main.subscription_guard
+
+    async def _pass(request, call_next):
+        return await call_next(request)
+
+    app_main.subscription_guard = _pass
+    client = TestClient(app, raise_server_exceptions=False)
+    yield client
+    app_main.subscription_guard = original_guard
+
+
+def _admin_token(client: TestClient) -> str:
+    resp = client.post(
+        "/login/email",
+        json={"username": "admin@example.com", "password": "adminpass"},
+    )
+    return resp.json()["data"]["access_token"]
+
+
+def test_global_maintenance(client, monkeypatch):
+    token = _admin_token(client)
+    monkeypatch.setenv("MAINTENANCE", "1")
+
+    resp = client.get("/health")
+    assert resp.status_code == 503
+    assert resp.json()["code"] == "MAINTENANCE"
+
+    resp = client.get("/admin", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+
+
+def test_tenant_maintenance(client, monkeypatch):
+    token = _admin_token(client)
+
+    @asynccontextmanager
+    async def _session():
+        class _Session:
+            async def get(self, model, tenant_id):
+                class _Tenant:
+                    maintenance_until = datetime.utcnow() + timedelta(minutes=5)
+
+                return _Tenant()
+
+        yield _Session()
+
+    monkeypatch.delenv("MAINTENANCE", raising=False)
+    monkeypatch.setattr(maint_module, "get_session", _session)
+
+    resp = client.get("/version", headers={"X-Tenant-ID": "demo"})
+    assert resp.status_code == 503
+    assert resp.json()["code"] == "MAINTENANCE"
+    assert resp.headers["Retry-After"].isdigit()
+
+    resp = client.get(
+        "/admin",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "X-Tenant-ID": "demo",
+        },
+    )
+    assert resp.status_code == 200

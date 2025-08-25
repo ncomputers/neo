@@ -7,6 +7,7 @@ Notification delivery channels are pluggable and resolved at runtime via environ
 | WhatsApp | `ALERTS_WHATSAPP_PROVIDER` | `app.providers.whatsapp_stub` |
 | SMS | `ALERTS_SMS_PROVIDER` | `app.providers.sms_stub` |
 | Email | `ALERTS_EMAIL_PROVIDER` | `app.providers.email_stub` |
+| Slack | `ALERTS_SLACK_PROVIDER` | `app.providers.slack_stub` |
 
 Each provider module must expose a `send(event, payload, target)` function. The worker passes the outbound event record, the payload, and a target value from the rule's configuration.
 
@@ -18,6 +19,7 @@ Use the built-in stubs (default):
 export ALERTS_WHATSAPP_PROVIDER=app.providers.whatsapp_stub
 export ALERTS_SMS_PROVIDER=app.providers.sms_stub
 export ALERTS_EMAIL_PROVIDER=app.providers.email_stub
+export ALERTS_SLACK_PROVIDER=app.providers.slack_stub
 ```
 
 Swap to custom providers:
@@ -26,7 +28,13 @@ Swap to custom providers:
 export ALERTS_WHATSAPP_PROVIDER=myapp.providers.twilio_whatsapp
 export ALERTS_SMS_PROVIDER=myapp.providers.twilio_sms
 export ALERTS_EMAIL_PROVIDER=myapp.providers.sendgrid_email
+export ALERTS_SLACK_PROVIDER=myapp.providers.slack_api
 ```
+
+## Slack
+
+The default Slack stub sends `text` payloads to the webhook URL specified by
+the `SLACK_WEBHOOK_URL` environment variable.
 
 ## Webhook Signing
 

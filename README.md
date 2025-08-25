@@ -19,6 +19,11 @@ Logging can be tuned via:
 - `LOG_LEVEL` – set log verbosity (default `INFO`)
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
+- `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
+
+Tenants may also set a future `maintenance_until` timestamp in the `tenants`
+table to temporarily block their own traffic. Requests made before the
+timestamp receive the same 503 response with a `Retry-After` header.
 
 Request bodies and query parameters are scrubbed of sensitive keys such as
 `pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.
@@ -50,15 +55,23 @@ alembic upgrade head
 pytest -q
 ```
 
+## Database performance
+
+Migration `0010_hot_path_indexes` adds indexes on frequently queried columns
+and, when running on PostgreSQL, ensures monthly partitions for `invoices` and
+`payments` based on `created_at`. SQLite deployments skip the partition step but
+still benefit from the new indexes.
+
 ## Continuous Integration
 
-GitHub Actions runs the test suite along with `pre-commit` and `pip-audit` for
+GitHub Actions runs the test suite along with `pre-commit`, `pip-audit`, and `gitleaks` for
 all pull requests. To mirror these checks locally:
 
 ```bash
-pip install pre-commit pip-audit
+pip install pre-commit pip-audit gitleaks
 pre-commit run --all-files
 pip-audit
+gitleaks detect -c .gitleaks.toml
 ```
 
 ## API
@@ -72,6 +85,7 @@ uvicorn app.main:app --reload
 Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
 Use `/support/contact` to fetch support email, phone, hours, and documentation links.
 Browsers requesting `text/html` receive simple static pages for 403, 404, and 500 errors.
+
 
 All API responses use a standard envelope:
 
@@ -95,8 +109,8 @@ A minimal onboarding flow captures tenant details:
   - `size` may be `A4`, `A3` or `Letter`
   - `per_page` accepts `6`, `12` or `24` (max `24`)
   - `show_logo` toggles the outlet logo on each page
-  - `label_fmt` customises table labels; `{n}` is replaced with the table number
-  - generation is rate-limited to one request per minute per tenant and the result is cached for ten minutes
+  - `label_fmt` customises table labels; `{n}` is replaced with the table number and `{label}` with the base label
+  - responses are cached in Redis for ten minutes and the endpoint is rate-limited to one request per minute per tenant
 
 ### Coupons
 
@@ -128,7 +142,7 @@ This router relies on tenant-specific databases and is not wired into the
 application yet.
 Guest endpoints honor the `Accept-Language` header and return localized UI labels
 for menu actions such as **Order**, **Pay**, and **Get Bill**. English is the
-default with a Hindi stub included.
+default with Hindi and Gujarati stubs included.
 
 ### Admin Menu
 
@@ -350,9 +364,9 @@ python -c "from api.onboard_tenant import create_tenant; create_tenant('demo', '
 
 The function creates a dedicated Postgres database, applies migrations, and
 records branding and configuration details in the master schema. Invoice
-numbering for each tenant can be customised via ``invoice_prefix`` and an
-``invoice_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
-reset, numbers include the year and month, e.g. ``INV/2024/02/000001``.
+numbering for each tenant can be customised via ``inv_prefix`` and an
+``inv_reset`` policy (``monthly``, ``yearly`` or ``never``). With a monthly
+reset, numbers include the year and month, e.g. ``INV-ABC-202402-0001``.
 
 ### Invoice PDFs
 
@@ -419,6 +433,16 @@ python scripts/retention_sweep.py --tenant TENANT_ID --days 30
 
 The sweep deletes `audit_tenant` rows, delivered `notifications_outbox`
 entries and `access_logs` records older than the specified retention window.
+
+To anonymize stale guest PII for a tenant, use:
+
+```bash
+python scripts/anonymize_pii.py --tenant TENANT_ID --days 30
+```
+
+This helper nulls the `name`, `phone` and `email` columns in `invoices` and
+`customers` beyond the retention window and records a summary in
+`audit_tenant`.
 
 
 ## Audit Logging

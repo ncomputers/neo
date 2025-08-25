@@ -1,0 +1,10 @@
+[Unit]
+Description=Synthetic canary order probe
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/neo
+ExecStart=/usr/bin/python3 scripts/canary_probe.py --tenant CANARY --table T1
+
+[Install]
+WantedBy=multi-user.target
