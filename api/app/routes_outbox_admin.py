@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .auth import User, role_required
 from .db.tenant import get_engine
-from .models_tenant import NotificationOutbox, NotificationDLQ
+from .models_tenant import NotificationDLQ, NotificationOutbox
+from .utils.pagination import Pagination
+from .utils.pagination import pagination as paginate
 from .utils.responses import ok
 
 router = APIRouter()
@@ -19,7 +21,9 @@ router = APIRouter()
 @asynccontextmanager
 async def _session(tenant_id: str):
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     try:
         async with sessionmaker() as session:
             yield session
@@ -31,18 +35,21 @@ async def _session(tenant_id: str):
 async def list_outbox(
     tenant_id: str,
     status: str = Query("pending"),
-    limit: int = Query(100, le=100),
+    page: Pagination = Depends(paginate),
     user: User = Depends(role_required("super_admin", "outlet_admin")),
 ) -> dict:
     status_map = {"pending": "queued"}
     db_status = status_map.get(status, status)
     async with _session(tenant_id) as session:
-        result = await session.execute(
+        stmt = (
             select(NotificationOutbox)
             .where(NotificationOutbox.status == db_status)
-            .order_by(NotificationOutbox.created_at.desc())
-            .limit(limit)
+            .order_by(NotificationOutbox.id.desc())
+            .limit(page.limit)
         )
+        if page.cursor:
+            stmt = stmt.where(NotificationOutbox.id < page.cursor)
+        result = await session.execute(stmt)
         rows = [
             {
                 "id": o.id,
@@ -82,15 +89,18 @@ async def retry_outbox(
 @router.get("/api/outlet/{tenant_id}/dlq")
 async def list_dlq(
     tenant_id: str,
-    limit: int = Query(100, le=100),
+    page: Pagination = Depends(paginate),
     user: User = Depends(role_required("super_admin", "outlet_admin")),
 ) -> dict:
     async with _session(tenant_id) as session:
-        result = await session.execute(
+        stmt = (
             select(NotificationDLQ)
-            .order_by(NotificationDLQ.failed_at.desc())
-            .limit(limit)
+            .order_by(NotificationDLQ.id.desc())
+            .limit(page.limit)
         )
+        if page.cursor:
+            stmt = stmt.where(NotificationDLQ.id < page.cursor)
+        result = await session.execute(stmt)
         rows = [
             {
                 "id": d.id,
