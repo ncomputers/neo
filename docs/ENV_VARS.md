@@ -7,6 +7,7 @@ The application relies on the following environment variables:
 | `POSTGRES_MASTER_URL` | Connection string for the master database. Defaults to a local SQLite file for development. | `sqlite+aiosqlite:///./dev_master.db` |
 | `POSTGRES_TENANT_DSN_TEMPLATE` | Template DSN for tenant databases, with `{tenant_id}` placeholder. Defaults to local SQLite files. | `sqlite+aiosqlite:///./tenant_{tenant_id}.db` |
 | `POSTGRES_SUPER_URL` (optional) | Superuser connection URL used when creating databases. Not required for SQLite. |  |
+| `DB_SLOW_QUERY_MS` (optional) | Emit a warning when a DB query exceeds this many milliseconds. Defaults to `200`. | `250` |
 | `DEFAULT_TZ` | Default timezone for application processes. | `UTC` |
 | `JWT_SECRET` | Secret key used to sign JWT tokens. | `your_jwt_secret_key` |
 | `JWKS_URL` (optional) | JWKS endpoint for verifying JWT signatures. | `https://auth.example.com/jwks.json` |

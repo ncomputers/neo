@@ -25,4 +25,6 @@ All notable changes to this project will be documented in this file.
   inclusion of deleted records via ``include_deleted``.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
+- Slow query logging with WARNs above the configurable threshold and 1% sampling
+  of regular queries.
 

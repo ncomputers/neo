@@ -7,6 +7,8 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from api.app.obs import add_query_logger
+
 DATABASE_URL = os.getenv("POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db")
 
 _engine: AsyncEngine | None = None
@@ -18,6 +20,7 @@ def get_engine() -> AsyncEngine:
     global _engine, _sessionmaker
     if _engine is None:
         _engine = create_async_engine(DATABASE_URL, future=True)
+        add_query_logger(_engine, "master")
         _sessionmaker = sessionmaker(
             _engine, expire_on_commit=False, class_=AsyncSession
         )
