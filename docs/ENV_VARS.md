@@ -20,6 +20,8 @@ The application relies on the following environment variables:
 | `VAPID_PUBLIC_KEY` (optional) | Public key for Web Push authentication. | `BASE64_KEY` |
 | `VAPID_PRIVATE_KEY` (optional) | Private key for Web Push authentication. | `BASE64_KEY` |
 | `WEBHOOK_SIGNING_SECRET` (optional) | Shared secret for signing outbound webhook requests. | `supersecret` |
+| `WEBHOOK_ALLOW_HOSTS` | Allowed webhook hostnames (comma, supports `*` wildcard). | `hooks.slack.com,*.example.com` |
+| `WEBHOOK_DENY_CIDRS` (optional) | CIDR ranges blocked for webhook egress. | `10.0.0.0/8` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` (optional) | OTLP trace exporter endpoint. Tracing is disabled when unset. | `http://otel-collector:4318/v1/traces` |
 | `OTEL_SERVICE_NAME` (optional) | Service name used for OpenTelemetry traces. Defaults to `neo-api`. | `neo-api` |
 | `OTEL_SAMPLER_RATIO` (optional) | Sampling ratio between 0 and 1. Defaults to `0.1`. | `0.25` |

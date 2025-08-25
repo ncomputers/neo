@@ -24,7 +24,9 @@ router = APIRouter()
 @asynccontextmanager
 async def _session(tenant_id: str):
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     try:
         async with sessionmaker() as session:
             yield session
@@ -56,7 +58,9 @@ async def owner_dashboard_charts(
     today = datetime.now(ZoneInfo(tz)).date()
     start = today - timedelta(days=range - 1)
     async with _session(tenant_id) as session:
-        data = await dashboard_repo_sql.charts_range(session, start, today, tz)
+        data = await dashboard_repo_sql.charts_range(
+            session, start, today, tz, use_rollup=True
+        )
     sales_series = data.get("series", {}).get("sales", [])
     sales = [pt["v"] for pt in sales_series]
     dates = [pt["d"] for pt in sales_series]

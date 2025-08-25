@@ -1,0 +1,74 @@
+{
+  "id": null,
+  "uid": "tenants-kpi",
+  "title": "Tenant KPIs",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "1m",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Sales",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(increase(sales_total{tenant=\"$tenant\"}[$period]))",
+          "refId": "A"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Orders",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(increase(orders_total{tenant=\"$tenant\"}[$period]))",
+          "refId": "A"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Ticket Size",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(increase(sales_total{tenant=\"$tenant\"}[$period])) / sum(increase(orders_total{tenant=\"$tenant\"}[$period]))",
+          "refId": "A"
+        }
+      ],
+      "id": 3
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Datasource"
+      },
+      {
+        "name": "tenant",
+        "type": "query",
+        "datasource": "$datasource",
+        "query": "label_values(orders_total, tenant)",
+        "refresh": 1,
+        "label": "Tenant"
+      },
+      {
+        "name": "period",
+        "type": "custom",
+        "query": "7d,30d,90d",
+        "label": "Period",
+        "current": {
+          "text": "7d",
+          "value": "7d"
+        }
+      }
+    ]
+  }
+}
