@@ -18,6 +18,7 @@ from .db.tenant import get_engine
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.audit import audit
 from .utils.responses import ok
+from .models_tenant import MenuItem
 
 router = APIRouter()
 
@@ -111,8 +112,11 @@ async def delete_menu_item(
     repo = MenuRepoSQL()
     async with _session(tenant_id) as session:
         await repo.soft_delete_item(session, item_id)
+        item = await session.get(MenuItem, item_id)
     await request.app.state.redis.delete(f"menu:{tenant_id}")
-    return ok(None)
+    return ok(
+        {"id": str(item.id), "name": item.name, "deleted_at": item.deleted_at}
+    )
 
 
 @router.post("/api/outlet/{tenant_id}/menu/items/{item_id}/restore")
@@ -127,5 +131,8 @@ async def restore_menu_item(
     repo = MenuRepoSQL()
     async with _session(tenant_id) as session:
         await repo.restore_item(session, item_id)
+        item = await session.get(MenuItem, item_id)
     await request.app.state.redis.delete(f"menu:{tenant_id}")
-    return ok(None)
+    return ok(
+        {"id": str(item.id), "name": item.name, "deleted_at": item.deleted_at}
+    )

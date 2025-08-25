@@ -54,11 +54,16 @@ async def create_guest_order(
     lines = [line.model_dump() for line in payload.items]
     try:
         order_id = await orders_repo_sql.create_order(session, table_token, lines)
+    except HTTPException as exc:
+        ip = request.client.host if request.client else "unknown"
+        await order_rejection.on_rejected(tenant_id, ip, request.app.state.redis)
+        raise exc
     except ValueError as exc:
         ip = request.client.host if request.client else "unknown"
         await order_rejection.on_rejected(tenant_id, ip, request.app.state.redis)
         status = 403 if str(exc) == "GONE_RESOURCE" else 400
-        raise HTTPException(status_code=status, detail=str(exc)) from exc
+        detail = {"code": str(exc), "message": str(exc)} if status == 403 else str(exc)
+        raise HTTPException(status_code=status, detail=detail) from exc
 
     try:  # optional pubsub notification
         await event_bus.publish(

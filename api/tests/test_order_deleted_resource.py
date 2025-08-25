@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 import fakeredis.aioredis
 import pytest
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, HTTPException
 from httpx import ASGITransport, AsyncClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
@@ -53,7 +53,10 @@ async def fake_session(tenant_id: str = "demo"):
 @pytest.mark.anyio
 async def test_order_on_deleted_resource_returns_403(monkeypatch) -> None:
     async def fake_create_order(session, token, lines):
-        raise ValueError("GONE_RESOURCE")
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "GONE_RESOURCE", "message": "Menu item is inactive/deleted"},
+        )
 
     async def fake_on_rejected(tenant_id, ip, redis):
         return None
@@ -76,11 +79,17 @@ async def test_order_on_deleted_resource_returns_403(monkeypatch) -> None:
             json={"items": [{"item_id": "1", "qty": 1}]},
         )
         assert resp1.status_code == 403
-        assert resp1.json()["detail"] == "GONE_RESOURCE"
+        assert resp1.json()["detail"] == {
+            "code": "GONE_RESOURCE",
+            "message": "Menu item is inactive/deleted",
+        }
 
         resp2 = await client.post(
             "/c/c1/order",
             json={"items": [{"item_id": "1", "qty": 1}]},
         )
         assert resp2.status_code == 403
-        assert resp2.json()["detail"] == "GONE_RESOURCE"
+        assert resp2.json()["detail"] == {
+            "code": "GONE_RESOURCE",
+            "message": "Menu item is inactive/deleted",
+        }

@@ -32,6 +32,12 @@
 - **Expected Result:** Delete a table and a menu item; orders are blocked while deleted and succeed once restored.
 - [ ] Pass    [ ] Fail
 
+## Soft-delete flows
+- **Delete a table → guest scan should fail; restore → scan works.**
+- **Delete a menu item → cannot add to cart; restore → can add.**
+- **Admin list with `include_deleted` shows deleted rows.**
+- [ ] Pass    [ ] Fail
+
 ## Quota boundaries
 - **Expected Result:** Hit quotas for tables, menu items, images, and exports; expect 403 FEATURE_LIMIT with an upgrade hint.
 - [ ] Pass    [ ] Fail

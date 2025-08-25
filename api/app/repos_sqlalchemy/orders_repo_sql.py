@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain import OrderStatus
 from ..models_tenant import MenuItem, Order, OrderItem, Table
+from ..utils.soft_delete import guard_not_deleted
 from . import ema_repo_sql
 from ..services import ema
 
@@ -41,15 +42,12 @@ async def create_order(
     Returns the newly created order's identifier.
     """
 
-    result = await session.execute(
-        select(Table.id, Table.deleted_at).where(Table.code == table_code)
-    )
-    row = result.one_or_none()
-    if row is None:  # pragma: no cover - defensive check
+    result = await session.execute(select(Table).where(Table.code == table_code))
+    table = result.scalar_one_or_none()
+    if table is None:  # pragma: no cover - defensive check
         raise ValueError(f"table {table_code!r} not found")
-    if row.deleted_at is not None:
-        raise ValueError("GONE_RESOURCE")
-    table_id = row.id
+    guard_not_deleted(table, "Table is inactive/deleted")
+    table_id = table.id
 
     order = Order(table_id=table_id, status=OrderStatus.PLACED.value)
     session.add(order)
@@ -57,30 +55,22 @@ async def create_order(
 
     item_ids = [l["item_id"] for l in lines]
     if item_ids:
-        result = await session.execute(
-            select(
-                MenuItem.id,
-                MenuItem.name,
-                MenuItem.price,
-                MenuItem.deleted_at,
-            ).where(MenuItem.id.in_(item_ids))
-        )
-        items = {row.id: row for row in result}
+        result = await session.execute(select(MenuItem).where(MenuItem.id.in_(item_ids)))
+        items = {item.id: item for item in result.scalars()}
     else:  # pragma: no cover - empty order
         items = {}
 
     for line in lines:
-        data = items.get(line["item_id"])
-        if data is None:  # pragma: no cover - menu item missing
+        item = items.get(line["item_id"])
+        if item is None:  # pragma: no cover - menu item missing
             raise ValueError(f"menu item {line['item_id']!r} not found")
-        if data.deleted_at is not None:
-            raise ValueError("GONE_RESOURCE")
+        guard_not_deleted(item, "Menu item is inactive/deleted")
         session.add(
             OrderItem(
                 order_id=order.id,
-                item_id=line["item_id"],
-                name_snapshot=data.name,
-                price_snapshot=data.price,
+                item_id=item.id,
+                name_snapshot=item.name,
+                price_snapshot=item.price,
                 qty=line["qty"],
                 status=OrderStatus.PLACED.value,
             )

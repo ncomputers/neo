@@ -25,6 +25,7 @@ from .models_tenant import (
     OrderItem,
     Payment,
     TenantMeta,
+    Table,
 )
 from .routes_exports import DEFAULT_LIMIT, SCAN_LIMIT, _session
 from .security import ratelimit
@@ -112,6 +113,29 @@ async def export_all(
                     Category,
                     ["id", "name", "sort"],
                     "menu.csv",
+                    zf,
+                    limit,
+                    cur,
+                ),
+            )
+            max_cursor = max(
+                max_cursor,
+                await _export_table(
+                    session,
+                    Table,
+                    [
+                        ("id", Table.id),
+                        ("code", Table.code),
+                        ("name", Table.name),
+                        (
+                            "status",
+                            case(
+                                (Table.deleted_at.isnot(None), "deleted"),
+                                else_="active",
+                            ),
+                        ),
+                    ],
+                    "tables.csv",
                     zf,
                     limit,
                     cur,

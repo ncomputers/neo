@@ -6,13 +6,13 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import func
 
 from .auth import User, role_required
 from .db import SessionLocal
 from .models_tenant import Table
 from .utils.audit import audit
 from .utils.responses import ok
+from .utils.soft_delete import filter_active, restore as restore_flag, soft_delete
 
 
 class TablePosition(BaseModel):
@@ -85,7 +85,7 @@ async def get_table_map(tenant: str, include_deleted: bool = False) -> dict:
     with SessionLocal() as session:
         query = session.query(Table)
         if not include_deleted:
-            query = query.filter(Table.deleted_at.is_(None))
+            query = filter_active(query)
         records = query.all()
         data = [
             {
@@ -117,9 +117,16 @@ async def delete_table(
         )
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
-        table.deleted_at = func.now()
+        soft_delete(table)
         session.commit()
-    return ok(None)
+        session.refresh(table)
+        return ok(
+            {
+                "code": table.code,
+                "name": table.name,
+                "deleted_at": table.deleted_at,
+            }
+        )
 
 
 @router.post("/api/outlet/{tenant}/tables/{code}/restore")
@@ -138,6 +145,13 @@ async def restore_table(
         )
         if table is None:
             raise HTTPException(status_code=404, detail="Table not found")
-        table.deleted_at = None
+        restore_flag(table)
         session.commit()
-    return ok(None)
+        session.refresh(table)
+        return ok(
+            {
+                "code": table.code,
+                "name": table.name,
+                "deleted_at": table.deleted_at,
+            }
+        )
