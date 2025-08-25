@@ -8,11 +8,6 @@ import fakeredis.aioredis
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
 
-sys.modules.setdefault("api.app.metrics", types.SimpleNamespace(router=APIRouter()))
-sys.modules.setdefault(
-    "api.app.routes_support", types.SimpleNamespace(router=APIRouter())
-)
-
 from api.app.db import engine  # noqa: E402
 from api.app.main import SessionLocal, app  # noqa: E402
 from api.app.models_tenant import (  # noqa: E402
@@ -28,9 +23,11 @@ client = TestClient(app)
 
 def setup_module():
     app.state.redis = fakeredis.aioredis.FakeRedis()
-    global _orig_metrics
+    global _orig_metrics, _orig_support
     _orig_metrics = sys.modules.get("api.app.metrics")
-    sys.modules["api.app.metrics"] = types.SimpleNamespace(router=APIRouter())
+    _orig_support = sys.modules.get("api.app.routes_support")
+    sys.modules.setdefault("api.app.metrics", types.SimpleNamespace(router=APIRouter()))
+    sys.modules.setdefault("api.app.routes_support", types.SimpleNamespace(router=APIRouter()))
 
 
 def seed():
@@ -84,3 +81,7 @@ def teardown_module():
         sys.modules["api.app.metrics"] = _orig_metrics
     else:
         del sys.modules["api.app.metrics"]
+    if _orig_support is not None:
+        sys.modules["api.app.routes_support"] = _orig_support
+    else:
+        del sys.modules["api.app.routes_support"]

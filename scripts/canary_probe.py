@@ -13,9 +13,12 @@ import json
 import logging
 import os
 import uuid
+from datetime import date, datetime, timedelta
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+from jose import jwt
 
 try:  # optional Prometheus pushgateway support
     from prometheus_client import CollectorRegistry, Gauge, push_to_gateway  # type: ignore
@@ -23,14 +26,21 @@ except Exception:  # pragma: no cover - dependency optional
     CollectorRegistry = Gauge = push_to_gateway = None  # type: ignore
 
 
-def _request(method: str, url: str, headers: dict[str, str], payload: dict[str, Any]) -> Any:
-    data = json.dumps(payload).encode()
-    req = Request(url, data=data, headers={"Content-Type": "application/json", **headers}, method=method)
+def _request(
+    method: str,
+    url: str,
+    headers: dict[str, str],
+    payload: dict[str, Any] | None = None,
+) -> Any:
+    data = json.dumps(payload).encode() if payload is not None else None
+    req_headers = {"Content-Type": "application/json", **headers} if data else headers
+    req = Request(url, data=data, headers=req_headers, method=method)
     with urlopen(req, timeout=10) as resp:  # noqa: S310 - controlled URL
         body = resp.read()
         if resp.status >= 400:
-            raise RuntimeError(f"{method} {url} -> {resp.status} {body.decode()}")
-        return json.loads(body)
+            raise RuntimeError(f"{method} {url} -> {resp.status} {body.decode(errors='ignore')}")
+        ctype = resp.headers.get("Content-Type", "")
+        return json.loads(body) if "application/json" in ctype else body
 
 
 def _emit_metric(ok: bool) -> None:
@@ -70,6 +80,31 @@ def main() -> None:
             {"items": [{"item_id": "canary", "qty": 1}]},
         )
         order_id = order["data"]["order_id"]
+
+        _request(
+            "GET",
+            f"{args.base_url}/api/outlet/{args.tenant}/kot/{order_id}.pdf",
+            {},
+        )
+
+        secret = os.environ.get("JWT_SECRET", "supersecret")
+        token = jwt.encode(
+            {
+                "sub": "canary",
+                "role": "super_admin",
+                "exp": datetime.utcnow() + timedelta(minutes=5),
+            },
+            secret,
+            algorithm="HS256",
+        )
+        yesterday = (date.today() - timedelta(days=1)).isoformat()
+        _request(
+            "POST",
+            f"{args.base_url}/api/outlet/{args.tenant}/digest/run?date={yesterday}",
+            {"Authorization": f"Bearer {token}"},
+            {},
+        )
+
         _request(
             "PATCH",
             f"{args.base_url}/tables/{args.table}/order/0",
