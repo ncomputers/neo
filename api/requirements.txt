@@ -19,6 +19,12 @@ redis
 fakeredis
 redis
 jinja2
+# email utilities
+email-validator
+# testing tools
+hypothesis
+# aws sdk for tests
+boto3
 # observability
 prometheus_client
 opentelemetry-api

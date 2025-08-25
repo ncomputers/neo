@@ -169,7 +169,7 @@ Outlet staff can authenticate with a numeric PIN to perform protected actions:
 
 Owners can authenticate using a passwordless email flow:
 
-- `POST /auth/magic/start` – request a single-use login link. Throttled to 3/min per IP and 10/hour per email.
+- `POST /auth/magic/start` – request a single-use login link. Throttled to 2/min per IP and 5/hour per email. When rate limited, clients may include an `X-Captcha-Token` HMAC generated with `CAPTCHA_SECRET` to bypass.
 - `GET /auth/magic/consume?token=...` – exchange the link for a session JWT.
 
 ### Media Uploads

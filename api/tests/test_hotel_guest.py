@@ -8,8 +8,6 @@ import fakeredis.aioredis
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
 
-sys.modules.setdefault("api.app.metrics", types.SimpleNamespace(router=APIRouter()))
-
 from api.app.main import app, SessionLocal
 from api.app.models_tenant import Category, MenuItem, Room, NotificationOutbox
 from api.app.db import engine
@@ -19,6 +17,9 @@ client = TestClient(app)
 
 def setup_module():
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    global _orig_metrics
+    _orig_metrics = sys.modules.get("api.app.metrics")
+    sys.modules["api.app.metrics"] = types.SimpleNamespace(router=APIRouter())
 
 
 def seed():
@@ -57,3 +58,10 @@ def test_room_menu_order_cleaning():
     resp = client.post("/h/R-101/request/cleaning")
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
+
+
+def teardown_module():
+    if _orig_metrics is not None:
+        sys.modules["api.app.metrics"] = _orig_metrics
+    else:
+        del sys.modules["api.app.metrics"]
