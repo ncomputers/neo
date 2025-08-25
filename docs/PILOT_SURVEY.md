@@ -12,4 +12,4 @@ Use this form to collect staff feedback after the pilot.
 ## Submission
 - Collect responses via Google Form or internal survey tool.
 - Review results weekly during the pilot.
-
+- Share a summary with stakeholders after the pilot.
