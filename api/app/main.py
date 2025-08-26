@@ -100,8 +100,10 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
+from .routes_admin_dlq import router as admin_dlq_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_privacy import router as admin_privacy_router
+
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_ops import router as admin_ops_router
 from .routes_alerts import router as alerts_router
@@ -121,6 +123,9 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
+from .routes_admin_dlq import router as admin_dlq_router
+from .routes_admin_privacy import router as admin_privacy_router
+
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_help import router as help_router
@@ -138,6 +143,7 @@ from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
+from .routes_order_void import router as order_void_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
@@ -152,15 +158,19 @@ from .routes_pwa_version import router as pwa_version_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
+from .routes_csp import router as csp_router
 from .routes_security import router as security_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
+from .routes_admin_support import router as admin_support_router
 from .routes_support_bundle import router as support_bundle_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
+from .routes_tenant_sandbox import router as tenant_sandbox_router
 from .routes_time_skew import router as time_skew_router
+
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhook_tools import router as webhook_tools_router
@@ -834,6 +844,7 @@ app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
 app.include_router(onboarding_router)
 app.include_router(qrpack_router)
+app.include_router(order_void_router)
 
 # KDS/KOT domain
 app.include_router(kot_router)
@@ -850,6 +861,7 @@ app.include_router(menu_import_router)
 app.include_router(alerts_router)
 app.include_router(security_router)
 app.include_router(jobs_status_router)
+app.include_router(admin_dlq_router)
 app.include_router(admin_privacy_router)
 app.include_router(outbox_admin_router)
 app.include_router(webhook_tools_router)
@@ -871,10 +883,12 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
+app.include_router(admin_support_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)
 app.include_router(maintenance_router)
 app.include_router(tenant_close_router)
+app.include_router(tenant_sandbox_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
@@ -892,6 +906,7 @@ app.include_router(admin_qrpack_router)
 app.include_router(daybook_pdf_router)
 app.include_router(digest_router)
 app.include_router(reports_router)
+app.include_router(csp_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
 app.include_router(export_all_router)

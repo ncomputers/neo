@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import os
-import re
 import secrets
+import uuid
 from typing import List
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -29,7 +29,6 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         else:
             self.allowed_origins = [o.strip() for o in allowed.split(",") if o.strip()]
         self.max_bytes = 256 * 1024
-        self.key_pattern = re.compile(r"^[A-Za-z0-9_\-=:]+$")
         self.hsts_enabled = os.getenv("ENABLE_HSTS") == "1"
 
     async def dispatch(self, request: Request, call_next):
@@ -53,11 +52,14 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 )
 
             key = request.headers.get("Idempotency-Key")
-            if key and (len(key) > 128 or not self.key_pattern.fullmatch(key)):
-                return JSONResponse(
-                    err("BAD_IDEMPOTENCY_KEY", "BadIdempotencyKey"),
-                    status_code=HTTP_400_BAD_REQUEST,
-                )
+            if key:
+                try:
+                    uuid.UUID(key)
+                except ValueError:
+                    return JSONResponse(
+                        err("BAD_IDEMPOTENCY_KEY", "BadIdempotencyKey"),
+                        status_code=HTTP_400_BAD_REQUEST,
+                    )
 
             async def receive() -> dict:
                 return {"type": "http.request", "body": body}
@@ -82,6 +84,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             f"script-src 'self' 'nonce-{nonce}'"
         )
         response.headers.setdefault("Content-Security-Policy", csp)
+        csp_report = csp + "; report-uri /csp/report"
+        response.headers.setdefault("Content-Security-Policy-Report-Only", csp_report)
         if self.hsts_enabled:
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"

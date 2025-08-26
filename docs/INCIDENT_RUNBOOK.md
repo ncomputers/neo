@@ -30,3 +30,6 @@ Contact: {incident commander}
 2. Trigger rollback in deployment pipeline.
 3. Monitor metrics and logs for recovery.
 4. Announce resolution and close incident.
+
+## Testing
+Use `scripts/emit_test_alert.py` to trigger a synthetic alert during drills.

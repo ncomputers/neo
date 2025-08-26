@@ -61,33 +61,34 @@ def main() -> None:
         help="PostgreSQL connection string",
     )
     parser.add_argument(
-        "--baseline",
+        "--baseline-dir",
         type=Path,
-        default=Path(__file__).with_name("plan_baseline.json"),
-        help="JSON file with query baselines",
+        default=Path(__file__).resolve().parents[1] / ".ci" / "baselines",
+        help="Directory containing query baseline JSON files",
     )
     parser.add_argument(
         "--runs", type=int, default=5, help="Number of executions per query"
     )
     args = parser.parse_args()
 
-    with open(args.baseline, "r", encoding="utf8") as fh:
-        queries = json.load(fh)
-
     conn = psycopg2.connect(args.dsn)
 
     failures: List[str] = []
     try:
-        for name, info in queries.items():
-            durations = run_explain(conn, info["sql"], args.runs)
-            try:
-                p95_ms = guard_query(name, durations, float(info["baseline_ms"]))
-                print(
-                    f"{name}: p95 {p95_ms:.2f} ms (baseline {info['baseline_ms']} ms)"
-                )
-            except RuntimeError as exc:  # pragma: no cover - exercised in CI
-                failures.append(str(exc))
-                print(str(exc), file=sys.stderr)
+        for baseline in sorted(args.baseline_dir.glob("*.json")):
+            with open(baseline, "r", encoding="utf8") as fh:
+                queries = json.load(fh)
+            for name, info in queries.items():
+                durations = run_explain(conn, info["sql"], args.runs)
+                try:
+                    p95_ms = guard_query(name, durations, float(info["baseline_ms"]))
+                    print(
+                        f"{name}: p95 {p95_ms:.2f} ms "
+                        f"(baseline {info['baseline_ms']} ms)"
+                    )
+                except RuntimeError as exc:  # pragma: no cover - exercised in CI
+                    failures.append(str(exc))
+                    print(str(exc), file=sys.stderr)
     finally:
         conn.close()
 
