@@ -2,14 +2,15 @@
 
 Minimal event tracking can be sent to [PostHog](https://posthog.com) or
 [Mixpanel](https://mixpanel.com). Analytics is disabled by default and only
-records data for tenants that have granted consent.
+records data for tenants that have granted consent. Events are buffered and
+sent in small batches with automatic retries.
 
 ## Enabling
 
-1. Turn on the feature flag:
+1. Enable analytics:
 
    ```bash
-   export FLAG_ANALYTICS=1
+   export TENANT_ANALYTICS_ENABLED=1
    ```
 
 2. Supply credentials for either PostHog or Mixpanel:
