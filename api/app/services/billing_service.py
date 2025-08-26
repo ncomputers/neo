@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from decimal import (
-    Decimal,
-    ROUND_HALF_UP,
-    ROUND_HALF_EVEN,
-    ROUND_CEILING,
-    ROUND_FLOOR,
-)
-from typing import Iterable, Mapping, Literal, Sequence
+from datetime import time
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
+from typing import Iterable, Literal, Mapping, Sequence
+
+from ..pricing import active_window, apply_discount
 
 GSTMode = Literal["unreg", "comp", "reg"]
 
@@ -47,6 +44,8 @@ def compute_bill(
     coupons: Sequence[Mapping[str, object]] | None = None,
     gst_rounding: str = "invoice-total",
     rounding_mode: str = "half-up",
+    happy_hour: Sequence[Mapping[str, object]] | None = None,
+    now: time | None = None,
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
 
@@ -90,6 +89,7 @@ def compute_bill(
     """
 
     subtotal = Decimal("0")
+    discount_total = Decimal("0")
     tax_breakup: defaultdict[Decimal, Decimal] = defaultdict(lambda: Decimal("0"))
 
     if rounding_mode not in ROUNDING_MAP:
@@ -99,14 +99,18 @@ def compute_bill(
     if gst_rounding not in {"item-wise", "invoice-total"}:
         raise ValueError(f"Unsupported GST rounding style: {gst_rounding}")
 
+    window = active_window(happy_hour, now)
     for item in items:
         qty = Decimal(str(item.get("qty", 1)))
         price = Decimal(str(item["price"]))
         gst_rate = Decimal(str(item.get("gst", 0)))
         line_total = qty * price
         subtotal += line_total
+        discounted_price = apply_discount(price, window)
+        discount_total += (price - discounted_price) * qty
+        discounted_total = qty * discounted_price
         if gst_mode == "reg" and gst_rate:
-            tax = line_total * gst_rate / Decimal("100")
+            tax = discounted_total * gst_rate / Decimal("100")
             if gst_rounding == "item-wise":
                 tax = tax.quantize(Decimal("0.01"), rounding=rounding_constant)
             tax_breakup[gst_rate] += tax
@@ -119,7 +123,7 @@ def compute_bill(
                 Decimal("0.01"), rounding=rounding_constant
             )
 
-    total = subtotal + sum(tax_breakup.values())
+    total = (subtotal - discount_total) + sum(tax_breakup.values())
 
     applied_coupons: list[str] = []
     effective_discount = Decimal("0")
@@ -171,9 +175,7 @@ def compute_bill(
             subtotal.quantize(Decimal("0.01"), rounding=rounding_constant)
         ),
         "tax_breakup": {
-            int(rate): float(
-                val.quantize(Decimal("0.01"), rounding=rounding_constant)
-            )
+            int(rate): float(val.quantize(Decimal("0.01"), rounding=rounding_constant))
             for rate, val in tax_breakup.items()
         },
         "tip": float(tip_amount.quantize(Decimal("0.01"), rounding=rounding_constant)),
@@ -188,6 +190,10 @@ def compute_bill(
     if coupons:
         bill["applied_coupons"] = applied_coupons
         bill["effective_discount"] = float(effective_discount.quantize(Decimal("0.01")))
+    if discount_total:
+        bill["discount"] = float(
+            discount_total.quantize(Decimal("0.01"), rounding=rounding_constant)
+        )
 
     return bill
 
@@ -199,6 +205,8 @@ def build_invoice_context(
     rounding: str = "nearest_1",
     gst_rounding: str = "invoice-total",
     rounding_mode: str = "half-up",
+    happy_hour: Sequence[Mapping[str, object]] | None = None,
+    now: time | None = None,
 ) -> dict:
     """Build a render-friendly invoice dict based on ``gst_mode``.
 
@@ -219,6 +227,8 @@ def build_invoice_context(
         rounding=rounding,
         gst_rounding=gst_rounding,
         rounding_mode=rounding_mode,
+        happy_hour=happy_hour,
+        now=now,
     )
     invoice = {
         "gst_mode": gst_mode,
@@ -254,5 +264,8 @@ def build_invoice_context(
             invoice["tax_lines"].append(
                 {"label": f"SGST {half_rate}%", "amount": half_amount}
             )
+
+    if bill.get("discount"):
+        invoice["discount"] = bill["discount"]
 
     return invoice

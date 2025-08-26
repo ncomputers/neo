@@ -4,6 +4,13 @@ from api.app.main import app
 from api.app.routes_onboarding import TENANTS
 
 
+def test_help_index_lists_links():
+    client = TestClient(app)
+    resp = client.get("/help")
+    assert resp.status_code == 200
+    assert "Owner Onboarding" in resp.text
+
+
 def test_help_page_includes_branding():
     TENANTS["demo"] = {"profile": {"name": "Demo Outlet", "logo_url": "logo.png"}}
     client = TestClient(app)

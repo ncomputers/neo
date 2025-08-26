@@ -13,3 +13,7 @@ Use this form to collect staff feedback after the pilot.
 - Collect responses via Google Form or internal survey tool.
 - Review results weekly during the pilot.
 - Share a summary with stakeholders after the pilot.
+
+## API
+Submit NPS feedback via `POST /api/pilot/{tenant}/feedback` with JSON `{"score": 9, "comment": "Great"}`.
+A daily cron runs `scripts/pilot_nps_digest.py` to email NPS summaries per outlet.
