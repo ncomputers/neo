@@ -41,3 +41,7 @@ Owners can request help directly from the service.
 Clients can compare their clock against the server.
 
 - `GET /time/skew` – returns the current server epoch timestamp.
+
+## GST Engine
+
+See [GST Engine](GST_ENGINE.md) for details on invoice tax calculations.
