@@ -232,6 +232,7 @@ app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
 init_tracing(app)
 asyncio.set_event_loop(asyncio.new_event_loop())
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
+app.state.export_progress = {}
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)

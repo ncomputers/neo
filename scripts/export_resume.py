@@ -27,7 +27,7 @@ def stream(url: str, output: str, cursor: str | None) -> None:
                 for chunk in resp.iter_content(chunk_size=8192):
                     if chunk:
                         fh.write(chunk)
-            cur = resp.headers.get("Next-Cursor")
+            cur = resp.headers.get("Next-Cursor") or resp.headers.get("X-Cursor")
             if not cur:
                 break
             print(f"next cursor: {cur}", file=sys.stderr)

@@ -1,6 +1,7 @@
 # Exports
 
 Big export endpoints support cursor-based pagination so interrupted downloads can resume.
+Each request caps output to **100k rows**; if hit, the `X-Export-Hint` header advises clients to refine the range and resume with the provided cursor.
 Export downloads are provided via tenant-scoped, signed URLs to ensure isolation.
 
 ## Owner data export
@@ -63,6 +64,16 @@ with open("daily.csv", "ab") as fh:
         if not cursor:
             break
 ```
+
+### Progress via SSE
+
+Provide a `progress` query parameter to the export request and listen on:
+
+```
+GET /api/outlet/demo/exports/progress/{progress}
+```
+
+Each event reports rows exported so far.
 
 ## Helper CLI
 
