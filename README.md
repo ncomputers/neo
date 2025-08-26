@@ -497,7 +497,7 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `notifications_outbox_delivered_total` / `notifications_outbox_failed_total`: notification worker results
 - `ws_messages_total`: WebSocket messages delivered
 - `sse_clients_gauge`: currently connected SSE clients
-- `digest_sent_total`: daily KPI digests sent (via route or CLI)
+- `digest_sent_total`: daily owner digests (orders, avg prep time, top items, comps, tips, gateway fee estimate) sent via email/WhatsApp or CLI
 - `slo_requests_total` / `slo_errors_total`: per-route SLO tracking
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
