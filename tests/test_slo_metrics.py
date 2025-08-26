@@ -8,11 +8,20 @@ from api.app.middlewares.prometheus import PrometheusMiddleware
 from api.app.routes_metrics import router as metrics_router
 
 
+class DummyRedis:
+    async def keys(self, *args, **kwargs):
+        return []
+
+    async def llen(self, *args, **kwargs):
+        return 0
+
+
 def test_slo_metrics_and_admin_endpoint(monkeypatch):
     app = FastAPI()
     app.add_middleware(PrometheusMiddleware)
     app.include_router(routes_slo.router)
     app.include_router(metrics_router)
+    app.state.redis = DummyRedis()
 
     @app.get("/ok")
     def ok_route():
