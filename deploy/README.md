@@ -94,8 +94,16 @@ sudo systemctl enable --now neo-grace.timer
 ```
 
 ## 9. Blue/green releases
-For safer deploys that avoid downtime, see the [blue/green guide](bluegreen/README.md)
-for instructions on upstream swaps, health gates and release smoke tests.
+Automate zero-downtime deploys with the helper script. It boots the new
+version, waits for `/ready`, runs smoke and canary probes and then flips the
+Nginx upstream before retiring the old instance:
+
+```bash
+python scripts/deploy_blue_green.py --new neo-green --old neo-blue --tenant TENANT --table TABLE --base-url https://example.com
+```
+
+For manual steps and more background, see the [blue/green guide](bluegreen/README.md).
+
 ## Grafana dashboards
 
 Prebuilt dashboards for API, background workers and tenant KPIs are located in
