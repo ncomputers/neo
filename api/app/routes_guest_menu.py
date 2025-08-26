@@ -74,7 +74,6 @@ async def fetch_menu(
     table_token: str,
     request: Request,
     response: Response,
-    filter: str | None = None,
     if_none_match: str | None = Header(default=None, alias="If-None-Match"),
     accept_language: str | None = Header(default=None, alias="Accept-Language"),
     filter: str | None = None,

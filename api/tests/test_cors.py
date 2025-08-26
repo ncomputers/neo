@@ -23,7 +23,7 @@ def test_allowed_origins_env(monkeypatch):
     resp_ok = client.get("/ready", headers={"Origin": "https://allowed.com"})
     assert resp_ok.headers.get("access-control-allow-origin") == "https://allowed.com"
 
-    resp_block = client.get("/ready", headers={"Origin": "https://bad.com"})
+    resp_block = client.get("/ready", headers={"Origin": "https://allowed.com.evil"})
     assert resp_block.status_code == 403
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
@@ -51,9 +51,14 @@ def test_security_headers(monkeypatch):
 
     client = TestClient(app_main.app)
     resp = client.get("/health", headers={"Origin": "https://allowed.com"})
-    assert resp.headers.get("Referrer-Policy") == "no-referrer"
+    assert resp.headers.get("access-control-allow-origin") == "https://allowed.com"
+    assert resp.headers.get("Referrer-Policy") == "same-origin"
     assert resp.headers.get("X-Content-Type-Options") == "nosniff"
     assert resp.headers.get("X-Frame-Options") == "DENY"
+    assert (
+        resp.headers.get("Strict-Transport-Security")
+        == "max-age=31536000; includeSubDomains"
+    )
     csp = resp.headers.get("Content-Security-Policy")
     assert csp and "default-src 'self'" in csp and "img-src 'self'" in csp
     cookie_resp = client.get("/cookie")
@@ -63,7 +68,6 @@ def test_security_headers(monkeypatch):
     assert "httponly" in lower_cookie
     assert "secure" in lower_cookie
     assert "samesite=lax" in lower_cookie
-
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
     monkeypatch.delenv("ENABLE_HSTS", raising=False)
