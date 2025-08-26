@@ -100,6 +100,7 @@ from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
+from .routes_admin_dlq import router as admin_dlq_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_privacy import router as admin_privacy_router
 
@@ -854,6 +855,7 @@ app.include_router(menu_import_router)
 app.include_router(alerts_router)
 app.include_router(security_router)
 app.include_router(jobs_status_router)
+app.include_router(admin_dlq_router)
 app.include_router(admin_privacy_router)
 app.include_router(outbox_admin_router)
 app.include_router(webhook_tools_router)
