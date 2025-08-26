@@ -32,3 +32,7 @@ All notable changes to this project will be documented in this file.
 - Idempotent offline order queue using client-side `op_id` dedupe.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
 
+## v1.0.0-rc - 2025-08-25
+
+- Initial release candidate.
+
