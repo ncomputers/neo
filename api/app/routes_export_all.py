@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
-from io import BytesIO, StringIO
+from io import BytesIO, TextIOWrapper
 from typing import Iterator
 from zipfile import ZipFile
 
@@ -26,7 +26,7 @@ from .models_tenant import (
     TenantMeta,
     Table,
 )
-from .routes_exports import DEFAULT_LIMIT, SCAN_LIMIT, _session
+from .routes_exports import DEFAULT_LIMIT, SCAN_LIMIT, HARD_LIMIT, _session
 from .security import ratelimit
 from .utils import ratelimits
 from .utils.rate_limit import rate_limited
@@ -49,31 +49,33 @@ async def _export_table(
     limit: int,
     cursor: int,
 ) -> int:
-    buf = StringIO()
-    writer = csv.writer(buf)
     headers = [c[0] if isinstance(c, tuple) else c for c in columns]
-    writer.writerow(headers)
     exported = 0
     last_id = cursor
-    while exported < limit:
-        chunk = min(SCAN_LIMIT, limit - exported)
-        select_cols = [c[1] if isinstance(c, tuple) else getattr(model, c) for c in columns]
-        stmt = (
-            select(*select_cols)
-            .where(getattr(model, "id") > last_id)
-            .order_by(getattr(model, "id"))
-            .limit(chunk)
-        )
-        rows = (await session.execute(stmt)).all()
-        if not rows:
-            break
-        for row in rows:
-            writer.writerow(row)
-            last_id = row[0]
-            exported += 1
-        if len(rows) < chunk:
-            break
-    zf.writestr(filename, buf.getvalue())
+    with zf.open(filename, "w") as raw:
+        with TextIOWrapper(raw, encoding="utf-8", newline="") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(headers)
+            while exported < limit:
+                chunk = min(SCAN_LIMIT, limit - exported)
+                select_cols = [
+                    c[1] if isinstance(c, tuple) else getattr(model, c) for c in columns
+                ]
+                stmt = (
+                    select(*select_cols)
+                    .where(getattr(model, "id") > last_id)
+                    .order_by(getattr(model, "id"))
+                    .limit(chunk)
+                )
+                rows = (await session.execute(stmt)).all()
+                if not rows:
+                    break
+                for row in rows:
+                    writer.writerow(row)
+                    last_id = row[0]
+                    exported += 1
+                if len(rows) < chunk:
+                    break
     return last_id
 
 
@@ -85,7 +87,7 @@ async def export_all(
     limit: int = DEFAULT_LIMIT,
     cursor: int | None = None,
 ) -> StreamingResponse:
-    limit = min(limit, DEFAULT_LIMIT)
+    limit = min(limit, DEFAULT_LIMIT, HARD_LIMIT)
     cur = cursor or 0
 
     redis = request.app.state.redis

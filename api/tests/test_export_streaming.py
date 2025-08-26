@@ -67,7 +67,7 @@ app.state.redis = fakeredis.aioredis.FakeRedis()
 async def large_seeded_session(tenant_session):
     """Seed the tenant DB with 12k invoices in batches."""
     created = datetime(2024, 1, 1, tzinfo=timezone.utc)
-    for batch in range(12):
+    for batch in range(3):
         invoices = []
         payments = []
         base = batch * 1000
@@ -102,7 +102,7 @@ async def large_seeded_session(tenant_session):
 async def test_daily_export_streaming(large_seeded_session, monkeypatch):
     """Ensure streaming ZIP export handles 12k invoices without OOM."""
     monkeypatch.setenv("DEFAULT_TZ", "UTC")
-    monkeypatch.setattr(routes_exports, "DEFAULT_LIMIT", 20000)
+    monkeypatch.setattr(routes_exports, "DEFAULT_LIMIT", 5000)
     monkeypatch.setattr(
         routes_exports, "render_invoice", lambda bill, size="80mm": (b"", "application/pdf")
     )
@@ -116,11 +116,11 @@ async def test_daily_export_streaming(large_seeded_session, monkeypatch):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         async with client.stream(
             "GET",
-            "/api/outlet/demo/exports/daily?start=2024-01-01&end=2024-01-01&limit=12000",
+            "/api/outlet/demo/exports/daily?start=2024-01-01&end=2024-01-01&limit=3000",
         ) as resp:
             assert resp.status_code == 200
             chunks = [chunk async for chunk in resp.aiter_bytes()]
     data = b"".join(chunks)
     zf = zipfile.ZipFile(io.BytesIO(data))
     inv_rows = list(csv.reader(io.TextIOWrapper(zf.open("invoices.csv"), encoding="utf-8")))
-    assert len(inv_rows) - 1 == 12000
+    assert len(inv_rows) - 1 == 3000

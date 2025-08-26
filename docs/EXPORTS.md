@@ -1,6 +1,8 @@
 # Exports
 
 Big export endpoints support cursor-based pagination so interrupted downloads can resume.
+Each request is capped at **100 000 rows**; when the cap is hit the response includes an
+`X-Row-Limit` header and a `Next-Cursor` value to continue from.
 Export downloads are provided via tenant-scoped, signed URLs to ensure isolation.
 
 ## Owner data export
@@ -82,4 +84,16 @@ python scripts/export_resume.py \
   --output daily.csv \
   --cursor abc123
 ```
+
+## Progress via SSE
+
+Provide a `job` query parameter when starting an export and listen on the
+corresponding progress stream:
+
+```bash
+curl -N http://localhost:8000/api/outlet/demo/exports/daily/progress/abc
+```
+
+The stream emits `progress` events with the number of rows exported and ends
+with a `complete` event.
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """Owner-facing export routes."""
 
+import asyncio
 import csv
 import os
 from contextlib import asynccontextmanager
@@ -10,8 +11,8 @@ from io import BytesIO, StringIO, TextIOWrapper
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -42,8 +43,15 @@ async def _session(tenant_id: str):
         await engine.dispose()
 
 
-DEFAULT_LIMIT = int(os.getenv("EXPORT_MAX_ROWS", "10000"))
+HARD_LIMIT = 100_000
+DEFAULT_LIMIT = min(int(os.getenv("EXPORT_MAX_ROWS", "10000")), HARD_LIMIT)
 SCAN_LIMIT = int(os.getenv("EXPORT_SCAN_ROWS", "5000"))
+
+
+def _iter_bytes(buffer: BytesIO):
+    buffer.seek(0)
+    while chunk := buffer.read(8192):
+        yield chunk
 
 
 @router.get("/api/outlet/{tenant_id}/exports/daily")
@@ -55,7 +63,8 @@ async def daily_export(
     request: Request,
     limit: int = DEFAULT_LIMIT,
     cursor: int | None = None,
-) -> Response:
+    job: str | None = None,
+) -> StreamingResponse:
     """Return a ZIP bundle of invoices, payments and z-report rows."""
     try:
         start_date = datetime.strptime(start, "%Y-%m-%d").date()
@@ -67,7 +76,7 @@ async def daily_export(
     if (end_date - start_date).days > 30:
         return JSONResponse(err("RANGE_TOO_LARGE", "Range too large"), status_code=400)
 
-    limit = min(limit, DEFAULT_LIMIT)
+    limit = min(limit, DEFAULT_LIMIT, HARD_LIMIT)
     cursor = cursor or 0
 
     redis = request.app.state.redis
@@ -79,6 +88,8 @@ async def daily_export(
     if not allowed:
         retry_after = await redis.ttl(f"ratelimit:{ip}:exports")
         return rate_limited(retry_after)
+    if job:
+        await redis.set(f"export:{job}:progress", 0)
 
     tz = os.getenv("DEFAULT_TZ", "UTC")
     tzinfo = ZoneInfo(tz)
@@ -165,6 +176,8 @@ async def daily_export(
                             attachments.append((number, bill))
                             last_id = inv_id
                             exported += 1
+                        if job:
+                            await redis.set(f"export:{job}:progress", exported)
                         pay_stmt = (
                             select(
                                 Payment.invoice_id,
@@ -235,8 +248,7 @@ async def daily_export(
                 ext = "pdf" if mimetype == "application/pdf" else "html"
                 zf.writestr(f"invoices/{number}.{ext}", content)
 
-        response = Response(bundle.getvalue(), media_type="application/zip")
-        response.headers["Content-Disposition"] = "attachment; filename=export.zip"
+        headers = {"Content-Disposition": "attachment; filename=export.zip"}
         more = await session.scalar(
             select(Invoice.id)
             .where(
@@ -247,5 +259,31 @@ async def daily_export(
             .limit(1)
         )
         if more is not None:
-            response.headers["X-Cursor"] = str(last_id)
-        return response
+            headers["Next-Cursor"] = str(last_id)
+        if limit == HARD_LIMIT and exported >= HARD_LIMIT and more is not None:
+            headers["X-Row-Limit"] = str(HARD_LIMIT)
+        if job:
+            await redis.delete(f"export:{job}:progress")
+        return StreamingResponse(_iter_bytes(bundle), media_type="application/zip", headers=headers)
+
+
+@router.get(
+    "/api/outlet/{tenant_id}/exports/daily/progress/{job}",
+    response_class=StreamingResponse,
+    responses={200: {"content": {"text/event-stream": {}}}},
+)
+async def daily_export_progress(tenant_id: str, job: str, request: Request) -> StreamingResponse:
+    """Stream export progress via SSE."""
+
+    redis = request.app.state.redis
+
+    async def event_gen():
+        while True:
+            val = await redis.get(f"export:{job}:progress")
+            if val is None:
+                yield "event: complete\ndata: 100\n\n"
+                break
+            yield f"event: progress\ndata: {int(val)}\n\n"
+            await asyncio.sleep(1)
+
+    return StreamingResponse(event_gen(), media_type="text/event-stream")
