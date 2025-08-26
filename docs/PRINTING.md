@@ -27,6 +27,12 @@ live till.
 If no printer is available, render the ticket as PDF or HTML and preview it in a
 browser before sending it to hardware.
 
+## Admin test route
+
+POST `/admin/print/test` accepts `{"printer": "58mm"|"80mm"}` and returns the
+ESC/POS text used for preview while also publishing a message for connected print
+agents. This helps verify printer connectivity from the dashboard.
+
 ## Security
 
 Printable invoice and KOT pages include a strict Content-Security-Policy header
