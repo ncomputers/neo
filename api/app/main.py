@@ -203,6 +203,7 @@ sys.modules.setdefault("repos_sqlalchemy", app_repos_sqlalchemy)
 sys.modules.setdefault("utils", app_utils)
 kds_router = importlib.import_module(".routes_kds", __package__).router
 kds_sla_router = importlib.import_module(".routes_kds_sla", __package__).router
+kds_expo_router = importlib.import_module(".routes_kds_expo", __package__).router
 superadmin_router = importlib.import_module(".routes_superadmin", __package__).router
 
 
@@ -883,6 +884,7 @@ app.include_router(order_void_router)
 app.include_router(kot_router)
 app.include_router(kds_router)
 app.include_router(kds_sla_router)
+app.include_router(kds_expo_router)
 
 # Admin domain
 app.include_router(counter_admin_router)
