@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
   "Request more" link.
+- Support happy-hour pricing via scheduled discount windows.
 
 
 ## v1.0.0-rc - 2025-08-25
