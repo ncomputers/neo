@@ -2,87 +2,52 @@ import { useState } from 'react'
 import { apiFetch } from './api'
 
 export default function Troubleshoot() {
-  const [printerStatus, setPrinterStatus] = useState('')
-  const [timeStatus, setTimeStatus] = useState('')
-  const [dnsStatus, setDnsStatus] = useState('')
+  const [results, setResults] = useState(null)
 
-  const checkPrinter = () => {
-    apiFetch('/printer/status')
-      .then((r) => {
-        if (r.ok) {
-          setPrinterStatus('Printer reachable.')
-        } else {
-          setPrinterStatus('Printer offline. Check power and network.')
-        }
-      })
-      .catch(() => {
-        setPrinterStatus('Printer offline. Check power and network.')
-      })
-  }
-
-  const checkTime = () => {
-    apiFetch('/time/skew')
+  const runChecks = () => {
+    const epoch = Date.now()
+    apiFetch(`/admin/troubleshoot?client_epoch=${epoch}`, {
+      headers: {
+        'X-App-Version': import.meta.env.VITE_APP_VERSION || '',
+      },
+    })
       .then((r) => r.json())
-      .then((data) => {
-        const serverMs = data.epoch * 1000
-        const skew = Math.abs(Date.now() - serverMs)
-        if (skew > 120000) {
-          setTimeStatus('Device clock is out of sync. Please correct it.')
-        } else {
-          setTimeStatus('Device clock is accurate.')
-        }
-      })
-      .catch(() => {
-        setTimeStatus('Unable to check time skew.')
-      })
-  }
-
-  const checkDns = () => {
-    fetch('https://example.com', { mode: 'no-cors' })
-      .then(() => {
-        setDnsStatus('DNS resolution looks good.')
-      })
-      .catch(() => {
-        setDnsStatus('DNS lookup failed. Check your network settings.')
-      })
+      .then(setResults)
+      .catch(() => setResults({ error: 'Failed to run checks' }))
   }
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold">Troubleshooting</h1>
-
-      <div className="mt-4">
-        <h2 className="font-semibold">Printer offline</h2>
-        <button
-          className="mt-2 rounded bg-blue-600 px-3 py-1 text-white"
-          onClick={checkPrinter}
-        >
-          Check
-        </button>
-        {printerStatus && <p className="mt-2">{printerStatus}</p>}
-      </div>
-
-      <div className="mt-6">
-        <h2 className="font-semibold">Time skew</h2>
-        <button
-          className="mt-2 rounded bg-blue-600 px-3 py-1 text-white"
-          onClick={checkTime}
-        >
-          Check
-        </button>
-        {timeStatus && <p className="mt-2">{timeStatus}</p>}
-      </div>
-
-      <div className="mt-6">
-        <h2 className="font-semibold">DNS issues</h2>
-        <button
-          className="mt-2 rounded bg-blue-600 px-3 py-1 text-white"
-          onClick={checkDns}
-        >
-          Check
-        </button>
-        {dnsStatus && <p className="mt-2">{dnsStatus}</p>}
-      </div>
+      <button
+        className="mt-4 rounded bg-blue-600 px-3 py-1 text-white"
+        onClick={runChecks}
+      >
+        Run checks
+      </button>
+      {results && !results.error && (
+        <ul className="mt-4 space-y-4">
+          <li>
+            <strong>Printer heartbeat:</strong>{' '}
+            {results.printer.ok ? 'Pass' : 'Fail'} {results.printer.next}
+          </li>
+          <li>
+            <strong>Time skew:</strong>{' '}
+            {results.time.ok ? 'Pass' : 'Fail'} {results.time.next}
+          </li>
+          <li>
+            <strong>DNS/latency:</strong>{' '}
+            {results.dns.ok ? 'Pass' : 'Fail'} {results.dns.next}
+          </li>
+          <li>
+            <strong>Software version:</strong>{' '}
+            {results.version.ok ? 'Pass' : 'Fail'} {results.version.next}
+          </li>
+        </ul>
+      )}
+      {results && results.error && (
+        <p className="mt-4 text-red-600">{results.error}</p>
+      )}
     </div>
   )
 }

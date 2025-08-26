@@ -166,6 +166,7 @@ from .routes_slo import router as slo_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
+from .routes_troubleshoot import router as troubleshoot_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
@@ -898,6 +899,7 @@ app.include_router(time_skew_router)
 app.include_router(pwa_version_router)
 app.include_router(version_router)
 app.include_router(ready_router)
+app.include_router(troubleshoot_router)
 app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(admin_support_router)
