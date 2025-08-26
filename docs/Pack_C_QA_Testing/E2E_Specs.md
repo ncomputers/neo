@@ -14,3 +14,9 @@
 
 ## Subscription Block
 - Expire subscription past grace → verify new orders blocked; renewal banner shows.
+
+## Guest to Cashier Full Flow
+- Scan QR → Menu → Filter items → Add items → Place order
+- KDS accepts → Prep time updates → Deliver
+- Add more items → Generate bill → Split payment → Mark paid
+- Soft-delete item and table → subsequent actions guarded with 403
