@@ -45,6 +45,21 @@ Logging can be tuned via:
   exposed via `app.state.replica_healthy` and Prometheus gauge
   `db_replica_healthy` (1 healthy, 0 unhealthy).
 
+Each request carries an `X-Request-ID` header. The middleware generates one
+when missing, attaches it to responses, and emits a structured log line like:
+
+```json
+{"ts":"2024-01-01T00:00:00Z","level":"INFO","req_id":"abc","tenant":null,
+ "user":null,"route":"/health","status":200,"latency_ms":12}
+```
+
+Forward `$request_id` from an Nginx or other reverse proxy so its access logs
+share the same identifier:
+
+```nginx
+proxy_set_header X-Request-ID $request_id;
+```
+
 
 Real-time streams expose additional knobs:
 

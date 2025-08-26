@@ -9,22 +9,36 @@ from fastapi.testclient import TestClient
 from starlette.responses import JSONResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from api.app.main import app  # noqa: E402
 from api.app.middlewares.logging import LoggingMiddleware  # noqa: E402
 
 
-def test_log_line_has_request_id(caplog):
-    client = TestClient(app)
+def test_request_id_propagation(caplog):
+    client = TestClient(_make_app())
     with caplog.at_level(logging.INFO, logger="api"):
-        client.get("/health")
-    line = caplog.messages[0]
+        resp = client.get("/health", headers={"X-Request-ID": "abc"})
+    assert resp.headers["X-Request-ID"] == "abc"
+    line = caplog.messages[1]
     data = json.loads(line)
-    assert data["request_id"]
+    assert data["req_id"] == "abc"
+
+
+def test_request_id_generation(caplog):
+    client = TestClient(_make_app())
+    with caplog.at_level(logging.INFO, logger="api"):
+        resp = client.get("/health")
+    rid = resp.headers["X-Request-ID"]
+    assert rid
+    data = json.loads(caplog.messages[1])
+    assert data["req_id"] == rid
 
 
 def _make_app():
     test_app = FastAPI()
     test_app.add_middleware(LoggingMiddleware)
+
+    @test_app.get("/health")
+    async def health():
+        return {"ok": True}
 
     @test_app.post("/echo")
     async def echo(data: dict):
