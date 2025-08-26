@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { apiFetch } from '../api'
 import LimitsUsageWidget from '../components/LimitsUsageWidget'
+import OpsWidget from '../components/OpsWidget'
+import PilotTelemetryWidget from '../components/PilotTelemetryWidget'
 import OwnerSlaWidget from '../components/OwnerSlaWidget'
 import Integrations from '../components/Integrations'
 
@@ -24,8 +26,11 @@ export default function AdminDashboard() {
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
       <LimitsUsageWidget />
+      <OpsWidget />
+      <PilotTelemetryWidget />
       <OwnerSlaWidget />
       <Integrations />
+
       {loading && <p>Loading...</p>}
       {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (

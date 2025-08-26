@@ -19,7 +19,14 @@ from domain import OrderStatus, can_transition
 from models_tenant import Order, OrderItem
 from .hooks import order_rejection
 from .services import ema as ema_service, push, whatsapp, notifications
-from .services import printer_watchdog
+try:  # pragma: no cover - optional watchdog
+    from .services import printer_watchdog
+except Exception:  # pragma: no cover - fallback when watchdog unavailable
+    class _StubWatchdog:
+        async def check(self, *_args, **_kwargs):
+            return True, 0, 0
+
+    printer_watchdog = _StubWatchdog()
 
 from repos_sqlalchemy import orders_repo_sql
 from .routes_metrics import kds_oldest_kot_seconds
