@@ -1,7 +1,11 @@
 # Exports
 
 Big export endpoints support cursor-based pagination so interrupted downloads can resume.
+Each request is capped at **100 000 rows**; when the cap is hit the response includes an
+`X-Row-Limit` header and a `Next-Cursor` value to continue from.
+
 Each request caps output to **100k rows**; if hit, the `X-Export-Hint` header advises clients to refine the range and resume with the provided cursor.
+
 Export downloads are provided via tenant-scoped, signed URLs to ensure isolation.
 
 ## Owner data export
@@ -94,6 +98,17 @@ python scripts/export_resume.py \
   --cursor abc123
 ```
 
+## Progress via SSE
+
+Provide a `job` query parameter when starting an export and listen on the
+corresponding progress stream:
+
+```bash
+curl -N http://localhost:8000/api/outlet/demo/exports/daily/progress/abc
+```
+
+The stream emits `progress` events with the number of rows exported and ends
+with a `complete` event.
 ## Accounting exports
 
 Lightweight CSVs allow hand-off to ledger software without a full integration.
@@ -114,4 +129,5 @@ GET /api/outlet/{tenant}/accounting/gst_summary.csv?start=YYYY-MM-DD&end=YYYY-MM
 1. Download the CSV export.
 2. In Zoho Books, go to **Sales → Invoices → More Options → Import Invoices**.
 3. Upload the file and map the columns as prompted.
+
 
