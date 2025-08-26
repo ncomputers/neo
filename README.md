@@ -436,7 +436,8 @@ hits exactly `0` when an order is `ready` or `served`.
 Guests who share a phone number and opt in to WhatsApp receive order status
 updates when their order is accepted, out for delivery, or ready. Messages are
 queued through the notification outbox and delivered via the configured
-WhatsApp provider.
+WhatsApp provider. Set `WHATSAPP_GUEST_UPDATES_ENABLED=true` to enable these
+messages.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
 ### Guest request limits

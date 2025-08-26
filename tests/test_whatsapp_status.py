@@ -14,8 +14,9 @@ def _cleanup():
         session.commit()
 
 
-def test_notify_status_enqueues_and_audits():
+def test_notify_status_enqueues_and_audits(monkeypatch):
     _cleanup()
+    monkeypatch.setenv("WHATSAPP_GUEST_UPDATES_ENABLED", "1")
     asyncio.run(whatsapp.notify_status("t1", "+123", 42, "accepted"))
     with SessionLocal() as session:
         outbox = session.query(NotificationOutbox).all()
@@ -27,9 +28,20 @@ def test_notify_status_enqueues_and_audits():
     _cleanup()
 
 
-def test_notify_status_skips_without_phone():
+def test_notify_status_skips_without_phone(monkeypatch):
     _cleanup()
+    monkeypatch.setenv("WHATSAPP_GUEST_UPDATES_ENABLED", "1")
     asyncio.run(whatsapp.notify_status("t1", None, 1, "accepted"))
+    with SessionLocal() as session:
+        assert session.query(NotificationOutbox).count() == 0
+        assert session.query(AuditTenant).count() == 0
+    _cleanup()
+
+
+def test_notify_status_respects_flag(monkeypatch):
+    _cleanup()
+    monkeypatch.setenv("WHATSAPP_GUEST_UPDATES_ENABLED", "0")
+    asyncio.run(whatsapp.notify_status("t1", "+123", 1, "accepted"))
     with SessionLocal() as session:
         assert session.query(NotificationOutbox).count() == 0
         assert session.query(AuditTenant).count() == 0
