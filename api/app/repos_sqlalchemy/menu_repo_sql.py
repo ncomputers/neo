@@ -11,6 +11,7 @@ from fastapi import HTTPException
 
 from ..models_tenant import Category, MenuItem, TenantMeta
 from ..repos.menu_repo import MenuRepo
+from .. import flags
 
 
 class MenuRepoSQL(MenuRepo):
@@ -36,6 +37,7 @@ class MenuRepoSQL(MenuRepo):
         if not include_hidden:
             stmt = stmt.where(MenuItem.out_of_stock.is_(False))
         result = await session.execute(stmt)
+        use_mods = flags.get("simple_modifiers")
         items = []
         for item in result.scalars().all():
             items.append(
@@ -51,10 +53,9 @@ class MenuRepoSQL(MenuRepo):
                     "hsn_sac": item.hsn_sac,
                     "show_fssai": item.show_fssai,
                     "out_of_stock": item.out_of_stock,
-                    "modifiers": item.modifiers or [],
-                    "combos": item.combos or [],
-                    "allergens": item.allergens or [],
-                    "dietary": item.dietary or [],
+                    "modifiers": item.modifiers if use_mods else [],
+                    "combos": item.combos if use_mods else [],
+
                 }
             )
         return items
