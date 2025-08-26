@@ -1,6 +1,7 @@
 """Service layer helpers for the API."""
 
 from .ema import eta, update_ema, record_sample
+from ..kds import printer_watchdog
 
 try:  # pragma: no cover - optional until KDS models stabilise
     from .kds_service import accept_order, bump_item, queue_view
@@ -14,4 +15,5 @@ __all__ = [
     "accept_order",
     "bump_item",
     "queue_view",
+    "printer_watchdog",
 ]

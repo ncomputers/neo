@@ -14,6 +14,9 @@ _webhooks_stub = types.ModuleType("routes_webhooks")
 _webhooks_stub.router = APIRouter()
 sys.modules.setdefault("api.app.routes_webhooks", _webhooks_stub)
 
+# stub missing services
+sys.modules.setdefault("api.app.services.printer_watchdog", types.SimpleNamespace())
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DB_URL", "postgresql://localhost/test")

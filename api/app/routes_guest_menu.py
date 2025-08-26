@@ -6,6 +6,9 @@ from __future__ import annotations
 
 import json
 
+import hashlib
+
+import httpx
 from fastapi import APIRouter, Depends, Header, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +17,7 @@ from .i18n import get_msg, resolve_lang
 from .menu.dietary import filter_items
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.responses import ok
+from config import get_settings
 
 router = APIRouter()
 
@@ -61,8 +65,9 @@ async def fetch_menu(
         data = {"categories": categories, "items": items}
         await redis.set(cache_key, json.dumps(data), ex=60)
     items = data["items"]
-    if filter:
-        items = filter_items(items, filter)
+    filter_str = request.query_params.get("filter")
+    if filter_str:
+        items = filter_items(items, filter_str)
     data["items"] = items
 
     lang = resolve_lang(accept_language)
@@ -71,5 +76,21 @@ async def fetch_menu(
         name: get_msg(lang, f"labels.{name}")
         for name in ("menu", "order", "pay", "get_bill")
     }
+    settings = get_settings()
+    if settings.ab_tests_enabled:
+        variant = request.cookies.get("ab_menu")
+        if variant not in {"A", "B"}:
+            bucket = int(hashlib.md5(table_token.encode()).hexdigest(), 16) % 2
+            variant = "B" if bucket else "A"
+            response.set_cookie("ab_menu", variant, path="/")
+        resp_data["ab_variant"] = variant
+        try:
+            async with httpx.AsyncClient(timeout=2) as client:
+                await client.post(
+                    f"{settings.proxy_url}/analytics/ab",
+                    json={"tenant": tenant_id, "test": "menu", "variant": variant, "event": "exposure"},
+                )
+        except Exception:
+            pass
     response.headers["ETag"] = etag
     return ok(resp_data)

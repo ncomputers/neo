@@ -8,6 +8,6 @@ order is rejected to increment the counter. The `GuestBlockMiddleware` consults
 should be blocked.
 
 After three rejected orders from the same IP within 24 hours for a tenant the
-address is blocked for a day and further guest `POST /g/*` requests return an
-`IP_BLOCKED` (HTTP 429) envelope. Admins may clear an address with
-`POST /api/outlet/{tenant}/security/unblock_ip`.
+address is cooled down for fifteen minutes and further guest `POST /g/*`
+requests return an `IP_BLOCKED` (HTTP 429) envelope. Admins may clear an
+address with `POST /api/outlet/{tenant}/security/unblock_ip`.

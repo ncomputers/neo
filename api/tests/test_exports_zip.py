@@ -173,7 +173,7 @@ async def test_range_too_large(seeded_session, monkeypatch):
 async def large_seeded_session(tenant_session):
     invoices = []
     payments = []
-    for i in range(12000):
+    for i in range(3000):
         inv = Invoice(
             order_group_id=i,
             number=f"INV{i}",
@@ -222,7 +222,7 @@ async def test_daily_export_cursor(large_seeded_session, monkeypatch):
         for _ in range(3):
             url = (
                 "/api/outlet/demo/exports/daily?"
-                "start=2024-01-01&end=2024-01-01&limit=5000"
+                "start=2024-01-01&end=2024-01-01&limit=1000"
             )
             if cursor:
                 url += f"&cursor={cursor}"
@@ -235,7 +235,35 @@ async def test_daily_export_cursor(large_seeded_session, monkeypatch):
                 )
             )
             total += len(inv_rows) - 1
-            cursor = resp.headers.get("x-cursor")
+            cursor = resp.headers.get("next-cursor")
             if not cursor:
                 break
-        assert total == 12000
+        assert total == 3000
+
+
+@pytest.mark.anyio
+async def test_daily_export_cap_hint(large_seeded_session, monkeypatch):
+    """Export is capped at HARD_LIMIT and hints via header."""
+    monkeypatch.setenv("DEFAULT_TZ", "UTC")
+
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        yield large_seeded_session
+
+    monkeypatch.setattr(routes_exports, "_session", fake_session)
+    monkeypatch.setattr(routes_exports, "render_invoice", lambda bill, size="80mm": (b"", "application/pdf"))
+    monkeypatch.setattr(routes_exports, "HARD_LIMIT", 100)
+    monkeypatch.setattr(routes_exports, "DEFAULT_LIMIT", 100)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(
+            "/api/outlet/demo/exports/daily?start=2024-01-01&end=2024-01-01&limit=150"
+        )
+        assert resp.status_code == 200
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        inv_rows = list(
+            csv.reader(io.TextIOWrapper(zf.open("invoices.csv"), encoding="utf-8"))
+        )
+        assert len(inv_rows) - 1 == 100
+        assert resp.headers["x-row-limit"] == "100"

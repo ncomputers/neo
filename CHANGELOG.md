@@ -9,8 +9,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Flagged server-side menu A/B testing with deterministic bucketing and exposure tracking.
 - L1 support console for tenant/table/order lookup with safe actions (resend invoice, reprint KOT, replay webhook, unlock PIN) and audit logging.
 - Cache last 50 invoice PDFs per outlet for offline review.
+- Block abusive user agents and apply temporary IP cooldowns after repeated order rejections.
 - Collect CSP violation reports via `/csp/report` with paginated admin viewer and query/token redaction.
 - /time/skew endpoint returns server epoch for client clock skew detection.
 - Guard hot queries with a p95 regression check.
@@ -27,6 +29,7 @@ All notable changes to this project will be documented in this file.
 
 - Admin APIs to soft-delete and restore tables and menu items with optional
   inclusion of deleted records via ``include_deleted``.
+- ESC/POS print templates for 58/80mm and `/admin/print/test` preview endpoint.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
 - Admin endpoint to probe webhook SLA, capturing TLS details and latency and
@@ -89,6 +92,8 @@ All notable changes to this project will be documented in this file.
 - JSON logger redacts phone numbers, emails, and UTR values.
 - `LOG_SAMPLE_2XX` controls sampling of successful request logs.
 
+- Expo endpoint lists ready tickets with aging and allergen badges with hotkeys to mark picked.
+
 ### Changed
 
 - 429 responses for magic-link, guest order, exports, and webhook test now include retry hints.
@@ -97,6 +102,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Bundle Noto Sans fonts for printable invoices and KOTs, covering the ₹ sign and Gujarati/Hindi glyphs.
+- Handle per-item GST/HSN display with IGST support and precise ₹0.01 rounding.
 
 
 
