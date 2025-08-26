@@ -5,8 +5,8 @@
     "screenCapture": "pa11y-screenshots/${TIMESTAMP}.png"
   },
   "urls": [
-    "http://localhost:8000/g/demo/menu",
-    "http://localhost:8000/g/demo/cart",
-    "http://localhost:8000/g/demo/checkout"
+    "http://localhost:8000/guest",
+    "http://localhost:8000/admin",
+    "http://localhost:8000/kds"
   ]
 }

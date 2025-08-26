@@ -11,6 +11,8 @@ def test_help_renders_docs():
     assert "Owner Onboarding" in resp.text
     assert "Cashier &amp; KDS Cheat Sheet" in resp.text
     assert "Troubleshooting" in resp.text
+    assert "Subprocessors" in resp.text
+    assert "Service Level Agreement" in resp.text
 
 
 def test_help_includes_branding():

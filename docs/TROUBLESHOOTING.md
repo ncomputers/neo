@@ -23,3 +23,6 @@ Common issues and quick fixes.
 - Enable automatic time sync or run `ntpdate`.
 - Misaligned clocks can cause auth failures.
 
+## Self‑serve checks
+- Admins can run guided diagnostics at `/admin/troubleshoot`.
+

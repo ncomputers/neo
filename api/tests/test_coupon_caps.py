@@ -121,6 +121,87 @@ async def test_per_guest_cap(session):
             outlet_id=1,
         )
     assert exc.value.code == "GUEST_CAP"
+    assert exc.value.hint == "Limit 1 per guest"
+
+
+@pytest.mark.anyio
+async def test_per_day_cap(session):
+    coupon = models_tenant.Coupon(
+        code="DAILY",
+        percent=10,
+        is_stackable=True,
+        per_day_cap=1,
+    )
+    session.add(coupon)
+    await session.commit()
+
+    coupons = [{"code": "DAILY", "percent": 10, "is_stackable": True}]
+    await invoices_repo_sql.generate_invoice(
+        session,
+        1,
+        "unreg",
+        "nearest_1",
+        tenant_id="T",
+        tip=0,
+        coupons=coupons,
+        guest_id=1,
+        outlet_id=1,
+    )
+
+    with pytest.raises(billing_service.CouponError) as exc:
+        await invoices_repo_sql.generate_invoice(
+            session,
+            1,
+            "unreg",
+            "nearest_1",
+            tenant_id="T",
+            tip=0,
+            coupons=coupons,
+            guest_id=2,
+            outlet_id=1,
+        )
+    assert exc.value.code == "DAILY_CAP"
+    assert exc.value.hint == "Try again tomorrow"
+
+
+@pytest.mark.anyio
+async def test_per_outlet_cap(session):
+    coupon = models_tenant.Coupon(
+        code="OUT", 
+        percent=10, 
+        is_stackable=True, 
+        per_outlet_cap=1,
+    )
+    session.add(coupon)
+    await session.commit()
+
+    coupons = [{"code": "OUT", "percent": 10, "is_stackable": True}]
+    await invoices_repo_sql.generate_invoice(
+        session,
+        1,
+        "unreg",
+        "nearest_1",
+        tenant_id="T",
+        tip=0,
+        coupons=coupons,
+        guest_id=1,
+        outlet_id=1,
+    )
+
+    with pytest.raises(billing_service.CouponError) as exc:
+        await invoices_repo_sql.generate_invoice(
+            session,
+            1,
+            "unreg",
+            "nearest_1",
+            tenant_id="T",
+            tip=0,
+            coupons=coupons,
+            guest_id=2,
+            outlet_id=1,
+        )
+    assert exc.value.code == "OUTLET_CAP"
+    assert exc.value.hint == "Outlet limit reached"
 
 
 @pytest.mark.anyio
@@ -155,6 +236,7 @@ async def test_time_window_enforced(session):
             outlet_id=1,
         )
     assert exc.value.code == "NOT_ACTIVE"
+    assert exc.value.hint == f"Starts on {future.date()}"
 
     with pytest.raises(billing_service.CouponError) as exc:
         await invoices_repo_sql.generate_invoice(
@@ -169,3 +251,4 @@ async def test_time_window_enforced(session):
             outlet_id=1,
         )
     assert exc.value.code == "EXPIRED"
+    assert exc.value.hint == f"Expired on {past.date()}"

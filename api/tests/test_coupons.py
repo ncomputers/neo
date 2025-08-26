@@ -26,6 +26,7 @@ def test_non_stackable_coupons_rejected():
     with pytest.raises(billing_service.CouponError) as exc:
         billing_service.compute_bill(items, "unreg", coupons=[c1, c2])
     assert exc.value.code == "NON_STACKABLE"
+    assert exc.value.hint == "Remove non-stackable coupon"
 
 
 def test_stackable_coupons_with_cap():

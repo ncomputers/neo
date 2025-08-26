@@ -16,7 +16,7 @@ Per-tenant product analytics can be enabled with tenant consent. See
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
-Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. HTML pages also emit a `Content-Security-Policy-Report-Only` header directing violation details to `/csp/report`. The endpoint retains the latest 500 reports for 24 hours with any `token` query parameters redacted; administrators can review them at `/admin/csp/reports`.
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. HTML pages also emit a `Content-Security-Policy-Report-Only` header directing violation details to `/csp/report`. The endpoint retains the latest 500 reports for 24 hours with tokens and query strings stripped; administrators can review paginated results at `/admin/csp/reports`.
 
 Guest-facing order endpoints accept an `Idempotency-Key` header (UUID). Successful responses are cached for 24 hours and the key is recorded in audit logs to guard against duplicate charges.
 
@@ -258,7 +258,7 @@ Coupons can be marked as stackable and may specify a per-invoice `max_discount` 
 
 Attempts to combine a non-stackable coupon with others raise a `CouponError` with code `NON_STACKABLE`.
 
-Coupons may also define per-day, per-guest and per-outlet usage caps along with `valid_from`/`valid_to` windows. Usage is audited and exceeding a cap results in a `CouponError` with a hint describing the limitation.
+Coupons may also define per-day, per-guest and per-outlet usage caps along with `valid_from`/`valid_to` windows. Usage is audited and exceeding a cap results in a `CouponError` with a `hint` describing the limitation.
 
 ### Feedback
 
@@ -543,6 +543,7 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 ## Billing
 
 Admins can view their current plan and renewal date at `/billing`. The page links to a UPI or gateway URL for self‑serve renewals, and successful payment webhooks automatically extend the license.
+Set the `LICENSE_PAY_URL` environment variable to the payment link displayed on this page.
 
 ## PWA
 
