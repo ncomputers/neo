@@ -65,7 +65,35 @@ POST /admin/support/console/order/{order_id}/replay_webhook
 POST /admin/support/console/staff/{staff_id}/unlock_pin
 ```
 
-All endpoints require `super_admin` credentials and each action is audit logged.
+All endpoints require a `super_admin` role. Requests lacking this role return:
+
+```json
+HTTP 403
+{"ok": false, "error": {"code": 403, "message": "forbidden"}}
+```
+
+The `search` endpoint requires a `tenant` parameter and restricts lookups to
+that tenant. If the tenant does not exist, the server responds with:
+
+```json
+HTTP 404
+{"ok": false, "error": {"code": 404, "message": "tenant not found"}}
+```
+
+Successful operations return data wrapped in an `ok` envelope. Example:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "tenant": {"id": "...", "name": "..."},
+    "table": {"id": "...", "code": "T1"},
+    "order": {"id": 1, "status": "READY"}
+  }
+}
+```
+
+Unsuccessful operations are not audit logged.
 
 ## Preflight Checklist
 
