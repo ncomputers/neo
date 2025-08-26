@@ -1,0 +1,6 @@
+{
+  "select_1": {
+    "sql": "SELECT 1",
+    "baseline_ms": 1.0
+  }
+}
