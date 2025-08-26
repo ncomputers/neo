@@ -215,8 +215,9 @@ Attempts to combine a non-stackable coupon with others raise a `CouponError` wit
 
 ### Feedback
 
-- `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
-- `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregate ratings for admins over the last `range` days (default 30).
+- `POST /api/outlet/{tenant}/feedback` – submit an NPS score (`0-10`) with optional comment using a guest token.
+- `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregated NPS metrics for admins over the last `range` days (default 30).
+- `scripts/nps_digest.py` – cron-friendly script that emails the previous day's NPS per outlet.
 
 ### Super Admin
 
