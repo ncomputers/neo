@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
-from api.app.routes_csp import router as csp_router
+from api.app.routes_csp_report import router as csp_router
 from api.app.staff_auth import create_staff_token
 
 
@@ -29,7 +29,7 @@ def test_csp_report_storage(monkeypatch):
     for i in range(501):
         client.post("/csp/report", json={"n": i})
 
-    resp = client.get("/admin/csp/reports", headers=_admin_headers())
+    resp = client.get("/admin/csp/reports?limit=500", headers=_admin_headers())
     assert resp.status_code == 200
     data = resp.json()["data"]
     assert len(data) == 500
@@ -41,7 +41,8 @@ def test_csp_report_redaction(monkeypatch):
     report = {
         "csp-report": {
             "document-uri": "https://x.test/?token=abc&x=1",
-            "blocked-uri": "https://bad/?token=def",
+            "blocked-uri": "https://bad/?q=1",
+            "sample-token": "secret",
         }
     }
     client.post("/csp/report", json=report)
@@ -50,5 +51,6 @@ def test_csp_report_redaction(monkeypatch):
     assert resp.status_code == 200
     data = resp.json()["data"]
     redacted = data[0]["csp-report"]
-    assert redacted["document-uri"] == "https://x.test/?token=***&x=1"
-    assert redacted["blocked-uri"] == "https://bad/?token=***"
+    assert redacted["document-uri"] == "https://x.test/"
+    assert redacted["blocked-uri"] == "https://bad/"
+    assert redacted["sample-token"] == "***"

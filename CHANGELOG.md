@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Cache last 50 invoice PDFs per outlet for offline review.
+- Collect CSP violation reports via `/csp/report` with paginated admin viewer and query/token redaction.
 - /time/skew endpoint returns server epoch for client clock skew detection.
 - Guard hot queries with a p95 regression check.
 - Enforce environment validation at application startup and audit required
