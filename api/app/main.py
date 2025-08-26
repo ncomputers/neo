@@ -101,6 +101,7 @@ from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
+from .routes_admin_privacy import router as admin_privacy_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -118,7 +119,6 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
-from .routes_admin_privacy import router as admin_privacy_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_help import router as help_router
@@ -136,6 +136,7 @@ from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
+from .routes_order_void import router as order_void_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
@@ -830,6 +831,7 @@ app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
 app.include_router(onboarding_router)
 app.include_router(qrpack_router)
+app.include_router(order_void_router)
 
 # KDS/KOT domain
 app.include_router(kot_router)
