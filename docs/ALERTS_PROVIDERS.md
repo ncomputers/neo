@@ -36,6 +36,12 @@ export ALERTS_SLACK_PROVIDER=myapp.providers.slack_api
 The default Slack stub sends `text` payloads to the webhook URL specified by
 the `SLACK_WEBHOOK_URL` environment variable.
 
+## Webhook Targets
+
+Creating an alert rule with `channel` set to `webhook` triggers a quick probe
+of the target URL. The API reports latency and TLS status and warns if the
+destination is slow or uses a self-signed certificate.
+
 ## Webhook Signing
 
 The notification worker signs outbound webhook requests when `WEBHOOK_SIGNING_SECRET` is set.

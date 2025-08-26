@@ -5,8 +5,11 @@ from contextlib import asynccontextmanager
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))  # noqa: E402
 
+import importlib  # noqa: E402
 import os  # noqa: E402
 import types  # noqa: E402
+
+from fastapi import APIRouter  # noqa: E402
 
 os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost")
@@ -16,6 +19,8 @@ os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 sys.modules.setdefault("PIL", types.ModuleType("PIL"))
 sys.modules.setdefault("PIL.Image", types.ModuleType("Image"))
 sys.modules.setdefault("PIL.ImageOps", types.ModuleType("ImageOps"))
+menu_pkg = importlib.import_module("api.app.menu")
+setattr(menu_pkg, "router", APIRouter())
 
 import fakeredis.aioredis  # noqa: E402
 import httpx  # noqa: E402

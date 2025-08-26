@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Push a synthetic alert to Alertmanager or log a message.
+"""Push a synthetic alert to Alertmanager to verify paging.
 
 Usage:
     python scripts/emit_test_alert.py --message "Test alert"
@@ -14,7 +14,6 @@ import argparse
 import datetime as dt
 import logging
 import os
-import sys
 
 import requests
 
@@ -30,7 +29,7 @@ def main() -> None:
     if url:
         payload = [
             {
-                "labels": {"alertname": "SyntheticTestAlert", "severity": "info"},
+                "labels": {"alertname": "SyntheticTestAlert", "severity": "critical"},
                 "annotations": {"summary": args.message},
                 "startsAt": dt.datetime.utcnow().isoformat() + "Z",
             }

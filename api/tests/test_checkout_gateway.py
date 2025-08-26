@@ -6,6 +6,7 @@ import pathlib
 import sys
 import types
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 import fakeredis.aioredis
 import pytest
@@ -16,6 +17,16 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 _webhooks_stub = types.ModuleType("routes_webhooks")
 _webhooks_stub.router = None
 sys.modules.setdefault("api.app.routes_webhooks", _webhooks_stub)
+_menu_stub = types.ModuleType("menu")
+_menu_stub.router = APIRouter()
+_menu_stub.__path__ = []  # mark as package
+sys.modules.setdefault("api.app.menu", _menu_stub)
+_mod_stub = types.ModuleType("modifiers")
+_mod_stub.apply_modifiers = lambda *args, **kwargs: None
+sys.modules.setdefault("api.app.menu.modifiers", _mod_stub)
+_diet_stub = types.ModuleType("dietary")
+_diet_stub.filter_items = lambda *args, **kwargs: []
+sys.modules.setdefault("api.app.menu.dietary", _diet_stub)
 os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 os.environ.setdefault("DB_URL", "https://example.com")
 os.environ.setdefault("REDIS_URL", "redis://localhost")
@@ -43,18 +54,24 @@ def client():
 
 
 def _master_session(provider: str | None = "razorpay", sandbox: bool = False):
+    tenant = types.SimpleNamespace(
+        gateway_provider=provider or "none",
+        gateway_sandbox=sandbox,
+        subscription_expires_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+
     @asynccontextmanager
     async def _session():
-        class _Tenant:
-            gateway_provider = provider or "none"
-            gateway_sandbox = sandbox
-
         class _Session:
             async def get(self, model, pk):
-                return _Tenant()
+                return tenant
+
+            async def commit(self):
+                pass
 
         yield _Session()
 
+    _session.tenant = tenant
     return _session
 
 
@@ -150,13 +167,59 @@ def test_webhook_signature_validation(provider, secret_env, client, monkeypatch)
     assert resp_bad.status_code == 400
 
 
-def test_e2e_start_webhook_flow(client, monkeypatch):
+def test_refund_requires_idempotency_key(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
     monkeypatch.setenv("GATEWAY_SANDBOX", "true")
     monkeypatch.setenv("RAZORPAY_SECRET_TEST", "secret")
     monkeypatch.setattr(
         routes_checkout_gateway, "get_session", _master_session("razorpay", True)
     )
+
+    payments: list = []
+    invoice = types.SimpleNamespace(settled=True, settled_at=None)
+
+    async def _tenant_session(tenant: str):
+        class _Session:
+            async def get(self, model, pk):
+                return invoice
+
+            def add(self, obj):
+                payments.append(obj)
+
+            async def commit(self):
+                pass
+
+        return _Session()
+
+    app.dependency_overrides[
+        routes_checkout_gateway.get_tenant_session
+    ] = _tenant_session
+
+    order_id = "o1"
+    sig_refund = hmac.new(
+        b"secret", f"{order_id}|1|10.0|refund".encode(), hashlib.sha256
+    ).hexdigest()
+
+    resp = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={
+            "order_id": order_id,
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "refund",
+            "signature": sig_refund,
+        },
+    )
+    assert resp.status_code == 400
+    assert payments == []
+
+
+def test_e2e_start_webhook_flow(client, monkeypatch):
+    monkeypatch.setenv("ENABLE_GATEWAY", "true")
+    monkeypatch.setenv("GATEWAY_SANDBOX", "true")
+    monkeypatch.setenv("RAZORPAY_SECRET_TEST", "secret")
+    master_session = _master_session("razorpay", True)
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", master_session)
 
     payments: list = []
     invoice = types.SimpleNamespace(settled=False, settled_at=None)
@@ -191,6 +254,7 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
     ).hexdigest()
 
     # first webhook
+    old_expiry = master_session.tenant.subscription_expires_at
     resp1 = client.post(
         "/api/outlet/demo/checkout/webhook",
         json={
@@ -204,6 +268,7 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
     assert resp1.status_code == 200
     assert invoice.settled
     assert len(payments) == 1
+    assert master_session.tenant.subscription_expires_at > old_expiry
 
     # duplicate webhook should be idempotent
     resp2 = client.post(
@@ -225,6 +290,7 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
         f"{order_id}|1|10.0|refund".encode(),
         hashlib.sha256,
     ).hexdigest()
+    refund_headers = {"Idempotency-Key": "key1"}
     resp3 = client.post(
         "/api/outlet/demo/checkout/webhook",
         json={
@@ -234,8 +300,24 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
             "status": "refund",
             "signature": sig_refund,
         },
+        headers=refund_headers,
     )
     assert resp3.status_code == 200
     assert not invoice.settled
     assert len(payments) == 2
     assert payments[1].amount == -10
+
+    resp4 = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={
+            "order_id": order_id,
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "refund",
+            "signature": sig_refund,
+        },
+        headers=refund_headers,
+    )
+    assert resp4.status_code == 200
+    assert resp4.json() == resp3.json()
+    assert len(payments) == 2

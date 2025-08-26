@@ -32,7 +32,16 @@ async def _fake_create_order(session, table_code, lines):
 
 
 async def _fake_generate_invoice(
-    session, order_group_id, gst_mode, rounding, tenant_id, tip=0, coupons=None
+    session,
+    order_group_id,
+    gst_mode,
+    rounding,
+    tenant_id,
+    tip=0,
+    coupons=None,
+    *,
+    guest_id=None,
+    outlet_id=None,
 ):
     return 1
 

@@ -17,6 +17,8 @@ from .request_id import request_id_ctx
 # Fields in requests that should be redacted from logs
 PII_KEYS = {"pin", "utr", "auth", "gstin", "email"}
 LOG_SAMPLE_2XX = float(os.getenv("LOG_SAMPLE_2XX", "0.1"))
+PII_KEYS = {"pin", "utr", "auth", "gstin", "email", "phone"}
+
 LOG_SAMPLE_GUEST_4XX = float(os.getenv("LOG_SAMPLE_GUEST_4XX", "0.1"))
 
 

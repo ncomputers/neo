@@ -65,19 +65,22 @@ def test_body_redaction(monkeypatch, caplog):
         "auth": "a",
         "gstin": "g",
         "email": "e@example.com",
-        "nested": {"email": "n@example.com"},
+        "phone": "123",
+        "nested": {"email": "n@example.com", "phone": "999"},
     }
-    params = {"auth": "q", "email": "q@example.com"}
+    params = {"auth": "q", "email": "q@example.com", "phone": "555"}
     with caplog.at_level(logging.INFO, logger="api"):
         client.post("/echo", json=payload, params=params)
     inbound = json.loads(caplog.messages[0])
     body = inbound["body"]
     query = inbound["query"]
-    for k in ["pin", "utr", "auth", "gstin", "email"]:
+    for k in ["pin", "utr", "auth", "gstin", "email", "phone"]:
         assert body[k] == "***"
     assert body["nested"]["email"] == "***"
+    assert body["nested"]["phone"] == "***"
     assert query["auth"] == "***"
     assert query["email"] == "***"
+    assert query["phone"] == "***"
 
 
 def test_guest_4xx_sampling(monkeypatch, caplog):

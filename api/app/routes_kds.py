@@ -19,6 +19,7 @@ from domain import OrderStatus, can_transition
 from models_tenant import Order, OrderItem
 from .hooks import order_rejection
 from .services import ema as ema_service, push, whatsapp
+from .services import printer_watchdog
 from repos_sqlalchemy import orders_repo_sql
 from utils.responses import ok
 from utils.audit import audit
@@ -42,14 +43,17 @@ async def _session(tenant_id: str):
 
 @router.get("/api/outlet/{tenant_id}/kds/queue")
 @audit("list_kds_queue")
-async def list_queue(tenant_id: str) -> dict:
-    """Return active orders for the KDS queue view."""
+async def list_queue(tenant_id: str, request: Request) -> dict:
+    """Return active orders along with printer agent status."""
+    redis = request.app.state.redis
+    stale, qlen = await printer_watchdog.check(redis, tenant_id)
     async with _session(tenant_id) as session:
         try:
             orders = await orders_repo_sql.list_active(session, tenant_id)
         except PermissionError:
             raise HTTPException(status_code=403, detail="forbidden") from None
-    return ok(orders)
+    data = {"orders": orders, "printer_stale": stale, "retry_queue": qlen}
+    return ok(data)
 
 
 async def _transition_order(tenant_id: str, order_id: int, dest: OrderStatus) -> dict:

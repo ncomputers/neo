@@ -1,5 +1,7 @@
 const STATIC_CACHE = 'static-v1';
 const STATIC_ASSETS = ['/static/manifest.json'];
+const INVOICE_CACHE_PREFIX = 'invoice-';
+const MAX_INVOICE_CACHE = 50;
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -60,6 +62,12 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  if (url.pathname.startsWith('/invoice/') && url.pathname.endsWith('/pdf')) {
+    const outlet = event.request.headers.get('X-Tenant-ID') || 'default';
+    event.respondWith(handleInvoiceRequest(event.request, outlet));
+    return;
+  }
+
   if (url.origin === location.origin && url.pathname.startsWith('/static/')) {
     event.respondWith(
       caches.match(event.request).then(cached => cached || fetch(event.request))
@@ -73,7 +81,30 @@ self.addEventListener('sync', event => {
   }
 });
 
-const orderQueue = []
+const orderQueue = [];
+
+async function handleInvoiceRequest(request, outlet) {
+  const cache = await caches.open(`${INVOICE_CACHE_PREFIX}${outlet}`);
+  const cached = await cache.match(request);
+  if (cached) {
+    await cache.delete(request);
+    await cache.put(request, cached.clone());
+    return cached;
+  }
+  try {
+    const resp = await fetch(request);
+    if (resp.ok) {
+      await cache.put(request, resp.clone());
+      const keys = await cache.keys();
+      if (keys.length > MAX_INVOICE_CACHE) {
+        await cache.delete(keys[0]);
+      }
+    }
+    return resp;
+  } catch (_) {
+    return cached || Response.error();
+  }
+}
 
 async function flushQueue() {
   const pending = orderQueue.filter(op => !op.synced)
