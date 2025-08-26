@@ -3,6 +3,7 @@ from __future__ import annotations
 """Operational preflight checklist endpoint."""
 
 import os
+import subprocess
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
@@ -109,6 +110,41 @@ def check_backups() -> dict:
     return result
 
 
+def check_kernel_ntp() -> dict:
+    """Best-effort check for kernel boot flags and NTP sync."""
+    missing = []
+    try:
+        cmdline = Path("/proc/cmdline").read_text()
+        for flag in ("slab_nomerge", "page_alloc.shuffle=1"):
+            if flag not in cmdline:
+                missing.append(flag)
+    except Exception:  # pragma: no cover - best effort
+        pass
+
+    ntp_synced = False
+    try:
+        result = subprocess.run(
+            ["timedatectl", "show", "--property=NTPSynchronized"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        ntp_synced = "NTPSynchronized=yes" in result.stdout
+    except Exception:  # pragma: no cover - best effort
+        pass
+
+    details = []
+    if missing:
+        details.append("kernel=" + ",".join(missing))
+    if not ntp_synced:
+        details.append("ntp=unsynced")
+    status = "warn" if details else "ok"
+    result = {"name": "kernel_ntp", "status": status}
+    if details:
+        result["detail"] = "; ".join(details)
+    return result
+
+
 def check_soft_delete_indexes() -> dict:
     """Ensure partial unique indexes for soft-delete exist."""
     required = {
@@ -140,7 +176,6 @@ def check_soft_delete_indexes() -> dict:
                 "name": "soft_delete_indexes",
                 "status": "fail",
                 "detail": "; ".join(parts),
-
             }
         return {"name": "soft_delete_indexes", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
@@ -158,9 +193,7 @@ async def check_quotas() -> dict:
             role = "super_admin"
 
         try:
-            app.dependency_overrides[auth.get_current_user] = (
-                lambda token=None: _User()
-            )
+            app.dependency_overrides[auth.get_current_user] = lambda token=None: _User()
             async with httpx.AsyncClient(
                 app=app, base_url="http://test", timeout=5
             ) as client:
@@ -199,7 +232,9 @@ async def check_webhook_metrics() -> dict:
     try:
         from .main import app
 
-        async with httpx.AsyncClient(app=app, base_url="http://test", timeout=5) as client:
+        async with httpx.AsyncClient(
+            app=app, base_url="http://test", timeout=5
+        ) as client:
             resp = await client.get("/metrics")
         if resp.status_code != 200:
             return {
@@ -212,7 +247,6 @@ async def check_webhook_metrics() -> dict:
                 "name": "webhook_metrics",
                 "status": "fail",
                 "detail": "missing webhook_breaker_state",
-
             }
         return {"name": "webhook_metrics", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
@@ -222,10 +256,12 @@ async def check_webhook_metrics() -> dict:
 async def check_replica() -> dict:
     """Verify replica gauge and fallback health."""
     try:
-        from .main import app
         from .db.replica import replica_session
+        from .main import app
 
-        async with httpx.AsyncClient(app=app, base_url="http://test", timeout=5) as client:
+        async with httpx.AsyncClient(
+            app=app, base_url="http://test", timeout=5
+        ) as client:
             resp = await client.get("/metrics")
         if resp.status_code != 200:
             return {
@@ -234,7 +270,11 @@ async def check_replica() -> dict:
                 "detail": "metrics unreachable",
             }
         gauge_line = next(
-            (line for line in resp.text.splitlines() if line.startswith("db_replica_healthy")),
+            (
+                line
+                for line in resp.text.splitlines()
+                if line.startswith("db_replica_healthy")
+            ),
             None,
         )
         if gauge_line is None:
@@ -275,11 +315,11 @@ async def preflight() -> dict:
         check_webhooks(),
         await check_alertmanager(),
         check_backups(),
+        check_kernel_ntp(),
         check_soft_delete_indexes(),
         await check_quotas(),
         await check_webhook_metrics(),
         await check_replica(),
-
     ]
     overall = "ok"
     if any(c["status"] == "fail" for c in checks):

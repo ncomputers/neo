@@ -51,3 +51,10 @@ def test_gst_rounding_styles():
     )
     assert itemwise["tax_breakup"][5] == 0.06
     assert invoice_total["tax_breakup"][5] == 0.05
+
+
+def test_rounding_to_paise():
+    items = [{"name": "X", "qty": 1, "price": 1.23, "gst": 5}]
+    bill = billing_service.compute_bill(items, "reg", rounding="none")
+    assert bill["rounding_adjustment"] == 0.0
+    assert bill["total"] == 1.29

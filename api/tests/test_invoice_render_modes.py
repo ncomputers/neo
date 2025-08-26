@@ -13,8 +13,8 @@ ITEMS = [
 GSTIN = "22AAAAA0000A1Z5"
 
 
-def _render(mode: str) -> str:
-    invoice = billing_service.build_invoice_context(ITEMS, mode, gstin=GSTIN)
+def _render(mode: str, **kwargs) -> str:
+    invoice = billing_service.build_invoice_context(ITEMS, mode, gstin=GSTIN, **kwargs)
     invoice["number"] = "INV-1"
     html_bytes, mimetype = render_invoice(invoice, size="80mm")
     assert mimetype == "text/html"
@@ -24,16 +24,22 @@ def _render(mode: str) -> str:
 def test_render_regular():
     html = _render("reg")
     assert "GSTIN: 22AAAAA0000A1Z5" in html
-    assert "HSN" in html
+    assert "GST%" in html and "HSN" in html
     assert "CGST 2.5%" in html and "SGST 2.5%" in html
     assert "Composition Scheme" not in html
     assert "Tax not applicable" not in html
 
 
+def test_render_regular_interstate():
+    html = _render("reg", is_interstate=True)
+    assert "GST%" in html and "HSN" in html
+    assert "IGST 5%" in html and "CGST" not in html and "SGST" not in html
+
+
 def test_render_composition():
     html = _render("comp")
     assert "GSTIN: 22AAAAA0000A1Z5 (Composition Scheme)" in html
-    assert "HSN" not in html
+    assert "GST%" not in html and "HSN" not in html
     assert "CGST" not in html and "SGST" not in html
     assert "Composition tax included" in html
     assert "Tax not applicable" not in html
@@ -42,7 +48,18 @@ def test_render_composition():
 def test_render_unregistered():
     html = _render("unreg")
     assert "GSTIN" not in html
-    assert "HSN" not in html
-    assert "CGST" not in html and "SGST" not in html
+    assert "GST%" not in html and "HSN" not in html
+    assert "CGST" not in html and "SGST" not in html and "IGST" not in html
     assert "Tax not applicable" in html
     assert "Composition Scheme" not in html
+
+
+def test_comp_invoice_no_gst_lines():
+    invoice = billing_service.build_invoice_context(ITEMS, "comp", gstin=GSTIN)
+    assert invoice["tax_lines"] == []
+
+
+def test_item_level_gst_hsn():
+    invoice = billing_service.build_invoice_context(ITEMS, "reg", gstin=GSTIN)
+    assert invoice["items"][0]["gst"] == 5
+    assert invoice["items"][0]["hsn"] == "1234"

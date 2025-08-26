@@ -11,5 +11,6 @@
   "sla_color_alert": false,
   "hide_out_of_stock_items": true,
   "audit_retention_days": 30,
+  "guest_receipts_ttl_days": 30,
   "happy_hour_windows": []
 }

@@ -5,8 +5,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi.testclient import TestClient
 
-from api.app.main import app
 import api.app.routes_preflight as routes_preflight
+from api.app.main import app
 
 
 async def ok_async(name="x"):
@@ -49,11 +49,11 @@ def test_preflight_ok(monkeypatch):
             "check_webhooks": ok_sync,
             "check_alertmanager": ok_async,
             "check_backups": ok_sync,
+            "check_kernel_ntp": ok_sync,
             "check_soft_delete_indexes": ok_sync,
             "check_quotas": ok_async,
             "check_webhook_metrics": ok_async,
             "check_replica": ok_async,
-
         },
     )
     client = TestClient(app)
@@ -61,7 +61,7 @@ def test_preflight_ok(monkeypatch):
     body = resp.json()
     assert resp.status_code == 200
     assert body["status"] == "ok"
-    assert len(body["checks"]) == 11
+    assert len(body["checks"]) == 12
 
 
 def test_preflight_fail(monkeypatch):
@@ -75,11 +75,11 @@ def test_preflight_fail(monkeypatch):
             "check_webhooks": ok_sync,
             "check_alertmanager": ok_async,
             "check_backups": ok_sync,
+            "check_kernel_ntp": ok_sync,
             "check_soft_delete_indexes": ok_sync,
             "check_quotas": ok_async,
             "check_webhook_metrics": ok_async,
             "check_replica": ok_async,
-
         },
     )
     client = TestClient(app)
@@ -95,14 +95,14 @@ def test_preflight_warn(monkeypatch):
             "check_redis": ok_async,
             "check_migrations": ok_sync,
             "check_storage": ok_async,
-            "check_webhooks": warn_sync,
+            "check_webhooks": ok_sync,
             "check_alertmanager": ok_async,
             "check_backups": ok_sync,
+            "check_kernel_ntp": warn_sync,
             "check_soft_delete_indexes": ok_sync,
             "check_quotas": ok_async,
             "check_webhook_metrics": ok_async,
             "check_replica": ok_async,
-
         },
     )
     client = TestClient(app)

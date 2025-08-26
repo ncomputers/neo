@@ -6,9 +6,7 @@ import asyncio
 import csv
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, time, timedelta, timezone
-from io import BytesIO, StringIO, TextIOWrapper
-from zipfile import ZipFile
+from datetime import datetime, time, timezone
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
@@ -18,13 +16,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.replica import read_only
 from .db.tenant import get_engine
-from .models_tenant import Invoice, Payment
-from .pdf.render import render_invoice
-from .repos_sqlalchemy import invoices_repo_sql
+from .models_tenant import Invoice
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import err
 from .utils.rate_limit import rate_limited
+from .utils.responses import err
 
 router = APIRouter()
 
@@ -46,6 +42,13 @@ async def _session(tenant_id: str):
 HARD_LIMIT = 100_000
 DEFAULT_LIMIT = min(int(os.getenv("EXPORT_MAX_ROWS", "10000")), HARD_LIMIT)
 SCAN_LIMIT = int(os.getenv("EXPORT_SCAN_ROWS", "5000"))
+ABSOLUTE_MAX_ROWS = 100_000
+
+
+def _cap_limit(limit: int) -> tuple[int, bool]:
+    """Cap requested limit to hard maximum rows."""
+    capped = min(limit, ABSOLUTE_MAX_ROWS)
+    return capped, limit > ABSOLUTE_MAX_ROWS
 
 
 def _iter_bytes(buffer: BytesIO):
@@ -77,6 +80,7 @@ async def daily_export(
         return JSONResponse(err("RANGE_TOO_LARGE", "Range too large"), status_code=400)
 
     limit = min(limit, DEFAULT_LIMIT, HARD_LIMIT)
+
     cursor = cursor or 0
 
     redis = request.app.state.redis
@@ -250,14 +254,84 @@ async def daily_export(
 
         headers = {"Content-Disposition": "attachment; filename=export.zip"}
         more = await session.scalar(
+
             select(Invoice.id)
             .where(
                 Invoice.created_at >= start_dt,
                 Invoice.created_at <= end_dt,
-                Invoice.id > last_id,
+                Invoice.id > cursor,
             )
+            .order_by(Invoice.id)
+            .offset(limit - 1)
             .limit(1)
         )
+        more = None
+        if last_id is not None:
+            more = await session.scalar(
+                select(Invoice.id)
+                .where(
+                    Invoice.created_at >= start_dt,
+                    Invoice.created_at <= end_dt,
+                    Invoice.id > last_id,
+                )
+                .limit(1)
+            )
+
+        async def row_iter():
+            exported = 0
+            last = cursor
+            header = ["id", "no", "date", "subtotal", "tax", "tip", "total", "settled"]
+            yield ",".join(header) + "\n"
+            while exported < limit:
+                chunk = min(SCAN_LIMIT, limit - exported)
+                conditions = [
+                    Invoice.created_at >= start_dt,
+                    Invoice.created_at <= end_dt,
+                    Invoice.id > last,
+                ]
+                if last_id is not None:
+                    conditions.append(Invoice.id <= last_id)
+                stmt = (
+                    select(
+                        Invoice.id,
+                        Invoice.number,
+                        Invoice.bill_json,
+                        Invoice.tip,
+                        Invoice.total,
+                        Invoice.settled,
+                        Invoice.created_at,
+                    )
+                    .where(*conditions)
+                    .order_by(Invoice.id)
+                    .limit(chunk)
+                )
+                rows = (await session.execute(stmt)).all()
+                if not rows:
+                    break
+                for (
+                    inv_id,
+                    number,
+                    bill,
+                    tip,
+                    total_amt,
+                    settled,
+                    created_at,
+                ) in rows:
+                    inv_date = created_at.astimezone(tzinfo).date().isoformat()
+                    subtotal = bill.get("subtotal", 0)
+                    tax = sum(bill.get("tax_breakup", {}).values())
+                    line = f"{inv_id},{number},{inv_date},{subtotal},{tax},{float(tip or 0)},{float(total_amt)},{settled}\n"
+                    yield line
+                    exported += 1
+                    last = inv_id
+                    if progress:
+                        request.app.state.export_progress[progress] = exported
+                if len(rows) < chunk or (last_id and last >= last_id):
+                    break
+            if progress:
+                request.app.state.export_progress.pop(progress, None)
+
+        headers = {"Content-Disposition": "attachment; filename=invoices.csv"}
         if more is not None:
             headers["Next-Cursor"] = str(last_id)
         if limit == HARD_LIMIT and exported >= HARD_LIMIT and more is not None:
@@ -284,6 +358,7 @@ async def daily_export_progress(tenant_id: str, job: str, request: Request) -> S
                 yield "event: complete\ndata: 100\n\n"
                 break
             yield f"event: progress\ndata: {int(val)}\n\n"
+
             await asyncio.sleep(1)
 
     return StreamingResponse(event_gen(), media_type="text/event-stream")

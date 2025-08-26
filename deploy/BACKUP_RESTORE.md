@@ -94,5 +94,7 @@ Schedule a weekly check via cron::
 
 `scripts/backup_smoke.sh` exercises the full backup pipeline by dumping the
 primary database, encrypting the SQL with `age`, restoring it into a temporary
-Postgres database, and reporting the encrypted size and timings. The
-`backup-smoke` GitHub workflow runs this weekly against the staging cluster.
+Postgres database, and running a basic tenant count query. It reports the
+encrypted size, timings, and row count. The `backup-smoke` GitHub workflow runs
+this weekly against the staging cluster and posts a summary to the workflow
+run.

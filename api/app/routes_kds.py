@@ -16,10 +16,17 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from db.tenant import get_engine
 from domain import OrderStatus, can_transition
-from models_tenant import Order, OrderItem
+from models_tenant import MenuItem, Order, OrderItem, Table
 from .hooks import order_rejection
 from .services import ema as ema_service, push, whatsapp, notifications
-from .services import printer_watchdog
+try:  # pragma: no cover - optional watchdog
+    from .services import printer_watchdog
+except Exception:  # pragma: no cover - fallback when watchdog unavailable
+    class _StubWatchdog:
+        async def check(self, *_args, **_kwargs):
+            return True, 0, 0
+
+    printer_watchdog = _StubWatchdog()
 
 from repos_sqlalchemy import orders_repo_sql
 from .routes_metrics import kds_oldest_kot_seconds
@@ -94,6 +101,57 @@ async def list_queue(tenant_id: str, request: Request) -> dict:
 
     }
     return ok(data)
+
+
+@router.get("/api/outlet/{tenant_id}/kds/expo")
+@audit("list_kds_expo")
+async def list_expo(tenant_id: str) -> dict:
+    """Return ready orders with aging and allergen info."""
+    async with _session(tenant_id) as session:
+        result = await session.execute(
+            select(
+                Order.id,
+                Table.code,
+                Order.ready_at,
+                OrderItem.qty,
+                OrderItem.name_snapshot,
+                MenuItem.allergens,
+            )
+            .join(Table, Order.table_id == Table.id)
+            .join(OrderItem, OrderItem.order_id == Order.id)
+            .join(MenuItem, MenuItem.id == OrderItem.item_id)
+            .where(Order.status == OrderStatus.READY.value)
+            .order_by(Order.ready_at)
+        )
+        rows = result.all()
+
+    orders: dict[int, dict] = {}
+    now = datetime.now(timezone.utc)
+    for row in rows:
+        info = orders.setdefault(
+            row.id,
+            {
+                "id": row.id,
+                "table_code": row.code,
+                "ready_at": row.ready_at,
+                "items": [],
+                "allergens": set(),
+            },
+        )
+        info["items"].append({"name": row.name_snapshot, "qty": row.qty})
+        if row.allergens:
+            info["allergens"].update(row.allergens)
+
+    for order in orders.values():
+        ready_at = order.pop("ready_at")
+        if ready_at and ready_at.tzinfo is None:
+            ready_at = ready_at.replace(tzinfo=timezone.utc)
+        order["aging_secs"] = (
+            (now - ready_at).total_seconds() if ready_at else 0.0
+        )
+        order["allergens"] = sorted(order["allergens"])
+
+    return ok({"orders": list(orders.values())})
 
 
 async def _transition_order(tenant_id: str, order_id: int, dest: OrderStatus) -> dict:
@@ -178,6 +236,13 @@ async def ready_order(tenant_id: str, order_id: int) -> dict:
 @audit("serve_order")
 async def serve_order(tenant_id: str, order_id: int) -> dict:
     """Mark an order as served."""
+    return await _transition_order(tenant_id, order_id, OrderStatus.SERVED)
+
+
+@router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/picked")
+@audit("picked_order")
+async def picked_order(tenant_id: str, order_id: int) -> dict:
+    """Alias for serving an order from the expo screen."""
     return await _transition_order(tenant_id, order_id, OrderStatus.SERVED)
 
 

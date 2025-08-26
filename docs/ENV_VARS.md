@@ -41,6 +41,7 @@ The application relies on the following environment variables:
 | `MIXPANEL_TOKEN` (optional) | Token for Mixpanel analytics. | `token` |
 | `FLAG_SIMPLE_MODIFIERS` | Enable basic menu modifiers and combos. | `1` |
 | `FLAG_WA_ENABLED` | Enable WhatsApp status notifications. | `1` |
+| `AB_TESTS_ENABLED` | Enable server-side A/B testing for menu copy/pricing. | `0` |
 
 ## JWT/JOSE
 

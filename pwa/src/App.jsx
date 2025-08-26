@@ -5,6 +5,7 @@ import CashierDashboard from './pages/CashierDashboard'
 import KitchenDashboard from './pages/KitchenDashboard'
 import CleanerDashboard from './pages/CleanerDashboard'
 import Billing from './pages/Billing'
+import ExpoDashboard from './pages/ExpoDashboard'
 import RequireRole from './components/RequireRole'
 import ConsentBanner from './components/ConsentBanner'
 import { useAuth } from './contexts/AuthContext'
@@ -35,6 +36,7 @@ export default function App() {
           </a>
         )}
         <Link to="/cashier">Cashier</Link>
+        <Link to="/expo">Expo</Link>
         <Link to="/kitchen">Kitchen</Link>
         <Link to="/cleaner">Cleaner</Link>
         <select
@@ -73,6 +75,14 @@ export default function App() {
           element={
             <RequireRole roles={['cashier']}>
               <CashierDashboard />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/expo"
+          element={
+            <RequireRole roles={['cashier']}>
+              <ExpoDashboard />
             </RequireRole>
           }
         />
