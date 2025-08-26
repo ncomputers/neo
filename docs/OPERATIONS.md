@@ -105,3 +105,15 @@ This should trigger a Slack message in `#ops` and an email to
 `ops@example.com`. Scheduled GitHub Actions jobs send this once a month
 against both production and staging to ensure the route stays healthy.
 
+
+## Stock vs KOT Reconciliation
+
+Flag significant mismatches between reported stock and kitchen order tickets.
+
+```bash
+python scripts/stock_kot_reconcile.py --csv report.csv --threshold 5
+```
+
+The CSV requires `item`, `sold_qty`, `KOT_cnt` and `variance` columns. Rows with
+an absolute variance above the threshold trigger an email to `OPS_EMAIL`. SMTP
+settings are read from `SMTP_HOST`, `SMTP_PORT` and optional `SMTP_USER`/`SMTP_PASS`.
