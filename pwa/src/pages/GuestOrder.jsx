@@ -48,7 +48,7 @@ export default function GuestOrder() {
       <p className="mt-2">Status: {status}</p>
       <p className="mt-1">ETA: {eta}</p>
       {loading && <p>Loading bill...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-danger">{error}</p>}
       {bill && (
         <div className="mt-4">
           <h3 className="font-semibold">Current Bill: {bill.total}</h3>
@@ -56,7 +56,8 @@ export default function GuestOrder() {
       )}
       <button
         onClick={addSample}
-        className="mt-4 rounded bg-blue-600 px-2 py-1 text-white"
+        aria-label="Add sample item"
+        className="mt-4 rounded bg-primary px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
       >
         Add Sample Item
       </button>
@@ -64,17 +65,26 @@ export default function GuestOrder() {
         {ops.map((op) => (
           <li key={op.op_id} className="mb-1">
             {op.items[0].item_id} x {op.items[0].qty}{' '}
-            <span className={op.synced ? 'text-green-600' : 'text-yellow-600'}>
+            <span
+              className={op.synced ? 'text-success' : 'text-warning'}
+            >
+
               {op.synced ? 'synced' : 'pending'}
             </span>
           </li>
         ))}
       </ul>
       <footer className="mt-8 text-sm text-gray-500">
-        <a href="/legal/privacy" className="mx-2 hover:underline">
+        <a
+          href="/legal/privacy"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           Privacy
         </a>
-        <a href="/legal/terms" className="mx-2 hover:underline">
+        <a
+          href="/legal/terms"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           Terms
         </a>
         <a href="/legal/refund" className="mx-2 hover:underline">

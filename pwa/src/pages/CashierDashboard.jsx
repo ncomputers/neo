@@ -27,7 +27,7 @@ export default function CashierDashboard() {
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Cashier Dashboard</h2>
       {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (
         <>
           <table className="w-full border mb-6">

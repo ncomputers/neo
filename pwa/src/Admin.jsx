@@ -21,7 +21,7 @@ export default function Admin() {
   return (
     <div className="p-4">
       {warning && (
-        <div className="mb-4 border border-yellow-400 bg-yellow-100 p-2 text-yellow-800">
+        <div className="mb-4 border border-warning bg-warning p-2 text-white">
           {warning}
         </div>
       )}
