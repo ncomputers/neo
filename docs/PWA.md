@@ -18,6 +18,7 @@ basic offline support.
   client‑generated `op_id` to avoid double submissions. Items show a **pending**
   badge until the service worker syncs them, after which they are marked
   **synced**.
+* Invoice PDFs are cached per outlet with an LRU cap of 50 for offline review.
 * Updates are picked up when the service worker changes.
 
 ## Update UX

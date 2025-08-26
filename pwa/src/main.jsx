@@ -5,6 +5,7 @@ import App from './App'
 import Login from './Login'
 import Dashboard from './Dashboard'
 import Admin from './Admin'
+import Troubleshoot from './Troubleshoot'
 import ProtectedRoute from './ProtectedRoute'
 import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           }
         >
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/troubleshoot" element={<Troubleshoot />} />
         </Route>
       </Routes>
     </BrowserRouter>

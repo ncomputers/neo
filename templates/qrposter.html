@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <style>
+      @page { size: {{ size }}; margin: 1cm; }
+      body { text-align: center; font-family: sans-serif; }
+      h1 { font-size: 2em; }
+      img { width: 60%; }
+    </style>
+  </head>
+  <body>
+    <h1>{{ label }}</h1>
+    <img src="{{ qr }}" alt="{{ label }}" />
+    <p>{{ instructions }}</p>
+  </body>
+</html>

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from .auth import User, role_required
+from .services.analytics import track
 from .utils.responses import ok
 
 
@@ -40,6 +41,7 @@ async def submit_feedback(
 
     record = FeedbackRecord(**fb.model_dump(), timestamp=datetime.utcnow())
     FEEDBACK_STORE.setdefault(tenant, []).append(record)
+    await track(tenant, "feedback_submitted", {"score": fb.score})
     return ok({"received": True})
 
 
