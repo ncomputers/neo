@@ -15,8 +15,9 @@ os.environ.setdefault("ALLOWED_ORIGINS", "*")
 
 from api.app.auth import UserInDB, create_access_token, fake_users_db
 from api.app.db import SessionLocal
-from api.app.models_master import Device
 from api.app.main import app
+from api.app.models_master import Device
+from api.app.utils.audit import AuditTenant
 
 client = TestClient(app)
 
@@ -52,6 +53,34 @@ def test_device_rbac() -> None:
         headers={"Authorization": f"Bearer {cashier}"},
     )
     assert resp.status_code == 403
+
+
+def test_device_register_and_list() -> None:
+    admin = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
+    fingerprint = "zzz"
+    with SessionLocal() as session:
+        session.query(AuditTenant).delete()
+        session.commit()
+
+    resp = client.post(
+        "/admin/devices/register",
+        json={"name": "TabX", "fingerprint": fingerprint},
+        headers={"Authorization": f"Bearer {admin}"},
+    )
+    assert resp.status_code == 200
+
+    resp = client.get(
+        "/admin/devices",
+        headers={"Authorization": f"Bearer {admin}"},
+    )
+    assert resp.status_code == 200
+    items = resp.json()["data"]
+    assert any(d["fingerprint"] == fingerprint for d in items)
+
+    with SessionLocal() as session:
+        row = session.query(AuditTenant).filter_by(action="devices.register").first()
+        assert row is not None
+        assert row.meta["payload"]["fingerprint"] == fingerprint
 
 
 def test_unlock_pin_rbac() -> None:
