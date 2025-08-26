@@ -26,6 +26,12 @@ async def is_blocked(redis: Redis, tenant: str, ip: str) -> bool:
     return bool(await redis.exists(BLOCK_KEY.format(tenant=tenant, ip=ip)))
 
 
+async def block_ttl(redis: Redis, tenant: str, ip: str) -> int:
+    """Return remaining block TTL for ``ip`` within ``tenant`` in seconds."""
+    ttl = await redis.ttl(BLOCK_KEY.format(tenant=tenant, ip=ip))
+    return max(ttl, 0)
+
+
 async def block_ip(redis: Redis, tenant: str, ip: str, ttl: int = 86400) -> None:
     """Block ``ip`` for ``tenant`` for the given ``ttl`` (default 1 day)."""
     await redis.set(BLOCK_KEY.format(tenant=tenant, ip=ip), 1, ex=ttl)

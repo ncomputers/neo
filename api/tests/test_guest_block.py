@@ -11,7 +11,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 from api.app.hooks import order_rejection
 from api.app.middlewares.guest_block import GuestBlockMiddleware
 from api.app.security import ip_reputation
-from api.app.security.blocklist import add_rejection, is_blocked, block_ip, clear_ip
+from api.app.security.blocklist import add_rejection, block_ip, clear_ip, is_blocked
 
 app = FastAPI()
 app.add_middleware(GuestBlockMiddleware)
@@ -55,7 +55,9 @@ def test_block_after_three_manual_rejections():
 
     resp = client.post("/g/echo", headers={"X-Tenant-ID": "demo"})
     assert resp.status_code == 429
-    assert resp.json()["error"]["code"] == "IP_BLOCKED"
+    data = resp.json()["error"]
+    assert data["code"] == "ABUSE_COOLDOWN"
+    assert data["hint"].startswith("Try again in ")
 
 
 def test_user_agent_denylist():
