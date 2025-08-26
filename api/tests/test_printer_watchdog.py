@@ -38,6 +38,7 @@ def test_printer_status_and_metrics():
 
     body = client.get("/metrics").text
     assert "printer_retry_queue 1.0" in body
+    assert "printer_retry_queue_age 0.0" in body
 
 import os
 import pathlib
@@ -85,11 +86,16 @@ def client(monkeypatch):
 def test_printer_offline_banner(client):
     client, redis = client
     # No heartbeat set -> stale
-    import asyncio
-
-    asyncio.run(redis.lpush("print:q:demo", "m1"))
+    import asyncio, json
+    now = datetime.datetime.now(datetime.timezone.utc)
+    ts = (now - datetime.timedelta(seconds=90)).isoformat()
+    asyncio.run(redis.lpush("print:q:demo", json.dumps({"ts": ts, "m": 1})))
     resp = client.get("/api/outlet/demo/kds/queue")
     assert resp.status_code == 200
     body = resp.json()
     assert body["data"]["printer_stale"] is True
     assert body["data"]["retry_queue"] == 1
+    assert body["data"]["retry_queue_age"] >= 90
+    metrics_body = client.get("/metrics").text
+    assert "printer_retry_queue 1.0" in metrics_body
+    assert "printer_retry_queue_age" in metrics_body
