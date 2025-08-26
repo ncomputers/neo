@@ -30,6 +30,8 @@ All notable changes to this project will be documented in this file.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
+- Guests opting into WhatsApp receive order status updates when orders are
+  accepted, out for delivery, or ready.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
   "Request more" link.
