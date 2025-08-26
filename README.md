@@ -235,6 +235,7 @@ A minimal onboarding flow captures tenant details:
   - `show_logo` toggles the outlet logo on each page
   - `label_fmt` customises table labels; `{n}` is replaced with the table number and `{label}` with the base label
   - responses are cached in Redis for ten minutes and the endpoint is rate-limited to one request per minute per tenant
+- `GET /api/admin/outlets/{tenant}/qrposters.zip?size=A4` – download a ZIP of A4 or A5 QR posters for each table.
 - `POST /api/outlet/{tenant}/tables/{code}/qr/rotate` – rotate a table's QR token, returning a new deeplink and QR image.
 
 ### Coupons
@@ -606,6 +607,7 @@ python scripts/tenant_seed_counter.py --tenant TENANT_ID
 python scripts/tenant_qr_tools.py list_tables --tenant TENANT_ID
 python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
 python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
+python scripts/qr_poster_pack.py --tenant TENANT_ID --size A4
 ```
 
 To generate a sizable dataset for local load testing, use the large outlet seeder:
