@@ -12,7 +12,16 @@ from typing import Mapping, Sequence
 
 from ..db.master import get_session as get_master_session
 from ..models_master import Tenant
-from ..models_tenant import Invoice, MenuItem, Order, OrderItem, Payment, Table
+from ..models_tenant import (
+    Coupon,
+    CouponUsage,
+    Invoice,
+    MenuItem,
+    Order,
+    OrderItem,
+    Payment,
+    Table,
+)
 from ..hooks.table_map import publish_table_state
 from ..services import billing_service
 from ..utils import invoice_counter
@@ -26,6 +35,9 @@ async def generate_invoice(
     tenant_id: str,
     tip: float | Decimal | None = 0,
     coupons: Sequence[Mapping[str, object]] | None = None,
+    *,
+    guest_id: int | None = None,
+    outlet_id: int | None = None,
 ) -> int:
     """Generate an immutable invoice and return its primary key.
 
@@ -58,6 +70,11 @@ async def generate_invoice(
         for qty, price, gst in result.all()
     ]
 
+    if coupons:
+        await _enforce_coupon_caps(
+            session, coupons, guest_id=guest_id, outlet_id=outlet_id
+        )
+
     bill = billing_service.compute_bill(
         items, gst_mode, rounding, tip=tip, coupons=coupons
     )
@@ -81,6 +98,76 @@ async def generate_invoice(
     session.add(invoice)
     await session.flush()
     return invoice.id
+
+
+async def _enforce_coupon_caps(
+    session: AsyncSession,
+    coupons: Sequence[Mapping[str, object]],
+    *,
+    guest_id: int | None,
+    outlet_id: int | None,
+) -> None:
+    """Validate coupon caps and record usage."""
+
+    now = datetime.now(timezone.utc)
+    start = datetime.combine(now.date(), time.min, tzinfo=timezone.utc)
+    end = datetime.combine(now.date(), time.max, tzinfo=timezone.utc)
+
+    for c in coupons:
+        coupon = await session.scalar(select(Coupon).where(Coupon.code == c["code"]))
+        if coupon is None:
+            continue
+        if coupon.valid_from and now < coupon.valid_from:
+            raise billing_service.CouponError(
+                "NOT_ACTIVE", f"Coupon {coupon.code} starts {coupon.valid_from.date()}"
+            )
+        if coupon.valid_to and now > coupon.valid_to:
+            raise billing_service.CouponError(
+                "EXPIRED", f"Coupon {coupon.code} expired on {coupon.valid_to.date()}"
+            )
+
+        if coupon.per_day_cap is not None:
+            day_count = await session.scalar(
+                select(func.count(CouponUsage.id)).where(
+                    CouponUsage.coupon_id == coupon.id,
+                    CouponUsage.used_at >= start,
+                    CouponUsage.used_at <= end,
+                )
+            )
+            if day_count >= coupon.per_day_cap:
+                raise billing_service.CouponError(
+                    "DAILY_CAP", f"Coupon {coupon.code} limit reached today"
+                )
+
+        if guest_id is not None and coupon.per_guest_cap is not None:
+            guest_count = await session.scalar(
+                select(func.count(CouponUsage.id)).where(
+                    CouponUsage.coupon_id == coupon.id,
+                    CouponUsage.guest_id == guest_id,
+                )
+            )
+            if guest_count >= coupon.per_guest_cap:
+                raise billing_service.CouponError(
+                    "GUEST_CAP", f"Coupon {coupon.code} already used"
+                )
+
+        if outlet_id is not None and coupon.per_outlet_cap is not None:
+            outlet_count = await session.scalar(
+                select(func.count(CouponUsage.id)).where(
+                    CouponUsage.coupon_id == coupon.id,
+                    CouponUsage.outlet_id == outlet_id,
+                )
+            )
+            if outlet_count >= coupon.per_outlet_cap:
+                raise billing_service.CouponError(
+                    "OUTLET_CAP", f"Outlet limit reached for {coupon.code}"
+                )
+
+        session.add(
+            CouponUsage(
+                coupon_id=coupon.id, guest_id=guest_id, outlet_id=outlet_id
+            )
+        )
 
 
 async def add_payment(
