@@ -460,6 +460,8 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 
 `scripts/digest_scheduler.py` scans all active tenants and triggers the KPI digest once the local time passes **09:00** in each tenant's timezone. The last sent date is stored in Redis under `digest:last:{tenant}` to prevent duplicates. A systemd timer (`deploy/systemd/neo-digest.timer`) runs this script every five minutes.
 
+`scripts/pilot_digest.py` collects pilot-tenant telemetry (orders, notification failures, SLA breaches, breaker opens and export errors) and sends a summary via email and Slack each day at **20:00 IST**. Tenants are configured through the `PILOT_TENANTS` environment variable.
+
 
 ## Grace/Expiry Reminders
 
