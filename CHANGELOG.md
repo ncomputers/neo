@@ -34,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
+- Menu items support JSON-defined modifiers and combos with server-side pricing.
 
 ## v1.0.0-rc - 2025-08-25
 

@@ -49,13 +49,17 @@ async def kot_pdf(
         order_id_db, placed_at, code = row
         source_type = "Counter"
         item_rows = await session.execute(
-            select(CounterOrderItem.name_snapshot, CounterOrderItem.qty).where(
-                CounterOrderItem.order_id == order_id
-            )
+            select(
+                CounterOrderItem.name_snapshot,
+                CounterOrderItem.qty,
+                CounterOrderItem.mods_snapshot,
+            ).where(CounterOrderItem.order_id == order_id)
         )
-        items = [
-            {"name": name, "qty": qty, "notes": ""} for name, qty in item_rows.all()
-        ]
+        items = []
+        for name, qty, mods in item_rows.all():
+            items.append({"name": name, "qty": qty, "notes": ""})
+            for mod in mods or []:
+                items.append({"name": f"- {mod['name']}", "qty": qty, "notes": ""})
     else:
         row = (
             await session.execute(
@@ -68,13 +72,17 @@ async def kot_pdf(
             order_id_db, placed_at, code = row
             source_type = "Table"
             item_rows = await session.execute(
-                select(OrderItem.name_snapshot, OrderItem.qty).where(
-                    OrderItem.order_id == order_id
-                )
+                select(
+                    OrderItem.name_snapshot,
+                    OrderItem.qty,
+                    OrderItem.mods_snapshot,
+                ).where(OrderItem.order_id == order_id)
             )
-            items = [
-                {"name": name, "qty": qty, "notes": ""} for name, qty in item_rows.all()
-            ]
+            items = []
+            for name, qty, mods in item_rows.all():
+                items.append({"name": name, "qty": qty, "notes": ""})
+                for mod in mods or []:
+                    items.append({"name": f"- {mod['name']}", "qty": qty, "notes": ""})
         else:
             row = (
                 await session.execute(
@@ -87,14 +95,17 @@ async def kot_pdf(
                 order_id_db, placed_at, code = row
                 source_type = "Room"
                 item_rows = await session.execute(
-                    select(RoomOrderItem.name_snapshot, RoomOrderItem.qty).where(
-                        RoomOrderItem.room_order_id == order_id
-                    )
+                    select(
+                        RoomOrderItem.name_snapshot,
+                        RoomOrderItem.qty,
+                        RoomOrderItem.mods_snapshot,
+                    ).where(RoomOrderItem.room_order_id == order_id)
                 )
-                items = [
-                    {"name": name, "qty": qty, "notes": ""}
-                    for name, qty in item_rows.all()
-                ]
+                items = []
+                for name, qty, mods in item_rows.all():
+                    items.append({"name": name, "qty": qty, "notes": ""})
+                    for mod in mods or []:
+                        items.append({"name": f"- {mod['name']}", "qty": qty, "notes": ""})
             else:
                 raise HTTPException(status_code=404, detail="order not found")
 
