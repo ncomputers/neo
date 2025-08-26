@@ -16,6 +16,7 @@ from .request_id import request_id_ctx
 
 # Fields in requests that should be redacted from logs
 PII_KEYS = {"pin", "utr", "auth", "gstin", "email"}
+LOG_SAMPLE_2XX = float(os.getenv("LOG_SAMPLE_2XX", "0.1"))
 LOG_SAMPLE_GUEST_4XX = float(os.getenv("LOG_SAMPLE_GUEST_4XX", "0.1"))
 
 
@@ -103,7 +104,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             outbound["error_id"] = error_id
 
         should_log = True
-        if _is_guest_post(request.url.path, request.method) and 400 <= status < 500:
+        if 200 <= status < 300:
+            if random.random() >= LOG_SAMPLE_2XX:
+                should_log = False
+        elif _is_guest_post(request.url.path, request.method) and 400 <= status < 500:
             if random.random() >= LOG_SAMPLE_GUEST_4XX:
                 should_log = False
 
