@@ -19,7 +19,9 @@ REGISTRY: Dict[str, Dict[str, Any]] = {
     "hotel_mode": {"default": False, "tenant_attr": "enable_hotel"},
     "counter_mode": {"default": False, "tenant_attr": "enable_counter"},
     "simple_modifiers": {"default": False},
+    "wa_enabled": {"default": False},
     "happy_hour": {"default": False},
+
 }
 
 

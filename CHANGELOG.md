@@ -37,6 +37,8 @@ All notable changes to this project will be documented in this file.
   accepted, out for delivery, or ready.
 - WhatsApp guest notifications are gated by the `WHATSAPP_GUEST_UPDATES_ENABLED`
   environment variable.
+- Status updates are sent via the WhatsApp provider with retry/backoff and
+  audit logging, gated by the `FLAG_WA_ENABLED` feature flag.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
 - Menu items expose dietary and allergen tags with guest filter support.
 - Feature-flagged menu modifiers and combos with server-side pricing (`FLAG_SIMPLE_MODIFIERS`).
