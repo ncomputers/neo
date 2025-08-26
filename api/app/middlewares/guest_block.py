@@ -7,6 +7,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
+from ..routes_metrics import abuse_ip_cooldown
 from ..security import blocklist, ip_reputation
 from ..security.ua_denylist import is_denied
 from ..utils.responses import err
@@ -36,11 +37,20 @@ class GuestBlockMiddleware(BaseHTTPMiddleware):
                     err("UA_BLOCKED", "TooManyRequests", hint=_geo_hint(request)),
                     status_code=HTTP_429_TOO_MANY_REQUESTS,
                 )
-            if await ip_reputation.is_bad(redis, ip) or await blocklist.is_blocked(
-                redis, tenant, ip
-            ):
+            if await ip_reputation.is_bad(redis, ip):
                 return JSONResponse(
                     err("IP_BLOCKED", "TooManyRequests", hint=_geo_hint(request)),
+                    status_code=HTTP_429_TOO_MANY_REQUESTS,
+                )
+            ttl = await blocklist.block_ttl(redis, tenant, ip)
+            if ttl > 0:
+                abuse_ip_cooldown.labels(ip=ip).set(ttl)
+                return JSONResponse(
+                    err(
+                        "ABUSE_COOLDOWN",
+                        "TooManyRequests",
+                        hint=f"Try again in {ttl}s",
+                    ),
                     status_code=HTTP_429_TOO_MANY_REQUESTS,
                 )
         return await call_next(request)

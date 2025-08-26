@@ -9,5 +9,7 @@ should be blocked.
 
 After three rejected orders from the same IP within 24 hours for a tenant the
 address is cooled down for fifteen minutes and further guest `POST /g/*`
-requests return an `IP_BLOCKED` (HTTP 429) envelope. Admins may clear an
-address with `POST /api/outlet/{tenant}/security/unblock_ip`.
+requests return an `ABUSE_COOLDOWN` (HTTP 429) envelope with a hint like
+`Try again in 900s`. A Prometheus metric `abuse_ip_cooldown{ip}` captures the
+remaining TTL. Admins may clear an address with
+`POST /api/outlet/{tenant}/security/unblock_ip`.

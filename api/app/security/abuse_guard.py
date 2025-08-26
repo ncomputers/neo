@@ -11,6 +11,7 @@ from fastapi import HTTPException, Request
 from redis.asyncio import Redis
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
+from ..routes_metrics import abuse_ip_cooldown
 from ..utils.responses import err
 from . import blocklist
 from .ua_denylist import is_denied
@@ -34,14 +35,20 @@ async def guard(request: Request, tenant: str, redis: Redis) -> None:
 
     ip = request.client.host if request.client else "unknown"
     ua = request.headers.get("User-Agent")
-    hint = _geo_hint(request)
+    geo_hint = _geo_hint(request)
     if is_denied(ua):
         raise HTTPException(
             status_code=HTTP_429_TOO_MANY_REQUESTS,
-            detail=err("UA_BLOCKED", "TooManyRequests", hint=hint),
+            detail=err("UA_BLOCKED", "TooManyRequests", hint=geo_hint),
         )
-    if await blocklist.is_blocked(redis, tenant, ip):
+    ttl = await blocklist.block_ttl(redis, tenant, ip)
+    if ttl > 0:
+        abuse_ip_cooldown.labels(ip=ip).set(ttl)
         raise HTTPException(
             status_code=HTTP_429_TOO_MANY_REQUESTS,
-            detail=err("IP_BLOCKED", "TooManyRequests", hint=hint),
+            detail=err(
+                "ABUSE_COOLDOWN",
+                "TooManyRequests",
+                hint=f"Try again in {ttl}s",
+            ),
         )

@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request, Response
 from datetime import datetime, timezone
+
+from fastapi import APIRouter, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
 
 # Counters
@@ -39,6 +40,11 @@ room_locked_denied_total = Counter(
     "room_locked_denied_total", "Total requests denied due to locked rooms"
 )
 room_locked_denied_total.inc(0)
+
+abuse_ip_cooldown = Gauge(
+    "abuse_ip_cooldown", "Remaining cooldown seconds for abusive IP", ["ip"]
+)
+abuse_ip_cooldown.labels(ip="sample").set(0)
 
 http_errors_total = Counter("http_errors_total", "Total HTTP errors", ["status"])
 http_errors_total.labels(status="0").inc(0)
@@ -115,14 +121,11 @@ rollup_runs_total.inc(0)
 rollup_failures_total = Counter("rollup_failures_total", "Total rollup failures")
 rollup_failures_total.inc(0)
 
-printer_retry_queue = Gauge(
-    "printer_retry_queue", "Queued print jobs awaiting retry"
-)
+printer_retry_queue = Gauge("printer_retry_queue", "Queued print jobs awaiting retry")
 printer_retry_queue.set(0)
 printer_retry_queue_age = Gauge(
     "printer_retry_queue_age",
     "Age in seconds of the oldest job awaiting retry",
-
 )
 printer_retry_queue_age.set(0)
 
@@ -133,15 +136,14 @@ kds_oldest_kot_seconds = Gauge(
 )
 kds_oldest_kot_seconds.labels(tenant="sample").set(0)
 
-kot_delay_alerts_total = Counter(
-    "kot_delay_alerts_total", "Total KOT delay alerts"
-)
+kot_delay_alerts_total = Counter("kot_delay_alerts_total", "Total KOT delay alerts")
 kot_delay_alerts_total.inc(0)
 
 
 def record_ab_conversion(experiment: str, variant: str) -> None:
     """Increment conversion counter for an experiment variant."""
     ab_conversions_total.labels(experiment=experiment, variant=variant).inc()
+
 
 router = APIRouter()
 

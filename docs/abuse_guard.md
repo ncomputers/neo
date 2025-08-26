@@ -4,7 +4,9 @@
 traffic.
 
 - **IP cooldown**: After three rejected orders from the same IP within a day the
-  address is cooled down for fifteen minutes.
+  address is cooled down for fifteen minutes. Cooldowns emit a Prometheus
+  metric `abuse_ip_cooldown{ip="1.2.3.4"}` with the remaining TTL and the API
+  responds with an `ABUSE_COOLDOWN` error hinting `Try again in Xs`.
 - **User-Agent denylist**: Requests from known bad agents such as `curl` and
   `wget` are rejected.
 - **Geo sanity hint**: If the reported `X-Geo-City` header does not match the
