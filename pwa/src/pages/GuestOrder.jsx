@@ -34,7 +34,10 @@ export default function GuestOrder() {
       items: [{ item_id: 'demo', qty: 1 }],
       synced: false,
     }
-    navigator.serviceWorker.controller?.postMessage({ type: 'QUEUE_ORDER_OP', op })
+    navigator.serviceWorker.controller?.postMessage({
+      type: 'QUEUE_ORDER_OP',
+      op,
+    })
     setOps((prev) => [...prev, op])
   }
 
@@ -61,9 +64,7 @@ export default function GuestOrder() {
         {ops.map((op) => (
           <li key={op.op_id} className="mb-1">
             {op.items[0].item_id} x {op.items[0].qty}{' '}
-            <span
-              className={op.synced ? 'text-green-600' : 'text-yellow-600'}
-            >
+            <span className={op.synced ? 'text-green-600' : 'text-yellow-600'}>
               {op.synced ? 'synced' : 'pending'}
             </span>
           </li>
