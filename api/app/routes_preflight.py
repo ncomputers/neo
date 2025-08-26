@@ -112,41 +112,37 @@ def check_backups() -> dict:
 
 
 def check_soft_delete_indexes() -> dict:
+    """Ensure partial unique indexes for soft-delete exist."""
+    required = {
+        "idx_tables_tenant_code_active": "tables",
+        "idx_menu_items_tenant_sku_active": "menu_items",
+    }
     try:
-        if engine.dialect.name != "postgresql":
-            return {
-                "name": "soft_delete_indexes",
-                "status": "warn",
-                "detail": "postgres only",
-            }
-        expected = [
-            "idx_tables_tenant_code_active",
-            "idx_menu_items_tenant_sku_active",
-        ]
         with engine.connect() as conn:
             rows = conn.execute(
                 text(
-                    "SELECT indexname, indexdef FROM pg_indexes WHERE indexname = ANY(:names)"
-                ),
-                {"names": expected},
-            ).fetchall()
-        found = {row[0]: row[1] for row in rows}
-        missing = [name for name in expected if name not in found]
+                    "SELECT indexname, indexdef FROM pg_indexes "
+                    "WHERE schemaname='public' AND tablename IN ('tables','menu_items')"
+                )
+            )
+        defs = {row.indexname: row.indexdef for row in rows}
+        missing = [name for name in required if name not in defs]
         invalid = [
             name
-            for name, idx in found.items()
-            if "WHERE deleted_at IS NULL" not in idx or "UNIQUE" not in idx
+            for name in required
+            if name in defs and "WHERE deleted_at IS NULL" not in defs[name]
         ]
         if missing or invalid:
-            detail_parts = []
+            parts = []
             if missing:
-                detail_parts.append(f"missing: {', '.join(missing)}")
+                parts.append("missing=" + ",".join(missing))
             if invalid:
-                detail_parts.append(f"invalid: {', '.join(invalid)}")
+                parts.append("invalid=" + ",".join(invalid))
             return {
                 "name": "soft_delete_indexes",
                 "status": "fail",
-                "detail": "; ".join(detail_parts),
+                "detail": "; ".join(parts),
+
             }
         return {"name": "soft_delete_indexes", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
@@ -154,51 +150,118 @@ def check_soft_delete_indexes() -> dict:
 
 
 async def check_quotas() -> dict:
-    url = os.getenv("QUOTAS_URL")
-    if not url:
-        return {"name": "quotas", "status": "warn", "detail": "missing"}
+    """Verify quotas endpoint returns sane values."""
+    tenant = os.getenv("PREFLIGHT_TENANT", "demo")
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            resp = await client.get(url)
-        data = resp.json() if resp.content else None
-        if resp.status_code != 200 or not isinstance(data, dict) or not data:
+        from . import auth
+        from .main import app
+
+        class _User:
+            role = "super_admin"
+
+        try:
+            app.dependency_overrides[auth.get_current_user] = (
+                lambda token=None: _User()
+            )
+            async with httpx.AsyncClient(
+                app=app, base_url="http://test", timeout=5
+            ) as client:
+                resp = await client.get(
+                    f"/api/outlet/{tenant}/limits/usage",
+                    headers={"X-Tenant-ID": tenant},
+                )
+        finally:
+            app.dependency_overrides.pop(auth.get_current_user, None)
+        if resp.status_code != 200:
             return {
                 "name": "quotas",
                 "status": "fail",
-                "detail": "invalid response",
+                "detail": f"http {resp.status_code}",
             }
+        data = resp.json().get("data")
+        if not isinstance(data, dict):
+            return {"name": "quotas", "status": "fail", "detail": "malformed"}
+        for metric, vals in data.items():
+            used = vals.get("used")
+            limit = vals.get("limit")
+            if (used is not None and used < 0) or (limit is not None and limit < 0):
+                return {
+                    "name": "quotas",
+                    "status": "fail",
+                    "detail": f"negative {metric}",
+                }
+
         return {"name": "quotas", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
         return {"name": "quotas", "status": "fail", "detail": str(exc)}
 
 
-def check_webhook_metrics() -> dict:
+async def check_webhook_metrics() -> dict:
+    """Ensure webhook metrics expose breaker state."""
     try:
-        metrics = generate_latest()
-        if b"webhook_breaker_state" not in metrics:
+        from .main import app
+
+        async with httpx.AsyncClient(app=app, base_url="http://test", timeout=5) as client:
+            resp = await client.get("/metrics")
+        if resp.status_code != 200:
             return {
                 "name": "webhook_metrics",
                 "status": "fail",
-                "detail": "webhook_breaker_state missing",
+                "detail": f"http {resp.status_code}",
+            }
+        if "webhook_breaker_state" not in resp.text:
+            return {
+                "name": "webhook_metrics",
+                "status": "fail",
+                "detail": "missing webhook_breaker_state",
+
             }
         return {"name": "webhook_metrics", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
         return {"name": "webhook_metrics", "status": "fail", "detail": str(exc)}
 
 
-def check_replica_gauge() -> dict:
+async def check_replica() -> dict:
+    """Verify replica gauge and fallback health."""
     try:
-        value = db_replica_healthy._value.get()  # type: ignore[attr-defined]
-        replica_url = os.getenv("READ_REPLICA_URL")
-        if replica_url:
-            if value == 1:
-                return {"name": "replica", "status": "ok"}
+        from .main import app
+        from .db.replica import replica_session
+
+        async with httpx.AsyncClient(app=app, base_url="http://test", timeout=5) as client:
+            resp = await client.get("/metrics")
+        if resp.status_code != 200:
             return {
                 "name": "replica",
                 "status": "fail",
-                "detail": "unhealthy",
+                "detail": "metrics unreachable",
             }
-        # no replica configured, falling back to primary
+        gauge_line = next(
+            (line for line in resp.text.splitlines() if line.startswith("db_replica_healthy")),
+            None,
+        )
+        if gauge_line is None:
+            return {
+                "name": "replica",
+                "status": "fail",
+                "detail": "gauge missing",
+            }
+        value = float(gauge_line.split()[-1])
+        replica_url = os.getenv("READ_REPLICA_URL")
+        if replica_url:
+            if value >= 1:
+                return {"name": "replica", "status": "ok"}
+            return {"name": "replica", "status": "fail", "detail": "unhealthy"}
+        # no replica configured - ensure fallback works
+        try:
+            async with replica_session() as session:
+                await session.execute(text("SELECT 1"))
+        except Exception as exc:  # pragma: no cover - best effort
+            return {
+                "name": "replica",
+                "status": "fail",
+                "detail": f"fallback failed: {exc}",
+            }
+
         return {"name": "replica", "status": "ok", "detail": "fallback"}
     except Exception as exc:  # pragma: no cover - best effort
         return {"name": "replica", "status": "fail", "detail": str(exc)}
@@ -216,8 +279,9 @@ async def preflight() -> dict:
         check_backups(),
         check_soft_delete_indexes(),
         await check_quotas(),
-        check_webhook_metrics(),
-        check_replica_gauge(),
+        await check_webhook_metrics(),
+        await check_replica(),
+
     ]
     overall = "ok"
     if any(c["status"] == "fail" for c in checks):

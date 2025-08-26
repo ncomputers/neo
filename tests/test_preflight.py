@@ -51,8 +51,9 @@ def test_preflight_ok(monkeypatch):
             "check_backups": ok_sync,
             "check_soft_delete_indexes": ok_sync,
             "check_quotas": ok_async,
-            "check_webhook_metrics": ok_sync,
-            "check_replica_gauge": ok_sync,
+            "check_webhook_metrics": ok_async,
+            "check_replica": ok_async,
+
         },
     )
     client = TestClient(app)
@@ -76,8 +77,9 @@ def test_preflight_fail(monkeypatch):
             "check_backups": ok_sync,
             "check_soft_delete_indexes": ok_sync,
             "check_quotas": ok_async,
-            "check_webhook_metrics": ok_sync,
-            "check_replica_gauge": ok_sync,
+            "check_webhook_metrics": ok_async,
+            "check_replica": ok_async,
+
         },
     )
     client = TestClient(app)
@@ -98,8 +100,9 @@ def test_preflight_warn(monkeypatch):
             "check_backups": ok_sync,
             "check_soft_delete_indexes": ok_sync,
             "check_quotas": ok_async,
-            "check_webhook_metrics": ok_sync,
-            "check_replica_gauge": ok_sync,
+            "check_webhook_metrics": ok_async,
+            "check_replica": ok_async,
+
         },
     )
     client = TestClient(app)
