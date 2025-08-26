@@ -6,6 +6,7 @@ import pathlib
 import sys
 import types
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 import fakeredis.aioredis
 import pytest
@@ -43,18 +44,24 @@ def client():
 
 
 def _master_session(provider: str | None = "razorpay", sandbox: bool = False):
+    tenant = types.SimpleNamespace(
+        gateway_provider=provider or "none",
+        gateway_sandbox=sandbox,
+        subscription_expires_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+
     @asynccontextmanager
     async def _session():
-        class _Tenant:
-            gateway_provider = provider or "none"
-            gateway_sandbox = sandbox
-
         class _Session:
             async def get(self, model, pk):
-                return _Tenant()
+                return tenant
+
+            async def commit(self):
+                pass
 
         yield _Session()
 
+    _session.tenant = tenant
     return _session
 
 
@@ -154,9 +161,8 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
     monkeypatch.setenv("GATEWAY_SANDBOX", "true")
     monkeypatch.setenv("RAZORPAY_SECRET_TEST", "secret")
-    monkeypatch.setattr(
-        routes_checkout_gateway, "get_session", _master_session("razorpay", True)
-    )
+    master_session = _master_session("razorpay", True)
+    monkeypatch.setattr(routes_checkout_gateway, "get_session", master_session)
 
     payments: list = []
     invoice = types.SimpleNamespace(settled=False, settled_at=None)
@@ -191,6 +197,7 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
     ).hexdigest()
 
     # first webhook
+    old_expiry = master_session.tenant.subscription_expires_at
     resp1 = client.post(
         "/api/outlet/demo/checkout/webhook",
         json={
@@ -204,6 +211,7 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
     assert resp1.status_code == 200
     assert invoice.settled
     assert len(payments) == 1
+    assert master_session.tenant.subscription_expires_at > old_expiry
 
     # duplicate webhook should be idempotent
     resp2 = client.post(

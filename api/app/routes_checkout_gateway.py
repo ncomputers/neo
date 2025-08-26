@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -113,6 +113,12 @@ async def checkout_webhook(
         invoice.settled = True
         invoice.settled_at = datetime.now(timezone.utc)
         await session.commit()
+        async with get_session() as m_session:
+            tenant_row = await m_session.get(Tenant, tenant)
+            if tenant_row:
+                current = tenant_row.subscription_expires_at or datetime.now(timezone.utc)
+                tenant_row.subscription_expires_at = current + timedelta(days=30)
+                await m_session.commit()
         return ok({"attached": True})
     if payload.status == "refund":
         if not getattr(invoice, "settled", False):
