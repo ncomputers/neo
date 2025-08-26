@@ -108,6 +108,7 @@ from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_admin_webhooks import router as admin_webhooks_router
+from .routes_admin_print import router as admin_print_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -910,6 +911,7 @@ app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(admin_support_router)
 app.include_router(admin_webhooks_router)
+app.include_router(admin_print_router)
 app.include_router(slo_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)
