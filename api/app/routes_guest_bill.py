@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import get_settings
 
 from .repos_sqlalchemy import invoices_repo_sql
 from .services import billing_service, notifications
+from .services.receipt_vault import ReceiptVault
 from .utils.responses import ok
 
 
@@ -39,6 +40,7 @@ router = APIRouter()
 @router.post("/g/{table_token}/bill")
 async def generate_bill(
     table_token: str,
+    request: Request,
     payload: dict | None = None,
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
@@ -73,6 +75,12 @@ async def generate_bill(
         coupons=coupons,
         happy_hour_windows=settings.happy_hour_windows,
     )
+    contact = None
+    if payload:
+        contact = payload.get("phone") or payload.get("email")
+    if contact and payload and payload.get("consent") and request is not None:
+        vault = ReceiptVault(request.app.state.redis)
+        await vault.add(contact, invoice_payload)
     await notifications.enqueue(
         tenant_id, "bill.generated", {"table_token": table_token}
     )

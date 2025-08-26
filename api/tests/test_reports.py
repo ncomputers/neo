@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import pathlib
 import sys
+
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 from api.app import db as app_db
+
 sys.modules.setdefault("db", app_db)
 
 import csv
@@ -16,25 +18,33 @@ from uuid import uuid4
 import fakeredis.aioredis
 import pytest
 from fastapi import FastAPI
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from api.app import routes_reports, routes_gst_monthly, routes_daybook_pdf
+from api.app import (
+    models_tenant,
+    routes_accounting,
+    routes_daybook_pdf,
+    routes_gst_monthly,
+    routes_reports,
+)
 from api.app.db.tenant import get_engine
-from api.app import models_tenant
 from api.app.models_tenant import (
-    Invoice,
-    Payment,
     Category,
+    Invoice,
     MenuItem,
     Order,
     OrderItem,
     OrderStatus,
+    Payment,
 )
 from api.app.services import billing_service
 
-os.environ.setdefault("POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db")
+os.environ.setdefault(
+    "POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db"
+)
+
 
 @pytest.fixture
 def anyio_backend() -> str:
@@ -47,7 +57,9 @@ async def tenant_session() -> AsyncSession:
     engine = get_engine(tenant_id)
     async with engine.begin() as conn:
         await conn.run_sync(models_tenant.Base.metadata.create_all)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
 
     try:
         async with sessionmaker() as session:
@@ -68,6 +80,7 @@ app = FastAPI()
 app.include_router(routes_reports.router)
 app.include_router(routes_gst_monthly.router)
 app.include_router(routes_daybook_pdf.router)
+app.include_router(routes_accounting.router)
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
 
@@ -306,8 +319,54 @@ async def test_z_report_csv(seeded_session, monkeypatch):
         resp = await client.get("/api/outlet/demo/reports/z?date=2024-01-01&format=csv")
         assert resp.status_code == 200
         rows = list(csv.reader(io.StringIO(resp.text)))
-        assert rows[0] == ["invoice_no", "subtotal", "tax", "total", "payments", "settled"]
+        assert rows[0] == [
+            "invoice_no",
+            "subtotal",
+            "tax",
+            "total",
+            "payments",
+            "settled",
+        ]
         assert rows[1] == ["INV1", "100.0", "5.0", "105.0", "cash:105.0", "True"]
+
+
+@pytest.mark.anyio
+async def test_sales_register_csv(seeded_session, monkeypatch):
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        yield seeded_session
+
+    monkeypatch.setattr(routes_accounting, "_session", fake_session)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(
+            "/api/outlet/demo/accounting/sales_register.csv?start=2024-01-01&end=2024-01-01"
+        )
+        assert resp.status_code == 200
+        rows = list(csv.reader(io.StringIO(resp.text)))
+        assert rows[0] == ["date", "invoice_no", "subtotal", "tax", "total"]
+        assert rows[1] == ["2024-01-01", "INV1", "100.0", "5.0", "105.0"]
+
+
+@pytest.mark.anyio
+async def test_gst_summary_csv(gst_seeded_session, monkeypatch):
+    @asynccontextmanager
+    async def fake_session(tenant_id: str):
+        yield gst_seeded_session
+
+    monkeypatch.setattr(routes_accounting, "_session", fake_session)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(
+            "/api/outlet/demo/accounting/gst_summary.csv?start=2024-01-01&end=2024-01-31"
+        )
+        assert resp.status_code == 200
+        rows = list(csv.reader(io.StringIO(resp.text)))
+        assert rows[0] == ["gst_rate", "taxable_value", "cgst", "sgst", "total"]
+        assert rows[1] == ["5", "200.0", "5.0", "5.0", "210.0"]
+        assert rows[2] == ["12", "200.0", "12.0", "12.0", "224.0"]
 
 
 @pytest.mark.anyio
@@ -344,9 +403,7 @@ async def test_daybook_pdf(daybook_seeded_session, monkeypatch):
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.get(
-            "/api/outlet/demo/reports/daybook.pdf?date=2024-01-01"
-        )
+        resp = await client.get("/api/outlet/demo/reports/daybook.pdf?date=2024-01-01")
         assert resp.status_code == 200
         assert resp.headers["content-type"].startswith("text/html") or resp.headers[
             "content-type"
@@ -366,5 +423,3 @@ async def test_daybook_pdf(daybook_seeded_session, monkeypatch):
         assert f"Total: {total_z:.2f}" in body
         assert "cash" in body and "card" in body
         assert "Pizza" in body and "Pasta" in body
-
-
