@@ -3,8 +3,6 @@ from __future__ import annotations
 """Printer agent heartbeat and retry queue metrics for KDS."""
 
 
-import json
-
 import logging
 from datetime import datetime, timezone
 from typing import Tuple
