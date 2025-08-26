@@ -9,10 +9,12 @@ from pathlib import Path
 
 import httpx
 from fastapi import APIRouter, UploadFile
+from prometheus_client import generate_latest
 from sqlalchemy import text
 
 from .db import SessionLocal, engine
 from .storage import storage
+from .routes_metrics import db_replica_healthy
 
 router = APIRouter()
 
@@ -109,6 +111,99 @@ def check_backups() -> dict:
     return result
 
 
+def check_soft_delete_indexes() -> dict:
+    try:
+        if engine.dialect.name != "postgresql":
+            return {
+                "name": "soft_delete_indexes",
+                "status": "warn",
+                "detail": "postgres only",
+            }
+        expected = [
+            "idx_tables_tenant_code_active",
+            "idx_menu_items_tenant_sku_active",
+        ]
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text(
+                    "SELECT indexname, indexdef FROM pg_indexes WHERE indexname = ANY(:names)"
+                ),
+                {"names": expected},
+            ).fetchall()
+        found = {row[0]: row[1] for row in rows}
+        missing = [name for name in expected if name not in found]
+        invalid = [
+            name
+            for name, idx in found.items()
+            if "WHERE deleted_at IS NULL" not in idx or "UNIQUE" not in idx
+        ]
+        if missing or invalid:
+            detail_parts = []
+            if missing:
+                detail_parts.append(f"missing: {', '.join(missing)}")
+            if invalid:
+                detail_parts.append(f"invalid: {', '.join(invalid)}")
+            return {
+                "name": "soft_delete_indexes",
+                "status": "fail",
+                "detail": "; ".join(detail_parts),
+            }
+        return {"name": "soft_delete_indexes", "status": "ok"}
+    except Exception as exc:  # pragma: no cover - best effort
+        return {"name": "soft_delete_indexes", "status": "fail", "detail": str(exc)}
+
+
+async def check_quotas() -> dict:
+    url = os.getenv("QUOTAS_URL")
+    if not url:
+        return {"name": "quotas", "status": "warn", "detail": "missing"}
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get(url)
+        data = resp.json() if resp.content else None
+        if resp.status_code != 200 or not isinstance(data, dict) or not data:
+            return {
+                "name": "quotas",
+                "status": "fail",
+                "detail": "invalid response",
+            }
+        return {"name": "quotas", "status": "ok"}
+    except Exception as exc:  # pragma: no cover - best effort
+        return {"name": "quotas", "status": "fail", "detail": str(exc)}
+
+
+def check_webhook_metrics() -> dict:
+    try:
+        metrics = generate_latest()
+        if b"webhook_breaker_state" not in metrics:
+            return {
+                "name": "webhook_metrics",
+                "status": "fail",
+                "detail": "webhook_breaker_state missing",
+            }
+        return {"name": "webhook_metrics", "status": "ok"}
+    except Exception as exc:  # pragma: no cover - best effort
+        return {"name": "webhook_metrics", "status": "fail", "detail": str(exc)}
+
+
+def check_replica_gauge() -> dict:
+    try:
+        value = db_replica_healthy._value.get()  # type: ignore[attr-defined]
+        replica_url = os.getenv("READ_REPLICA_URL")
+        if replica_url:
+            if value == 1:
+                return {"name": "replica", "status": "ok"}
+            return {
+                "name": "replica",
+                "status": "fail",
+                "detail": "unhealthy",
+            }
+        # no replica configured, falling back to primary
+        return {"name": "replica", "status": "ok", "detail": "fallback"}
+    except Exception as exc:  # pragma: no cover - best effort
+        return {"name": "replica", "status": "fail", "detail": str(exc)}
+
+
 @router.get("/api/admin/preflight")
 async def preflight() -> dict:
     checks = [
@@ -119,6 +214,10 @@ async def preflight() -> dict:
         check_webhooks(),
         await check_alertmanager(),
         check_backups(),
+        check_soft_delete_indexes(),
+        await check_quotas(),
+        check_webhook_metrics(),
+        check_replica_gauge(),
     ]
     overall = "ok"
     if any(c["status"] == "fail" for c in checks):

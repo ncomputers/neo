@@ -46,5 +46,6 @@ GET /api/admin/preflight
 
 The endpoint returns overall status and results for individual checks covering
 database and Redis connectivity, migration state, storage backend, webhook
-configuration, Alertmanager reachability, and backup recency.
+configuration, quotas service, webhook metrics, replica health, Alertmanager
+reachability, soft-delete indexes, and backup recency.
 
