@@ -164,6 +164,7 @@ from .routes_reports import router as reports_router
 from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
 from .routes_slo import router as slo_router
+from .routes_admin_ops import router as admin_ops_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
@@ -874,6 +875,7 @@ app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
 app.include_router(slo_router)
+app.include_router(admin_ops_router)
 app.include_router(limits_router)
 app.include_router(menu_import_router)
 app.include_router(alerts_router)
