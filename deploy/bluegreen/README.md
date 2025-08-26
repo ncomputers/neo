@@ -12,6 +12,15 @@ sudo sed -e 's/upstream blue/upstream green/' -i /etc/nginx/sites-available/neo.
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+## Weighted ramp
+Instead of an instant flip you can gradually shift traffic using Nginx
+weights. The helper below bumps the new stack from 5% to 25% to 50%, verifying
+`/ready` after each change:
+
+```bash
+python scripts/weighted_ramp.py --new neo-green --old neo-blue --base-url https://example.com
+```
+
 ## 2. Health gates
 Before and after the swap, gate traffic on the `/ready` endpoint until it
 returns HTTP 200. This ensures the application has completed migrations and
