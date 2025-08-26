@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { apiFetch } from '../api'
+import InvoiceLink from '../components/InvoiceLink'
 
 export default function CashierDashboard() {
   const { logo } = useTheme()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [invoices, setInvoices] = useState([])
 
   useEffect(() => {
     apiFetch('/orders')
@@ -14,6 +16,10 @@ export default function CashierDashboard() {
       .then((data) => setOrders(data.orders || []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
+    apiFetch('/invoices?limit=50')
+      .then((res) => res.json())
+      .then((data) => setInvoices(data.invoices || []))
+      .catch(() => {})
   }, [])
 
   return (
@@ -23,26 +29,40 @@ export default function CashierDashboard() {
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
       {!loading && !error && (
-        <table className="w-full border">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-2 border">Table</th>
-              <th className="p-2 border">Item</th>
-              <th className="p-2 border">Qty</th>
-              <th className="p-2 border">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o) => (
-              <tr key={`${o.table_id}-${o.index}`}>
-                <td className="p-2 border">{o.table_id}</td>
-                <td className="p-2 border">{o.item}</td>
-                <td className="p-2 border">{o.quantity}</td>
-                <td className="p-2 border capitalize">{o.status}</td>
+        <>
+          <table className="w-full border mb-6">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-2 border">Table</th>
+                <th className="p-2 border">Item</th>
+                <th className="p-2 border">Qty</th>
+                <th className="p-2 border">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((o) => (
+                <tr key={`${o.table_id}-${o.index}`}>
+                  <td className="p-2 border">{o.table_id}</td>
+                  <td className="p-2 border">{o.item}</td>
+                  <td className="p-2 border">{o.quantity}</td>
+                  <td className="p-2 border capitalize">{o.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {invoices.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-2">Recent invoices</h3>
+              <ul className="space-y-1">
+                {invoices.map((inv) => (
+                  <li key={inv.invoice_id}>
+                    <InvoiceLink invoiceId={inv.invoice_id} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
