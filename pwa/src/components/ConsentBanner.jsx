@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { apiFetch } from '../api'
 
 export default function ConsentBanner() {
   const [visible, setVisible] = useState(false)
@@ -22,6 +23,15 @@ export default function ConsentBanner() {
         'guestConsent',
         JSON.stringify({ analytics, wa })
       )
+    } catch (e) {
+      /* ignore */
+    }
+    try {
+      apiFetch('/g/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allow_analytics: analytics, allow_wa: wa })
+      })
     } catch (e) {
       /* ignore */
     }

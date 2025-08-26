@@ -14,9 +14,10 @@ GSTMode = Literal["unreg", "comp", "reg"]
 class CouponError(ValueError):
     """Raised when coupon application fails."""
 
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(self, code: str, message: str, *, hint: str | None = None) -> None:
         super().__init__(message)
         self.code = code
+        self.hint = hint
 
 
 ROUNDING_MAP = {
@@ -104,7 +105,11 @@ def compute_bill(
     if flags.get("happy_hour"):
         windows = active_windows(happy_hour_windows, now)
     if windows and coupons:
-        raise CouponError("HAPPY_HOUR", "Coupons cannot be used during happy hour")
+        raise CouponError(
+            "HAPPY_HOUR",
+            "Coupons cannot be used during happy hour",
+            hint="Try again outside happy hour",
+        )
     for item in items:
         qty = Decimal(str(item.get("qty", 1)))
         price = Decimal(str(item["price"]))
@@ -135,7 +140,11 @@ def compute_bill(
     if coupons:
         if len(coupons) > 1 and any(not c.get("is_stackable") for c in coupons):
             bad = next(c["code"] for c in coupons if not c.get("is_stackable"))
-            raise CouponError("NON_STACKABLE", f"Coupon {bad} cannot be stacked")
+            raise CouponError(
+                "NON_STACKABLE",
+                f"Coupon {bad} cannot be stacked",
+                hint="Remove non-stackable coupon",
+            )
 
         percent_total = Decimal("0")
         flat_total = Decimal("0")

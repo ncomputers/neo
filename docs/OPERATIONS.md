@@ -19,6 +19,24 @@ Run daily at 3 AM:
 0 3 * * * cd /path/to/neo && python scripts/purge_data.py --tenant TENANT_NAME
 ```
 
+## Owner Digest
+
+Operators can send a daily summary covering orders, average preparation
+time, top selling items, complimentary counts, tip totals and webhook
+breaker opens:
+
+```bash
+python scripts/owner_digest.py --tenant TENANT_NAME
+```
+
+### Example crontab
+
+Run nightly at 20:00 IST:
+
+```
+0 20 * * * cd /path/to/neo && python scripts/owner_digest.py --tenant TENANT_NAME
+```
+
 ## Support Bundle
 
 Administrators can download a diagnostic archive for a tenant:
@@ -84,6 +102,6 @@ python scripts/emit_test_alert.py --message "Test alert"
 ```
 
 This should trigger a Slack message in `#ops` and an email to
-`ops@example.com`. A scheduled GitHub Actions job sends this once a month
-to ensure the route stays healthy.
+`ops@example.com`. Scheduled GitHub Actions jobs send this once a month
+against both production and staging to ensure the route stays healthy.
 

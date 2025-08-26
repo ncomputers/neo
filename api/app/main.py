@@ -103,14 +103,17 @@ from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_privacy import router as admin_privacy_router
+from .routes_privacy_dsar import router as privacy_dsar_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
+from .routes_admin_webhooks import router as admin_webhooks_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
+from .routes_billing import router as billing_router
 from .routes_checkout_gateway import router as checkout_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
@@ -125,6 +128,7 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
+from .routes_guest_consent import router as guest_consent_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_help import router as help_router
@@ -160,9 +164,11 @@ from .routes_reports import router as reports_router
 from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
 from .routes_slo import router as slo_router
+from .routes_admin_ops import router as admin_ops_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
+from .routes_troubleshoot import router as troubleshoot_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
@@ -510,29 +516,6 @@ async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> di
     return ok({"status": "verified"})
 
 
-@app.get("/billing")
-async def billing_info(x_tenant_id: str = Header(...)) -> dict:
-    tenant = TENANTS.get(x_tenant_id)
-    if tenant is None:
-        raise HTTPException(status_code=404, detail="Tenant not found")
-    plan = tenant.get("plan")
-    next_renewal = tenant.get("subscription_expires_at")
-    pay_url = os.getenv("LICENSE_PAY_URL", "")
-    grace_days = tenant.get("grace_period_days", 7)
-    now = datetime.utcnow()
-    grace = False
-    if next_renewal:
-        grace = next_renewal < now <= next_renewal + timedelta(days=grace_days)
-    return ok(
-        {
-            "plan": plan,
-            "next_renewal": next_renewal,
-            "pay_url": pay_url,
-            "grace": grace,
-        }
-    )
-
-
 @app.get("/health")
 async def health() -> dict:
     return ok({"status": "ok"})
@@ -873,9 +856,11 @@ app.include_router(auth_2fa_router)
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
+app.include_router(guest_consent_router)
 app.include_router(counter_guest_router)
 app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
+app.include_router(billing_router)
 app.include_router(onboarding_router)
 app.include_router(qrpack_router)
 app.include_router(order_void_router)
@@ -890,6 +875,7 @@ app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
 app.include_router(slo_router)
+app.include_router(admin_ops_router)
 app.include_router(limits_router)
 app.include_router(menu_import_router)
 app.include_router(alerts_router)
@@ -897,6 +883,7 @@ app.include_router(security_router)
 app.include_router(jobs_status_router)
 app.include_router(dlq_router)
 app.include_router(admin_privacy_router)
+app.include_router(privacy_dsar_router)
 app.include_router(outbox_admin_router)
 app.include_router(webhook_tools_router)
 app.include_router(orders_batch_router)
@@ -915,9 +902,11 @@ app.include_router(time_skew_router)
 app.include_router(pwa_version_router)
 app.include_router(version_router)
 app.include_router(ready_router)
+app.include_router(troubleshoot_router)
 app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(admin_support_router)
+app.include_router(admin_webhooks_router)
 app.include_router(slo_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)

@@ -22,11 +22,13 @@ The queue endpoint returns a payload:
   "data": {
     "orders": [],
     "printer_stale": false,
-    "retry_queue": 0
+    "retry_queue": 0,
+    "retry_oldest_age": 0
   }
 }
 ```
 
 `printer_stale` becomes `true` when the printing bridge fails to send a
 heartbeat within a minute. `retry_queue` exposes the length of the bridge's
-retry list for basic monitoring.
+retry list and `retry_oldest_age` reports the age in seconds of the oldest
+job awaiting retry for basic monitoring.
