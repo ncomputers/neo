@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api.app.middlewares.logging import LoggingMiddleware  # noqa: E402
+from api.app.middlewares.request_id import RequestIdMiddleware  # noqa: E402
 
 
 def test_request_id_propagation(caplog):
@@ -34,6 +35,7 @@ def test_request_id_generation(caplog):
 
 def _make_app():
     test_app = FastAPI()
+    test_app.add_middleware(RequestIdMiddleware)
     test_app.add_middleware(LoggingMiddleware)
 
     @test_app.get("/health")
