@@ -8,7 +8,8 @@ from typing import Literal, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "templates"
+ROOT_DIR = Path(__file__).resolve().parents[3]
+TEMPLATE_DIR = ROOT_DIR / "templates"
 _env = Environment(
     loader=FileSystemLoader(TEMPLATE_DIR), autoescape=select_autoescape()
 )
@@ -30,7 +31,10 @@ def render_template(
     html = template.render(**context)
     try:
         weasyprint = importlib.import_module("weasyprint")
-        pdf_bytes = weasyprint.HTML(string=html, base_url=str(TEMPLATE_DIR)).write_pdf()
+        font_config = weasyprint.text.fonts.FontConfiguration()
+        pdf_bytes = weasyprint.HTML(string=html, base_url=str(ROOT_DIR)).write_pdf(
+            font_config=font_config
+        )
         return pdf_bytes, "application/pdf"
     except Exception:
         return html.encode("utf-8"), "text/html"
@@ -52,7 +56,10 @@ def render_invoice(
     html = template.render(invoice=invoice_json, csp_nonce=nonce)
     try:
         weasyprint = importlib.import_module("weasyprint")
-        pdf_bytes = weasyprint.HTML(string=html, base_url=str(TEMPLATE_DIR)).write_pdf()
+        font_config = weasyprint.text.fonts.FontConfiguration()
+        pdf_bytes = weasyprint.HTML(string=html, base_url=str(ROOT_DIR)).write_pdf(
+            font_config=font_config
+        )
         return pdf_bytes, "application/pdf"
     except Exception:
         return html.encode("utf-8"), "text/html"

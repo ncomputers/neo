@@ -1,9 +1,11 @@
+import io
 import pathlib
 import re
 import sys
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from pypdf import PdfReader
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
@@ -12,7 +14,11 @@ from api.app.pdf import render as pdf_render  # noqa: E402
 from api.app.routes_invoice_pdf import router  # noqa: E402
 
 
-def test_invoice_pdf_route_html_fallback():
+def test_invoice_pdf_route_html_fallback(monkeypatch):
+    def fake_import(name):
+        raise ImportError
+
+    monkeypatch.setattr(pdf_render.importlib, "import_module", fake_import)
     app = FastAPI()
     app.add_middleware(SecurityMiddleware)
     app.include_router(router)
@@ -34,11 +40,19 @@ def test_render_invoice_pdf_with_fake_weasyprint(monkeypatch):
             self.string = string
             self.base_url = base_url
 
-        def write_pdf(self):
+        def write_pdf(self, font_config=None):
             return b"%PDF-1.4"
 
     class DummyWeasy:
         HTML = DummyHTML
+
+        class text:
+            class fonts:
+                class FontConfiguration:  # noqa: D401 - simple stub
+                    """Font config stub."""
+
+                    def __init__(self):
+                        pass
 
     def fake_import(name):  # pragma: no cover - simple mock
         if name == "weasyprint":
@@ -113,3 +127,23 @@ def test_invoice_gujarati_item(monkeypatch):
     assert "કાઠીયાવાડી" in text
     assert "₹" in text
     assert "Noto Sans" in text
+
+
+def test_invoice_pdf_indic_fonts(tmp_path):
+    invoice = {
+        "number": "1",
+        "items": [
+            {"name": "કાઠીયાવાડી", "qty": 1, "price": "₹1"},
+            {"name": "पाव भाजी", "qty": 1, "price": "₹2"},
+        ],
+        "subtotal": "₹3",
+        "grand_total": "₹3",
+        "gst_mode": "unreg",
+    }
+    pdf_bytes, mimetype = pdf_render.render_invoice(invoice)
+    assert mimetype == "application/pdf"
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    text = "".join(page.extract_text() or "" for page in reader.pages)
+    assert "કાઠીયાવાડી" in text
+    assert "पाव भाजी" in text
+    assert "₹" in text

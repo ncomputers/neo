@@ -73,7 +73,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         csp = (
             "default-src 'self'; "
             "img-src 'self' data: https:; "
-            f"style-src 'self' 'nonce-{nonce}'; "
+            f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com; "
+            "font-src https://fonts.gstatic.com; "
             f"script-src 'self' 'nonce-{nonce}'"
         )
         response.headers.setdefault("Content-Security-Policy", csp)
