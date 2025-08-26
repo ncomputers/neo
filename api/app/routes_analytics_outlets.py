@@ -10,7 +10,8 @@ from io import StringIO
 from typing import Iterable
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -63,7 +64,7 @@ async def analytics_outlets(
     ids: str,
     from_: str = Query(..., alias="from"),
     to: str = Query(...),
-    format: str | None = None,
+    export: str | None = None,
 ):
     tenant_scope = set(_parse_scope(request))
     requested = [tid.strip() for tid in ids.split(",") if tid.strip()]
@@ -168,25 +169,32 @@ async def analytics_outlets(
         "voids_pct": voids_pct,
     }
 
-    if format == "csv":
-        output = StringIO()
-        writer = csv.writer(output)
-        writer.writerow(
-            ["outlet_id", "orders", "sales", "aov", "median_prep", "voids_pct"]
-        )
-        for row in per_outlet:
+    if export == "csv":
+        def _iter_csv():
+            output = StringIO()
+            writer = csv.writer(output)
             writer.writerow(
-                [
-                    row["id"],
-                    row["orders"],
-                    f"{row['sales']:.2f}",
-                    f"{row['aov']:.2f}",
-                    f"{row['median_prep']:.2f}",
-                    f"{row['voids_pct']:.2f}",
-                ]
+                ["outlet_id", "orders", "sales", "aov", "median_prep", "voids_pct"]
             )
-        resp = Response(content=output.getvalue(), media_type="text/csv")
-        resp.headers["Content-Disposition"] = "attachment; filename=outlets.csv"
-        return resp
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
+            for row in per_outlet:
+                writer.writerow(
+                    [
+                        row["id"],
+                        row["orders"],
+                        f"{row['sales']:.2f}",
+                        f"{row['aov']:.2f}",
+                        f"{row['median_prep']:.2f}",
+                        f"{row['voids_pct']:.2f}",
+                    ]
+                )
+                yield output.getvalue()
+                output.seek(0)
+                output.truncate(0)
+
+        headers = {"Content-Disposition": "attachment; filename=outlets.csv"}
+        return StreamingResponse(_iter_csv(), media_type="text/csv", headers=headers)
 
     return data
