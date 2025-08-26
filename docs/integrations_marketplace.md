@@ -21,3 +21,5 @@ POST /api/outlet/{tenant}/integrations/connect
 ```
 
 Validates the URL with a probe and stores the configuration for the tenant.
+
+For detailed setup instructions and troubleshooting, see [INTEGRATIONS.md](INTEGRATIONS.md).

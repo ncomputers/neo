@@ -69,6 +69,17 @@ async def connect_integration(
     probe_report = None
     if payload.url:
         probe_report = await probe_webhook(str(payload.url))
+        warnings = set(probe_report.get("warnings", []))
+        if "tls_self_signed" in warnings:
+            raise HTTPException(
+                status_code=400,
+                detail="Webhook has self-signed TLS certificate",
+            )
+        if "slow" in warnings:
+            raise HTTPException(
+                status_code=400,
+                detail="Webhook responded too slowly",
+            )
     TENANT_INTEGRATIONS.setdefault(tenant, {})[payload.type] = {
         "url": str(payload.url) if payload.url else None,
         "key": payload.key,
