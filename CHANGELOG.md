@@ -39,6 +39,8 @@ All notable changes to this project will be documented in this file.
 - Slow query logging with WARNs above the configurable threshold and 1% sampling of regular queries.
 - Locust profiles with locked p95 targets and nightly staging perf sanity.
 - Idempotent offline order queue using client-side `op_id` dedupe.
+- Consent-gated guest receipts vault with `/guest/receipts` listing the last 10
+  redacted bills. Retention defaults to 30 days and is configurable per tenant.
 - Offline queue and background sync for guest/counter orders with
   `Idempotency-Key` deduplication.
 - Dry-run mode for soft-deleted purge script with nightly CI report.

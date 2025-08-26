@@ -137,6 +137,7 @@ from .routes_guest_bill import router as guest_bill_router
 from .routes_guest_consent import router as guest_consent_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
+from .routes_guest_receipts import router as guest_receipts_router
 from .routes_help import router as help_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
@@ -866,6 +867,7 @@ app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
 app.include_router(guest_consent_router)
+app.include_router(guest_receipts_router)
 app.include_router(counter_guest_router)
 app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
