@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
+from datetime import datetime, timezone
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
 from datetime import datetime, timezone
 
@@ -105,11 +106,14 @@ rollup_runs_total.inc(0)
 rollup_failures_total = Counter("rollup_failures_total", "Total rollup failures")
 rollup_failures_total.inc(0)
 
-printer_retry_queue = Gauge("printer_retry_queue", "Queued print jobs awaiting retry")
+printer_retry_queue = Gauge(
+    "printer_retry_queue", "Queued print jobs awaiting retry"
+)
 printer_retry_queue.set(0)
 printer_retry_queue_age = Gauge(
     "printer_retry_queue_age",
     "Age in seconds of the oldest job awaiting retry",
+
 )
 printer_retry_queue_age.set(0)
 
@@ -143,5 +147,6 @@ async def metrics_endpoint(request: Request) -> Response:
                     pass
         printer_retry_queue.set(total)
         printer_retry_queue_age.set(max_age)
+
     data = generate_latest()
     return Response(data, media_type=CONTENT_TYPE_LATEST)

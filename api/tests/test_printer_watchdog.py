@@ -40,6 +40,7 @@ def test_printer_status_and_metrics():
     assert "printer_retry_queue 1.0" in body
     assert "printer_retry_queue_age" in body
 
+
 import os
 import pathlib
 import sys
@@ -90,6 +91,7 @@ def test_printer_offline_banner(client):
 
     old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=7)
     asyncio.run(redis.lpush("print:retry:demo", old.isoformat()))
+
     resp = client.get("/api/outlet/demo/kds/queue")
     assert resp.status_code == 200
     body = resp.json()

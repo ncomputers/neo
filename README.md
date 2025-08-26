@@ -258,7 +258,7 @@ Coupons can be marked as stackable and may specify a per-invoice `max_discount` 
 
 Attempts to combine a non-stackable coupon with others raise a `CouponError` with code `NON_STACKABLE`.
 
-Coupons may also define per-day, per-guest and per-outlet usage caps along with `valid_from`/`valid_to` windows. Usage is audited and exceeding a cap results in a `CouponError` with a hint describing the limitation.
+Coupons may also define per-day, per-guest and per-outlet usage caps along with `valid_from`/`valid_to` windows. Usage is audited and exceeding a cap results in a `CouponError` with a `hint` describing the limitation.
 
 ### Feedback
 
@@ -543,6 +543,7 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 ## Billing
 
 Admins can view their current plan and renewal date at `/billing`. The page links to a UPI or gateway URL for self‑serve renewals, and successful payment webhooks automatically extend the license.
+Set the `LICENSE_PAY_URL` environment variable to the payment link displayed on this page.
 
 ## PWA
 

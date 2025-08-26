@@ -2,6 +2,9 @@ from __future__ import annotations
 
 """Printer agent heartbeat and retry queue metrics for KDS."""
 
+
+import json
+
 import logging
 from datetime import datetime, timezone
 from typing import Tuple
@@ -9,6 +12,7 @@ from typing import Tuple
 HEARTBEAT_KEY = "print:hb:{tenant}"
 RETRY_QUEUE_KEY = "print:retry:{tenant}"
 DEFAULT_TIMEOUT = 60 * 5  # 5 minutes
+
 
 
 async def check(
@@ -21,6 +25,7 @@ async def check(
 
     ``redis`` is an ``aioredis`` compatible client. ``timeout`` is the maximum
     allowed seconds between heartbeats. ``now`` is only used for tests.
+
     """
     if now is None:
         now = datetime.now(timezone.utc)
@@ -57,3 +62,4 @@ async def check(
             except ValueError:
                 oldest_age = 0
     return stale, int(qlen), oldest_age
+

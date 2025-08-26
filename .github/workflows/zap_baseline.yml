@@ -1,0 +1,20 @@
+name: zap-baseline
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ secrets.STAGING_URL }}
+          allowlist: |
+            /auth
+            /callback
+          cmd_options: '-r zap_report.html'
+          artifact_name: zap-baseline-report

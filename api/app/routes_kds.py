@@ -47,6 +47,7 @@ async def list_queue(tenant_id: str, request: Request) -> dict:
     """Return active orders along with printer agent status."""
     redis = request.app.state.redis
     stale, qlen, oldest = await printer_watchdog.check(redis, tenant_id)
+
     async with _session(tenant_id) as session:
         try:
             orders = await orders_repo_sql.list_active(session, tenant_id)
@@ -57,6 +58,7 @@ async def list_queue(tenant_id: str, request: Request) -> dict:
         "printer_stale": stale,
         "retry_queue": qlen,
         "retry_oldest_age": oldest,
+
     }
     return ok(data)
 

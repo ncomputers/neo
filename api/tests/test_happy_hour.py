@@ -136,3 +136,4 @@ def test_coupons_rejected_during_happy_hour(monkeypatch):
             now=datetime(2023, 1, 2, 10, 30),
         )
     assert exc.value.code == "HAPPY_HOUR"
+    assert exc.value.hint == "Try again outside happy hour"
