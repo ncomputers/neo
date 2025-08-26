@@ -101,21 +101,17 @@ from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
-from .routes_accounting import router as accounting_router
+from .routes_accounting_exports import router as accounting_exports_router
+from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_ops import router as admin_ops_router
-
 from .routes_admin_pilot import router as admin_pilot_router
-
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_admin_support_console import router as admin_support_console_router
 from .routes_admin_webhooks import router as admin_webhooks_router
-from .routes_admin_devices import router as admin_devices_router
-from .routes_print_test import router as print_test_router
-from .routes_integrations import router as integrations_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -144,6 +140,7 @@ from .routes_help import router as help_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_housekeeping import router as housekeeping_router
+from .routes_integrations import router as integrations_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_jobs_status import router as jobs_status_router
 from .routes_kot import router as kot_router
@@ -166,6 +163,7 @@ from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
+from .routes_print_test import router as print_test_router
 from .routes_privacy_dsar import router as privacy_dsar_router
 from .routes_push import router as push_router
 from .routes_pwa_version import router as pwa_version_router
@@ -956,7 +954,7 @@ app.include_router(daybook_pdf_router)
 app.include_router(digest_router)
 app.include_router(reports_router)
 app.include_router(csp_router)
-app.include_router(accounting_router)
+app.include_router(accounting_exports_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
 app.include_router(export_all_router)
