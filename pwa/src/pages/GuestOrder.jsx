@@ -34,7 +34,10 @@ export default function GuestOrder() {
       items: [{ item_id: 'demo', qty: 1 }],
       synced: false,
     }
-    navigator.serviceWorker.controller?.postMessage({ type: 'QUEUE_ORDER_OP', op })
+    navigator.serviceWorker.controller?.postMessage({
+      type: 'QUEUE_ORDER_OP',
+      op,
+    })
     setOps((prev) => [...prev, op])
   }
 
@@ -65,6 +68,7 @@ export default function GuestOrder() {
             <span
               className={op.synced ? 'text-success' : 'text-warning'}
             >
+
               {op.synced ? 'synced' : 'pending'}
             </span>
           </li>
@@ -82,6 +86,12 @@ export default function GuestOrder() {
           className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
           Terms
+        </a>
+        <a href="/legal/refund" className="mx-2 hover:underline">
+          Refunds
+        </a>
+        <a href="/legal/contact" className="mx-2 hover:underline">
+          Contact
         </a>
       </footer>
     </div>

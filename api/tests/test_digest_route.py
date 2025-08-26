@@ -6,27 +6,30 @@ from datetime import datetime, timedelta, timezone
 import fakeredis.aioredis
 import pytest
 from fastapi import FastAPI
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 from api.app import db as app_db  # noqa: E402
+
 sys.modules.setdefault("db", app_db)  # noqa: E402
 
-from api.app import routes_digest, auth, models_tenant  # noqa: E402
+from api.app import auth, models_tenant, routes_digest  # noqa: E402
 from api.app.db.tenant import get_engine  # noqa: E402
-from api.app.models_tenant import (
+from api.app.models_tenant import (  # noqa: E402
     Category,
+    Invoice,
     MenuItem,
     Order,
     OrderItem,
-    Invoice,
-    Payment,
     OrderStatus,
-)  # noqa: E402
+    Payment,
+)
 
-os.environ.setdefault("POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db")
+os.environ.setdefault(
+    "POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db"
+)
 
 
 @pytest.fixture
@@ -43,7 +46,9 @@ async def tenant_session() -> AsyncSession:
         os.remove(db_path)
     async with engine.begin() as conn:
         await conn.run_sync(models_tenant.Base.metadata.create_all)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     try:
         async with sessionmaker() as session:
             yield session
@@ -110,7 +115,9 @@ async def seeded_session(tenant_session):
 app = FastAPI()
 app.include_router(routes_digest.router)
 app.state.redis = fakeredis.aioredis.FakeRedis()
-app.dependency_overrides[auth.get_current_user] = lambda: auth.User(username="u", role="super_admin")
+app.dependency_overrides[auth.get_current_user] = lambda: auth.User(
+    username="u", role="super_admin"
+)
 
 
 @pytest.mark.anyio
@@ -124,3 +131,4 @@ async def test_digest_route(seeded_session, monkeypatch):
     data = resp.json()
     assert data["sent"] is True
     assert "console" in data["channels"]
+    assert "email" in data["channels"]

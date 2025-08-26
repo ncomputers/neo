@@ -51,6 +51,8 @@ async def generate_bill(
     """
     tip = float(payload.get("tip", 0)) if payload else 0
     coupons = payload.get("coupons") if payload else None
+    guest_id = payload.get("guest_id") if payload else None
+    outlet_id = payload.get("outlet_id") if payload else None
 
     await invoices_repo_sql.generate_invoice(
         session=session,
@@ -60,6 +62,8 @@ async def generate_bill(
         tenant_id=tenant_id,
         tip=tip,
         coupons=coupons,
+        guest_id=guest_id,
+        outlet_id=outlet_id,
     )
     settings = get_settings()
     invoice_payload = billing_service.compute_bill(

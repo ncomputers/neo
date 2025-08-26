@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Cache last 50 invoice PDFs per outlet for offline review.
 - /time/skew endpoint returns server epoch for client clock skew detection.
 - Guard hot queries with a p95 regression check.
 - Enforce environment validation at application startup and audit required
@@ -26,6 +27,8 @@ All notable changes to this project will be documented in this file.
   inclusion of deleted records via ``include_deleted``.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
+- Webhook rule creation probes target latency and TLS, warning on slow or
+  self-signed endpoints.
 - Controlled cancellation flow with `/orders/{id}/void/request` and `/void/approve` endpoints, reversing stock, adjusting invoices and auditing each step.
 - Printable invoice and KOT templates consume middleware-provided CSP nonces on inline styles to harden rendering.
 - Add tests ensuring CSP nonces are applied on printable invoice and KOT pages.
@@ -38,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
+- Optional PostHog/Mixpanel analytics with per-tenant consent and PII redaction.
 - WhatsApp guest notifications are gated by the `WHATSAPP_GUEST_UPDATES_ENABLED`
   environment variable.
 - Status updates are sent via the WhatsApp provider with retry/backoff and
@@ -58,6 +62,10 @@ All notable changes to this project will be documented in this file.
 - Script to bulk seed a large dataset for local scale testing.
 
 - Feature-flagged happy-hour pricing via scheduled `happy_hour_windows` (day/time windows) with best-overlap discounting and coupons disabled during discount windows.
+
+### Changed
+
+- 429 responses for magic-link, guest order, exports, and webhook test now include retry hints.
 
 ### Fixed
 

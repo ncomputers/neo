@@ -95,14 +95,22 @@ sudo systemctl enable --now neo-grace.timer
 
 ## 9. Blue/green releases
 Automate zero-downtime deploys with the helper script. It boots the new
-version, waits for `/ready`, runs smoke and canary probes and then flips the
-Nginx upstream before retiring the old instance:
+version, waits for `/preflight` and `/ready`, runs a minimal canary smoke
+followed by the full probe and then flips the Nginx upstream before retiring
+the old instance. Smoke failures trigger a rollback of the new unit:
 
 ```bash
 python scripts/deploy_blue_green.py --new neo-green --old neo-blue --tenant TENANT --table TABLE --base-url https://example.com
 ```
 
 For manual steps and more background, see the [blue/green guide](bluegreen/README.md).
+
+To slowly shift traffic, run the weighted ramp helper which adjusts Nginx
+weights to 5%, 25% and 50%, gating on `/ready` between each bump:
+
+```bash
+python scripts/weighted_ramp.py --new neo-green --old neo-blue --base-url https://example.com
+```
 
 ## Grafana dashboards
 

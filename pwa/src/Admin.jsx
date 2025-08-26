@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { apiFetch } from './api'
 
 export default function Admin() {
@@ -25,6 +26,14 @@ export default function Admin() {
         </div>
       )}
       <h1 className="text-2xl font-bold">Admin Area</h1>
+      <div className="mt-4">
+        <Link
+          to="/admin/troubleshoot"
+          className="text-blue-600 underline hover:text-blue-800"
+        >
+          Troubleshoot common issues
+        </Link>
+      </div>
     </div>
   )
 }

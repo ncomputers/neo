@@ -9,12 +9,14 @@ This repository contains three main services:
 Invoices support optional FSSAI license details when provided.
 QR pack generation events are audited and can be exported via admin APIs. See
 [`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details.
+Per-tenant product analytics can be enabled with tenant consent. See
+[`docs/analytics.md`](docs/analytics.md) for setup instructions.
 
 ## Security
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
-Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports (kept for 24 hours) are available at `/admin/csp/reports`.
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. HTML pages also emit a `Content-Security-Policy-Report-Only` header directing violation details to `/csp/report`. The endpoint retains the latest 500 reports for 24 hours with any `token` query parameters redacted; administrators can review them at `/admin/csp/reports`.
 
 Guest-facing order endpoints accept an `Idempotency-Key` header (UUID). Successful responses are cached for 24 hours and the key is recorded in audit logs to guard against duplicate charges.
 
@@ -158,16 +160,19 @@ Hot query plans are checked in CI using `scripts/plan_guard.py`, which runs
 
 ## Continuous Integration
 
-GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-audit`, and `gitleaks` for
+GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-audit`, `gitleaks`, and `trivy` for
 all pull requests. To mirror these checks locally:
 
 ```bash
 pip install pre-commit pip-audit
-brew install gitleaks # or grab a binary from https://github.com/gitleaks/gitleaks/releases
+brew install gitleaks trivy # binaries: https://github.com/gitleaks/gitleaks/releases and https://aquasecurity.github.io/trivy
 pre-commit run --all-files
 npx pa11y-ci -c pa11y-ci.json
 pip-audit
 gitleaks detect -c .gitleaks.toml
+docker build -t api -f Dockerfile.api .
+docker build -t worker -f Dockerfile.worker .
+trivy image --severity HIGH,CRITICAL api worker
 ```
 
 ## Accessibility
@@ -209,7 +214,7 @@ uvicorn app.main:app --reload
 
 Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
 Use `/support/contact` to fetch support email, phone, hours, documentation links, and legal policy URLs.
-Legal policy pages are available at `/legal/{page}` (for example, `/legal/privacy` or `/legal/terms`) and support optional outlet branding.
+Legal policy pages are available at `/legal/{page}` (for example, `/legal/privacy`, `/legal/terms`, `/legal/subprocessors`, or `/legal/sla`) and support optional outlet branding.
 Bundled diagnostics for an outlet can be downloaded by admin users at `/api/outlet/{tenant}/support/bundle.zip`.
 Browsers requesting `text/html` receive simple static pages for 403, 404, and 500 errors.
 
@@ -241,6 +246,7 @@ A minimal onboarding flow captures tenant details:
   - `show_logo` toggles the outlet logo on each page
   - `label_fmt` customises table labels; `{n}` is replaced with the table number and `{label}` with the base label
   - responses are cached in Redis for ten minutes and the endpoint is rate-limited to one request per minute per tenant
+- `GET /api/admin/outlets/{tenant}/qrposters.zip?size=A4` – download a ZIP of A4 or A5 QR posters for each table.
 - `POST /api/outlet/{tenant}/tables/{code}/qr/rotate` – rotate a table's QR token, returning a new deeplink and QR image.
 
 ### Coupons
@@ -248,6 +254,8 @@ A minimal onboarding flow captures tenant details:
 Coupons can be marked as stackable and may specify a per-invoice `max_discount` cap. When multiple stackable coupons are applied, the invoice `bill_json` records the `applied_coupons` and the combined `effective_discount`.
 
 Attempts to combine a non-stackable coupon with others raise a `CouponError` with code `NON_STACKABLE`.
+
+Coupons may also define per-day, per-guest and per-outlet usage caps along with `valid_from`/`valid_to` windows. Usage is audited and exceeding a cap results in a `CouponError` with a hint describing the limitation.
 
 ### Feedback
 
@@ -503,7 +511,7 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `notifications_outbox_delivered_total` / `notifications_outbox_failed_total`: notification worker results
 - `ws_messages_total`: WebSocket messages delivered
 - `sse_clients_gauge`: currently connected SSE clients
-- `digest_sent_total`: daily KPI digests sent (via route or CLI)
+- `digest_sent_total`: daily owner digests (orders, avg prep time, top items, comps, tips, gateway fee estimate) sent via email/WhatsApp or CLI
 - `slo_requests_total` / `slo_errors_total`: per-route SLO tracking
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
@@ -528,6 +536,10 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 ## Grace/Expiry Reminders
 
 `scripts/grace_reminder.py` scans tenant subscriptions and enqueues owner alerts when a license is set to expire in 7, 3 or 1 days, or while it remains within the grace window. A systemd timer (`deploy/systemd/neo-grace.timer`) runs this helper daily.
+
+## Billing
+
+Admins can view their current plan and renewal date at `/billing`. The page links to a UPI or gateway URL for self‑serve renewals, and successful payment webhooks automatically extend the license.
 
 ## PWA
 
@@ -612,6 +624,7 @@ python scripts/tenant_seed_counter.py --tenant TENANT_ID
 python scripts/tenant_qr_tools.py list_tables --tenant TENANT_ID
 python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
 python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
+python scripts/qr_poster_pack.py --tenant TENANT_ID --size A4
 ```
 
 To generate a sizable dataset for local load testing, use the large outlet seeder:

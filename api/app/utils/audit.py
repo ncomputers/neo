@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import wraps
 import inspect
 import typing
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 from fastapi import Request
 
@@ -13,7 +13,9 @@ from api.app.db import SessionLocal
 from api.app.models_tenant import AuditTenant
 
 
-def audit(action: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def audit(
+    action: str, redact: Iterable[str] | None = None
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorate a route handler to persist an audit entry on success.
 
     When the wrapped handler returns a response produced by
@@ -67,6 +69,11 @@ def audit(action: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
                     if k not in {"tenant", "tenant_id", "request", "user", "staff"}
                     and k.endswith("id")
                 }
+                if payload and redact:
+                    payload = {
+                        k: ("***" if k in set(redact) else v)
+                        for k, v in payload.items()
+                    }
                 meta = {"path": request.url.path, "payload": payload}
                 if targets:
                     meta["target"] = targets

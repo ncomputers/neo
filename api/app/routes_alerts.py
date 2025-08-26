@@ -2,8 +2,11 @@ from __future__ import annotations
 
 """Routes for managing alert rules and viewing notification outbox."""
 
+import ssl
+import time
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -12,9 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from .auth import User, role_required
 from .db.tenant import get_engine
 from .models_tenant import AlertRule, NotificationOutbox
+from .utils.audit import audit
 from .utils.responses import ok
 from .utils.scrub import scrub_payload
-from .utils.audit import audit
 
 router = APIRouter()
 
@@ -39,6 +42,35 @@ async def _session(tenant_id: str):
         await engine.dispose()
 
 
+SLA_MS = 1000
+
+
+async def _probe_webhook(url: str) -> dict:
+    start = time.monotonic()
+    tls_self_signed = False
+    http_code: int | None = None
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.head(url)
+        http_code = resp.status_code
+    except httpx.HTTPError as exc:
+        cause = getattr(exc, "__cause__", None)
+        if isinstance(cause, ssl.SSLCertVerificationError):
+            tls_self_signed = True
+    latency_ms = int((time.monotonic() - start) * 1000)
+    warnings: list[str] = []
+    if latency_ms > SLA_MS:
+        warnings.append("slow")
+    if tls_self_signed:
+        warnings.append("tls_self_signed")
+    return {
+        "latency_ms": latency_ms,
+        "http_code": http_code,
+        "tls_self_signed": tls_self_signed,
+        "warnings": warnings,
+    }
+
+
 @router.post("/api/outlet/{tenant_id}/alerts/rules")
 @audit("create_alert_rule")
 async def create_rule(
@@ -50,7 +82,10 @@ async def create_rule(
     async with _session(tenant_id) as session:
         session.add(rule)
         await session.commit()
-    return ok({"id": rule.id})
+    result = {"id": rule.id}
+    if payload.channel == "webhook":
+        result["probe"] = await _probe_webhook(payload.target)
+    return ok(result)
 
 
 @router.get("/api/outlet/{tenant_id}/alerts/rules")
