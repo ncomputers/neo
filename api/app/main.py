@@ -31,7 +31,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -101,14 +101,10 @@ from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
-from .routes_accounting_exports import router as accounting_exports_router
-
+from .routes_ab_tests import router as ab_tests_router
 from .routes_accounting import router as accounting_router
+from .routes_accounting_exports import router as accounting_exports_router
 from .routes_admin_devices import router as admin_devices_router
-from .routes_admin_menu import router as admin_menu_router
-from .routes_admin_ops import router as admin_ops_router
-from .routes_admin_pilot import router as admin_pilot_router
-
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_ops import router as admin_ops_router
 from .routes_admin_pilot import router as admin_pilot_router
@@ -119,12 +115,8 @@ from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_admin_support_console import router as admin_support_console_router
 from .routes_admin_webhooks import router as admin_webhooks_router
-
-
-from .routes_admin_devices import router as admin_devices_router
-from .routes_print_test import router as print_test_router
-from .routes_integrations import router as integrations_router
 from .routes_alerts import router as alerts_router
+from .routes_analytics_outlets import router as analytics_outlets_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
 from .routes_auth_magic import router as auth_magic_router
@@ -153,7 +145,6 @@ from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_housekeeping import router as housekeeping_router
 from .routes_integrations import router as integrations_router
-
 from .routes_integrations_marketplace import router as integrations_marketplace_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_jobs_status import router as jobs_status_router
@@ -165,7 +156,6 @@ from .routes_media import router as media_router
 from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
-from .routes_ab_tests import router as ab_tests_router
 from .routes_onboarding import router as onboarding_router
 from .routes_order_void import router as order_void_router
 from .routes_orders_batch import router as orders_batch_router
@@ -255,6 +245,8 @@ async def status_json():
         Path(__file__).resolve().parent.parent.parent / "status.json",
         media_type="application/json",
     )
+
+
 init_tracing(app)
 asyncio.set_event_loop(asyncio.new_event_loop())
 app.state.redis = from_url(settings.redis_url, decode_responses=True)
@@ -932,6 +924,7 @@ app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
 app.include_router(ab_tests_router)
 app.include_router(rum_router)
+app.include_router(analytics_outlets_router)
 app.include_router(owner_analytics_router)
 app.include_router(owner_sla_router)
 app.include_router(dashboard_router)

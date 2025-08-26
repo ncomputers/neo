@@ -96,6 +96,7 @@ class OrderStatus(enum.Enum):
     PREPARING = "preparing"
     READY = "ready"
     SERVED = "served"
+    CANCELLED = "cancelled"
 
 
 class Table(Base):
