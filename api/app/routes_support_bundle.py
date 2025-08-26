@@ -11,7 +11,6 @@ from zipfile import ZipFile
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
-from . import flags
 from .audit import Audit, SessionLocal
 from .auth import User, role_required
 from .db.master import get_session

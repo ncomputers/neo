@@ -46,7 +46,7 @@ def fetch_menu(
     with SessionLocal() as session:
         cat_ts = session.query(func.max(Category.updated_at)).scalar()
         item_ts = session.query(func.max(MenuItem.updated_at)).scalar()
-    etag = hashlib.sha1(f"{cat_ts}{item_ts}".encode()).hexdigest()
+    etag = hashlib.sha1(f"{cat_ts}{item_ts}".encode(), usedforsecurity=False).hexdigest()
     if if_none_match == etag:
         return Response(status_code=304, headers={"ETag": etag})
 

@@ -18,6 +18,8 @@ Responses include a strict Content-Security-Policy with per-request nonces appli
 
 Guest-facing order endpoints accept an `Idempotency-Key` header (UUID). Successful responses are cached for 24 hours and the key is recorded in audit logs to guard against duplicate charges.
 
+All pull requests run Bandit, pip-audit, and ruff checks in CI to block risky code and dependencies.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
