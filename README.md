@@ -160,16 +160,19 @@ Hot query plans are checked in CI using `scripts/plan_guard.py`, which runs
 
 ## Continuous Integration
 
-GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-audit`, and `gitleaks` for
+GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-audit`, `gitleaks`, and `trivy` for
 all pull requests. To mirror these checks locally:
 
 ```bash
 pip install pre-commit pip-audit
-brew install gitleaks # or grab a binary from https://github.com/gitleaks/gitleaks/releases
+brew install gitleaks trivy # binaries: https://github.com/gitleaks/gitleaks/releases and https://aquasecurity.github.io/trivy
 pre-commit run --all-files
 npx pa11y-ci -c pa11y-ci.json
 pip-audit
 gitleaks detect -c .gitleaks.toml
+docker build -t api -f Dockerfile.api .
+docker build -t worker -f Dockerfile.worker .
+trivy image --severity HIGH,CRITICAL api worker
 ```
 
 ## Localization
