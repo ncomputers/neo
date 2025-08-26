@@ -1,0 +1,9 @@
+[run]
+omit =
+    */migrations/*
+    */__init__.py
+    */scripts/*
+
+[report]
+fail_under = 80
+
