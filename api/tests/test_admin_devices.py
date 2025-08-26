@@ -1,3 +1,4 @@
+import asyncio
 import os
 import pathlib
 import sys
@@ -12,7 +13,7 @@ os.environ.setdefault("REDIS_URL", "redis://localhost/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 os.environ.setdefault("ALLOWED_ORIGINS", "*")
 
-from api.app.auth import create_access_token
+from api.app.auth import UserInDB, create_access_token, fake_users_db
 from api.app.db import SessionLocal
 from api.app.models_master import Device
 from api.app.main import app
@@ -51,3 +52,35 @@ def test_device_rbac() -> None:
         headers={"Authorization": f"Bearer {cashier}"},
     )
     assert resp.status_code == 403
+
+
+def test_unlock_pin_rbac() -> None:
+    """Only managers may clear PIN lockouts."""
+    fake_users_db["manager1"] = UserInDB(
+        username="manager1", role="manager", password_hash=""
+    )
+    manager = create_access_token({"sub": "manager1", "role": "manager"})
+    cashier = create_access_token({"sub": "cashier1", "role": "cashier"})
+
+    lock_key = "pin:lock:demo:cashier1:testclient"
+    asyncio.get_event_loop().run_until_complete(app.state.redis.set(lock_key, 1))
+
+    resp = client.post(
+        "/admin/staff/cashier1/unlock_pin",
+        headers={"Authorization": f"Bearer {cashier}"},
+    )
+    assert resp.status_code == 403
+    exists = asyncio.get_event_loop().run_until_complete(
+        app.state.redis.exists(lock_key)
+    )
+    assert exists == 1
+
+    resp = client.post(
+        "/admin/staff/cashier1/unlock_pin",
+        headers={"Authorization": f"Bearer {manager}"},
+    )
+    assert resp.status_code == 200
+    exists = asyncio.get_event_loop().run_until_complete(
+        app.state.redis.exists(lock_key)
+    )
+    assert exists == 0
