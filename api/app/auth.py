@@ -57,6 +57,11 @@ fake_users_db: dict[str, UserInDB] = {
         role="super_admin",
         password_hash=ph.hash("adminpass"),
     ),
+    "owner@example.com": UserInDB(
+        username="owner@example.com",
+        role="owner",
+        password_hash=ph.hash("ownerpass"),
+    ),
     "cashier1": UserInDB(
         username="cashier1",
         role="cashier",
