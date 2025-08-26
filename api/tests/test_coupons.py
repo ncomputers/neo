@@ -117,6 +117,8 @@ async def test_invoice_persists_coupon_details(monkeypatch):
             tenant_id="T",
             tip=0,
             coupons=coupons,
+            guest_id=1,
+            outlet_id=1,
         )
         await session.commit()
         invoice = await session.get(models_tenant.Invoice, inv_id)

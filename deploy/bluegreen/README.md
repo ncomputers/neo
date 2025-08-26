@@ -12,34 +12,35 @@ sudo sed -e 's/upstream blue/upstream green/' -i /etc/nginx/sites-available/neo.
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## 2. Health gates
-Before and after the swap, gate traffic on the `/ready` endpoint until it
-returns HTTP 200. This ensures the application has completed migrations and
-warmed caches.
+## Weighted ramp
+Instead of an instant flip you can gradually shift traffic using Nginx
+weights. The helper below bumps the new stack from 5% to 25% to 50%, verifying
+`/ready` after each change:
 
 ```bash
+python scripts/weighted_ramp.py --new neo-green --old neo-blue --base-url https://example.com
+```
+
+## 2. Health gates
+Before and after the swap, gate traffic on the `/preflight` and `/ready`
+endpoints until both return HTTP 200. This ensures the application has completed
+migrations and warmed caches.
+
+```bash
+curl -f https://example.com/preflight
 curl -f https://example.com/ready
 ```
 
-## 3. Preflight check
-After deployment, verify overall system readiness via the consolidated preflight
-API. The endpoint must report status `ok`:
+## 3. Smoke suite
+Run a minimal synthetic order to confirm end‑to‑end functionality:
 
 ```bash
-curl -fsS https://example.com/api/admin/preflight | jq -e '.status == "ok"'
+python scripts/canary_probe.py --minimal --tenant TENANT --table TABLE
 ```
 
-## 4. Smoke suite
-Run a tiny canary order to confirm end‑to‑end functionality. The helper script
-places and then voids an order:
+If the script fails, stop the new instance to roll back.
 
-```bash
-python scripts/smoke_release.py --tenant TENANT --table TABLE
-```
-
-If the script exits with code 0 the release is considered healthy.
-
-## 5. Canary probe
+## 4. Canary probe
 Perform a full synthetic canary round‑trip which also exercises KOT generation
 and the digest endpoint:
 

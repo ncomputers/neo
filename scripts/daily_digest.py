@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Send a daily KPI digest for a tenant.
+"""Send a daily owner digest for a tenant.
 
 Aggregates previous day's orders, sales, average ticket size,
- top selling items and payment split, and sends the digest
-via configured providers. Supports ``console`` and ``whatsapp``
-(stub) providers.
+average preparation time, top selling items and payment split,
+along with complimentary item counts, tips and an estimated
+payment gateway spend. The digest is sent via configured
+providers – console, WhatsApp (stub) and email (stub).
 
 The script can be invoked directly or through the optional
 API route ``POST /api/outlet/{tenant}/digest/run``.
@@ -14,23 +15,30 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from datetime import date, datetime, time, timedelta, timezone
 import os
-from typing import Iterable
-
-from pathlib import Path
 import sys
+from datetime import date, datetime, time, timedelta, timezone
+from pathlib import Path
+from typing import Iterable
 
 # Ensure ``api`` package is importable when running as a standalone script
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "api"))
 
-from app.db.tenant import get_engine as get_tenant_engine  # type: ignore
-from app.models_tenant import AuditTenant, Order, OrderItem, Invoice, Payment  # type: ignore
-from sqlalchemy import select, func, desc
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from zoneinfo import ZoneInfo
+
+from app.db.tenant import get_engine as get_tenant_engine  # type: ignore
+from app.models_tenant import (  # type: ignore
+    AuditTenant,
+    Invoice,
+    Order,
+    OrderItem,
+    Payment,
+)
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from api.app.routes_metrics import digest_sent_total  # type: ignore
 
 
@@ -51,9 +59,22 @@ class WhatsappProvider:
         return None
 
 
+class EmailProvider:
+    """Stub provider for email delivery."""
+
+    @staticmethod
+    def send(message: str) -> None:  # pragma: no cover - stub
+        from api.app.providers import email_stub  # type: ignore
+
+        email_stub.send(
+            "daily_digest", {"subject": "Daily Digest", "body": message}, None
+        )
+
+
 PROVIDERS = {
     "console": ConsoleProvider(),
     "whatsapp": WhatsappProvider(),
+    "email": EmailProvider(),
 }
 
 
@@ -65,14 +86,20 @@ async def build_digest_line(tenant: str, day: date) -> str:
     end = datetime.combine(day, time.max, tzinfo).astimezone(timezone.utc)
 
     engine = get_tenant_engine(tenant)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     try:
         async with sessionmaker() as session:
             orders = await _orders_count(session, start, end)
             sales = await _sales_total(session, start, end)
             avg_ticket = float(sales / orders) if orders else 0.0
+            avg_prep = await _avg_prep_minutes(session, start, end)
             top_items = await _top_items(session, start, end)
             payments = await _payment_split(session, start, end)
+            comps = await _comps_count(session, start, end)
+            tips = await _tips_total(session, start, end)
+            gateway = await _gateway_fees(session, start, end)
             logins, cleaned = await _staff_activity(session, start, end)
     finally:
         await engine.dispose()
@@ -82,17 +109,18 @@ async def build_digest_line(tenant: str, day: date) -> str:
         f"{mode}:{amount:.2f}" for mode, amount in sorted(payments.items())
     )
     return (
-        f"{day.isoformat()} | orders={orders} | sales={sales:.2f} | "
+        f"{day.isoformat()} | orders={orders} | avg_prep={avg_prep:.2f}m | sales={sales:.2f} | "
         f"avg_ticket={avg_ticket:.2f} | top_items={top_str} | payments={pay_str} | "
+        f"comps={comps} | tips={tips:.2f} | gateway_fees={gateway:.2f} | "
         f"staff_logins={logins} | tables_cleaned={cleaned}"
     )
 
 
 async def _orders_count(session: AsyncSession, start: datetime, end: datetime) -> int:
     result = await session.scalar(
-        select(func.count()).select_from(Order).where(
-            Order.placed_at >= start, Order.placed_at <= end
-        )
+        select(func.count())
+        .select_from(Order)
+        .where(Order.placed_at >= start, Order.placed_at <= end)
     )
     return int(result or 0)
 
@@ -115,7 +143,7 @@ async def _top_items(
         .where(Order.placed_at >= start, Order.placed_at <= end)
         .group_by(OrderItem.name_snapshot)
         .order_by(desc("qty"))
-        .limit(3)
+        .limit(5)
     )
     return [(name, int(qty)) for name, qty in result.all()]
 
@@ -129,6 +157,61 @@ async def _payment_split(
         .group_by(Payment.mode)
     )
     return {mode: float(amount or 0) for mode, amount in result.all()}
+
+
+async def _avg_prep_minutes(
+    session: AsyncSession, start: datetime, end: datetime
+) -> float:
+    rows = await session.execute(
+        select(Order.placed_at, Order.served_at).where(
+            Order.served_at.is_not(None),
+            Order.placed_at.is_not(None),
+            Order.served_at >= start,
+            Order.served_at <= end,
+        )
+    )
+    durations = [
+        (served - placed).total_seconds()
+        for placed, served in rows.all()
+        if placed and served
+    ]
+    return (sum(durations) / len(durations) / 60.0) if durations else 0.0
+
+
+async def _comps_count(session: AsyncSession, start: datetime, end: datetime) -> int:
+    result = await session.scalar(
+        select(func.count())
+        .select_from(OrderItem)
+        .join(Order, Order.id == OrderItem.order_id)
+        .where(
+            Order.placed_at >= start,
+            Order.placed_at <= end,
+            OrderItem.price_snapshot == 0,
+        )
+    )
+    return int(result or 0)
+
+
+async def _tips_total(session: AsyncSession, start: datetime, end: datetime) -> float:
+    result = await session.scalar(
+        select(func.coalesce(func.sum(Invoice.tip), 0)).where(
+            Invoice.created_at >= start, Invoice.created_at <= end
+        )
+    )
+    return float(result or 0)
+
+
+async def _gateway_fees(
+    session: AsyncSession, start: datetime, end: datetime, rate: float = 0.02
+) -> float:
+    result = await session.scalar(
+        select(func.coalesce(func.sum(Payment.amount), 0)).where(
+            Payment.created_at >= start,
+            Payment.created_at <= end,
+            Payment.mode != "cash",
+        )
+    )
+    return float(result or 0) * rate
 
 
 async def _staff_activity(
@@ -151,7 +234,9 @@ async def _staff_activity(
     return int(logins or 0), int(cleaned or 0)
 
 
-async def main(tenant: str, date_str: str | None = None, providers: Iterable[str] | None = None) -> str:
+async def main(
+    tenant: str, date_str: str | None = None, providers: Iterable[str] | None = None
+) -> str:
     """Compute digest for ``tenant``/``date`` and send via ``providers``.
 
     Returns the formatted digest line.
@@ -165,7 +250,7 @@ async def main(tenant: str, date_str: str | None = None, providers: Iterable[str
 
     line = await build_digest_line(tenant, day)
 
-    for name in providers or ("console", "whatsapp"):
+    for name in providers or ("console", "whatsapp", "email"):
         provider = PROVIDERS.get(name)
         if provider:
             provider.send(line)

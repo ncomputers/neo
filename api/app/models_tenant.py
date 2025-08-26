@@ -233,6 +233,23 @@ class Coupon(Base):
     active = Column(Boolean, nullable=False, default=True)
     is_stackable = Column(Boolean, nullable=False, default=False)
     max_discount = Column(Numeric(10, 2), nullable=True)
+    valid_from = Column(DateTime(timezone=True), nullable=True)
+    valid_to = Column(DateTime(timezone=True), nullable=True)
+    per_day_cap = Column(Integer, nullable=True)
+    per_guest_cap = Column(Integer, nullable=True)
+    per_outlet_cap = Column(Integer, nullable=True)
+
+
+class CouponUsage(Base):
+    """Audit log of coupon redemptions."""
+
+    __tablename__ = "coupon_usage"
+
+    id = Column(Integer, primary_key=True)
+    coupon_id = Column(ForeignKey("coupons.id"), nullable=False)
+    guest_id = Column(Integer, nullable=True)
+    outlet_id = Column(Integer, nullable=True)
+    used_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class Customer(Base):
@@ -243,6 +260,8 @@ class Customer(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     phone = Column(String, nullable=False)
+    allow_analytics = Column(Boolean, nullable=False, default=False)
+    allow_wa = Column(Boolean, nullable=False, default=False)
 
 
 class Counter(Base):

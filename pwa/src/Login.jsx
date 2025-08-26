@@ -54,7 +54,11 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           className="border p-1"
         />
-        <button type="submit" className="bg-blue-500 text-white px-2 py-1">
+        <button
+          type="submit"
+          aria-label="Login with email"
+          className="bg-primary text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           Login
         </button>
       </form>
@@ -72,7 +76,11 @@ export default function Login() {
           onChange={(e) => setPin(e.target.value)}
           className="border p-1"
         />
-        <button type="submit" className="bg-green-500 text-white px-2 py-1">
+        <button
+          type="submit"
+          aria-label="Login with PIN"
+          className="bg-success text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-success"
+        >
           Login
         </button>
       </form>

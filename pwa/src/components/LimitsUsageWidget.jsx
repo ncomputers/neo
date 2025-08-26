@@ -7,10 +7,10 @@ function Bar({ label, usage }) {
   const percent = limit ? Math.min((used / limit) * 100, 100) : 0
   const color =
     percent >= 100
-      ? 'bg-red-500'
+      ? 'bg-danger'
       : percent >= 80
-        ? 'bg-yellow-500'
-        : 'bg-green-500'
+        ? 'bg-warning'
+        : 'bg-success'
   return (
     <div className="mb-4">
       <div className="flex justify-between text-sm mb-1">
@@ -43,7 +43,7 @@ export default function LimitsUsageWidget() {
       .catch((err) => setError(err.message))
   }, [])
 
-  if (error) return <p className="text-red-500">{error}</p>
+  if (error) return <p className="text-danger">{error}</p>
   if (!data) return <p>Loading...</p>
 
   const entries = [
@@ -61,7 +61,7 @@ export default function LimitsUsageWidget() {
       )}
       <a
         href="mailto:support@example.com?subject=Request%20more%20quota"
-        className="text-sm text-blue-600 underline"
+        className="text-sm text-primary underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         target="_blank"
         rel="noopener noreferrer"
       >

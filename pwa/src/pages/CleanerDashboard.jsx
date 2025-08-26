@@ -32,7 +32,7 @@ export default function CleanerDashboard() {
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Cleaner Dashboard</h2>
       {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (
         <table className="w-full border">
           <thead>
@@ -49,7 +49,8 @@ export default function CleanerDashboard() {
                 <td className="p-2 border capitalize">{t.status}</td>
                 <td className="p-2 border text-center">
                   <button
-                    className="px-2 py-1 bg-blue-500 text-white rounded"
+                    aria-label="Mark table clean"
+                    className="px-2 py-1 bg-primary text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                     onClick={() => markClean(t.id)}
                   >
                     Mark Clean

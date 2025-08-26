@@ -8,11 +8,20 @@ Create a backup file for a tenant database::
 
     python scripts/tenant_backup.py --tenant TENANT --out /backups/TENANT-YYYYMMDD.sql
 
+Nightly automation uses `ops/scripts/nightly_backup.sh` which encrypts dumps with
+[`age`](https://age-encryption.org/). Set `BACKUP_PUBLIC_KEY` in repository
+secrets or the environment so the script can encrypt to your public key. The
+resulting files use a `.age` suffix.
+
 ## Restore
 
 Restore a tenant database from a backup file::
 
     python scripts/tenant_restore.py --tenant TENANT --file /backups/TENANT-YYYYMMDD.sql
+
+To restore an encrypted dump, provide the matching private key in the
+`BACKUP_PRIVATE_KEY` environment variable and point `--file` to the `.age`
+artifact. The script decrypts the backup before loading it.
 
 The restore command ensures the tenant database or schema exists before loading
 the provided dump. For PostgreSQL backends, it invokes `psql` or `pg_restore` as

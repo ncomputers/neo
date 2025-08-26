@@ -4,7 +4,9 @@ import AdminDashboard from './pages/AdminDashboard'
 import CashierDashboard from './pages/CashierDashboard'
 import KitchenDashboard from './pages/KitchenDashboard'
 import CleanerDashboard from './pages/CleanerDashboard'
+import Billing from './pages/Billing'
 import RequireRole from './components/RequireRole'
+import ConsentBanner from './components/ConsentBanner'
 import { useAuth } from './contexts/AuthContext'
 
 function Home() {
@@ -21,10 +23,12 @@ export default function App() {
 
   return (
     <div className="p-4">
+      <ConsentBanner />
       <nav className="mb-4 space-x-2">
         <Link to="/">Home</Link>
         <Link to="/guest">Guest</Link>
         <Link to="/admin">Admin</Link>
+        <Link to="/billing">Billing</Link>
         {user.role === 'admin' && (
           <a href="/help" target="_blank" rel="noopener noreferrer">
             Help Center
@@ -53,6 +57,14 @@ export default function App() {
           element={
             <RequireRole roles={['admin']}>
               <AdminDashboard />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <RequireRole roles={['admin']}>
+              <Billing />
             </RequireRole>
           }
         />

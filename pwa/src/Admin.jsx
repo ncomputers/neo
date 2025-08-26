@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { apiFetch } from './api'
 
 export default function Admin() {
@@ -20,11 +21,19 @@ export default function Admin() {
   return (
     <div className="p-4">
       {warning && (
-        <div className="mb-4 border border-yellow-400 bg-yellow-100 p-2 text-yellow-800">
+        <div className="mb-4 border border-warning bg-warning p-2 text-white">
           {warning}
         </div>
       )}
       <h1 className="text-2xl font-bold">Admin Area</h1>
+      <div className="mt-4">
+        <Link
+          to="/admin/troubleshoot"
+          className="text-blue-600 underline hover:text-blue-800"
+        >
+          Troubleshoot common issues
+        </Link>
+      </div>
     </div>
   )
 }

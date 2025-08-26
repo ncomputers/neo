@@ -100,6 +100,8 @@ async def test_non_stackable_codes_rejected(session):
             tenant_id="T",
             tip=0,
             coupons=coupons,
+            guest_id=1,
+            outlet_id=1,
         )
     assert exc.value.code == "NON_STACKABLE"
     assert "cannot be stacked" in str(exc.value)
@@ -120,6 +122,8 @@ async def test_stackable_coupons_capped_and_persisted(session):
         tenant_id="T",
         tip=0,
         coupons=coupons,
+        guest_id=1,
+        outlet_id=1,
     )
     await session.commit()
     invoice = await session.get(models_tenant.Invoice, inv_id)
