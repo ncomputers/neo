@@ -14,7 +14,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from api.app import models_tenant
 from api.app.models_tenant import Invoice, Order, OrderItem, OrderStatus, Payment
-from api.app import routes_owner_aggregate
+from api.app import routes_analytics_outlets
 
 
 async def _seed(amount: float, prep: int) -> tuple[AsyncSession, any]:
@@ -83,7 +83,7 @@ async def seeded_sessions():
 @pytest.fixture
 def app():
     app = FastAPI()
-    app.include_router(routes_owner_aggregate.router)
+    app.include_router(routes_analytics_outlets.router)
     app.state.redis = fakeredis.aioredis.FakeRedis()
     return app
 
@@ -102,8 +102,8 @@ async def test_summary_and_csv(app, seeded_sessions, monkeypatch):
     async def fake_info(ids):
         return {tid: {"tz": "UTC"} for tid in ids}
 
-    monkeypatch.setattr(routes_owner_aggregate, "_session", fake_session)
-    monkeypatch.setattr(routes_owner_aggregate, "_get_tenants_info", fake_info)
+    monkeypatch.setattr(routes_analytics_outlets, "_session", fake_session)
+    monkeypatch.setattr(routes_analytics_outlets, "_get_tenants_info", fake_info)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -127,14 +127,14 @@ async def test_summary_and_csv(app, seeded_sessions, monkeypatch):
                 "ids": "t1,t2",
                 "from": "2024-01-01",
                 "to": "2024-01-03",
-                "format": "csv",
+                "export": "csv",
             },
             headers={"x-tenant-ids": "t1,t2"},
         )
         assert resp_csv.headers["content-type"].startswith("text/csv")
-        body = resp_csv.text
-        assert "t1,3,300.00,100.00,600.00" in body
-        assert "t2,3,600.00,200.00,1200.00" in body
+        lines = resp_csv.text.splitlines()
+        assert lines[0] == "outlet_id,orders,sales,aov,median_prep,voids_pct"
+        assert lines[1] == "t1,3,300.00,100.00,600.00,0.00"
 
 
 @pytest.mark.anyio
@@ -143,12 +143,12 @@ async def test_tenant_scope(app, seeded_sessions, monkeypatch):
     async def fake_session(tid: str):
         yield seeded_sessions[tid]
 
-    monkeypatch.setattr(routes_owner_aggregate, "_session", fake_session)
+    monkeypatch.setattr(routes_analytics_outlets, "_session", fake_session)
 
     async def fake_info(ids):
         return {tid: {"tz": "UTC"} for tid in ids}
 
-    monkeypatch.setattr(routes_owner_aggregate, "_get_tenants_info", fake_info)
+    monkeypatch.setattr(routes_analytics_outlets, "_get_tenants_info", fake_info)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -166,12 +166,12 @@ async def test_date_boundaries(app, seeded_sessions, monkeypatch):
     async def fake_session(tid: str):
         yield seeded_sessions[tid]
 
-    monkeypatch.setattr(routes_owner_aggregate, "_session", fake_session)
+    monkeypatch.setattr(routes_analytics_outlets, "_session", fake_session)
 
     async def fake_info(ids):
         return {tid: {"tz": "UTC"} for tid in ids}
 
-    monkeypatch.setattr(routes_owner_aggregate, "_get_tenants_info", fake_info)
+    monkeypatch.setattr(routes_analytics_outlets, "_get_tenants_info", fake_info)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
