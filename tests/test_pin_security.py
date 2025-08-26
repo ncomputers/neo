@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from api.app.audit import Audit, SessionLocal
 from api.app.main import app
 from api.app.middlewares import pin_security
+from api.app.security import pin_lockout
 from tests.conftest import DummyRedis
 
 client = TestClient(app)
@@ -37,7 +38,7 @@ def test_pin_lock_after_failed_attempts():
 def test_pin_unlock_after_ttl(monkeypatch):
     _clear_audit()
     r = _redis()
-    monkeypatch.setattr(pin_security, "LOCK_TTL", 1)
+    monkeypatch.setattr(pin_lockout, "LOCK_TTL", 1)
     bad = {"username": "cashier1", "pin": "0000"}
     good = {"username": "cashier1", "pin": "1234"}
     for _ in range(5):
@@ -46,6 +47,11 @@ def test_pin_unlock_after_ttl(monkeypatch):
     time.sleep(1.2)
     res = client.post("/login/pin", json=good)
     assert res.status_code == 200
+    with SessionLocal() as session:
+        locks = session.query(Audit).filter_by(action="pin_lock").count()
+        unlocks = session.query(Audit).filter_by(action="pin_unlock").count()
+        assert locks == 1
+        assert unlocks == 1
 
 
 def test_pin_rotation_enforced():
