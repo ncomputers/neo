@@ -150,6 +150,17 @@ class SupportTicket(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class Device(Base):
+    """Registered staff devices."""
+
+    __tablename__ = "devices"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    fingerprint = Column(String, nullable=False, unique=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -160,4 +171,5 @@ __all__ = [
     "TwoFactorSecret",
     "TwoFactorBackupCode",
     "SupportTicket",
+    "Device",
 ]
