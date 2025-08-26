@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Mark non-security MD5 usage in A/B bucketing and tests with ``usedforsecurity=False``.
+- Enable Jinja ``select_autoescape`` for ESC/POS presets to avoid unsafe rendering.
 - Update GitHub Actions workflows to use `actions/upload-artifact@v4`.
 - Clean up redundant imports and outdated ``noqa`` comment to satisfy ``ruff``.
 - Point GHCR workflow to the API Dockerfile so image builds succeed.

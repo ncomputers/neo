@@ -24,7 +24,7 @@ def allocate(device_id: str, experiment: str, variants: Dict[str, int]) -> str:
     if total <= 0:
         return "control"
     key = f"{experiment}:{device_id}".encode()
-    bucket = int(hashlib.md5(key).hexdigest(), 16) % total
+    bucket = int(hashlib.md5(key, usedforsecurity=False).hexdigest(), 16) % total
     cumulative = 0
     for name, weight in variants.items():
         cumulative += weight
