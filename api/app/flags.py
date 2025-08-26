@@ -20,6 +20,8 @@ REGISTRY: Dict[str, Dict[str, Any]] = {
     "counter_mode": {"default": False, "tenant_attr": "enable_counter"},
     "simple_modifiers": {"default": False},
     "wa_enabled": {"default": False},
+    "happy_hour": {"default": False},
+
 }
 
 

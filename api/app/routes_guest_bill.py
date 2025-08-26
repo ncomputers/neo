@@ -1,9 +1,11 @@
-from __future__ import annotations
-
 """Guest billing routes."""
+
+from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from config import get_settings
 
 from .repos_sqlalchemy import invoices_repo_sql
 from .services import billing_service, notifications
@@ -18,7 +20,9 @@ async def get_tenant_id() -> str:  # pragma: no cover - placeholder dependency
     raise NotImplementedError
 
 
-async def get_tenant_session(tenant_id: str) -> AsyncSession:  # pragma: no cover - placeholder
+async def get_tenant_session(
+    tenant_id: str,
+) -> AsyncSession:  # pragma: no cover - placeholder
     """Yield an ``AsyncSession`` bound to the tenant database.
 
     Parameters
@@ -57,8 +61,15 @@ async def generate_bill(
         tip=tip,
         coupons=coupons,
     )
+    settings = get_settings()
     invoice_payload = billing_service.compute_bill(
-        [], "unreg", tip=tip, coupons=coupons
+        [],
+        "unreg",
+        tip=tip,
+        coupons=coupons,
+        happy_hour_windows=settings.happy_hour_windows,
     )
-    await notifications.enqueue(tenant_id, "bill.generated", {"table_token": table_token})
+    await notifications.enqueue(
+        tenant_id, "bill.generated", {"table_token": table_token}
+    )
     return ok(invoice_payload)

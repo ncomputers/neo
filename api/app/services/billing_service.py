@@ -6,6 +6,7 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, ROUND_HALF_UP, 
 from typing import Iterable, Literal, Mapping, Sequence
 
 from ..pricing import active_window, apply_discount
+from .. import flags
 
 GSTMode = Literal["unreg", "comp", "reg"]
 
@@ -44,7 +45,7 @@ def compute_bill(
     coupons: Sequence[Mapping[str, object]] | None = None,
     gst_rounding: str = "invoice-total",
     rounding_mode: str = "half-up",
-    happy_hour: Sequence[Mapping[str, object]] | None = None,
+    happy_hour_windows: Sequence[Mapping[str, object]] | None = None,
     now: time | None = None,
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
@@ -99,7 +100,11 @@ def compute_bill(
     if gst_rounding not in {"item-wise", "invoice-total"}:
         raise ValueError(f"Unsupported GST rounding style: {gst_rounding}")
 
-    window = active_window(happy_hour, now)
+    window = None
+    if flags.get("happy_hour"):
+        window = active_window(happy_hour_windows, now)
+    if window and coupons:
+        raise CouponError("HAPPY_HOUR", "Coupons cannot be used during happy hour")
     for item in items:
         qty = Decimal(str(item.get("qty", 1)))
         price = Decimal(str(item["price"]))
@@ -205,7 +210,7 @@ def build_invoice_context(
     rounding: str = "nearest_1",
     gst_rounding: str = "invoice-total",
     rounding_mode: str = "half-up",
-    happy_hour: Sequence[Mapping[str, object]] | None = None,
+    happy_hour_windows: Sequence[Mapping[str, object]] | None = None,
     now: time | None = None,
 ) -> dict:
     """Build a render-friendly invoice dict based on ``gst_mode``.
@@ -227,7 +232,7 @@ def build_invoice_context(
         rounding=rounding,
         gst_rounding=gst_rounding,
         rounding_mode=rounding_mode,
-        happy_hour=happy_hour,
+        happy_hour_windows=happy_hour_windows,
         now=now,
     )
     invoice = {

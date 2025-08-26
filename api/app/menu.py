@@ -16,6 +16,7 @@ from openpyxl import Workbook, load_workbook
 from sqlalchemy import select
 
 from config import get_settings
+from . import flags
 
 from .db import SessionLocal
 from .models_tenant import Category as CategoryModel
@@ -108,7 +109,11 @@ def list_items(include_out_of_stock: bool = False, now: datetime | None = None) 
         values = [i for i in values if i.in_stock]
 
     settings = get_settings()
-    window = active_window(settings.happy_hour, now.time() if now else None)
+    window = None
+    if flags.get("happy_hour"):
+        window = active_window(
+            settings.happy_hour_windows, now.time() if now else None
+        )
     result: list[Item] = []
     for item in values:
         data = item.model_dump()
