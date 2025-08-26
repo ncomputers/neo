@@ -119,11 +119,15 @@ async def _enforce_coupon_caps(
             continue
         if coupon.valid_from and now < coupon.valid_from:
             raise billing_service.CouponError(
-                "NOT_ACTIVE", f"Coupon {coupon.code} starts {coupon.valid_from.date()}"
+                "NOT_ACTIVE",
+                f"Coupon {coupon.code} starts {coupon.valid_from.date()}",
+                hint=f"Starts on {coupon.valid_from.date()}",
             )
         if coupon.valid_to and now > coupon.valid_to:
             raise billing_service.CouponError(
-                "EXPIRED", f"Coupon {coupon.code} expired on {coupon.valid_to.date()}"
+                "EXPIRED",
+                f"Coupon {coupon.code} expired on {coupon.valid_to.date()}",
+                hint=f"Expired on {coupon.valid_to.date()}",
             )
 
         if coupon.per_day_cap is not None:
@@ -136,7 +140,9 @@ async def _enforce_coupon_caps(
             )
             if day_count >= coupon.per_day_cap:
                 raise billing_service.CouponError(
-                    "DAILY_CAP", f"Coupon {coupon.code} limit reached today"
+                    "DAILY_CAP",
+                    f"Coupon {coupon.code} limit reached today",
+                    hint="Try again tomorrow",
                 )
 
         if guest_id is not None and coupon.per_guest_cap is not None:
@@ -148,7 +154,9 @@ async def _enforce_coupon_caps(
             )
             if guest_count >= coupon.per_guest_cap:
                 raise billing_service.CouponError(
-                    "GUEST_CAP", f"Coupon {coupon.code} already used"
+                    "GUEST_CAP",
+                    f"Coupon {coupon.code} already used",
+                    hint="Limit 1 per guest",
                 )
 
         if outlet_id is not None and coupon.per_outlet_cap is not None:
@@ -160,7 +168,9 @@ async def _enforce_coupon_caps(
             )
             if outlet_count >= coupon.per_outlet_cap:
                 raise billing_service.CouponError(
-                    "OUTLET_CAP", f"Outlet limit reached for {coupon.code}"
+                    "OUTLET_CAP",
+                    f"Outlet limit reached for {coupon.code}",
+                    hint="Outlet limit reached",
                 )
 
         session.add(
