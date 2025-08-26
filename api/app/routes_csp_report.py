@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from urllib.parse import parse_qsl, urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 
 from .staff_auth import role_required
 from .utils.responses import ok
@@ -13,6 +13,12 @@ router = APIRouter()
 _CSP_KEY = "csp:reports"
 _MAX_REPORTS = 500
 _TTL = 86400
+
+
+def _redact_url(url: str) -> str:
+    """Strip query/fragment components from a URL."""
+    parsed = urlparse(url)
+    return urlunparse(parsed._replace(query="", fragment=""))
 
 
 @router.post("/csp/report", status_code=204)
@@ -25,21 +31,13 @@ async def csp_report(request: Request) -> Response:
         payload = body.decode()
     else:
         report = data.get("csp-report") if isinstance(data, dict) else None
-
-        def _redact(url: str) -> str:
-            parsed = urlparse(url)
-            qs = [
-                (k, "***" if k.lower() == "token" else v)
-                for k, v in parse_qsl(parsed.query, keep_blank_values=True)
-            ]
-            query = "&".join(f"{k}={v}" for k, v in qs)
-            return urlunparse(parsed._replace(query=query))
-
-        if report:
-            for key in ("document-uri", "blocked-uri"):
-                url = report.get(key)
-                if url:
-                    report[key] = _redact(url)
+        if isinstance(report, dict):
+            for key, value in list(report.items()):
+                if isinstance(value, str):
+                    if "token" in key.lower():
+                        report[key] = "***"
+                    else:
+                        report[key] = _redact_url(value)
         payload = json.dumps(data, separators=(",", ":"))
 
     await redis.rpush(_CSP_KEY, payload)
@@ -50,10 +48,14 @@ async def csp_report(request: Request) -> Response:
 
 @router.get("/admin/csp/reports")
 async def get_csp_reports(
-    request: Request, staff=Depends(role_required("admin", "super_admin"))
+    request: Request,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=_MAX_REPORTS),
+    staff=Depends(role_required("admin", "super_admin")),
 ):
     redis = request.app.state.redis
-    items = await redis.lrange(_CSP_KEY, 0, -1)
+    end = offset + limit - 1
+    items = await redis.lrange(_CSP_KEY, offset, end)
     reports = [json.loads(i) for i in items]
     return ok(reports)
 
