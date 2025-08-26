@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
 
 # Counters
@@ -104,13 +104,21 @@ rollup_runs_total.inc(0)
 rollup_failures_total = Counter("rollup_failures_total", "Total rollup failures")
 rollup_failures_total.inc(0)
 
+printer_retry_queue = Gauge("printer_retry_queue", "Queued print jobs awaiting retry")
+printer_retry_queue.set(0)
+
 router = APIRouter()
 
 
 @router.get("/metrics")
-async def metrics_endpoint() -> Response:
+async def metrics_endpoint(request: Request) -> Response:
     """Expose Prometheus metrics."""
-    # register sample for this request before generating output
     http_requests_total.labels(path="/metrics", method="GET", status="200").inc(0)
+    redis = getattr(request.app.state, "redis", None)
+    if redis:
+        total = 0
+        for key in await redis.keys("print:retry:*"):
+            total += await redis.llen(key)
+        printer_retry_queue.set(total)
     data = generate_latest()
     return Response(data, media_type=CONTENT_TYPE_LATEST)

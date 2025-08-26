@@ -7,6 +7,7 @@ export default function KitchenDashboard() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [printerStale, setPrinterStale] = useState(false)
 
   const fetchOrders = () => {
     setLoading(true)
@@ -19,6 +20,10 @@ export default function KitchenDashboard() {
 
   useEffect(() => {
     fetchOrders()
+    apiFetch('/print/status')
+      .then((res) => res.json())
+      .then((data) => setPrinterStale(data.stale))
+      .catch(() => {})
   }, [])
 
   const updateOrder = (tableId, index, action) => {
@@ -31,6 +36,14 @@ export default function KitchenDashboard() {
 
   return (
     <div className="p-4">
+      {printerStale && (
+        <div
+          className="mb-4 rounded bg-red-600 p-2 text-white"
+          data-testid="printer-alert"
+        >
+          Printer offline. Tickets queued.
+        </div>
+      )}
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Kitchen Dashboard</h2>
       {loading && <p>Loading...</p>}

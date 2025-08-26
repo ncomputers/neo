@@ -10,6 +10,7 @@ Experimental Kitchen Display System endpoints.
 | POST | /api/outlet/{tenant_id}/kds/order/{order_id}/ready | Mark an order as ready. |
 | POST | /api/outlet/{tenant_id}/kds/order/{order_id}/serve | Mark an order as served. |
 | GET | /api/outlet/{tenant_id}/kot/{order_id}.pdf | Printable KOT for an order (PDF/HTML). |
+| GET | /api/outlet/{tenant_id}/print/status | Printer agent heartbeat and retry queue length. |
 
 These endpoints rely on tenant databases and are wired into the main application.
 
