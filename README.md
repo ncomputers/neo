@@ -3,7 +3,7 @@
 This repository contains three main services:
 
 - `api/` – FastAPI application with `/health`, `/ready` and `/time/skew` endpoints, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
-- `pwa/` – React + Tailwind front end with a placeholder home page.
+- `pwa/` – React + Tailwind front end with a placeholder home page and installable PWA manifest.
 - `ops/` – Docker Compose for local development.
 -
 Invoices support optional FSSAI license details when provided.
