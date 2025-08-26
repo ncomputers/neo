@@ -3,12 +3,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 
+from .audit import log_event
 from .auth import User, role_required
 from .db import SessionLocal
 from .models_master import Device
-from .utils.responses import ok
+from .security.pin_lockout import reset as reset_pin_lock
 from .utils.audit import audit
-from .audit import log_event
+from .utils.responses import ok
 
 router = APIRouter()
 
@@ -59,12 +60,7 @@ async def unlock_pin(
 ) -> dict:
     redis = request.app.state.redis
     tenant = request.headers.get("X-Tenant-ID", "demo")
-    async for key in redis.scan_iter(f"pin:lock:{tenant}:{username}:*"):
-        await redis.delete(key)
-    async for key in redis.scan_iter(f"pin:lockstatus:{tenant}:{username}:*"):
-        await redis.delete(key)
-    async for key in redis.scan_iter(f"pin:fail:{tenant}:{username}:*"):
-        await redis.delete(key)
+    await reset_pin_lock(redis, tenant, username)
     log_event(username, "pin_unlock", tenant)
     return ok(True)
 

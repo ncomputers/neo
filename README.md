@@ -534,6 +534,9 @@ Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
   median prep time, and KOT delay alerts.
 - Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
   `POST /api/admin/dlq/replay` re-enqueues a job by ID supplied in the JSON body.
+- Pilot telemetry for ops is available at `/api/admin/pilot/telemetry` and
+  reports orders/minute, prep times, queue age, latency, error rate and breaker
+  status.
 
 Rolling 30-day error budgets per route are available from the admin endpoint
 `/admin/ops/slo`.

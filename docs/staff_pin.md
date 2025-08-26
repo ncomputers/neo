@@ -16,8 +16,9 @@ member.
 
 ## Login Lockout
 
-Staff PIN logins are locked for **10 minutes** after **5 failed attempts** for
-each combination of IP address and staff code. Once locked the endpoint
+Staff PIN logins are locked for **15 minutes** after **5 failed attempts**
+within a **10 minute** window for each combination of IP address and staff code.
+Once locked the endpoint
 responds with `err("AUTH_LOCKED")` and HTTP 403. Managers can clear the
 lockout early via `POST /admin/staff/{username}/unlock_pin`. Unlocking events
 as well as lockouts are written to the audit log. Resetting the PIN via the
