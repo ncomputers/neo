@@ -385,6 +385,8 @@ Configure and inspect notification rules:
 - `POST /api/outlet/{tenant_id}/outbox/{id}/retry` – reset a notification for another delivery attempt.
 - `POST /api/outlet/{tenant_id}/webhooks/test` – send a sample webhook payload to a URL.
 - `POST /api/outlet/{tenant_id}/webhooks/{id}/replay` – re-enqueue a webhook from outbox history.
+- `GET /admin/integrations` – list available webhook integration types with sample payloads.
+- `POST /admin/integrations/{type}/probe` – probe a webhook destination and send a sample payload.
 - `GET /api/outlet/{tenant_id}/dlq?limit=100` – view dead-lettered notifications.
 - `POST /api/outlet/{tenant_id}/dlq/{id}/requeue` – move a dead-lettered event back to the outbox.
 - `DELETE /api/outlet/{tenant_id}/dlq/{id}` – discard a dead-lettered event.
