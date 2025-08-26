@@ -55,5 +55,5 @@ jobs:
       - name: Check i18n keys
         run: pre-commit run --hook-stage manual i18n-lint --all-files
       - name: Test
-        run: pytest --cov=api --cov-report=term --cov-fail-under=80 -q
+        run: pytest --cov --cov-report=term --cov-fail-under=80 -q
 
