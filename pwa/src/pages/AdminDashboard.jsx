@@ -5,6 +5,7 @@ import LimitsUsageWidget from '../components/LimitsUsageWidget'
 import OpsWidget from '../components/OpsWidget'
 import PilotTelemetryWidget from '../components/PilotTelemetryWidget'
 import OwnerSlaWidget from '../components/OwnerSlaWidget'
+import Integrations from '../components/Integrations'
 
 export default function AdminDashboard() {
   const { logo } = useTheme()
@@ -28,6 +29,7 @@ export default function AdminDashboard() {
       <OpsWidget />
       <PilotTelemetryWidget />
       <OwnerSlaWidget />
+      <Integrations />
 
       {loading && <p>Loading...</p>}
       {error && <p className="text-danger">{error}</p>}
