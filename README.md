@@ -237,6 +237,8 @@ A minimal onboarding flow captures tenant details:
 - Tenants may also define rounding policies:
   - `gst_rounding` – either `item-wise` or `invoice-total`
   - `rounding_mode` – one of `half-up`, `bankers`, `ceil` or `floor`
+  - `rounding` – `nearest_1` or `none` for ₹0.01 totals
+- Invoices list per-item GST% and HSN codes with CGST/SGST or IGST tax lines; composition mode omits tax lines.
 - `POST /api/onboarding/{id}/tables` – allocate tables and assign QR tokens.
 - `POST /api/onboarding/{id}/payments` – configure payment modes and VPA.
 - `POST /api/onboarding/{id}/finish` – finalize and activate the tenant.

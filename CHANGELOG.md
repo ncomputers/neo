@@ -92,6 +92,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Bundle Noto Sans fonts for printable invoices and KOTs, covering the ₹ sign and Gujarati/Hindi glyphs.
+- Handle per-item GST/HSN display with IGST support and precise ₹0.01 rounding.
 
 
 

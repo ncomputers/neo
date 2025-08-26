@@ -221,6 +221,7 @@ def build_invoice_context(
     rounding_mode: str = "half-up",
     happy_hour_windows: Sequence[Mapping[str, object]] | None = None,
     now: datetime | time | None = None,
+    is_interstate: bool = False,
 ) -> dict:
     """Build a render-friendly invoice dict based on ``gst_mode``.
 
@@ -228,11 +229,13 @@ def build_invoice_context(
     ----------
     items:
         Each mapping should include ``name`` and ``price``. Optional keys
-        include ``qty`` and ``hsn``.
+        include ``qty``, ``gst`` and ``hsn``.
     gst_mode:
         Tax mode for the invoice (``"reg"``, ``"comp"`` or ``"unreg"``).
     gstin:
         Optional GSTIN to include on the invoice header for registered modes.
+    is_interstate:
+        When ``True``, tax lines are reported as IGST instead of CGST/SGST.
     """
 
     bill = compute_bill(
@@ -264,20 +267,28 @@ def build_invoice_context(
             "qty": item.get("qty", 1),
             "price": item.get("price"),
         }
-        if gst_mode == "reg" and item.get("hsn"):
-            line["hsn"] = item.get("hsn")
+        if gst_mode == "reg":
+            if item.get("gst") is not None:
+                line["gst"] = item.get("gst")
+            if item.get("hsn"):
+                line["hsn"] = item.get("hsn")
         invoice["items"].append(line)
 
     if gst_mode == "reg":
         for rate, amount in bill["tax_breakup"].items():
-            half_rate = rate / 2
-            half_amount = round(amount / 2, 2)
-            invoice["tax_lines"].append(
-                {"label": f"CGST {half_rate}%", "amount": half_amount}
-            )
-            invoice["tax_lines"].append(
-                {"label": f"SGST {half_rate}%", "amount": half_amount}
-            )
+            if is_interstate:
+                invoice["tax_lines"].append(
+                    {"label": f"IGST {rate}%", "amount": round(amount, 2)}
+                )
+            else:
+                half_rate = rate / 2
+                half_amount = round(amount / 2, 2)
+                invoice["tax_lines"].append(
+                    {"label": f"CGST {half_rate}%", "amount": half_amount}
+                )
+                invoice["tax_lines"].append(
+                    {"label": f"SGST {half_rate}%", "amount": half_amount}
+                )
 
     if bill.get("discount"):
         invoice["discount"] = bill["discount"]
