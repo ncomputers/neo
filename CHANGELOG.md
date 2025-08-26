@@ -47,7 +47,7 @@ All notable changes to this project will be documented in this file.
 
 - Script to bulk seed a large dataset for local scale testing.
 
-- Support happy-hour pricing via scheduled discount windows.
+- Feature-flagged happy-hour pricing via scheduled `happy_hour_windows` with coupons disabled during discount windows.
 
 ### Fixed
 

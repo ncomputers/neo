@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     sla_color_alert: bool = False
     hide_out_of_stock_items: bool = True
     audit_retention_days: int = 30
-    happy_hour: list[dict] = []
+    happy_hour_windows: list[dict] = []
     vapid_public_key: str | None = None
     vapid_private_key: str | None = None
     max_conn_per_ip: int = 20
