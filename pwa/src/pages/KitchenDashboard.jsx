@@ -8,22 +8,23 @@ export default function KitchenDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [printerStale, setPrinterStale] = useState(false)
+  const [kotDelay, setKotDelay] = useState(false)
 
   const fetchOrders = () => {
     setLoading(true)
-    apiFetch('/orders')
+    apiFetch('/kds/queue')
       .then((res) => res.json())
-      .then((data) => setOrders(data.orders || []))
+      .then((data) => {
+        setOrders(data.orders || [])
+        setPrinterStale(data.printer_stale)
+        setKotDelay(data.kot_delay)
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
     fetchOrders()
-    apiFetch('/print/status')
-      .then((res) => res.json())
-      .then((data) => setPrinterStale(data.stale))
-      .catch(() => {})
   }, [])
 
   const updateOrder = (tableId, index, action) => {
@@ -36,6 +37,14 @@ export default function KitchenDashboard() {
 
   return (
     <div className="p-4">
+      {kotDelay && (
+        <div
+          className="mb-4 rounded bg-yellow-600 p-2 text-white"
+          data-testid="kot-delay-alert"
+        >
+          Kitchen is behind. Oldest ticket delayed.
+        </div>
+      )}
       {printerStale && (
         <div
           role="alert"

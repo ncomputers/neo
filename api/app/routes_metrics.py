@@ -117,6 +117,13 @@ printer_retry_queue_age = Gauge(
 )
 printer_retry_queue_age.set(0)
 
+kds_oldest_kot_seconds = Gauge(
+    "kds_oldest_kot_seconds",
+    "Age in seconds of the oldest pending KOT",
+    ["tenant"],
+)
+kds_oldest_kot_seconds.labels(tenant="sample").set(0)
+
 router = APIRouter()
 
 
