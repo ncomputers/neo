@@ -47,6 +47,14 @@ self.addEventListener('message', event => {
     notifyClients()
     event.waitUntil(self.registration.sync.register('order-queue'))
   }
+  if (event.data?.type === 'BG_SYNC_ENQUEUE') {
+    event.waitUntil(
+      enqueueRequest(event.data.req).then(() =>
+        self.registration.sync.register(API_QUEUE_TAG)
+      )
+    )
+    return
+  }
 });
 
 self.addEventListener('fetch', event => {

@@ -125,9 +125,11 @@ against both production and staging to ensure the route stays healthy.
 Flag significant mismatches between reported stock and kitchen order tickets.
 
 ```bash
-python scripts/stock_kot_reconcile.py --csv report.csv --threshold 5
+python scripts/stock_kot_reconcile.py --csv report.csv --threshold 5 [--verbose]
 ```
 
 The CSV requires `item`, `sold_qty`, `KOT_cnt` and `variance` columns. Rows with
 an absolute variance above the threshold trigger an email to `OPS_EMAIL`. SMTP
 settings are read from `SMTP_HOST`, `SMTP_PORT` and optional `SMTP_USER`/`SMTP_PASS`.
+Provide `SMTP_FROM` to override the sender address. Use `--verbose` to enable
+debug logging; invalid or incomplete rows are skipped with warnings.

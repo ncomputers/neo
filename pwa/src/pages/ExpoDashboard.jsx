@@ -4,23 +4,23 @@ import { apiFetch } from '../api'
 
 export default function ExpoDashboard() {
   const { logo } = useTheme()
-  const [orders, setOrders] = useState([])
+  const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchOrders = () => {
+  const fetchTickets = () => {
     setLoading(true)
     apiFetch('/kds/expo')
       .then((res) => res.json())
       .then((data) => {
-        setOrders(data.orders || [])
+        setTickets(data.tickets || [])
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
-    fetchOrders()
+    fetchTickets()
   }, [])
 
   const markPicked = (id) => {
@@ -40,11 +40,12 @@ export default function ExpoDashboard() {
       const idx = parseInt(e.key, 10)
       if (!isNaN(idx) && idx > 0 && idx <= orders.length) {
         markPicked(orders[idx - 1].order_id)
+
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [orders])
+  }, [tickets])
 
   return (
     <div className="p-4">
@@ -60,6 +61,7 @@ export default function ExpoDashboard() {
                 <span className="font-semibold">
                   Table {o.table}
                   {o.allergen_badges.length > 0 && (
+
                     <span className="ml-2 rounded bg-red-100 px-1 text-red-800 text-xs">
                       Allergy
                     </span>
@@ -67,13 +69,15 @@ export default function ExpoDashboard() {
                 </span>
                 <span className="text-sm text-gray-600">
                   {Math.round(o.age_s / 60)}m
+
                 </span>
               </div>
               <button
                 className="mt-2 bg-blue-600 text-white px-2 py-1 rounded"
                 onClick={() => markPicked(o.order_id)}
+
               >
-                Picked [{idx + 1}]
+                Picked
               </button>
             </li>
           ))}

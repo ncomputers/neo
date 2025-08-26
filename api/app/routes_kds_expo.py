@@ -18,6 +18,7 @@ router = APIRouter()
 @audit("list_kds_expo")
 async def list_expo(tenant_id: str) -> dict:
     """Return ready orders with aging and allergen badges."""
+
     async with _session(tenant_id) as session:
         result = await session.execute(
             select(
@@ -36,6 +37,7 @@ async def list_expo(tenant_id: str) -> dict:
 
     tickets: dict[int, dict] = {}
     now = datetime.now(timezone.utc)
+
     for row in rows:
         info = tickets.setdefault(
             row.id,
@@ -85,3 +87,4 @@ async def pick_order(tenant_id: str, order_id: int) -> dict:
         )
         await session.commit()
     return ok({"status": OrderStatus.SERVED.value})
+

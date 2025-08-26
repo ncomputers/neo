@@ -21,6 +21,8 @@ basic offline support.
 * Guest and counter POST requests are queued when offline and replayed via
   background sync with an `Idempotency-Key` header to deduplicate on the
   server.
+* `static/js/bg_sync.js` exposes a `bgSyncPost()` helper to enqueue API
+  requests when offline and flush them once connectivity returns.
 * Invoice PDFs are cached per outlet with an LRU cap of 50 for offline review.
 * Updates are picked up when the service worker changes.
 
