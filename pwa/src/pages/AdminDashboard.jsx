@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { apiFetch } from '../api'
+import LimitsUsageWidget from '../components/LimitsUsageWidget'
 
 export default function AdminDashboard() {
   const { logo } = useTheme()
@@ -20,6 +21,7 @@ export default function AdminDashboard() {
     <div className="p-4">
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
+      <LimitsUsageWidget />
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
       {!loading && !error && (
