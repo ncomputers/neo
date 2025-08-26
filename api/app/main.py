@@ -149,6 +149,7 @@ from .routes_pwa_version import router as pwa_version_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
+from .routes_csp import router as csp_router
 from .routes_security import router as security_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
@@ -884,6 +885,7 @@ app.include_router(postman_router)
 app.include_router(daybook_pdf_router)
 app.include_router(digest_router)
 app.include_router(reports_router)
+app.include_router(csp_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
 app.include_router(export_all_router)

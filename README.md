@@ -12,7 +12,7 @@ Invoices support optional FSSAI license details when provided.
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
-Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages.
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports are available at `/admin/csp/reports`.
 
 ## Configuration
 
