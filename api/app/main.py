@@ -163,6 +163,7 @@ from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_refunds import router as refunds_router
 from .routes_reports import router as reports_router
+from .routes_rum import router as rum_router
 from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
 from .routes_slo import router as slo_router
@@ -892,6 +893,7 @@ app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
+app.include_router(rum_router)
 app.include_router(owner_analytics_router)
 app.include_router(owner_sla_router)
 app.include_router(dashboard_router)
