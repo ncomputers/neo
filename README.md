@@ -9,6 +9,8 @@ This repository contains three main services:
 Invoices support optional FSSAI license details when provided.
 QR pack generation events are audited and can be exported via admin APIs. See
 [`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details.
+Per-tenant product analytics can be enabled with tenant consent. See
+[`docs/analytics.md`](docs/analytics.md) for setup instructions.
 
 ## Security
 
