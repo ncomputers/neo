@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response
+from datetime import datetime, timezone
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
 
 # Counters
@@ -104,8 +105,14 @@ rollup_runs_total.inc(0)
 rollup_failures_total = Counter("rollup_failures_total", "Total rollup failures")
 rollup_failures_total.inc(0)
 
-printer_retry_queue = Gauge("printer_retry_queue", "Queued print jobs awaiting retry")
+printer_retry_queue = Gauge(
+    "printer_retry_queue", "Queued print jobs awaiting retry"
+)
 printer_retry_queue.set(0)
+printer_retry_queue_age = Gauge(
+    "printer_retry_queue_age", "Oldest job age in printer retry queue"
+)
+printer_retry_queue_age.set(0)
 
 router = APIRouter()
 
@@ -117,8 +124,24 @@ async def metrics_endpoint(request: Request) -> Response:
     redis = getattr(request.app.state, "redis", None)
     if redis:
         total = 0
-        for key in await redis.keys("print:retry:*"):
-            total += await redis.llen(key)
+        oldest = 0
+        keys = []
+        keys.extend(await redis.keys("print:retry:*"))
+        keys.extend(await redis.keys("print:q:*"))
+        now = datetime.now(timezone.utc)
+        for key in keys:
+            qlen = await redis.llen(key)
+            total += qlen
+            if qlen:
+                raw = await redis.lindex(key, -1)
+                if isinstance(raw, bytes):
+                    raw = raw.decode()
+                from .kds.printer_watchdog import _job_age
+
+                age = _job_age(raw, now)
+                if age > oldest:
+                    oldest = age
         printer_retry_queue.set(total)
+        printer_retry_queue_age.set(oldest)
     data = generate_latest()
     return Response(data, media_type=CONTENT_TYPE_LATEST)
