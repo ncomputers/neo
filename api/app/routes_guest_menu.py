@@ -39,6 +39,7 @@ async def fetch_menu(
     table_token: str,
     request: Request,
     response: Response,
+    filter: str | None = None,
     if_none_match: str | None = Header(default=None, alias="If-None-Match"),
     accept_language: str | None = Header(default=None, alias="Accept-Language"),
     tenant_id: str = Depends(get_tenant_id),
@@ -59,6 +60,23 @@ async def fetch_menu(
         items = await repo.list_items(session)
         data = {"categories": categories, "items": items}
         await redis.set(cache_key, json.dumps(data), ex=60)
+    items = data["items"]
+    if filter:
+        for term in filter.split(","):
+            term = term.strip()
+            if not term:
+                continue
+            neg = term.startswith("-")
+            term = term[1:] if neg else term
+            if ":" not in term:
+                continue
+            key, value = term.split(":", 1)
+            field = "allergens" if key == "allergen" else key
+            if neg:
+                items = [i for i in items if value not in (i.get(field) or [])]
+            else:
+                items = [i for i in items if value in (i.get(field) or [])]
+    data["items"] = items
     lang = resolve_lang(accept_language)
     data["labels"] = {
         name: get_msg(lang, f"labels.{name}")

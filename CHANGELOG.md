@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
+- Menu items expose dietary and allergen tags with guest filter support.
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
   "Request more" link.
 - Script to bulk seed a large dataset for local scale testing.

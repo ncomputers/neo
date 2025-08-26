@@ -53,6 +53,8 @@ class MenuRepoSQL(MenuRepo):
                     "out_of_stock": item.out_of_stock,
                     "modifiers": item.modifiers or [],
                     "combos": item.combos or [],
+                    "dietary": item.dietary or [],
+                    "allergens": item.allergens or [],
                 }
             )
         return items
