@@ -104,14 +104,20 @@ def build_groups(prs: Dict[int, Tuple[str, List[str]]]) -> str:
 
 
 def next_tag(current: str | None, final: bool) -> str:
+    """Return the next tag.
+
+    The first pre-release returns ``<base>-rc`` without a numeric suffix. Subsequent
+    release candidates are suffixed with an incrementing number (``-rc1``, ``-rc2`` ...).
+    """
+
     if final:
         return BASE_VERSION
-    if current and current.startswith(f"{BASE_VERSION}-rc"):
-        try:
-            n = int(current.split("-rc")[1])
-        except ValueError:
-            n = 0
-    else:
+    if not current or not current.startswith(f"{BASE_VERSION}-rc"):
+        return f"{BASE_VERSION}-rc"
+    suffix = current.split(f"{BASE_VERSION}-rc", 1)[1]
+    try:
+        n = int(suffix) if suffix else 0
+    except ValueError:
         n = 0
     return f"{BASE_VERSION}-rc{n + 1}"
 
@@ -130,7 +136,9 @@ def create_tag(tag: str) -> None:
 
 
 def main(argv: Iterable[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Tag a release")
+    parser = argparse.ArgumentParser(
+        description="Tag a release; first RC is '-rc' then '-rc1', '-rc2', etc."
+    )
     parser.add_argument("--final", action="store_true", help="create final release tag")
     args = parser.parse_args(list(argv) if argv is not None else None)
 

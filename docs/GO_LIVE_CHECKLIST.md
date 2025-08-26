@@ -11,6 +11,7 @@
 - Pilot smoke: menu→order→bill path OK
 - Printing agent OK; fonts verified
 - Licensing plan + grace flows verified
+- Telemetry and NPS capture enabled ([pilot survey](PILOT_SURVEY.md))
 
 ## General availability
 
@@ -20,3 +21,5 @@
 - Blue/green switch rehearsed
 - Rollback path documented and tested
 - Alert routing to on-call channels confirmed
+- Telemetry dashboards verified ([analytics](analytics.md))
+- Rollback status documented with reference to [status.json](../status.json)
