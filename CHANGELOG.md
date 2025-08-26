@@ -2,9 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-## v1.0.0-rc1 - 2025-08-25
-
-
 ## Unreleased
 
 ### Fixed
@@ -65,7 +62,7 @@ All notable changes to this project will be documented in this file.
 - Idempotent payment refunds via `/payments/{id}/refund` endpoint.
 - Extra tenant isolation and signed media tests to enforce cross-tenant boundaries.
 - Per-coupon usage caps (per day/guest/outlet) with valid-from/to windows and
-  usage auditing, returning helpful hints when limits are exceeded.>>>>>>> main
+  usage auditing, returning helpful hints when limits are exceeded.
 
 - Opt-in owner digest with richer stats (top 10 items, comps %, voids, tips,
   prep SLA hit rate) and after-hours throttling.
@@ -115,7 +112,9 @@ All notable changes to this project will be documented in this file.
 - Bundle Noto Sans fonts for printable invoices and KOTs, covering the ₹ sign and Gujarati/Hindi glyphs.
 - Handle per-item GST/HSN display with IGST support, outlet-wide ₹0.01 rounding and composition invoices without GST lines.
 
+## v1.0.0-rc1 - 2025-08-25
 
+- Second release candidate.
 
 ## v1.0.0-rc - 2025-08-25
 
