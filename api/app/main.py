@@ -152,6 +152,7 @@ from .routes_reports import router as reports_router
 from .routes_security import router as security_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
+from .routes_admin_support import router as admin_support_router
 from .routes_support_bundle import router as support_bundle_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
@@ -865,6 +866,7 @@ app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
+app.include_router(admin_support_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)
 app.include_router(maintenance_router)
