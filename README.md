@@ -12,6 +12,9 @@ QR pack generation events are audited and can be exported via admin APIs. See
 Per-tenant product analytics can be enabled with tenant consent. See
 [`docs/analytics.md`](docs/analytics.md) for setup instructions.
 
+CSV accounting exports for sales registers and GST summaries are documented in
+[`docs/accounting_exports.md`](docs/accounting_exports.md).
+
 ## Security
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.

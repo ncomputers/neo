@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Bandit, pip-audit, and ruff GitHub Actions workflows to block risky code and dependencies.
 
 - Request-id middleware with JSON log configuration for request correlation.
+- feat(acc): sales register + GST summary exports.
 
 - Admin APIs to soft-delete and restore tables and menu items with optional
   inclusion of deleted records via ``include_deleted``.
