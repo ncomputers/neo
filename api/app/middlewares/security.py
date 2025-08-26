@@ -14,6 +14,7 @@ from starlette.status import (
     HTTP_413_REQUEST_ENTITY_TOO_LARGE,
 )
 
+from ..config.cors import ALLOWED_ORIGINS
 from ..utils.responses import err
 from .guest_utils import _is_guest_post
 
@@ -23,10 +24,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app) -> None:
         super().__init__(app)
-        allowed = os.getenv("ALLOWED_ORIGINS", "")
-        self.allowed_origins: List[str] = [
-            o.strip() for o in allowed.split(",") if o.strip()
-        ]
+        self.allowed_origins: List[str] = list(ALLOWED_ORIGINS)
         self.max_bytes = 256 * 1024
         self.hsts_enabled = os.getenv("ENABLE_HSTS") == "1"
 
@@ -67,7 +65,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if origin and origin in self.allowed_origins:
             response.headers.setdefault("access-control-allow-origin", origin)
             response.headers.setdefault("vary", "Origin")
-        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         csp = (
@@ -92,10 +90,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 raw_headers.append((name, cookie.encode("latin1")))
             else:
                 raw_headers.append((name, value))
-        response.raw_headers = raw_headers
-
         if self.hsts_enabled:
-            response.headers.setdefault(
-                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            raw_headers.append(
+                (b"strict-transport-security", b"max-age=31536000; includeSubDomains")
             )
+        response.raw_headers = raw_headers
         return response
