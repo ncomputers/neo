@@ -79,7 +79,7 @@ from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
-    CorrelationIdMiddleware,
+    RequestIdMiddleware,
     GuestBlockMiddleware,
     GuestRateLimitMiddleware,
     HTMLErrorPagesMiddleware,
@@ -99,6 +99,7 @@ from .middlewares.security import SecurityMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
+from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_admin_dlq import router as admin_dlq_router
 from .routes_admin_menu import router as admin_menu_router
@@ -222,7 +223,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)
 app.add_middleware(HTMLErrorPagesMiddleware, static_dir=static_dir)
-app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
@@ -255,26 +256,36 @@ app.include_router(menu_router, prefix="/menu")
 
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
+configure_logging(getattr(logging, LOG_LEVEL))
 logger = logging.getLogger("api")
-handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter(
-        "%(message)s" if LOG_FORMAT == "json" else "[%(levelname)s] %(message)s"
-    )
-)
-logger.addHandler(handler)
-logger.setLevel(LOG_LEVEL)
 init_sentry(env=os.getenv("ENV"))
 
 
 @app.exception_handler(StarletteHTTPException)
 async def http_error_handler(request: Request, exc: StarletteHTTPException):
+    logger.warning(
+        exc.detail,
+        extra={
+            "status": exc.status_code,
+            "route": request.url.path,
+            "tenant": request.headers.get("X-Tenant"),
+            "user": request.headers.get("X-User"),
+        },
+    )
     return JSONResponse(err(exc.status_code, exc.detail), status_code=exc.status_code)
 
 
 @app.exception_handler(Exception)
 async def general_error_handler(request: Request, exc: Exception):
+    logger.exception(
+        "unhandled_error",
+        extra={
+            "status": 500,
+            "route": request.url.path,
+            "tenant": request.headers.get("X-Tenant"),
+            "user": request.headers.get("X-User"),
+        },
+    )
     capture_exception(exc)
     return JSONResponse(err(500, "Internal Server Error"), status_code=500)
 

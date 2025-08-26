@@ -4,7 +4,6 @@ import os
 import random
 import time
 import uuid
-from contextvars import ContextVar
 from datetime import datetime
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -13,13 +12,13 @@ from starlette.responses import JSONResponse
 
 from ..utils.responses import err
 from .guest_utils import _is_guest_post
+from .request_id import request_id_ctx
 
 # Fields in requests that should be redacted from logs
 PII_KEYS = {"pin", "utr", "auth", "gstin", "email"}
 LOG_SAMPLE_GUEST_4XX = float(os.getenv("LOG_SAMPLE_GUEST_4XX", "0.1"))
 
 
-request_id_ctx = ContextVar("request_id", default=None)
 logger = logging.getLogger("api")
 
 
@@ -27,9 +26,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     """Emit structured inbound/outbound request logs with a request ID."""
 
     async def dispatch(self, request: Request, call_next):
-        req_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
-        token = request_id_ctx.set(req_id)
-        request.state.request_id = req_id
+        req_id = getattr(request.state, "request_id", None)
+        token = None
+        if not req_id:
+            req_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+            request.state.request_id = req_id
+            # Fallback for contexts where RequestIdMiddleware is absent
+            token = request_id_ctx.set(req_id)
 
         body_bytes = await request.body()
 
@@ -112,5 +115,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         if response is not None:
             response.headers["X-Request-ID"] = req_id
 
-        request_id_ctx.reset(token)
+        if token is not None:
+            request_id_ctx.reset(token)
         return response
