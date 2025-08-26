@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import time
+from datetime import datetime, time
 from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
 from typing import Iterable, Literal, Mapping, Sequence
 
-from ..pricing import active_window, apply_discount
+from ..pricing import active_windows, apply_discount
 from .. import flags
 
 GSTMode = Literal["unreg", "comp", "reg"]
@@ -46,7 +46,7 @@ def compute_bill(
     gst_rounding: str = "invoice-total",
     rounding_mode: str = "half-up",
     happy_hour_windows: Sequence[Mapping[str, object]] | None = None,
-    now: time | None = None,
+    now: datetime | time | None = None,
 ) -> dict:
     """Compute subtotal, tax breakup and total for a list of items.
 
@@ -100,10 +100,10 @@ def compute_bill(
     if gst_rounding not in {"item-wise", "invoice-total"}:
         raise ValueError(f"Unsupported GST rounding style: {gst_rounding}")
 
-    window = None
+    windows = []
     if flags.get("happy_hour"):
-        window = active_window(happy_hour_windows, now)
-    if window and coupons:
+        windows = active_windows(happy_hour_windows, now)
+    if windows and coupons:
         raise CouponError("HAPPY_HOUR", "Coupons cannot be used during happy hour")
     for item in items:
         qty = Decimal(str(item.get("qty", 1)))
@@ -111,7 +111,7 @@ def compute_bill(
         gst_rate = Decimal(str(item.get("gst", 0)))
         line_total = qty * price
         subtotal += line_total
-        discounted_price = apply_discount(price, window)
+        discounted_price = apply_discount(price, windows)
         discount_total += (price - discounted_price) * qty
         discounted_total = qty * discounted_price
         if gst_mode == "reg" and gst_rate:
@@ -211,7 +211,7 @@ def build_invoice_context(
     gst_rounding: str = "invoice-total",
     rounding_mode: str = "half-up",
     happy_hour_windows: Sequence[Mapping[str, object]] | None = None,
-    now: time | None = None,
+    now: datetime | time | None = None,
 ) -> dict:
     """Build a render-friendly invoice dict based on ``gst_mode``.
 

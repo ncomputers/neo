@@ -24,7 +24,7 @@ All pull requests run Bandit, pip-audit, and ruff checks in CI to block risky co
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
 
-Tenants can define `happy_hour_windows` with percent or flat discounts applied during the specified times. Enable the `FLAG_HAPPY_HOUR` feature to activate this discounting.
+Tenants can define `happy_hour_windows` with percent or flat discounts applied during specified days and times. Enable the `FLAG_HAPPY_HOUR` feature to activate this discounting.
 
 The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
