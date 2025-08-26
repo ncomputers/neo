@@ -41,6 +41,8 @@ All notable changes to this project will be documented in this file.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
+- Weighted canary ramp helper that templates Nginx upstreams and rolls back on
+  failed health checks.
 - Idempotent payment refunds via `/payments/{id}/refund` endpoint.
 - Extra tenant isolation and signed media tests to enforce cross-tenant boundaries.
 - Per-coupon usage caps (per day/guest/outlet) with valid-from/to windows and
