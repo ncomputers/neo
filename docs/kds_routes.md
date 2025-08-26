@@ -4,7 +4,7 @@ Experimental Kitchen Display System endpoints.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /api/outlet/{tenant_id}/kds/queue | List active orders for the outlet and printer agent status. |
+| GET | /api/outlet/{tenant_id}/kds/queue | List active orders for the outlet, printer agent status and delay flag. |
 | POST | /api/outlet/{tenant_id}/kds/order/{order_id}/accept | Mark an order as accepted. |
 | POST | /api/outlet/{tenant_id}/kds/order/{order_id}/progress | Move an order to in-progress. |
 | POST | /api/outlet/{tenant_id}/kds/order/{order_id}/ready | Mark an order as ready. |
@@ -22,11 +22,13 @@ The queue endpoint returns a payload:
   "data": {
     "orders": [],
     "printer_stale": false,
-    "retry_queue": 0
+    "retry_queue": 0,
+    "kot_delay": false
   }
 }
 ```
 
 `printer_stale` becomes `true` when the printing bridge fails to send a
 heartbeat within a minute. `retry_queue` exposes the length of the bridge's
-retry list for basic monitoring.
+retry list for basic monitoring. `kot_delay` flips to `true` when the oldest
+pending order exceeds the SLA, nudging staff when the kitchen falls behind.

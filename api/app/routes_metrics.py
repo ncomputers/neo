@@ -107,6 +107,13 @@ rollup_failures_total.inc(0)
 printer_retry_queue = Gauge("printer_retry_queue", "Queued print jobs awaiting retry")
 printer_retry_queue.set(0)
 
+kds_oldest_kot_seconds = Gauge(
+    "kds_oldest_kot_seconds",
+    "Age in seconds of the oldest pending KOT",
+    ["tenant"],
+)
+kds_oldest_kot_seconds.labels(tenant="sample").set(0)
+
 router = APIRouter()
 
 
