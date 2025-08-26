@@ -16,6 +16,8 @@ def test_legal_pages_served():
         "privacy": "Privacy Policy",
         "refund": "Cancellation & Refund Policy",
         "contact": "Contact Us",
+        "subprocessors": "Subprocessors",
+        "sla": "Service Level Agreement",
     }
     for page, title in pages.items():
         resp = client.get(f"/legal/{page}")
