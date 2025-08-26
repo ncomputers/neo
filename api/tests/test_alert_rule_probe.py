@@ -31,6 +31,7 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from api.app import routes_alerts  # noqa: E402
 from api.app.auth import create_access_token  # noqa: E402
 from api.app.main import app  # noqa: E402
+from api.app.utils import webhook_probe  # noqa: E402
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
@@ -41,13 +42,14 @@ def test_create_rule_probes_webhook(monkeypatch):
     async def fake_probe(url: str):
         called["url"] = url
         return {
-            "latency_ms": 2000,
-            "http_code": None,
-            "tls_self_signed": True,
-            "warnings": ["slow", "tls_self_signed"],
+            "tls": {"version": "TLSv1.3", "expires_at": None},
+            "latency_ms": {"p50": 2000, "p95": 2000},
+            "status_codes": [200, 200, 200],
+            "allowed": True,
+            "warnings": ["slow"],
         }
 
-    monkeypatch.setattr(routes_alerts, "_probe_webhook", fake_probe)
+    monkeypatch.setattr(routes_alerts, "probe_webhook", fake_probe)
 
     class DummySession:
         def add(self, obj):
@@ -82,8 +84,8 @@ def test_create_rule_probes_webhook(monkeypatch):
     resp = asyncio.run(_run())
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert data["probe"]["tls_self_signed"] is True
     assert "slow" in data["probe"]["warnings"]
+    assert data["warning"] == "risky_webhook"
     assert called["url"] == "https://example.com/hook"
 
 
@@ -101,11 +103,8 @@ def test_probe_webhook_warns(monkeypatch):
         async def head(self, url):
             raise httpx.HTTPError("tls") from ssl.SSLCertVerificationError("bad cert")
 
-    monkeypatch.setattr(routes_alerts.httpx, "AsyncClient", DummyClient)
+    monkeypatch.setattr(webhook_probe.httpx, "AsyncClient", DummyClient)
+    monkeypatch.setattr(webhook_probe, "is_allowed_url", lambda url: True)
 
-    values = itertools.chain([0, 0, 2], itertools.repeat(2))
-    monkeypatch.setattr(routes_alerts.time, "monotonic", lambda: next(values))
-
-    report = asyncio.run(routes_alerts._probe_webhook("https://bad"))
-    assert report["tls_self_signed"] is True
-    assert set(report["warnings"]) == {"slow", "tls_self_signed"}
+    report = asyncio.run(webhook_probe.probe_webhook("https://bad"))
+    assert set(report["warnings"]) == {"tls_self_signed", "bad_status"}
