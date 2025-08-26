@@ -41,7 +41,7 @@ All notable changes to this project will be documented in this file.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
-- PWA manifest referencing external icons to enable install prompts on supported devices.
+- Fetch PWA icons (192x192 and 512x512) via script with iOS meta tags for better install prompts.
 - OWASP ZAP baseline security scan against staging with auth paths allowlisted.
 - Optional PostHog/Mixpanel analytics with per-tenant consent and PII redaction.
 
