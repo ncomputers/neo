@@ -102,10 +102,12 @@ from .obs import capture_exception, init_sentry
 from .otel import init_tracing
 from .routes_admin_dlq import router as admin_dlq_router
 from .routes_admin_menu import router as admin_menu_router
-from .routes_admin_privacy import router as admin_privacy_router
-
-from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_ops import router as admin_ops_router
+from .routes_admin_privacy import router as admin_privacy_router
+from .routes_admin_qrpack import router as admin_qrpack_router
+from .routes_admin_support import router as admin_support_router
+from .routes_admin_ops import router as admin_ops_router
+
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -114,6 +116,7 @@ from .routes_backup import router as backup_router
 from .routes_checkout_gateway import router as checkout_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
+from .routes_csp import router as csp_router
 from .routes_dashboard import router as dashboard_router
 from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_daybook_pdf import router as daybook_pdf_router
@@ -158,11 +161,9 @@ from .routes_pwa_version import router as pwa_version_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
-from .routes_csp import router as csp_router
 from .routes_security import router as security_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
-from .routes_admin_support import router as admin_support_router
 from .routes_support_bundle import router as support_bundle_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
@@ -884,6 +885,7 @@ app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(admin_support_router)
+app.include_router(admin_ops_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)
 app.include_router(maintenance_router)

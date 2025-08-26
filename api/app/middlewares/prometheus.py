@@ -5,11 +5,9 @@ from __future__ import annotations
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-from ..routes_metrics import (
-    http_requests_total,
-    slo_errors_total,
-    slo_requests_total,
-)
+from ..routes_metrics import http_requests_total, slo_errors_total, slo_requests_total
+from ..slo import slo_tracker
+
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
@@ -17,16 +15,17 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
+        path = request.url.path
+        status = response.status_code
         http_requests_total.labels(
-            path=request.url.path,
+            path=path,
             method=request.method,
-            status=str(response.status_code),
+            status=str(status),
         ).inc()
+        slo_requests_total.labels(route=path).inc()
+        error = status >= 500
+        if error:
+            slo_errors_total.labels(route=path).inc()
+        slo_tracker.record(path, error=error)
 
-        route = request.scope.get("route")
-        route_path = route.path if route else request.url.path
-        if route_path.startswith("/g/"):
-            slo_requests_total.labels(route=route_path).inc()
-            if response.status_code >= 500:
-                slo_errors_total.labels(route=route_path).inc()
         return response
