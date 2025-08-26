@@ -7,7 +7,7 @@ import hmac
 import os
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,6 +71,7 @@ async def checkout_start(tenant: str, payload: CheckoutStart) -> dict:
 async def checkout_webhook(
     tenant: str,
     payload: WebhookPayload,
+    request: Request,
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
     if not _gateway_enabled() or not payload.signature:
@@ -115,6 +116,8 @@ async def checkout_webhook(
         await session.commit()
         return ok({"attached": True})
     if payload.status == "refund":
+        if not request.headers.get("Idempotency-Key"):
+            raise HTTPException(status_code=400, detail="missing idempotency key")
         if not getattr(invoice, "settled", False):
             return ok({"refunded": False})
         payment = Payment(
