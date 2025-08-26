@@ -39,6 +39,10 @@ All notable changes to this project will be documented in this file.
 
 - Support happy-hour pricing via scheduled discount windows.
 
+### Fixed
+
+- Bundle Noto Sans fonts for printable invoices and KOTs, covering the ₹ sign and Gujarati/Hindi glyphs.
+
 
 ## v1.0.0-rc - 2025-08-25
 
