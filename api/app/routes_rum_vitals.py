@@ -3,7 +3,7 @@ from __future__ import annotations
 """Routes for Real User Monitoring (Web Vitals)."""
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from prometheus_client import Histogram
 import uuid
 
@@ -42,13 +42,38 @@ ttfb_hist = Histogram(
 )
 
 
+ROUTE_WHITELIST = {
+    "/",
+    "/guest",
+    "/dashboard",
+    "/admin",
+    "/admin/troubleshoot",
+    "/billing",
+    "/cashier",
+    "/expo",
+    "/kitchen",
+    "/cleaner",
+    "/login",
+}
+
+
 class VitalsPayload(BaseModel):
     route: str
-    lcp: float | None = None
-    cls: float | None = None
-    inp: float | None = None
-    ttfb: float | None = None
+    lcp: float | None = Field(default=None, ge=0, le=10)
+    cls: float | None = Field(default=None, ge=0, le=2)
+    inp: float | None = Field(default=None, ge=0, le=10)
+    ttfb: float | None = Field(default=None, ge=0, le=4)
     consent: bool = False
+
+    @validator("route")
+    def _sanitize_route(cls, v: str) -> str:  # noqa: N805 - pydantic validator
+        path = v.split("?")[0]
+        if len(path) > 64:
+            raise ValueError("route too long")
+        for allowed in sorted(ROUTE_WHITELIST, key=len, reverse=True):
+            if path == allowed or path.startswith(allowed + "/"):
+                return allowed
+        raise ValueError("invalid route")
 
 
 async def _analytics_enabled(tenant_id: str) -> bool:

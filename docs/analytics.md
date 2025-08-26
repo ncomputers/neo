@@ -41,5 +41,14 @@ consent, the PWA reports [Web Vitals](https://web.dev/vitals/) for each route
 without using any third-party libraries. Largest Contentful Paint (LCP),
 Cumulative Layout Shift (CLS), Interaction to Next Paint (INP) and Time to
 First Byte (TTFB) are POSTed to `/rum/vitals` along with the current route and
-exported as Prometheus histograms.
+exported as Prometheus histograms. Clients **must** include the `X-Tenant-ID`
+header in these requests. The PWA adds this automatically when the
+`VITE_TENANT_ID` build-time variable is set:
+
+```sh
+VITE_TENANT_ID=<tenant> npm run build
+```
+
+The value will be sent as `X-Tenant-ID` in all API calls including the RUM
+endpoint.
 
