@@ -1,19 +1,22 @@
 # Load Testing
 
-This directory contains basic [Locust](https://locust.io/) scenarios for the guest flow:
+This directory contains [Locust](https://locust.io/) scenarios for the guest flow with locked performance targets:
 
-1. **View menu** – Performs conditional `GET /g/{table_token}/menu` requests using the `ETag` header to exercise `304 Not Modified` responses.
-2. **Place order** – Posts to `/g/{table_token}/order` with a unique `Idempotency-Key` header.
-3. **Generate bill** – Fetches `/g/{table_token}/bill` and then reapplies the request with a `coupon` query parameter.
+- **Scan → Menu** – `GET /g/{table_token}/menu` p95 < 200 ms.
+- **Add → Place Order** – `POST /g/{table_token}/order` p95 < 400 ms.
+- **Table Map SSE** – maintain 1 000 clients per outlet via `/api/outlet/{tenant}/tables/map/stream`.
+
+The run fails if the p95 thresholds are exceeded.
 
 ## Usage
 
-Set the target host in `HOST` and optionally override `TABLE_TOKEN`:
+Set the target host in `HOST` and optionally override `TABLE_TOKEN` and `TENANT`:
 
 ```bash
 export HOST="http://localhost:8000"
 export TABLE_TOKEN="T-001"
-locust -f load/locustfile.py
+export TENANT="demo"
+locust --headless -f load/locustfile.py -u 10 -r 10 -t 1m
 ```
 
-The script will spawn virtual users that perform the above actions against the configured host.
+The script spawns virtual users that perform the above actions against the configured host.
