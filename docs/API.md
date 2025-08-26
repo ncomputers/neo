@@ -33,4 +33,11 @@ Alternatively, import the raw OpenAPI document by URL using `/openapi.json`.
 Owners can request help directly from the service.
 
 - `POST /support/ticket` – submit a ticket with a subject, body and optional screenshots.
+- `GET /support/ticket` – list tickets submitted by the current tenant.
 - `GET /admin/support` – list submitted tickets and their status (admin only).
+
+## Time
+
+Clients can compare their clock against the server.
+
+- `GET /time/skew` – returns the current server epoch timestamp.

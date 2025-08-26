@@ -20,6 +20,8 @@ redis
 fakeredis
 redis
 jinja2
+# markdown rendering
+markdown
 # email utilities
 email-validator
 # testing tools

@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CategoryIn(BaseModel):
@@ -30,6 +30,8 @@ class ItemIn(BaseModel):
     category_id: Optional[UUID] = None
     in_stock: bool = True
     show_fssai_icon: bool = False
+    dietary: list[str] = Field(default_factory=list)
+    allergens: list[str] = Field(default_factory=list)
 
 
 class Item(ItemIn):

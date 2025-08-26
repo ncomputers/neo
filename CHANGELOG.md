@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- /time/skew endpoint returns server epoch for client clock skew detection.
 - Guard hot queries with a p95 regression check.
 - Enforce environment validation at application startup and audit required
   variables during the CI lint step.
@@ -32,12 +33,26 @@ All notable changes to this project will be documented in this file.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
+- WhatsApp guest notifications are gated by the `WHATSAPP_GUEST_UPDATES_ENABLED`
+  environment variable.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
+- Menu items expose dietary and allergen tags with guest filter support.
+- Feature-flagged menu modifiers and combos with server-side pricing (`FLAG_SIMPLE_MODIFIERS`).
+
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
+  "Request more" email link.
+
   "Request more" link.
+- Track per-route SLO metrics, expose `/admin/ops/slo` endpoint and Grafana dashboard.
+
 - Script to bulk seed a large dataset for local scale testing.
 
 - Support happy-hour pricing via scheduled discount windows.
+
+### Fixed
+
+- Bundle Noto Sans fonts for printable invoices and KOTs, covering the ₹ sign and Gujarati/Hindi glyphs.
+
 
 
 ## v1.0.0-rc - 2025-08-25

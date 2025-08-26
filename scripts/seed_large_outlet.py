@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Bulk seed a tenant with large datasets for local scale testing.
+"""Seed a large dataset for load testing.
 
-This helper inserts many tables, menu items and orders using SQLAlchemy bulk
-operations. It is intended only for development environments to quickly
-produce data volumes that mimic a busy outlet.
+This helper creates a category, thousands of menu items, hundreds of tables
+and tens of thousands of orders with one line item each. It is intended for
+local scale testing and inserts rows in batches for performance.
+
 """
 
 from __future__ import annotations
@@ -12,13 +13,15 @@ import argparse
 import asyncio
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.app.db.tenant import get_tenant_session
 from api.app.models_tenant import (
+    Base,
+
     Category,
     MenuItem,
     Order,
@@ -27,110 +30,160 @@ from api.app.models_tenant import (
     Table,
 )
 
+DEFAULT_BATCH_SIZE = 1000
+
 
 async def _seed(
-    session: AsyncSession, tables: int, items: int, orders: int, days: int
+    session: AsyncSession,
+    *,
+    items: int,
+    tables: int,
+    orders: int,
+    batch_size: int,
 ) -> None:
-    """Populate ``session`` with synthetic tables, items and orders."""
+    """Insert large volumes of menu items, tables and orders."""
 
-    # Create a single category for all menu items
-    category = Category(name="Bulk", sort=1)
+    # Ensure tables exist for ad-hoc databases like SQLite.
+    async with session.bind.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    category = Category(name="Load Test", sort=1)
     session.add(category)
     await session.flush()
 
-    # Generate menu items and collect their ids for snapshots
-    item_payload = []
-    for i in range(1, items + 1):
-        item_payload.append(
+    # Menu items
+    item_ids: list[int] = []
+    item_batch: list[dict[str, object]] = []
+    for i in range(items):
+        item_batch.append(
             {
                 "category_id": category.id,
-                "name": f"Item {i}",
-                "price": (i % 100) + 1,
-                "is_veg": i % 2 == 0,
+                "name": f"Item {i + 1}",
+                "price": 100,
+                "is_veg": False,
             }
         )
-    result = await session.execute(
-        insert(MenuItem).returning(MenuItem.id, MenuItem.name, MenuItem.price),
-        item_payload,
-    )
-    items_info = {row.id: (row.name, row.price) for row in result.mappings().all()}
+        if len(item_batch) >= batch_size:
+            res = await session.execute(
+                insert(MenuItem).returning(MenuItem.id), item_batch
+            )
+            item_ids.extend(res.scalars().all())
+            item_batch.clear()
+    if item_batch:
+        res = await session.execute(
+            insert(MenuItem).returning(MenuItem.id), item_batch
+        )
+        item_ids.extend(res.scalars().all())
 
-    # Tables are keyed by UUID so we generate ids upfront
-    table_payload: list[dict] = []
+    # Tables
     table_ids: list[uuid.UUID] = []
-    for i in range(1, tables + 1):
+    table_batch: list[dict[str, object]] = []
+    tenant_uuid = uuid.uuid4()
+    for i in range(tables):
         table_id = uuid.uuid4()
         table_ids.append(table_id)
-        table_payload.append(
+        table_batch.append(
             {
                 "id": table_id,
-                "tenant_id": uuid.uuid4(),
-                "name": f"Table {i}",
-                "code": f"T-{i:03d}",
+                "tenant_id": tenant_uuid,
+                "name": f"Table {i + 1}",
+                "code": f"T-{i + 1:03d}",
                 "qr_token": uuid.uuid4().hex,
             }
         )
-    await session.execute(insert(Table), table_payload)
+        if len(table_batch) >= batch_size:
+            await session.execute(insert(Table), table_batch)
+            table_batch.clear()
+    if table_batch:
+        await session.execute(insert(Table), table_batch)
 
-    # Orders with a single line item each spread over ``days`` days
-    now = datetime.utcnow()
-    order_rows: list[dict] = []
-    chosen_items: list[int] = []
+    # Orders and order items
+    order_batch: list[dict[str, object]] = []
+    order_item_batch: list[dict[str, object]] = []
     for _ in range(orders):
         table_id = random.choice(table_ids)
-        item_id = random.choice(list(items_info))
-        chosen_items.append(item_id)
-        placed_at = now - timedelta(days=random.randrange(days))
-        order_rows.append(
+        order_batch.append(
             {
                 "table_id": table_id,
-                "status": OrderStatus.SERVED,
-                "placed_at": placed_at,
-                "accepted_at": placed_at,
+                "status": OrderStatus.CONFIRMED,
+                "placed_at": datetime.now(timezone.utc),
             }
         )
-    result = await session.execute(insert(Order).returning(Order.id), order_rows)
-    order_ids = result.scalars().all()
+        if len(order_batch) >= batch_size:
+            res = await session.execute(
+                insert(Order).returning(Order.id), order_batch
+            )
+            order_ids = res.scalars().all()
+            for order_id in order_ids:
+                item_id = random.choice(item_ids)
+                order_item_batch.append(
+                    {
+                        "order_id": order_id,
+                        "item_id": item_id,
+                        "name_snapshot": f"Item {item_id}",
+                        "price_snapshot": 100,
+                        "qty": 1,
+                        "status": "SERVED",
+                    }
+                )
+            await session.execute(insert(OrderItem), order_item_batch)
+            order_batch.clear()
+            order_item_batch.clear()
+    if order_batch:
+        res = await session.execute(insert(Order).returning(Order.id), order_batch)
+        order_ids = res.scalars().all()
+        for order_id in order_ids:
+            item_id = random.choice(item_ids)
+            order_item_batch.append(
+                {
+                    "order_id": order_id,
+                    "item_id": item_id,
+                    "name_snapshot": f"Item {item_id}",
+                    "price_snapshot": 100,
+                    "qty": 1,
+                    "status": "SERVED",
+                }
+            )
+        await session.execute(insert(OrderItem), order_item_batch)
 
-    order_item_rows = []
-    for order_id, item_id in zip(order_ids, chosen_items):
-        name, price = items_info[item_id]
-        order_item_rows.append(
-            {
-                "order_id": order_id,
-                "item_id": item_id,
-                "name_snapshot": name,
-                "price_snapshot": price,
-                "qty": 1,
-                "status": "served",
-                "mods_snapshot": [],
-            }
-        )
-    await session.execute(insert(OrderItem), order_item_rows)
     await session.commit()
 
 
-async def main(tenant: str, tables: int, items: int, orders: int, days: int) -> None:
+async def main(
+    tenant: str,
+    *,
+    items: int,
+    tables: int,
+    orders: int,
+    batch_size: int,
+) -> None:
     async with get_tenant_session(tenant) as session:
-        await _seed(session, tables, items, orders, days)
+        await _seed(
+            session,
+            items=items,
+            tables=tables,
+            orders=orders,
+            batch_size=batch_size,
+        )
+    print(f"Seeded {items} items, {tables} tables and {orders} orders")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Seed a tenant with a large synthetic dataset"
-    )
+    parser = argparse.ArgumentParser(description="Seed a large dataset")
     parser.add_argument("--tenant", required=True, help="Tenant identifier")
+    parser.add_argument("--items", type=int, default=5000, help="Number of menu items")
+    parser.add_argument("--tables", type=int, default=300, help="Number of tables")
+    parser.add_argument("--orders", type=int, default=50000, help="Number of orders")
     parser.add_argument(
-        "--tables", type=int, default=300, help="Number of tables to create"
-    )
-    parser.add_argument(
-        "--items", type=int, default=5000, help="Number of menu items to create"
-    )
-    parser.add_argument(
-        "--orders", type=int, default=50000, help="Number of orders to create"
-    )
-    parser.add_argument(
-        "--days", type=int, default=60, help="Spread orders across past days"
+        "--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Bulk insert batch size"
     )
     args = parser.parse_args()
-    asyncio.run(main(args.tenant, args.tables, args.items, args.orders, args.days))
+    asyncio.run(
+        main(
+            args.tenant,
+            items=args.items,
+            tables=args.tables,
+            orders=args.orders,
+            batch_size=args.batch_size,
+        )
+    )
