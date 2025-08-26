@@ -1,0 +1,71 @@
+{
+  "id": null,
+  "uid": "rum",
+  "title": "Web Vitals RUM",
+  "timezone": "",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "5m",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "LCP by route",
+      "datasource": "prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(web_vitals_lcp_seconds_bucket[5m])) by (le, route))",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.75, sum(rate(web_vitals_lcp_seconds_bucket[5m])) by (le, route))",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(web_vitals_lcp_seconds_bucket[5m])) by (le, route))",
+          "refId": "C"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "CLS by route",
+      "datasource": "prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(web_vitals_cls_bucket[5m])) by (le, route))",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.75, sum(rate(web_vitals_cls_bucket[5m])) by (le, route))",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(web_vitals_cls_bucket[5m])) by (le, route))",
+          "refId": "C"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "graph",
+      "title": "INP by route",
+      "datasource": "prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(web_vitals_inp_seconds_bucket[5m])) by (le, route))",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.75, sum(rate(web_vitals_inp_seconds_bucket[5m])) by (le, route))",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(web_vitals_inp_seconds_bucket[5m])) by (le, route))",
+          "refId": "C"
+        }
+      ],
+      "id": 3
+    }
+  ]
+}

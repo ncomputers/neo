@@ -52,3 +52,26 @@ VITE_TENANT_ID=<tenant> npm run build
 The value will be sent as `X-Tenant-ID` in all API calls including the RUM
 endpoint.
 
+### Grafana dashboard
+
+`deploy/dashboards/rum.json` defines a Grafana dashboard with panels for
+Largest Contentful Paint (LCP), Cumulative Layout Shift (CLS) and Interaction to
+Next Paint (INP). Each panel charts the p50, p75 and p95 percentiles per route
+using the Prometheus histograms. Import the JSON through Grafana's **Dashboards →
+Import** page to load it.
+
+The percentile panels help interpret performance: p50 is the median, p75 shows
+upper-quartile latencies and p95 highlights worst-case routes.
+
+### Sample PromQL
+
+Percentiles can be queried directly with `histogram_quantile`:
+
+```promql
+histogram_quantile(0.95, sum(rate(web_vitals_lcp_seconds_bucket{route="/"}[5m])) by (le))
+histogram_quantile(0.95, sum(rate(web_vitals_cls_bucket{route="/"}[5m])) by (le))
+histogram_quantile(0.95, sum(rate(web_vitals_inp_seconds_bucket{route="/"}[5m])) by (le))
+```
+
+Replace `0.95` with `0.50` or `0.75` for other percentiles.
+
