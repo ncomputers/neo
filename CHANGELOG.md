@@ -45,6 +45,7 @@ All notable changes to this project will be documented in this file.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
 - Menu items expose dietary and allergen tags with guest filter support.
 - Feature-flagged menu modifiers and combos with server-side pricing (`FLAG_SIMPLE_MODIFIERS`).
+- Centralised helpers for applying modifier pricing and dietary/allergen filters.
 
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
   "Request more" email link.

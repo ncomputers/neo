@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import flags
 from ..domain import OrderStatus
+from ..menu.modifiers import apply_modifiers
 from ..models_tenant import MenuItem, Order, OrderItem, Table
 from ..services import ema
 from ..utils.soft_delete import guard_not_deleted
@@ -69,15 +70,7 @@ async def create_order(
             raise ValueError(f"menu item {line['item_id']!r} not found")
         guard_not_deleted(item, "Menu item is inactive/deleted")
         mods = line.get("mods", []) if flags.get("simple_modifiers") else []
-        chosen = []
-        extra = 0.0
-        for mid in mods:
-            for mod in item.modifiers or []:
-                if mod.get("id") == mid:
-                    chosen.append(mod)
-                    extra += float(mod.get("delta", 0))
-                    break
-        price = float(item.price) + extra
+        price, chosen = apply_modifiers(float(item.price), mods, item.modifiers or [])
         session.add(
             OrderItem(
                 order_id=order.id,
@@ -214,15 +207,7 @@ async def add_round(
         if data.deleted_at is not None:
             raise ValueError("GONE_RESOURCE")
         mods = line.get("mods", []) if flags.get("simple_modifiers") else []
-        chosen = []
-        extra = 0.0
-        for mid in mods:
-            for mod in data.modifiers or []:
-                if mod.get("id") == mid:
-                    chosen.append(mod)
-                    extra += float(mod.get("delta", 0))
-                    break
-        price = float(data.price) + extra
+        price, chosen = apply_modifiers(float(data.price), mods, data.modifiers or [])
         session.add(
             OrderItem(
                 order_id=order_id,

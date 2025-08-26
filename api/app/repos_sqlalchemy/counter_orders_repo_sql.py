@@ -8,6 +8,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import flags
+from ..menu.modifiers import apply_modifiers
 from ..models_tenant import (
     Counter,
     CounterOrder,
@@ -61,15 +62,7 @@ async def create_order(
         if data.deleted_at is not None:
             raise ValueError("GONE_RESOURCE")
         mods = line.get("mods", []) if flags.get("simple_modifiers") else []
-        chosen = []
-        extra = 0.0
-        for mid in mods:
-            for mod in data.modifiers or []:
-                if mod.get("id") == mid:
-                    chosen.append(mod)
-                    extra += float(mod.get("delta", 0))
-                    break
-        price = float(data.price) + extra
+        price, chosen = apply_modifiers(float(data.price), mods, data.modifiers or [])
         session.add(
             CounterOrderItem(
                 order_id=order.id,
