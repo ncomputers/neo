@@ -17,6 +17,41 @@ from .utils.responses import ok
 router = APIRouter()
 
 
+def _apply_filters(items: list[dict], filter_str: str) -> list[dict]:
+    """Filter ``items`` based on a comma-separated ``filter_str``."""
+    positives: dict[str, set[str]] = {}
+    negatives: dict[str, set[str]] = {}
+    for term in filter_str.split(","):
+        term = term.strip()
+        if not term:
+            continue
+        negate = term.startswith("-")
+        if negate:
+            term = term[1:]
+        if ":" not in term:
+            continue
+        key, value = term.split(":", 1)
+        key = key.lower()
+        value = value.lower()
+        if key == "allergen":
+            key = "allergens"
+        target = negatives if negate else positives
+        target.setdefault(key, set()).add(value)
+
+    def matches(item: dict) -> bool:
+        for key, vals in positives.items():
+            field_vals = [v.lower() for v in item.get(key, [])]
+            if not all(v in field_vals for v in vals):
+                return False
+        for key, vals in negatives.items():
+            field_vals = [v.lower() for v in item.get(key, [])]
+            if any(v in field_vals for v in vals):
+                return False
+        return True
+
+    return [item for item in items if matches(item)]
+
+
 async def get_tenant_id(table_token: str) -> str:
     """Return the tenant identifier for ``table_token``.
 
@@ -41,6 +76,7 @@ async def fetch_menu(
     response: Response,
     if_none_match: str | None = Header(default=None, alias="If-None-Match"),
     accept_language: str | None = Header(default=None, alias="Accept-Language"),
+    filter: str | None = None,
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
@@ -59,10 +95,14 @@ async def fetch_menu(
         items = await repo.list_items(session)
         data = {"categories": categories, "items": items}
         await redis.set(cache_key, json.dumps(data), ex=60)
+    items = data["items"]
+    if filter:
+        items = _apply_filters(items, filter)
     lang = resolve_lang(accept_language)
-    data["labels"] = {
+    resp_data = {**data, "items": items}
+    resp_data["labels"] = {
         name: get_msg(lang, f"labels.{name}")
         for name in ("menu", "order", "pay", "get_bill")
     }
     response.headers["ETag"] = etag
-    return ok(data)
+    return ok(resp_data)

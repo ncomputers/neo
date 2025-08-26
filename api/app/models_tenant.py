@@ -58,6 +58,8 @@ class MenuItem(Base):
     out_of_stock = Column(Boolean, nullable=False, default=False)
     modifiers = Column(JSON, nullable=False, server_default="[]")
     combos = Column(JSON, nullable=False, server_default="[]")
+    allergens = Column(JSON, nullable=False, server_default="[]")
+    dietary = Column(JSON, nullable=False, server_default="[]")
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

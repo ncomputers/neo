@@ -42,6 +42,17 @@ room_locked_denied_total.inc(0)
 http_errors_total = Counter("http_errors_total", "Total HTTP errors", ["status"])
 http_errors_total.labels(status="0").inc(0)
 
+slo_requests_total = Counter(
+    "slo_requests_total", "Total requests for SLO tracking", ["route"]
+)
+slo_requests_total.labels(route="/sample").inc(0)
+
+slo_errors_total = Counter(
+    "slo_errors_total", "Total error requests for SLO tracking", ["route"]
+)
+slo_errors_total.labels(route="/sample").inc(0)
+
+
 notifications_outbox_delivered_total = Counter(
     "notifications_outbox_delivered_total",
     "Total notifications delivered from outbox",

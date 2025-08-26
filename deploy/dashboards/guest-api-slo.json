@@ -1,0 +1,23 @@
+{
+  "id": null,
+  "uid": "guest-api-slo",
+  "title": "Guest API SLO",
+  "timezone": "",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "5m",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "30d Error Rate by Route",
+      "datasource": "prometheus",
+      "targets": [
+        {
+          "expr": "sum(increase(slo_errors_total[30d])) by (route) / sum(increase(slo_requests_total[30d])) by (route)",
+          "refId": "A"
+        }
+      ],
+      "id": 1
+    }
+  ]
+}

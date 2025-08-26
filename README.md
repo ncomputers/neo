@@ -16,6 +16,10 @@ Owner and admin accounts can enable optional TOTP-based two-factor authenticatio
 
 Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports are available at `/admin/csp/reports`.
 
+Guest-facing order endpoints accept an `Idempotency-Key` header (UUID). Successful responses are cached for 24 hours and the key is recorded in audit logs to guard against duplicate charges.
+
+All pull requests run Bandit, pip-audit, and ruff checks in CI to block risky code and dependencies.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
@@ -243,7 +247,9 @@ A guest-facing router exposes menu data for a specific table:
 
 - `GET /g/{table_token}/menu` – list menu categories and items. Responses
   include an `ETag` derived from a menu version that increments whenever the
-  menu is modified, ensuring caches invalidate reliably.
+  menu is modified, ensuring caches invalidate reliably. Use
+  `filter=dietary:vegan,-allergen:nuts` to include only items matching dietary
+  tags and excluding specific allergens.
 - `GET /h/{room_token}/menu` – list menu for hotel rooms.
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
@@ -467,14 +473,20 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `idempotency_hits_total` / `idempotency_conflicts_total`: idempotency key usage
 - `table_locked_denied_total` / `room_locked_denied_total`: requests denied due to locks
 - `http_errors_total`: HTTP errors labelled by status
+- `slo_requests_total` / `slo_errors_total`: guest requests and errors by route
 - `notifications_outbox_delivered_total` / `notifications_outbox_failed_total`: notification worker results
 - `ws_messages_total`: WebSocket messages delivered
 - `sse_clients_gauge`: currently connected SSE clients
 - `digest_sent_total`: daily KPI digests sent (via route or CLI)
+- `slo_requests_total` / `slo_errors_total`: per-route SLO tracking
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
+Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
 - Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
   `POST /api/admin/dlq/replay` re-enqueues a job by ID.
+
+Rolling 30-day error budgets per route are available from the admin endpoint
+`/admin/ops/slo`.
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
@@ -576,6 +588,16 @@ python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
 python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
 ```
 
+To generate a sizable dataset for local load testing, use the large outlet seeder:
+
+```bash
+POSTGRES_TENANT_DSN_TEMPLATE=sqlite+aiosqlite:///tmp/{tenant_id}.db \
+python scripts/seed_large_outlet.py --tenant TENANT_ID \
+    --items 5000 --tables 300 --orders 50000
+```
+
+
+
 For local scale testing, a helper seeds large volumes of data using bulk
 inserts:
 
@@ -656,6 +678,15 @@ Run a single module or test:
 
 ```bash
 pytest api/tests/test_auth.py::test_password_login_success
+```
+
+### API contract fuzzing
+
+Critical `orders`, `billing` and `exports` routes are fuzzed with [Schemathesis](https://schemathesis.readthedocs.io/) to catch schema regressions.
+Run them locally with:
+
+```bash
+pytest tests/api_contract -q
 ```
 
 ## Events
