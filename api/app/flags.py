@@ -18,6 +18,7 @@ from typing import Any, Dict
 REGISTRY: Dict[str, Dict[str, Any]] = {
     "hotel_mode": {"default": False, "tenant_attr": "enable_hotel"},
     "counter_mode": {"default": False, "tenant_attr": "enable_counter"},
+    "simple_modifiers": {"default": False},
 }
 
 

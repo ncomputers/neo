@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import os
-import re
 import secrets
+import uuid
 from typing import List
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -23,22 +23,16 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app) -> None:
         super().__init__(app)
-        allowed = os.getenv("ALLOWED_ORIGINS", "*")
-        if allowed == "*":
-            self.allowed_origins: List[str] = ["*"]
-        else:
-            self.allowed_origins = [o.strip() for o in allowed.split(",") if o.strip()]
+        allowed = os.getenv("ALLOWED_ORIGINS", "")
+        self.allowed_origins: List[str] = [
+            o.strip() for o in allowed.split(",") if o.strip()
+        ]
         self.max_bytes = 256 * 1024
-        self.key_pattern = re.compile(r"^[A-Za-z0-9_\-=:]+$")
         self.hsts_enabled = os.getenv("ENABLE_HSTS") == "1"
 
     async def dispatch(self, request: Request, call_next):
         origin = request.headers.get("origin")
-        if (
-            self.allowed_origins != ["*"]
-            and origin
-            and origin not in self.allowed_origins
-        ):
+        if self.allowed_origins and origin and origin not in self.allowed_origins:
             return JSONResponse(
                 err("FORBIDDEN_ORIGIN", "ForbiddenOrigin"),
                 status_code=HTTP_403_FORBIDDEN,
@@ -53,11 +47,14 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 )
 
             key = request.headers.get("Idempotency-Key")
-            if key and (len(key) > 128 or not self.key_pattern.fullmatch(key)):
-                return JSONResponse(
-                    err("BAD_IDEMPOTENCY_KEY", "BadIdempotencyKey"),
-                    status_code=HTTP_400_BAD_REQUEST,
-                )
+            if key:
+                try:
+                    uuid.UUID(key)
+                except ValueError:
+                    return JSONResponse(
+                        err("BAD_IDEMPOTENCY_KEY", "BadIdempotencyKey"),
+                        status_code=HTTP_400_BAD_REQUEST,
+                    )
 
             async def receive() -> dict:
                 return {"type": "http.request", "body": body}
@@ -67,14 +64,12 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         nonce = secrets.token_urlsafe(16)
         request.state.csp_nonce = nonce
         response = await call_next(request)
-        if origin:
-            if self.allowed_origins == ["*"]:
-                response.headers.setdefault("access-control-allow-origin", "*")
-            elif origin in self.allowed_origins:
-                response.headers.setdefault("access-control-allow-origin", origin)
-                response.headers.setdefault("vary", "Origin")
+        if origin and origin in self.allowed_origins:
+            response.headers.setdefault("access-control-allow-origin", origin)
+            response.headers.setdefault("vary", "Origin")
         response.headers.setdefault("Referrer-Policy", "no-referrer")
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
         csp = (
             "default-src 'self'; "
             "img-src 'self' data: https:; "
@@ -82,8 +77,22 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             f"script-src 'self' 'nonce-{nonce}'"
         )
         response.headers.setdefault("Content-Security-Policy", csp)
-        csp_report = csp + "; report-uri /csp/report"
-        response.headers.setdefault("Content-Security-Policy-Report-Only", csp_report)
+        raw_headers: list[tuple[bytes, bytes]] = []
+        for name, value in response.raw_headers:
+            if name.lower() == b"set-cookie":
+                cookie = value.decode("latin1")
+                lower = cookie.lower()
+                if "httponly" not in lower:
+                    cookie += "; HttpOnly"
+                if "secure" not in lower:
+                    cookie += "; Secure"
+                if "samesite" not in lower:
+                    cookie += "; SameSite=Lax"
+                raw_headers.append((name, cookie.encode("latin1")))
+            else:
+                raw_headers.append((name, value))
+        response.raw_headers = raw_headers
+
         if self.hsts_enabled:
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"

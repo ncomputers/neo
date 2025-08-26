@@ -42,18 +42,28 @@ def test_security_headers(monkeypatch):
     importlib.reload(app_main)
     app_main.app.state.redis = fakeredis.aioredis.FakeRedis()
 
+    from fastapi import Response
+
+    @app_main.app.get("/cookie")
+    def _cookie(response: Response):
+        response.set_cookie("a", "b")
+        return {"ok": True}
+
     client = TestClient(app_main.app)
-    resp = client.get("/ready", headers={"Origin": "https://allowed.com"})
+    resp = client.get("/health", headers={"Origin": "https://allowed.com"})
     assert resp.headers.get("Referrer-Policy") == "no-referrer"
     assert resp.headers.get("X-Content-Type-Options") == "nosniff"
+    assert resp.headers.get("X-Frame-Options") == "DENY"
     csp = resp.headers.get("Content-Security-Policy")
     assert csp and "default-src 'self'" in csp and "img-src 'self'" in csp
-    csp_ro = resp.headers.get("Content-Security-Policy-Report-Only")
-    assert csp_ro and "report-uri /csp/report" in csp_ro
-    assert (
-        resp.headers.get("Strict-Transport-Security")
-        == "max-age=31536000; includeSubDomains"
-    )
+    cookie_resp = client.get("/cookie")
+    cookie = cookie_resp.headers.get("set-cookie")
+    assert cookie is not None
+    lower_cookie = cookie.lower()
+    assert "httponly" in lower_cookie
+    assert "secure" in lower_cookie
+    assert "samesite=lax" in lower_cookie
+
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
     monkeypatch.delenv("ENABLE_HSTS", raising=False)

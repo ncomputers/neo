@@ -27,7 +27,7 @@ export default function App() {
         <Link to="/admin">Admin</Link>
         {user.role === 'admin' && (
           <a href="/help" target="_blank" rel="noopener noreferrer">
-            Help
+            Help Center
           </a>
         )}
         <Link to="/cashier">Cashier</Link>

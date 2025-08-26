@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import StaticPool
 
 from api.app.middlewares.security import SecurityMiddleware
+
 from api.app.models_tenant import Base, Category, MenuItem
 from api.app import routes_guest_menu
 from api.app.deps.tenant import get_tenant_id as header_tenant_id
@@ -59,6 +60,7 @@ async def _setup_db():
     return Session
 
 
+
 Session = asyncio.run(_setup_db())
 
 
@@ -94,3 +96,4 @@ def test_filter_dietary_and_allergen_exclusion():
     assert resp.status_code == 200
     items = resp.json()["data"]["items"]
     assert [i["name"] for i in items] == ["Fruit Salad"]
+

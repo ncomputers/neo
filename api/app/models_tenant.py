@@ -60,6 +60,7 @@ class MenuItem(Base):
     combos = Column(JSON, nullable=False, server_default="[]")
     dietary = Column(JSON, nullable=False, server_default="[]", default=list)
     allergens = Column(JSON, nullable=False, server_default="[]", default=list)
+
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

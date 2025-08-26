@@ -1,0 +1,23 @@
+{
+  "id": null,
+  "uid": "slo",
+  "title": "Service Level Objectives",
+  "timezone": "",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "5m",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Error Rate",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "sum(rate(slo_errors_total[5m])) / sum(rate(slo_requests_total[5m]))",
+          "refId": "A"
+        }
+      ],
+      "id": 1
+    }
+  ]
+}

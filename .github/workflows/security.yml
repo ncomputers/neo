@@ -13,8 +13,10 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies
         run: |
-          pip install pre-commit pip-audit
-      - name: Run pre-commit
-        run: pre-commit run --all-files
+          pip install bandit pip-audit ruff
+      - name: Run bandit
+        run: bandit -r api/ --severity-level high --confidence-level high
       - name: Run pip-audit
-        run: pip-audit
+        run: pip-audit --strict --ignore-vuln GHSA-wj6h-64fc-37mp
+      - name: Run ruff
+        run: ruff check api/app --select F

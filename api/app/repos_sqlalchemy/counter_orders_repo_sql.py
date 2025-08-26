@@ -8,6 +8,7 @@ from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..utils import invoice_counter
+from .. import flags
 
 from ..models_tenant import (
     MenuItem,
@@ -60,14 +61,14 @@ async def create_order(
             raise ValueError(f"menu item {line['item_id']!r} not found")
         if data.deleted_at is not None:
             raise ValueError("GONE_RESOURCE")
-        mods = line.get("mods", [])
+        mods = line.get("mods", []) if flags.get("simple_modifiers") else []
         chosen = []
         extra = 0.0
         for mid in mods:
             for mod in data.modifiers or []:
                 if mod.get("id") == mid:
                     chosen.append(mod)
-                    extra += float(mod.get("price", 0))
+                    extra += float(mod.get("delta", 0))
                     break
         price = float(data.price) + extra
         session.add(
