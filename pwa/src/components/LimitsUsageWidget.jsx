@@ -62,6 +62,8 @@ export default function LimitsUsageWidget() {
       <a
         href="mailto:support@example.com?subject=Request%20more%20quota"
         className="text-sm text-blue-600 underline"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         Request more
       </a>

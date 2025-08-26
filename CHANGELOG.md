@@ -40,6 +40,8 @@ All notable changes to this project will be documented in this file.
 - Feature-flagged menu modifiers and combos with server-side pricing (`FLAG_SIMPLE_MODIFIERS`).
 
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
+  "Request more" email link.
+
   "Request more" link.
 - Track per-route SLO metrics, expose `/admin/ops/slo` endpoint and Grafana dashboard.
 
