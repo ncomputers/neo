@@ -15,3 +15,5 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         with:
           config: .gitleaks.toml
+          fail: true
+          args: --redact
