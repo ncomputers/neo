@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     vapid_public_key: str | None = None
     vapid_private_key: str | None = None
     max_conn_per_ip: int = 20
+    ab_tests_enabled: bool = False
 
 
 # Cached singleton to avoid repeated file reads
