@@ -4,13 +4,16 @@ This repository contains three main services:
 
 - `api/` – FastAPI application with `/health`, `/ready` and `/time/skew` endpoints, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
 - `pwa/` – React + Tailwind front end with a placeholder home page and installable PWA manifest.
-- `ops/` – Docker Compose for local development.
--
+ - `ops/` – Docker Compose for local development.
+Monitoring tools such as UptimeRobot should poll the `/status.json` endpoint for platform health. Ops scripts in `ops/scripts/status_page.py` maintain this file during incidents.
 Invoices support optional FSSAI license details when provided.
 QR pack generation events are audited and can be exported via admin APIs. See
 [`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details.
 Per-tenant product analytics can be enabled with tenant consent. See
 [`docs/analytics.md`](docs/analytics.md) for setup instructions.
+
+CSV accounting exports for sales registers and GST summaries are documented in
+[`docs/accounting_exports.md`](docs/accounting_exports.md).
 
 ## Security
 
@@ -84,6 +87,26 @@ Request bodies and query parameters are scrubbed of sensitive keys such as
 `pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs. The
 JSON logger further redacts phone numbers, email addresses, and UTR values in
 log messages using regex filters.
+
+## A/B testing
+
+The API includes a deterministic allocator that maps device IDs into weighted
+experiment variants. Clients can query their assignment via
+`GET /api/ab/{experiment}` by providing a `device-id` header or `device_id`
+query parameter. Set `FLAG_AB_TESTS=0` to globally disable experiments and
+force the `"control"` variant.
+
+Prometheus metrics capture experiment outcomes:
+
+* `ab_exposures_total` – incremented when a variant is served.
+* `ab_conversions_total` – helper counter for recording conversions.
+
+Example:
+
+```bash
+curl -H 'device-id: 123' http://localhost:8000/api/ab/sample
+{"variant": "control"}
+```
 
 Media files can be persisted using either the local filesystem or S3. Configure
 storage with:
@@ -531,9 +554,35 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
   processed counts, recent failures, and queue depths.
 Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
 - Owner SLA metrics are available from `/owner/sla` for uptime, webhook success,
-  median prep time, and KOT delay alerts.
+  median prep time, and KOT delay alerts. Each value includes a corresponding
+  `<field>_trend` delta comparing the current 7‑day window with the preceding
+  one. The PWA uses these deltas to render arrows and colors based on SLA
+  thresholds.
+  
+  Example:
+  ```json
+  {
+    "data": {
+      "uptime_7d": 100.0,
+      "uptime_trend": 10.0,
+      "webhook_success": 0.67,
+      "webhook_success_trend": -0.08,
+      "median_prep": 20.0,
+      "median_prep_trend": -20.0,
+      "kot_delay_alerts": 2,
+      "kot_delay_alerts_trend": 1
+    }
+  }
+  ```
+  
+  UI thresholds (configurable in `OwnerSlaWidget.jsx`): uptime ≥99.9% green,
+  ≥99% yellow; webhook success ≥99% green, ≥95% yellow; median prep <600s green,
+  <900s yellow; KOT alerts 0 green, ≤3 yellow, otherwise red.
 - Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
   `POST /api/admin/dlq/replay` re-enqueues a job by ID supplied in the JSON body.
+- Pilot telemetry for ops is available at `/api/admin/pilot/telemetry` and
+  reports orders/minute, prep times, queue age, latency, error rate and breaker
+  status.
 
 Rolling 30-day error budgets per route are available from the admin endpoint
 `/admin/ops/slo`.

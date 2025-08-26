@@ -62,3 +62,4 @@ def stream_csv(
     iterator = csv_stream(row_iter, flush_size=chunk_size)
     iterator.write_row(headers)
     return iterator
+

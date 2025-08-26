@@ -1,5 +1,15 @@
 # Operations
 
+## Status Endpoint
+
+External monitors can poll `GET /status.json` to observe platform health. The file contains a top-level `state` (`operational` or `degraded`) and a list of active `incidents`.
+Use the helper script to start or resolve incidents:
+
+```
+python ops/scripts/status_page.py start "<title>" "<details>"
+python ops/scripts/status_page.py resolve "<title>"
+```
+
 ## Data Purge
 
 The `scripts/purge_data.py` helper removes expired customer PII and delivered
@@ -65,7 +75,35 @@ POST /admin/support/console/order/{order_id}/replay_webhook
 POST /admin/support/console/staff/{staff_id}/unlock_pin
 ```
 
-All endpoints require `super_admin` credentials and each action is audit logged.
+All endpoints require a `super_admin` role. Requests lacking this role return:
+
+```json
+HTTP 403
+{"ok": false, "error": {"code": 403, "message": "forbidden"}}
+```
+
+The `search` endpoint requires a `tenant` parameter and restricts lookups to
+that tenant. If the tenant does not exist, the server responds with:
+
+```json
+HTTP 404
+{"ok": false, "error": {"code": 404, "message": "tenant not found"}}
+```
+
+Successful operations return data wrapped in an `ok` envelope. Example:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "tenant": {"id": "...", "name": "..."},
+    "table": {"id": "...", "code": "T1"},
+    "order": {"id": 1, "status": "READY"}
+  }
+}
+```
+
+Unsuccessful operations are not audit logged.
 
 ## Preflight Checklist
 
@@ -125,9 +163,11 @@ against both production and staging to ensure the route stays healthy.
 Flag significant mismatches between reported stock and kitchen order tickets.
 
 ```bash
-python scripts/stock_kot_reconcile.py --csv report.csv --threshold 5
+python scripts/stock_kot_reconcile.py --csv report.csv --threshold 5 [--verbose]
 ```
 
 The CSV requires `item`, `sold_qty`, `KOT_cnt` and `variance` columns. Rows with
 an absolute variance above the threshold trigger an email to `OPS_EMAIL`. SMTP
 settings are read from `SMTP_HOST`, `SMTP_PORT` and optional `SMTP_USER`/`SMTP_PASS`.
+Provide `SMTP_FROM` to override the sender address. Use `--verbose` to enable
+debug logging; invalid or incomplete rows are skipped with warnings.

@@ -2,7 +2,7 @@
 
 Flags support a three-level precedence order:
 
-1. Environment variable override: ``FLAG_<NAME>``
+1. Environment variable override: ``FLAG_<NAME>`` (e.g., ``FLAG_AB_TESTS``)
 2. Per-tenant override via model attributes or ``tenant.features`` mapping
 3. Default defined in :data:`REGISTRY`
 """
@@ -22,6 +22,7 @@ REGISTRY: Dict[str, Dict[str, Any]] = {
     "wa_enabled": {"default": False},
     "happy_hour": {"default": False},
     "analytics": {"default": False},
+    "ab_tests": {"default": True},
 
 }
 

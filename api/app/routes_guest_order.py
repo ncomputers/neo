@@ -16,6 +16,7 @@ from .hooks import order_rejection
 from .models_tenant import AuditTenant
 from .repos_sqlalchemy import orders_repo_sql
 from .routes_metrics import orders_created_total
+from .security import abuse_guard
 from .utils.responses import ok
 
 router = APIRouter(prefix="/g")
@@ -56,6 +57,7 @@ async def create_guest_order(
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
     """Create a new order for ``table_token`` within the tenant context."""
+    await abuse_guard.guard(request, tenant_id, request.app.state.redis)
     lines = [line.model_dump() for line in payload.items]
     try:
         order_id = await orders_repo_sql.create_order(session, table_token, lines)

@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, time, timedelta, timezone
 from io import BytesIO, StringIO, TextIOWrapper
 from zipfile import ZipFile
+
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
@@ -24,6 +25,7 @@ from .repos_sqlalchemy import invoices_repo_sql
 from .security import ratelimit
 from .utils import ratelimits
 from .utils.csv_stream import stream_csv
+
 from .utils.rate_limit import rate_limited
 from .utils.responses import err
 
@@ -75,6 +77,7 @@ async def invoices_export(
     """Stream invoice rows as CSV."""
 
     limit, cap_hint = _cap_limit(limit)
+
 
     redis = request.app.state.redis
     ip = request.client.host if request.client else "unknown"
@@ -156,6 +159,7 @@ async def invoices_export_progress(
                 yield f'event: progress\ndata: {{"count": {count}}}\n\n'
                 last = count
             await asyncio.sleep(0.1)
+
 
     return StreamingResponse(event_gen(), media_type="text/event-stream")
 
