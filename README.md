@@ -4,8 +4,8 @@ This repository contains three main services:
 
 - `api/` – FastAPI application with `/health`, `/ready` and `/time/skew` endpoints, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
 - `pwa/` – React + Tailwind front end with a placeholder home page and installable PWA manifest.
-- `ops/` – Docker Compose for local development.
--
+ - `ops/` – Docker Compose for local development.
+Monitoring tools such as UptimeRobot should poll the `/status.json` endpoint for platform health. Ops scripts in `ops/scripts/status_page.py` maintain this file during incidents.
 Invoices support optional FSSAI license details when provided.
 QR pack generation events are audited and can be exported via admin APIs. See
 [`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details.
