@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Flagged server-side menu A/B testing with deterministic bucketing and exposure tracking.
 - Cache last 50 invoice PDFs per outlet for offline review.
 - Collect CSP violation reports via `/csp/report` with paginated admin viewer and query/token redaction.
 - /time/skew endpoint returns server epoch for client clock skew detection.
