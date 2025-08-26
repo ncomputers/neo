@@ -9,14 +9,15 @@ os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 
-from fastapi.testclient import TestClient
 import fakeredis.aioredis
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
-from api.app.main import app
-from api.app import routes_admin_ops
+from api.app import routes_slo
 
 
 def test_admin_slo_endpoint(monkeypatch):
+    app = FastAPI()
     app.state.redis = fakeredis.aioredis.FakeRedis()
 
     class FakeResponse:
@@ -24,9 +25,7 @@ def test_admin_slo_endpoint(monkeypatch):
             return {
                 "status": "success",
                 "data": {
-                    "result": [
-                        {"metric": {"route": "/g/test"}, "value": [0, "0.1"]}
-                    ]
+                    "result": [{"metric": {"route": "/g/test"}, "value": [0, "0.1"]}]
                 },
             }
 
@@ -47,8 +46,9 @@ def test_admin_slo_endpoint(monkeypatch):
         AsyncClient = FakeClient
         HTTPError = Exception
 
-    monkeypatch.setattr(routes_admin_ops, "httpx", FakeHttpx)
+    monkeypatch.setattr(routes_slo, "httpx", FakeHttpx)
 
+    app.include_router(routes_slo.router)
     client = TestClient(app)
     resp = client.get("/admin/ops/slo")
     assert resp.status_code == 200
