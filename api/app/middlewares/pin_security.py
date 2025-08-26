@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
 import json
+from datetime import datetime
 from typing import Any
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -10,10 +10,11 @@ from starlette.responses import JSONResponse, Response
 from starlette.status import HTTP_403_FORBIDDEN
 
 from ..audit import log_event
+from ..security.pin_lockout import is_locked
+from ..security.pin_lockout import keys as lock_keys
+from ..security.pin_lockout import register_failure
 from ..utils.responses import err
 
-MAX_ATTEMPTS = 5
-LOCK_TTL = 10 * 60  # 10 minutes
 ROTATE_DAYS = 90
 WARN_DAYS = 80
 
@@ -43,17 +44,17 @@ class PinSecurityMiddleware(BaseHTTPMiddleware):
             data = {}
         username = data.get("username", "")
 
-        lock_key = f"pin:lock:{tenant}:{username}:{ip}"
-        status_key = f"pin:lockstatus:{tenant}:{username}:{ip}"
-        fail_key = f"pin:fail:{tenant}:{username}:{ip}"
+        lock_key, status_key, fail_key = lock_keys(tenant, username, ip)
         rot_key = f"pin:rot:{tenant}:{username}"
 
-        if await redis.exists(lock_key):
+        if await is_locked(redis, tenant, username, ip):
             return JSONResponse(
                 err("AUTH_LOCKED", "AuthLocked"), status_code=HTTP_403_FORBIDDEN
             )
 
-        if await redis.exists(status_key) and not await redis.exists(lock_key):
+        if await redis.exists(status_key) and not await is_locked(
+            redis, tenant, username, ip
+        ):
             await redis.delete(status_key)
             await redis.delete(fail_key)
             log_event(username, "pin_unlock", tenant)
@@ -80,17 +81,15 @@ class PinSecurityMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         if response.status_code != 200:
-            count = await redis.incr(fail_key)
-            await redis.expire(fail_key, LOCK_TTL)
-            if count >= MAX_ATTEMPTS:
-                await redis.set(lock_key, 1, ex=LOCK_TTL)
-                await redis.set(status_key, 1)
-                await redis.delete(fail_key)
+            locked = await register_failure(redis, tenant, username, ip)
+            if locked:
                 log_event(username, "pin_lock", tenant)
             return response
 
         await redis.delete(fail_key)
-        if warn and response.headers.get("content-type", "").startswith("application/json"):
+        if warn and response.headers.get("content-type", "").startswith(
+            "application/json"
+        ):
             payload = json.loads(response.body.decode())
             data = payload.get("data", {})
             data["rotation_warning"] = True

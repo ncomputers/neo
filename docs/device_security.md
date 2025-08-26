@@ -19,5 +19,6 @@ Returns all registered devices. Requires `manager` or `super_admin` token.
 
 `POST /admin/staff/{username}/unlock_pin`
 
-Clears the PIN lockout state for `username` after too many failed attempts.
-Requires `manager` or `super_admin` token and is audited.
+Clears the PIN lockout state for `username` after too many failed attempts
+(5 failures within 10 minutes triggers a 15 minute lockout). Requires
+`manager` or `super_admin` token and is audited.

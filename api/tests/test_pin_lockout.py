@@ -3,8 +3,8 @@ import os
 import pathlib
 import sys
 
-from fastapi.testclient import TestClient
 import fakeredis.aioredis
+from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
@@ -13,10 +13,11 @@ os.environ.setdefault("REDIS_URL", "redis://localhost/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 os.environ.setdefault("ALLOWED_ORIGINS", "*")
 
+from starlette.requests import Request
+
 from api.app.auth import User
 from api.app.main import app
 from api.app.routes_admin_devices import unlock_pin
-from starlette.requests import Request
 
 client = TestClient(app)
 
@@ -32,10 +33,19 @@ def test_pin_lockout_and_unlock() -> None:
     assert resp.status_code == 403
     lock_key = "pin:lock:demo:cashier1:testclient"
     ttl = asyncio.get_event_loop().run_until_complete(app.state.redis.ttl(lock_key))
-    assert 0 < ttl <= 600
-    req = Request({"type": "http", "app": app, "headers": [], "path": "/admin/staff/cashier1/unlock_pin"})
+    assert 0 < ttl <= 900
+    req = Request(
+        {
+            "type": "http",
+            "app": app,
+            "headers": [],
+            "path": "/admin/staff/cashier1/unlock_pin",
+        }
+    )
     asyncio.get_event_loop().run_until_complete(
-        unlock_pin("cashier1", req, User(username="admin@example.com", role="super_admin"))
+        unlock_pin(
+            "cashier1", req, User(username="admin@example.com", role="super_admin")
+        )
     )
     exists = asyncio.get_event_loop().run_until_complete(
         app.state.redis.exists(lock_key)
