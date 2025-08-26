@@ -49,6 +49,10 @@ def test_preflight_ok(monkeypatch):
             "check_webhooks": ok_sync,
             "check_alertmanager": ok_async,
             "check_backups": ok_sync,
+            "check_soft_delete_indexes": ok_sync,
+            "check_quotas": ok_async,
+            "check_webhook_metrics": ok_async,
+            "check_replica": ok_async,
         },
     )
     client = TestClient(app)
@@ -56,7 +60,7 @@ def test_preflight_ok(monkeypatch):
     body = resp.json()
     assert resp.status_code == 200
     assert body["status"] == "ok"
-    assert len(body["checks"]) == 7
+    assert len(body["checks"]) == 11
 
 
 def test_preflight_fail(monkeypatch):
@@ -70,6 +74,10 @@ def test_preflight_fail(monkeypatch):
             "check_webhooks": ok_sync,
             "check_alertmanager": ok_async,
             "check_backups": ok_sync,
+            "check_soft_delete_indexes": ok_sync,
+            "check_quotas": ok_async,
+            "check_webhook_metrics": ok_async,
+            "check_replica": ok_async,
         },
     )
     client = TestClient(app)
@@ -88,6 +96,10 @@ def test_preflight_warn(monkeypatch):
             "check_webhooks": warn_sync,
             "check_alertmanager": ok_async,
             "check_backups": ok_sync,
+            "check_soft_delete_indexes": ok_sync,
+            "check_quotas": ok_async,
+            "check_webhook_metrics": ok_async,
+            "check_replica": ok_async,
         },
     )
     client = TestClient(app)
