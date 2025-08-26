@@ -81,6 +81,23 @@ async def seeded_session(tenant_session):
     return tenant_session
 
 
+@pytest.fixture
+async def seeded_session_many(tenant_session):
+    rows = [
+        {
+            "order_group_id": i,
+            "number": f"INV{i}",
+            "bill_json": {"subtotal": 0, "tax_breakup": {}, "total": 0},
+            "tip": 0,
+            "total": 0,
+        }
+        for i in range(11000)
+    ]
+    await tenant_session.execute(Invoice.__table__.insert(), rows)
+    await tenant_session.commit()
+    return tenant_session
+
+
 @pytest.mark.anyio
 async def test_stream_chunks(seeded_session, monkeypatch):
     monkeypatch.setattr(routes_exports, "DEFAULT_LIMIT", 5000)
@@ -131,14 +148,64 @@ async def test_sse_progress():
                 "GET", "/api/outlet/demo/exports/invoices/progress/job1"
             ) as sse_resp:
                 events = []
+                event_type = None
                 async for line in sse_resp.aiter_lines():
+                    if line.startswith("event:"):
+                        event_type = line.split(":", 1)[1].strip()
+                        continue
                     if line.startswith("data:"):
-                        events.append(json.loads(line[5:]))
-                        if len(events) == 2:
+                        if event_type == "progress":
+                            events.append(json.loads(line[5:]))
+                        elif event_type == "complete":
+                            events.append("complete")
                             break
                 return events
 
         prod = asyncio.create_task(produce())
         events = await consume()
         await prod
-    assert events == [{"count": 1000}, {"count": 2000}]
+    assert events == [{"count": 1000}, {"count": 2000}, "complete"]
+
+
+@pytest.mark.anyio
+async def test_streaming_progress_over_10k(seeded_session_many, monkeypatch):
+    orig_sleep = asyncio.sleep
+
+    async def fast_sleep(_):
+        await orig_sleep(0)
+
+    monkeypatch.setattr(routes_exports.asyncio, "sleep", fast_sleep)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+
+        async def consume():
+            async with client.stream(
+                "GET", "/api/outlet/demo/exports/invoices/progress/bigjob"
+            ) as sse_resp:
+                events = []
+                event_type = None
+                async for line in sse_resp.aiter_lines():
+                    if line.startswith("event:"):
+                        event_type = line.split(":", 1)[1].strip()
+                        continue
+                    if line.startswith("data:"):
+                        if event_type == "progress":
+                            events.append(json.loads(line[5:])["count"])
+                        elif event_type == "complete":
+                            events.append("complete")
+                            break
+                return events
+
+        consume_task = asyncio.create_task(consume())
+        await asyncio.sleep(0.01)
+        async with client.stream(
+            "GET", "/api/outlet/demo/exports/invoices.csv?limit=10500&job=bigjob"
+        ) as resp:
+            assert resp.status_code == 200
+            assert (
+                resp.headers.get("Transfer-Encoding") == "chunked"
+                or resp.headers.get("Content-Length") is None
+            )
+            await resp.aread()
+        events = await consume_task
+    assert events == list(range(1000, 10001, 1000)) + ["complete"]
