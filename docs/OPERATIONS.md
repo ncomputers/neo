@@ -53,6 +53,20 @@ The ZIP includes:
 - `recent-logs.txt` – recent log lines or last 200 audit records
 - `config.json` – tenant plan, feature flags, and limits
 
+## L1 Support Console
+
+Operations staff can perform safe remediation actions via a minimal support console. The API exposes:
+
+```
+GET /admin/support/console/search?tenant=<id>&table=<code>&order=<id>
+POST /admin/support/console/order/{order_id}/resend_invoice
+POST /admin/support/console/order/{order_id}/reprint_kot
+POST /admin/support/console/order/{order_id}/replay_webhook
+POST /admin/support/console/staff/{staff_id}/unlock_pin
+```
+
+All endpoints require `super_admin` credentials and each action is audit logged.
+
 ## Preflight Checklist
 
 Operators can verify service readiness before go‑live using a consolidated
@@ -105,3 +119,15 @@ This should trigger a Slack message in `#ops` and an email to
 `ops@example.com`. Scheduled GitHub Actions jobs send this once a month
 against both production and staging to ensure the route stays healthy.
 
+
+## Stock vs KOT Reconciliation
+
+Flag significant mismatches between reported stock and kitchen order tickets.
+
+```bash
+python scripts/stock_kot_reconcile.py --csv report.csv --threshold 5
+```
+
+The CSV requires `item`, `sold_qty`, `KOT_cnt` and `variance` columns. Rows with
+an absolute variance above the threshold trigger an email to `OPS_EMAIL`. SMTP
+settings are read from `SMTP_HOST`, `SMTP_PORT` and optional `SMTP_USER`/`SMTP_PASS`.

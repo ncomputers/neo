@@ -4,6 +4,7 @@ import os
 import random
 import time
 import uuid
+from collections import deque
 from datetime import datetime
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -23,6 +24,7 @@ LOG_SAMPLE_GUEST_4XX = float(os.getenv("LOG_SAMPLE_GUEST_4XX", "0.1"))
 
 
 logger = logging.getLogger("api")
+latency_samples: deque[int] = deque(maxlen=1000)
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -90,6 +92,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             payload["error_id"] = error_id
             response = JSONResponse(payload, status_code=500)
         dur_ms = int((time.perf_counter() - start) * 1000)
+        latency_samples.append(dur_ms)
         status = response.status_code if response else 500
         level = "ERROR" if status >= 500 else "INFO"
         outbound = {

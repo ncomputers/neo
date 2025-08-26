@@ -1,6 +1,7 @@
 # Exports
 
 Big export endpoints support cursor-based pagination so interrupted downloads can resume.
+Each request caps output to **100k rows**; if hit, the `X-Export-Hint` header advises clients to refine the range and resume with the provided cursor.
 Export downloads are provided via tenant-scoped, signed URLs to ensure isolation.
 
 ## Owner data export
@@ -64,6 +65,16 @@ with open("daily.csv", "ab") as fh:
             break
 ```
 
+### Progress via SSE
+
+Provide a `progress` query parameter to the export request and listen on:
+
+```
+GET /api/outlet/demo/exports/progress/{progress}
+```
+
+Each event reports rows exported so far.
+
 ## Helper CLI
 
 A convenience script automates the cursor dance:
@@ -82,4 +93,25 @@ python scripts/export_resume.py \
   --output daily.csv \
   --cursor abc123
 ```
+
+## Accounting exports
+
+Lightweight CSVs allow hand-off to ledger software without a full integration.
+
+```
+GET /api/outlet/{tenant}/accounting/sales_register.csv?start=YYYY-MM-DD&end=YYYY-MM-DD
+GET /api/outlet/{tenant}/accounting/gst_summary.csv?start=YYYY-MM-DD&end=YYYY-MM-DD
+```
+
+### Importing into Tally
+
+1. Download the relevant CSV export.
+2. In Tally, navigate to **Gateway of Tally → Import Data → Vouchers**.
+3. Choose the CSV file and accept the import prompts.
+
+### Importing into Zoho Books
+
+1. Download the CSV export.
+2. In Zoho Books, go to **Sales → Invoices → More Options → Import Invoices**.
+3. Upload the file and map the columns as prompted.
 

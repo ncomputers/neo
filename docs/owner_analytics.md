@@ -24,3 +24,15 @@ The optional ``range`` parameter accepts 7, 30 or 90 days and defaults to 30.
 It returns a time‑series payload exposing D0/D7/D30 retention counts, active
 outlets and average orders per outlet. Results are cached for ten minutes and
 require a ``super_admin`` role bearer token.
+
+## Multi‑outlet summary
+
+Owners may aggregate performance across specific outlets:
+
+```
+GET /api/analytics/outlets?ids=t1,t2&from=YYYY-MM-DD&to=YYYY-MM-DD
+```
+
+The response includes combined orders, sales, average order value, top items
+and median preparation time for the selected outlets. Adding ``format=csv``
+returns a CSV export with per‑outlet metrics.

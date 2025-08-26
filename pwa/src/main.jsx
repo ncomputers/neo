@@ -10,6 +10,9 @@ import ProtectedRoute from './ProtectedRoute'
 import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { initRUM } from './rum'
+
+initRUM(window.location.pathname.startsWith('/admin') ? 'admin' : 'guest')
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

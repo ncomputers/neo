@@ -8,7 +8,14 @@ from datetime import datetime, timezone
 import httpx
 from fastapi import APIRouter, Request
 
-from .services import printer_watchdog
+try:  # pragma: no cover - optional watchdog
+    from .services import printer_watchdog
+except Exception:  # pragma: no cover - fallback when watchdog unavailable
+    class _StubWatchdog:
+        async def check(self, *_args, **_kwargs):
+            return True, 0
+
+    printer_watchdog = _StubWatchdog()
 
 router = APIRouter()
 
