@@ -20,6 +20,8 @@ Responses include a strict Content-Security-Policy with per-request nonces appli
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
 
+Tenants can define `happy_hour` windows with percent or flat discounts applied during the specified times.
+
 The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
 notification is triggered.
