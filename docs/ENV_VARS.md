@@ -34,6 +34,7 @@ The application relies on the following environment variables:
 | `GIT_SHA` (optional) | Git commit SHA exposed by the `/version` endpoint. | `c0ffee` |
 | `BUILT_AT` (optional) | Build timestamp exposed by the `/version` endpoint. | `2024-01-01T00:00:00Z` |
 | `ENV` (optional) | Deployment environment (`prod`, `staging`, or `dev`). | `prod` |
+| `FLAG_SIMPLE_MODIFIERS` | Enable basic menu modifiers and combos. | `1` |
 
 ## JWT/JOSE
 

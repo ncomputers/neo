@@ -32,7 +32,7 @@ All notable changes to this project will be documented in this file.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
-- Menu items support JSON-defined modifiers and combos with server-side pricing.
+- Feature-flagged menu modifiers and combos with server-side pricing (`FLAG_SIMPLE_MODIFIERS`).
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
   "Request more" link.
 - Script to bulk seed a large dataset for local scale testing.
