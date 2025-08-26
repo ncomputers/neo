@@ -24,16 +24,22 @@ export default function ExpoDashboard() {
   }, [])
 
   const markPicked = (id) => {
-    apiFetch(`/kds/order/${id}/picked`, { method: 'POST' })
+    apiFetch(`/kds/expo/${id}/picked`, { method: 'POST' })
       .then(() => fetchOrders())
       .catch((err) => setError(err.message))
   }
 
   useEffect(() => {
     const handler = (e) => {
+      if (e.key === 'p' || e.key === 'P') {
+        if (orders.length > 0) {
+          markPicked(orders[orders.length - 1].order_id)
+        }
+        return
+      }
       const idx = parseInt(e.key, 10)
       if (!isNaN(idx) && idx > 0 && idx <= orders.length) {
-        markPicked(orders[idx - 1].id)
+        markPicked(orders[idx - 1].order_id)
       }
     }
     window.addEventListener('keydown', handler)
@@ -49,30 +55,23 @@ export default function ExpoDashboard() {
       {!loading && !error && (
         <ul className="space-y-4">
           {orders.map((o, idx) => (
-            <li key={o.id} className="border p-2 rounded">
+            <li key={o.order_id} className="border p-2 rounded">
               <div className="flex justify-between">
                 <span className="font-semibold">
-                  Table {o.table_code}
-                  {o.allergens.length > 0 && (
+                  Table {o.table}
+                  {o.allergen_badges.length > 0 && (
                     <span className="ml-2 rounded bg-red-100 px-1 text-red-800 text-xs">
                       Allergy
                     </span>
                   )}
                 </span>
                 <span className="text-sm text-gray-600">
-                  {Math.round(o.aging_secs / 60)}m
+                  {Math.round(o.age_s / 60)}m
                 </span>
               </div>
-              <ul className="mt-2 text-sm">
-                {o.items.map((it, i) => (
-                  <li key={i}>
-                    {it.qty} x {it.name}
-                  </li>
-                ))}
-              </ul>
               <button
                 className="mt-2 bg-blue-600 text-white px-2 py-1 rounded"
-                onClick={() => markPicked(o.id)}
+                onClick={() => markPicked(o.order_id)}
               >
                 Picked [{idx + 1}]
               </button>
