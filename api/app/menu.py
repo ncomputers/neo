@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import os
 import uuid
+from datetime import datetime
+from decimal import Decimal
 from io import BytesIO
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -13,8 +15,12 @@ from fastapi.responses import StreamingResponse
 from openpyxl import Workbook, load_workbook
 from sqlalchemy import select
 
+from config import get_settings
+
 from .db import SessionLocal
-from .models_tenant import Category as CategoryModel, MenuItem as MenuItemModel
+from .models_tenant import Category as CategoryModel
+from .models_tenant import MenuItem as MenuItemModel
+from .pricing import active_window, apply_discount
 from .schemas import Category, CategoryIn, Item, ItemIn
 from .utils.responses import ok
 
@@ -63,13 +69,11 @@ def create_category(data: CategoryIn) -> dict:
     return ok(category)
 
 
-
 @router.get("/categories")
 def list_categories() -> dict:
     """Return all categories."""
 
     return ok(list(_categories.values()))
-
 
 
 @router.delete("/categories/{category_id}")
@@ -94,13 +98,25 @@ def create_item(data: ItemIn) -> dict:
 
 
 @router.get("/items")
-def list_items(include_out_of_stock: bool = False) -> dict:
-    """List items, optionally including out-of-stock ones."""
+def list_items(include_out_of_stock: bool = False, now: datetime | None = None) -> dict:
+    """List items with optional time-based discounts."""
 
     values = _items.values()
     if not include_out_of_stock:
         values = [i for i in values if i.in_stock]
-    return ok(list(values))
+
+    settings = get_settings()
+    window = active_window(settings.happy_hour, now.time() if now else None)
+    result: list[Item] = []
+    for item in values:
+        data = item.model_dump()
+        if window:
+            discounted = apply_discount(Decimal(str(item.price)), window)
+            if discounted != Decimal(str(item.price)):
+                data["strike_price"] = item.price
+                data["price"] = int(discounted)
+        result.append(Item(**data))
+    return ok(result)
 
 
 # Import/Export
@@ -113,9 +129,8 @@ def export_items() -> StreamingResponse:
     ws = wb.active
     ws.append(["name", "price", "category", "in_stock", "show_fssai_icon"])
     with SessionLocal() as session:
-        stmt = (
-            select(MenuItemModel, CategoryModel)
-            .join(CategoryModel, MenuItemModel.category_id == CategoryModel.id, isouter=True)
+        stmt = select(MenuItemModel, CategoryModel).join(
+            CategoryModel, MenuItemModel.category_id == CategoryModel.id, isouter=True
         )
         for item, cat in session.execute(stmt):
             ws.append(
@@ -162,7 +177,6 @@ def import_items(file: UploadFile = File(...)) -> dict:
     return ok(count)
 
 
-
 @router.get("/items/{item_id}")
 def get_item(item_id: uuid.UUID) -> dict:
     """Fetch a single item by ID."""
@@ -171,7 +185,6 @@ def get_item(item_id: uuid.UUID) -> dict:
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return ok(item)
-
 
 
 @router.put("/items/{item_id}")
@@ -190,7 +203,6 @@ def update_item(item_id: uuid.UUID, data: ItemIn) -> dict:
     return ok(stored)
 
 
-
 @router.post("/items/apply-pending")
 def apply_pending_prices() -> dict:
     """Apply any staged price updates."""
@@ -205,14 +217,12 @@ def apply_pending_prices() -> dict:
     return ok(None)
 
 
-
 @router.delete("/items/{item_id}")
 def delete_item(item_id: uuid.UUID) -> dict:
     """Remove an item if present."""
 
     _items.pop(item_id, None)
     return ok(None)
-
 
 
 # Images
@@ -231,4 +241,3 @@ def upload_image(item_id: uuid.UUID, file: UploadFile = File(...)) -> dict:
         f.write(file.file.read())
     item.image_url = path
     return ok(item)
-

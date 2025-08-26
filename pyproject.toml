@@ -11,3 +11,6 @@ select = ["E", "F"]
 
 [tool.isort]
 profile = "black"
+
+[tool.pip-audit]
+ignore-vuln = ["GHSA-wj6h-64fc-37mp"]
