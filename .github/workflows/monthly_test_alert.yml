@@ -1,0 +1,19 @@
+name: staging test alert
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+jobs:
+  emit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install requests
+      - env:
+          ALERTMANAGER_URL: ${{ secrets.STAGING_ALERTMANAGER_URL }}
+        run: python scripts/emit_test_alert.py --message "Monthly synthetic alert (staging)"
