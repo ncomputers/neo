@@ -260,6 +260,8 @@ class Customer(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     phone = Column(String, nullable=False)
+    allow_analytics = Column(Boolean, nullable=False, default=False)
+    allow_wa = Column(Boolean, nullable=False, default=False)
 
 
 class Counter(Base):
