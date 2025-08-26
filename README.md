@@ -265,7 +265,9 @@ A guest-facing router exposes menu data for a specific table:
   include an `ETag` derived from a menu version that increments whenever the
   menu is modified, ensuring caches invalidate reliably. Use
   `filter=dietary:vegan,-allergen:nuts` to include only items matching dietary
-  tags and excluding specific allergens.
+  tags and excluding specific allergens. Menu items may expose server-priced
+  modifiers or optional combos with pricing calculated on the server when
+  orders are placed.
 - `GET /h/{room_token}/menu` – list menu for hotel rooms.
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.

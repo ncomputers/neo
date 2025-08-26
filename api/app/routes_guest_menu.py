@@ -11,45 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db.replica import read_only
 from .i18n import get_msg, resolve_lang
+from .menu.dietary import filter_items
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.responses import ok
 
 router = APIRouter()
-
-
-def _apply_filters(items: list[dict], filter_str: str) -> list[dict]:
-    """Filter ``items`` based on a comma-separated ``filter_str``."""
-    positives: dict[str, set[str]] = {}
-    negatives: dict[str, set[str]] = {}
-    for term in filter_str.split(","):
-        term = term.strip()
-        if not term:
-            continue
-        negate = term.startswith("-")
-        if negate:
-            term = term[1:]
-        if ":" not in term:
-            continue
-        key, value = term.split(":", 1)
-        key = key.lower()
-        value = value.lower()
-        if key == "allergen":
-            key = "allergens"
-        target = negatives if negate else positives
-        target.setdefault(key, set()).add(value)
-
-    def matches(item: dict) -> bool:
-        for key, vals in positives.items():
-            field_vals = [v.lower() for v in item.get(key, [])]
-            if not all(v in field_vals for v in vals):
-                return False
-        for key, vals in negatives.items():
-            field_vals = [v.lower() for v in item.get(key, [])]
-            if any(v in field_vals for v in vals):
-                return False
-        return True
-
-    return [item for item in items if matches(item)]
 
 
 async def get_tenant_id(table_token: str) -> str:
@@ -97,20 +63,7 @@ async def fetch_menu(
         await redis.set(cache_key, json.dumps(data), ex=60)
     items = data["items"]
     if filter:
-        for term in filter.split(","):
-            term = term.strip()
-            if not term:
-                continue
-            neg = term.startswith("-")
-            term = term[1:] if neg else term
-            if ":" not in term:
-                continue
-            key, value = term.split(":", 1)
-            field = "allergens" if key == "allergen" else key
-            if neg:
-                items = [i for i in items if value not in (i.get(field) or [])]
-            else:
-                items = [i for i in items if value in (i.get(field) or [])]
+        items = filter_items(items, filter)
     data["items"] = items
 
     lang = resolve_lang(accept_language)
