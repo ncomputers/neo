@@ -2,6 +2,9 @@ const STATIC_CACHE = 'static-v1';
 const STATIC_ASSETS = ['/static/manifest.json'];
 const INVOICE_CACHE_PREFIX = 'invoice-';
 const MAX_INVOICE_CACHE = 50;
+const QUEUE_DB = 'request-queue';
+const QUEUE_STORE = 'requests';
+const API_QUEUE_TAG = 'api-queue';
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -10,7 +13,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(self.clients.claim().then(() => checkPendingRequests()));
   self.registration.addEventListener('updatefound', () => {
     const newSW = self.registration.installing;
     if (newSW) {
@@ -49,6 +52,14 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  if (
+    event.request.method === 'POST' &&
+    (url.pathname.startsWith('/api/guest/') || url.pathname.startsWith('/api/counter/'))
+  ) {
+    event.respondWith(handleApiRequest(event.request));
+    return;
+  }
+
   if (url.pathname.startsWith('/api/guest/menu')) {
     event.respondWith(
       fetch(event.request)
@@ -78,6 +89,9 @@ self.addEventListener('fetch', event => {
 self.addEventListener('sync', event => {
   if (event.tag === 'order-queue') {
     event.waitUntil(flushQueue());
+  }
+  if (event.tag === API_QUEUE_TAG) {
+    event.waitUntil(flushRequestQueue());
   }
 });
 
@@ -135,4 +149,100 @@ function notifyClients() {
   self.clients.matchAll({ type: 'window' }).then(clients => {
     clients.forEach(client => client.postMessage({ type: 'QUEUE_STATUS', ops: orderQueue }))
   })
+}
+
+async function handleApiRequest(request) {
+  const key = self.crypto?.randomUUID ? self.crypto.randomUUID() : Math.random().toString(36).slice(2);
+  const headers = new Headers(request.headers);
+  headers.set('Idempotency-Key', key);
+  const req = new Request(request, { headers });
+
+  try {
+    return await fetch(req);
+  } catch (_) {
+    const body = await req.clone().arrayBuffer();
+    await enqueueRequest({ key, url: req.url, method: req.method, headers: Array.from(headers.entries()), body });
+    await self.registration.sync.register(API_QUEUE_TAG);
+    return new Response(JSON.stringify({ queued: true }), {
+      status: 202,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+}
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(QUEUE_DB, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(QUEUE_STORE, { keyPath: 'key' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function enqueueRequest(data) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(QUEUE_STORE, 'readwrite');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.objectStore(QUEUE_STORE).put(data);
+  });
+}
+
+async function readAllRequests() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(QUEUE_STORE, 'readonly');
+    const req = tx.objectStore(QUEUE_STORE).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteRequest(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(QUEUE_STORE, 'readwrite');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.objectStore(QUEUE_STORE).delete(key);
+  });
+}
+
+async function flushRequestQueue() {
+  const items = await readAllRequests();
+  for (const item of items) {
+    try {
+      await fetch(item.url, {
+        method: item.method,
+        headers: new Headers(item.headers),
+        body: item.body,
+      });
+      await deleteRequest(item.key);
+    } catch (_) {
+      // keep for retry
+    }
+  }
+}
+
+async function checkPendingRequests() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(QUEUE_STORE, 'readonly');
+    const store = tx.objectStore(QUEUE_STORE);
+    const countReq = store.count();
+    return new Promise(resolve => {
+      countReq.onsuccess = () => {
+        if (countReq.result > 0) {
+          self.registration.sync.register(API_QUEUE_TAG);
+        }
+        resolve();
+      };
+      countReq.onerror = () => resolve();
+    });
+  } catch (_) {
+    // ignore
+  }
 }
