@@ -136,6 +136,20 @@ class TwoFactorBackupCode(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class SupportTicket(Base):
+    """Owner support tickets stored in the master database."""
+
+    __tablename__ = "support_tickets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant = Column(String, nullable=True)
+    subject = Column(String, nullable=False)
+    body = Column(String, nullable=False)
+    screenshots = Column(JSON, nullable=True)
+    status = Column(String, nullable=False, default="open")
+    created_at = Column(DateTime, server_default=func.now())
+
+
 __all__ = [
     "Base",
     "Tenant",
@@ -145,4 +159,5 @@ __all__ = [
     "NotificationDLQ",
     "TwoFactorSecret",
     "TwoFactorBackupCode",
+    "SupportTicket",
 ]

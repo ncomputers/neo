@@ -27,3 +27,10 @@ Most endpoints require a bearer token. To obtain one:
 3. In Postman, open the collection settings and add an `Authorization` header with the value `Bearer {{token}}`, replacing `{{token}}` with the copied token or an environment variable.
 
 Alternatively, import the raw OpenAPI document by URL using `/openapi.json`.
+
+## Support Tickets
+
+Owners can request help directly from the service.
+
+- `POST /support/ticket` – submit a ticket with a subject, body and optional screenshots.
+- `GET /admin/support` – list submitted tickets and their status (admin only).
