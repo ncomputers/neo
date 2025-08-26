@@ -79,7 +79,6 @@ from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
-    RequestIdMiddleware,
     GuestBlockMiddleware,
     GuestRateLimitMiddleware,
     HTMLErrorPagesMiddleware,
@@ -91,6 +90,7 @@ from .middlewares import (
     MaintenanceMiddleware,
     PinSecurityMiddleware,
     PrometheusMiddleware,
+    RequestIdMiddleware,
     TableStateGuardMiddleware,
     realtime_guard,
 )
@@ -102,7 +102,6 @@ from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
-from .routes_admin_ops import router as admin_ops_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_support import router as admin_support_router
@@ -157,7 +156,9 @@ from .routes_pwa_version import router as pwa_version_router
 from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_reports import router as reports_router
+from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
+from .routes_slo import router as slo_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
@@ -166,7 +167,6 @@ from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
 from .routes_tenant_sandbox import router as tenant_sandbox_router
-from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_time_skew import router as time_skew_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
@@ -863,7 +863,7 @@ app.include_router(kds_sla_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
-app.include_router(admin_ops_router)
+app.include_router(slo_router)
 app.include_router(limits_router)
 app.include_router(menu_import_router)
 app.include_router(alerts_router)
@@ -892,7 +892,7 @@ app.include_router(ready_router)
 app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(admin_support_router)
-app.include_router(admin_ops_router)
+app.include_router(slo_router)
 app.include_router(support_bundle_router)
 app.include_router(legal_router)
 app.include_router(maintenance_router)

@@ -9,15 +9,19 @@ os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 
-from fastapi import HTTPException
-from fastapi.testclient import TestClient
 import fakeredis.aioredis
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
-from api.app.main import app
+from api.app.middlewares.prometheus import PrometheusMiddleware
+from api.app.routes_metrics import router as metrics_router
 
 
 def test_slo_counters():
+    app = FastAPI()
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    app.add_middleware(PrometheusMiddleware)
+    app.include_router(metrics_router)
 
     @app.get("/g/test_ok")
     async def test_ok():

@@ -3,28 +3,16 @@ from __future__ import annotations
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
+from api.app import routes_slo
 from api.app.middlewares.prometheus import PrometheusMiddleware
-from api.app.slo import slo_tracker
+from api.app.routes_metrics import router as metrics_router
 
 
 def test_slo_metrics_and_admin_endpoint(monkeypatch):
-    # bypass auth for admin route
-    import importlib
-
-    import api.app.auth as auth
-
-    monkeypatch.setattr(auth, "role_required", lambda *roles: (lambda: object()))
-    import api.app.routes_admin_ops as admin_ops
-
-    importlib.reload(admin_ops)
-
-    # reset tracker
-    slo_tracker.requests.clear()
-    slo_tracker.errors.clear()
-
     app = FastAPI()
     app.add_middleware(PrometheusMiddleware)
-    app.include_router(admin_ops.router)
+    app.include_router(routes_slo.router)
+    app.include_router(metrics_router)
 
     @app.get("/ok")
     def ok_route():
@@ -34,15 +22,44 @@ def test_slo_metrics_and_admin_endpoint(monkeypatch):
     def boom_route():  # pragma: no cover - simple test handler
         raise HTTPException(status_code=500, detail="boom")
 
+    class FakeResponse:
+        def json(self):
+            return {
+                "status": "success",
+                "data": {
+                    "result": [
+                        {"metric": {"route": "/ok"}, "value": [0, "0"]},
+                        {"metric": {"route": "/boom"}, "value": [0, "1"]},
+                    ]
+                },
+            }
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        async def get(self, url, params=None):
+            return FakeResponse()
+
+    class FakeHttpx:
+        AsyncClient = FakeClient
+        HTTPError = Exception
+
+    monkeypatch.setattr(routes_slo, "httpx", FakeHttpx)
+
     client = TestClient(app)
 
     client.get("/ok")
     client.get("/boom")
 
+    body = client.get("/metrics").text
+    assert 'slo_requests_total{route="/ok"} 1.0' in body
+    assert 'slo_errors_total{route="/boom"} 1.0' in body
     resp = client.get("/admin/ops/slo")
-    data = resp.json()["data"]
-
-    assert data["/ok"]["requests"] == 1
-    assert data["/ok"]["errors"] == 0
-    assert data["/boom"]["requests"] == 1
-    assert data["/boom"]["errors"] == 1
+    assert resp.json()["/boom"]["error_rate"] == 1.0
