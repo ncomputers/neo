@@ -36,6 +36,7 @@ Logging can be tuned via:
 
 - `LOG_LEVEL` – set log verbosity (default `INFO`)
 - `LOG_FORMAT` – log output format (`json` or `text`, default `json`)
+- `LOG_SAMPLE_2XX` – sampling rate for 2xx logs (default `0.1`)
 - `LOG_SAMPLE_GUEST_4XX` – sampling rate for guest 4xx logs (default `0.1`)
 - `ERROR_DSN` – optional Sentry-compatible DSN for centralized error reporting
 - `MAINTENANCE` – when `1`, only admin routes are served; others return `503 {"code":"MAINTENANCE"}`
@@ -80,7 +81,9 @@ guest endpoints are blocked. Super admins may reactivate the outlet before
 purge via `POST /api/admin/tenants/{id}/restore`.
 
 Request bodies and query parameters are scrubbed of sensitive keys such as
-`pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs.
+`pin`, `utr`, `auth`, `gstin`, and `email` before being written to logs. The
+JSON logger further redacts phone numbers, email addresses, and UTR values in
+log messages using regex filters.
 
 Media files can be persisted using either the local filesystem or S3. Configure
 storage with:
