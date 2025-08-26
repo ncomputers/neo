@@ -245,6 +245,8 @@ Coupons can be marked as stackable and may specify a per-invoice `max_discount` 
 
 Attempts to combine a non-stackable coupon with others raise a `CouponError` with code `NON_STACKABLE`.
 
+Coupons may also define per-day, per-guest and per-outlet usage caps along with `valid_from`/`valid_to` windows. Usage is audited and exceeding a cap results in a `CouponError` with a hint describing the limitation.
+
 ### Feedback
 
 - `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
