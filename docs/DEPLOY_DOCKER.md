@@ -42,3 +42,13 @@ docker run -p 80:80 -p 443:443 \
 ```
 
 Replace `/path/to/certs` with a directory containing `fullchain.pem` and `privkey.pem`.
+
+To trace requests across the proxy and API, forward and log the request ID:
+
+```nginx
+proxy_set_header X-Request-ID $request_id;
+log_format main '$remote_addr [$time_local] "$request" $status $body_bytes_sent $request_id';
+```
+
+The API echoes this header in responses and emits `req_id` in its JSON logs,
+allowing easy correlation.

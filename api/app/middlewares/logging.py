@@ -27,9 +27,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     """Emit structured inbound/outbound request logs with a request ID."""
 
     async def dispatch(self, request: Request, call_next):
-        request_id = str(uuid.uuid4())
-        token = request_id_ctx.set(request_id)
-        request.state.request_id = request_id
+        req_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        token = request_id_ctx.set(req_id)
+        request.state.request_id = req_id
 
         body_bytes = await request.body()
 
@@ -59,7 +59,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         inbound = {
             "ts": datetime.utcnow().isoformat() + "Z",
-            "request_id": request_id,
+            "level": "INFO",
+            "req_id": req_id,
             "tenant": request.headers.get("X-Tenant"),
             "path": request.url.path,
             "method": request.method,
@@ -78,19 +79,22 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
         except Exception:
             error_id = str(uuid.uuid4())
-            logger.exception(
-                json.dumps({"request_id": request_id, "error_id": error_id})
-            )
+            logger.exception(json.dumps({"req_id": req_id, "error_id": error_id}))
             payload = err(500, "Internal Server Error")
             payload["error_id"] = error_id
             response = JSONResponse(payload, status_code=500)
         dur_ms = int((time.perf_counter() - start) * 1000)
         status = response.status_code if response else 500
+        level = "ERROR" if status >= 500 else "INFO"
         outbound = {
             "ts": datetime.utcnow().isoformat() + "Z",
-            "request_id": request_id,
+            "level": level,
+            "req_id": req_id,
+            "tenant": request.headers.get("X-Tenant"),
+            "user": request.headers.get("X-User"),
+            "route": request.url.path,
             "status": status,
-            "dur_ms": dur_ms,
+            "latency_ms": dur_ms,
         }
         if error_id:
             outbound["error_id"] = error_id
@@ -102,7 +106,11 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         if should_log:
             logger.info(json.dumps(inbound))
-            logger.info(json.dumps(outbound))
+            log_fn = logger.error if level == "ERROR" else logger.info
+            log_fn(json.dumps(outbound))
+
+        if response is not None:
+            response.headers["X-Request-ID"] = req_id
 
         request_id_ctx.reset(token)
         return response
