@@ -459,6 +459,8 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `digest_sent_total`: daily KPI digests sent (via route or CLI)
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
+- Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
+  `POST /api/admin/dlq/replay` re-enqueues a job by ID.
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
