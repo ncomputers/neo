@@ -133,6 +133,10 @@ and, when running on PostgreSQL, ensures monthly partitions for `invoices` and
 `payments` based on `created_at`. SQLite deployments skip the partition step but
 still benefit from the new indexes.
 
+Hot query plans are checked in CI using `scripts/plan_guard.py`, which runs
+`EXPLAIN ANALYZE` and compares the p95 execution time against baselines in
+`.ci/baselines/`.
+
 ## Continuous Integration
 
 GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-audit`, and `gitleaks` for
