@@ -25,15 +25,22 @@ export default function ExpoDashboard() {
 
   const markPicked = (id) => {
     apiFetch(`/kds/expo/${id}/picked`, { method: 'POST' })
-      .then(() => fetchTickets())
+      .then(() => fetchOrders())
       .catch((err) => setError(err.message))
   }
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.key.toLowerCase() === 'p' && tickets.length > 0) {
-        const newest = tickets[tickets.length - 1]
-        markPicked(newest.order_id)
+      if (e.key === 'p' || e.key === 'P') {
+        if (orders.length > 0) {
+          markPicked(orders[orders.length - 1].order_id)
+        }
+        return
+      }
+      const idx = parseInt(e.key, 10)
+      if (!isNaN(idx) && idx > 0 && idx <= orders.length) {
+        markPicked(orders[idx - 1].order_id)
+
       }
     }
     window.addEventListener('keydown', handler)
@@ -48,24 +55,27 @@ export default function ExpoDashboard() {
       {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (
         <ul className="space-y-4">
-          {tickets.map((t) => (
-            <li key={t.order_id} className="border p-2 rounded">
+          {orders.map((o, idx) => (
+            <li key={o.order_id} className="border p-2 rounded">
               <div className="flex justify-between">
                 <span className="font-semibold">
-                  Table {t.table}
-                  {t.allergen_badges.length > 0 && (
+                  Table {o.table}
+                  {o.allergen_badges.length > 0 && (
+
                     <span className="ml-2 rounded bg-red-100 px-1 text-red-800 text-xs">
                       Allergy
                     </span>
                   )}
                 </span>
                 <span className="text-sm text-gray-600">
-                  {Math.round(t.age_s / 60)}m
+                  {Math.round(o.age_s / 60)}m
+
                 </span>
               </div>
               <button
                 className="mt-2 bg-blue-600 text-white px-2 py-1 rounded"
-                onClick={() => markPicked(t.order_id)}
+                onClick={() => markPicked(o.order_id)}
+
               >
                 Picked
               </button>

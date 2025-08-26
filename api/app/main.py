@@ -105,6 +105,9 @@ from .routes_accounting_exports import router as accounting_exports_router
 
 from .routes_accounting import router as accounting_router
 from .routes_admin_devices import router as admin_devices_router
+from .routes_admin_menu import router as admin_menu_router
+from .routes_admin_ops import router as admin_ops_router
+from .routes_admin_pilot import router as admin_pilot_router
 
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_ops import router as admin_ops_router
@@ -116,6 +119,7 @@ from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_admin_support_console import router as admin_support_console_router
 from .routes_admin_webhooks import router as admin_webhooks_router
+
 
 from .routes_admin_devices import router as admin_devices_router
 from .routes_print_test import router as print_test_router
@@ -149,6 +153,7 @@ from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_housekeeping import router as housekeeping_router
 from .routes_integrations import router as integrations_router
+
 from .routes_integrations_marketplace import router as integrations_marketplace_router
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_jobs_status import router as jobs_status_router
@@ -210,6 +215,7 @@ sys.modules.setdefault("models_tenant", app_models_tenant)
 sys.modules.setdefault("repos_sqlalchemy", app_repos_sqlalchemy)
 sys.modules.setdefault("utils", app_utils)
 kds_router = importlib.import_module(".routes_kds", __package__).router
+kds_expo_router = importlib.import_module(".routes_kds_expo", __package__).router
 kds_sla_router = importlib.import_module(".routes_kds_sla", __package__).router
 kds_expo_router = importlib.import_module(".routes_kds_expo", __package__).router
 superadmin_router = importlib.import_module(".routes_superadmin", __package__).router
@@ -891,6 +897,7 @@ app.include_router(order_void_router)
 # KDS/KOT domain
 app.include_router(kot_router)
 app.include_router(kds_router)
+app.include_router(kds_expo_router)
 app.include_router(kds_sla_router)
 app.include_router(kds_expo_router)
 
