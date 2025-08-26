@@ -501,7 +501,7 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
   processed counts, recent failures, and queue depths.
 Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
 - Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
-  `POST /api/admin/dlq/replay` re-enqueues a job by ID.
+  `POST /api/admin/dlq/replay` re-enqueues a job by ID supplied in the JSON body.
 
 Rolling 30-day error budgets per route are available from the admin endpoint
 `/admin/ops/slo`.

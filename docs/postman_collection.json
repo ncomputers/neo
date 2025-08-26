@@ -1912,8 +1912,12 @@
           "request": {
             "method": "POST",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"1\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/dlq/replay/{item_id}",
+              "raw": "{{baseUrl}}/api/admin/dlq/replay",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1921,8 +1925,7 @@
                 "api",
                 "admin",
                 "dlq",
-                "replay",
-                "{item_id}"
+                "replay"
               ]
             }
           }
