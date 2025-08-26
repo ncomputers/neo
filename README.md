@@ -581,6 +581,16 @@ python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
 python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
 ```
 
+To generate a sizable dataset for local load testing, use the large outlet seeder:
+
+```bash
+POSTGRES_TENANT_DSN_TEMPLATE=sqlite+aiosqlite:///tmp/{tenant_id}.db \
+python scripts/seed_large_outlet.py --tenant TENANT_ID \
+    --items 5000 --tables 300 --orders 50000
+```
+
+
+
 For local scale testing, a helper seeds large volumes of data using bulk
 inserts:
 
