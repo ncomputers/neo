@@ -18,7 +18,7 @@ from db.tenant import get_engine
 from domain import OrderStatus, can_transition
 from models_tenant import Order, OrderItem
 from .hooks import order_rejection
-from .services import ema as ema_service, push
+from .services import ema as ema_service, push, whatsapp
 from repos_sqlalchemy import orders_repo_sql
 from utils.responses import ok
 from utils.audit import audit
@@ -65,6 +65,16 @@ async def _transition_order(tenant_id: str, order_id: int, dest: OrderStatus) ->
         if not can_transition(OrderStatus(current.value), dest):
             raise HTTPException(status_code=400, detail="invalid transition")
         table_code = await orders_repo_sql.update_status(session, order_id, dest.value)
+        if table_code and dest in {OrderStatus.ACCEPTED, OrderStatus.READY}:
+            try:
+                from ..main import redis_client  # lazy import
+                phone = await redis_client.get(f"rt:wa:{tenant_id}:{table_code}")
+            except Exception:  # pragma: no cover - best effort
+                phone = None
+            if phone:
+                if isinstance(phone, bytes):
+                    phone = phone.decode()
+                await whatsapp.notify_status(tenant_id, phone, order_id, dest.value)
         if dest is OrderStatus.READY and table_code:
             await push.notify_ready(tenant_id, table_code, order_id)
         if dest is OrderStatus.SERVED and accepted_at is not None:

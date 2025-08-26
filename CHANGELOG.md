@@ -4,16 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## v1.0.0-rc1 - 2025-08-25
 
-### Other
-- PR #313 (#313)
-- PR #314 (#314)
-- PR #315 (#315)
-- PR #316 (#316)
 
 ## Unreleased
 
 ### Added
 
+- Guard hot queries with a p95 regression check.
 - Enforce environment validation at application startup and audit required
   variables during the CI lint step.
 - Lock out staff PIN login for 15 minutes after 5 failed attempts per user/IP
@@ -34,6 +30,15 @@ All notable changes to this project will be documented in this file.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
+- Guests opting into WhatsApp receive order status updates when orders are
+  accepted, out for delivery, or ready.
+- Menu items support JSON-defined modifiers and combos with server-side pricing.
+- Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
+  "Request more" link.
+- Script to bulk seed a large dataset for local scale testing.
+
+- Support happy-hour pricing via scheduled discount windows.
+
 
 ## v1.0.0-rc - 2025-08-25
 

@@ -65,14 +65,25 @@ async def create_order(
         if item is None:  # pragma: no cover - menu item missing
             raise ValueError(f"menu item {line['item_id']!r} not found")
         guard_not_deleted(item, "Menu item is inactive/deleted")
+        mods = line.get("mods", [])
+        chosen = []
+        extra = 0.0
+        for mid in mods:
+            for mod in item.modifiers or []:
+                if mod.get("id") == mid:
+                    chosen.append(mod)
+                    extra += float(mod.get("price", 0))
+                    break
+        price = float(item.price) + extra
         session.add(
             OrderItem(
                 order_id=order.id,
                 item_id=item.id,
                 name_snapshot=item.name,
-                price_snapshot=item.price,
+                price_snapshot=price,
                 qty=line["qty"],
                 status=OrderStatus.PLACED.value,
+                mods_snapshot=chosen,
             )
         )
 
@@ -188,6 +199,7 @@ async def add_round(
             MenuItem.name,
             MenuItem.price,
             MenuItem.deleted_at,
+            MenuItem.modifiers,
         ).where(MenuItem.id.in_(item_ids))
     )
     items = {row.id: row for row in result}
@@ -198,14 +210,25 @@ async def add_round(
             raise ValueError(f"menu item {line['item_id']!r} not found")
         if data.deleted_at is not None:
             raise ValueError("GONE_RESOURCE")
+        mods = line.get("mods", [])
+        chosen = []
+        extra = 0.0
+        for mid in mods:
+            for mod in data.modifiers or []:
+                if mod.get("id") == mid:
+                    chosen.append(mod)
+                    extra += float(mod.get("price", 0))
+                    break
+        price = float(data.price) + extra
         session.add(
             OrderItem(
                 order_id=order_id,
                 item_id=line["item_id"],
                 name_snapshot=data.name,
-                price_snapshot=data.price,
+                price_snapshot=price,
                 qty=line["qty"],
                 status=OrderStatus.PLACED.value,
+                mods_snapshot=chosen,
             )
         )
 

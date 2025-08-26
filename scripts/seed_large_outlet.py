@@ -4,6 +4,7 @@
 This helper creates a category, thousands of menu items, hundreds of tables
 and tens of thousands of orders with one line item each. It is intended for
 local scale testing and inserts rows in batches for performance.
+
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.app.db.tenant import get_tenant_session
 from api.app.models_tenant import (
     Base,
+
     Category,
     MenuItem,
     Order,

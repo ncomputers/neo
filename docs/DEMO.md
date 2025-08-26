@@ -16,3 +16,15 @@ To purge existing categories, items and tables before seeding, pass `--reset`:
 ```bash
 python scripts/demo_seed.py --tenant DEMO --reset
 ```
+
+## Sandbox Tenant Endpoint
+
+For a quick demo environment, an admin can request a sandbox tenant via the API:
+
+```
+POST /api/admin/tenant/sandbox
+```
+
+The response returns a `tenant_id` and an `expires_at` timestamp exactly seven
+days in the future. The sandbox clones menu and settings without storing any
+personally identifiable information and comes with a few demo orders.

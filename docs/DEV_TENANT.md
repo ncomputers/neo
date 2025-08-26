@@ -31,6 +31,7 @@ Run each command from the project root:
    POSTGRES_TENANT_DSN_TEMPLATE=sqlite+aiosqlite:///tmp/{tenant_id}.db \\
    python scripts/seed_large_outlet.py --tenant demo \\
        --items 5000 --tables 300 --orders 50000
+
    ```
 
 These commands set up a fully initialized `demo` tenant ready for development.

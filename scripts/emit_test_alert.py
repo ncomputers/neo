@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""Emit a test alert via the configured webhook.
+"""Push a synthetic alert to Alertmanager or log a message.
 
 Usage:
     python scripts/emit_test_alert.py --message "Test alert"
 
 Environment variables:
-- ALERT_WEBHOOK_URL: Destination webhook URL to post the alert.
+- ALERTMANAGER_URL: Base URL for Alertmanager (e.g. http://localhost:9093)
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime as dt
+import logging
 import os
 import sys
 
@@ -18,19 +20,28 @@ import requests
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Emit a test alert")
+    parser = argparse.ArgumentParser(description="Send a sample alert")
     parser.add_argument(
-        "--message", default="Test alert from runbook", help="Message text"
+        "--message", default="Test alert from runbook", help="Summary text"
     )
     args = parser.parse_args()
 
-    url = os.environ.get("ALERT_WEBHOOK_URL")
-    if not url:
-        sys.exit("ALERT_WEBHOOK_URL not set")
+    url = os.environ.get("ALERTMANAGER_URL")
+    if url:
+        payload = [
+            {
+                "labels": {"alertname": "SyntheticTestAlert", "severity": "info"},
+                "annotations": {"summary": args.message},
+                "startsAt": dt.datetime.utcnow().isoformat() + "Z",
+            }
+        ]
 
-    resp = requests.post(url, json={"text": args.message}, timeout=5)
-    resp.raise_for_status()
-    print("Alert dispatched")
+        resp = requests.post(f"{url}/api/v1/alerts", json=payload, timeout=5)
+        resp.raise_for_status()
+        print("Alert dispatched")
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.info("Synthetic alert: %s", args.message)
 
 
 if __name__ == "__main__":

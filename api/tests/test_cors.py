@@ -48,6 +48,8 @@ def test_security_headers(monkeypatch):
     assert resp.headers.get("X-Content-Type-Options") == "nosniff"
     csp = resp.headers.get("Content-Security-Policy")
     assert csp and "default-src 'self'" in csp and "img-src 'self'" in csp
+    csp_ro = resp.headers.get("Content-Security-Policy-Report-Only")
+    assert csp_ro and "report-uri /csp/report" in csp_ro
     assert (
         resp.headers.get("Strict-Transport-Security")
         == "max-age=31536000; includeSubDomains"

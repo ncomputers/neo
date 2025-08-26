@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Neo API",
-    "_postman_id": "a1936785-e42f-541b-bc9c-3b65d24e7037",
+    "_postman_id": "89ada69e-e956-537b-ad87-37ad88683865",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -657,6 +657,48 @@
           }
         },
         {
+          "name": "Dsar Delete",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/privacy/dsar/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "privacy",
+                "dsar",
+                "delete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dsar Export",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/privacy/dsar/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "privacy",
+                "dsar",
+                "export"
+              ]
+            }
+          }
+        },
+        {
           "name": "Enable 2Fa",
           "request": {
             "method": "POST",
@@ -1137,6 +1179,24 @@
               "path": [
                 "menu",
                 "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Dlq",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dlq",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dlq"
               ]
             }
           }
@@ -1843,6 +1903,26 @@
                 "{tenant_id}",
                 "subscription",
                 "renew"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replay Dlq",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dlq/replay/{item_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dlq",
+                "replay",
+                "{item_id}"
               ]
             }
           }
