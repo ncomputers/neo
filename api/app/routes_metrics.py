@@ -124,6 +124,11 @@ kds_oldest_kot_seconds = Gauge(
 )
 kds_oldest_kot_seconds.labels(tenant="sample").set(0)
 
+kot_delay_alerts_total = Counter(
+    "kot_delay_alerts_total", "Total KOT delay alerts"
+)
+kot_delay_alerts_total.inc(0)
+
 router = APIRouter()
 
 

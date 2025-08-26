@@ -72,8 +72,8 @@ All notable changes to this project will be documented in this file.
 
   "Request more" link.
 - Track per-route SLO metrics, expose `/admin/ops/slo` endpoint and Grafana dashboard.
-- Owner dashboard includes SLA/ops widget with uptime, webhook success rate,
-  breaker open time, and median KOT prep time.
+- Owner dashboard includes SLA widget with uptime, webhook success rate,
+  median prep time, and KOT delay alerts.
 
 - Script to bulk seed a large dataset for local scale testing.
 
