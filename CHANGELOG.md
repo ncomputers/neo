@@ -71,6 +71,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - 429 responses for magic-link, guest order, exports, and webhook test now include retry hints.
+- Use asyncpg for PostgreSQL connections and updated DSNs to `postgresql+asyncpg://`.
 
 ### Fixed
 
