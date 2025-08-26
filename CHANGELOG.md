@@ -27,10 +27,15 @@ All notable changes to this project will be documented in this file.
   notification outbox.
 - Printable invoice and KOT templates consume middleware-provided CSP nonces on inline styles to harden rendering.
 - Add tests ensuring CSP nonces are applied on printable invoice and KOT pages.
-- Slow query logging with WARNs above the configurable threshold and 1% sampling
-  of regular queries.
+- Slow query logging with WARNs above the configurable threshold and 1% sampling of regular queries.
+- Locust profiles with locked p95 targets and nightly staging perf sanity.
 - Idempotent offline order queue using client-side `op_id` dedupe.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
+- Owner dashboard displays licensing usage bars for tables, items, images, and exports.
+
+## v1.0.0-rc - 2025-08-25
+
+- Initial release candidate.
 

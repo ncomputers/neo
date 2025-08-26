@@ -9,16 +9,14 @@ from datetime import timedelta
 from hashlib import sha256
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
 from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from .auth import ALGORITHM, SECRET_KEY, Token, create_access_token
 from .providers import email_stub
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import err, ok
+from .utils.responses import ok, rate_limited
 
 router = APIRouter()
 
@@ -53,10 +51,7 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
     )
     if not allowed_ip and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{ip}:magic-start")
-        return JSONResponse(
-            err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
-            status_code=HTTP_429_TOO_MANY_REQUESTS,
-        )
+        return rate_limited(retry_after)
 
     policy_email = ratelimits.magic_link_email()
     allowed_email = await ratelimit.allow(
@@ -64,10 +59,7 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
     )
     if not allowed_email and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{email}:magic-email")
-        return JSONResponse(
-            err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
-            status_code=HTTP_429_TOO_MANY_REQUESTS,
-        )
+        return rate_limited(retry_after)
 
     jti = str(uuid.uuid4())
     token = create_access_token(

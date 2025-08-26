@@ -9,10 +9,12 @@ from pathlib import Path
 
 import httpx
 from fastapi import APIRouter, UploadFile
+from prometheus_client import generate_latest
 from sqlalchemy import text
 
 from .db import SessionLocal, engine
 from .storage import storage
+from .routes_metrics import db_replica_healthy
 
 router = APIRouter()
 
@@ -140,6 +142,7 @@ def check_soft_delete_indexes() -> dict:
                 "name": "soft_delete_indexes",
                 "status": "fail",
                 "detail": "; ".join(parts),
+
             }
         return {"name": "soft_delete_indexes", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
@@ -187,6 +190,7 @@ async def check_quotas() -> dict:
                     "status": "fail",
                     "detail": f"negative {metric}",
                 }
+
         return {"name": "quotas", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
         return {"name": "quotas", "status": "fail", "detail": str(exc)}
@@ -210,6 +214,7 @@ async def check_webhook_metrics() -> dict:
                 "name": "webhook_metrics",
                 "status": "fail",
                 "detail": "missing webhook_breaker_state",
+
             }
         return {"name": "webhook_metrics", "status": "ok"}
     except Exception as exc:  # pragma: no cover - best effort
@@ -256,6 +261,7 @@ async def check_replica() -> dict:
                 "status": "fail",
                 "detail": f"fallback failed: {exc}",
             }
+
         return {"name": "replica", "status": "ok", "detail": "fallback"}
     except Exception as exc:  # pragma: no cover - best effort
         return {"name": "replica", "status": "fail", "detail": str(exc)}
@@ -275,6 +281,7 @@ async def preflight() -> dict:
         await check_quotas(),
         await check_webhook_metrics(),
         await check_replica(),
+
     ]
     overall = "ok"
     if any(c["status"] == "fail" for c in checks):

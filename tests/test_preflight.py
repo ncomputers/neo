@@ -53,6 +53,7 @@ def test_preflight_ok(monkeypatch):
             "check_quotas": ok_async,
             "check_webhook_metrics": ok_async,
             "check_replica": ok_async,
+
         },
     )
     client = TestClient(app)
@@ -78,6 +79,7 @@ def test_preflight_fail(monkeypatch):
             "check_quotas": ok_async,
             "check_webhook_metrics": ok_async,
             "check_replica": ok_async,
+
         },
     )
     client = TestClient(app)
@@ -100,6 +102,7 @@ def test_preflight_warn(monkeypatch):
             "check_quotas": ok_async,
             "check_webhook_metrics": ok_async,
             "check_replica": ok_async,
+
         },
     )
     client = TestClient(app)

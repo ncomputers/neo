@@ -143,8 +143,8 @@ def test_guest_post_rate_limit(client, monkeypatch):
     )
     assert resp.status_code == 429
     body = resp.json()["error"]
-    assert body["code"] == "RATELIMITED"
-    assert body["details"]["retry_after"] >= 0
+    assert body["code"] == "RATE_LIMIT"
+    assert "retry in" in body["hint"]
 
 
 def test_guest_post_body_size_limit(client):
