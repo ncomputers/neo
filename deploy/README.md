@@ -112,6 +112,12 @@ weights to 5%, 25% and 50%, gating on `/ready` between each bump:
 python scripts/weighted_ramp.py --new neo-green --old neo-blue --base-url https://example.com
 ```
 
+For a templated version that rolls back automatically on failed health checks:
+
+```bash
+python scripts/weighted_canary_ramp.py --new neo-green --old neo-blue --base-url https://example.com
+```
+
 ## Grafana dashboards
 
 Prebuilt dashboards for API, background workers and tenant KPIs are located in

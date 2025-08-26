@@ -21,6 +21,13 @@ weights. The helper below bumps the new stack from 5% to 25% to 50%, verifying
 python scripts/weighted_ramp.py --new neo-green --old neo-blue --base-url https://example.com
 ```
 
+For an option that renders the upstream from a template and automatically
+rolls back if a health check fails, use the canary helper:
+
+```bash
+python scripts/weighted_canary_ramp.py --new neo-green --old neo-blue --base-url https://example.com
+```
+
 ## 2. Health gates
 Before and after the swap, gate traffic on the `/preflight` and `/ready`
 endpoints until both return HTTP 200. This ensures the application has completed

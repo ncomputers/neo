@@ -38,6 +38,8 @@ All notable changes to this project will be documented in this file.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
+- Weighted canary ramp helper that templates Nginx upstreams and rolls back on
+  failed health checks.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
