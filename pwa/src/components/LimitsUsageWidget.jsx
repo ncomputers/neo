@@ -59,6 +59,12 @@ export default function LimitsUsageWidget() {
       {entries.map(({ key, label }) =>
         data[key] ? <Bar key={key} label={label} usage={data[key]} /> : null,
       )}
+      <a
+        href="mailto:support@example.com?subject=Request%20more%20quota"
+        className="text-sm text-blue-600 underline"
+      >
+        Request more
+      </a>
     </div>
   )
 }
