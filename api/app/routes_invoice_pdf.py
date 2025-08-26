@@ -4,6 +4,8 @@ from typing import Literal
 
 from fastapi import APIRouter, Request, Response
 
+from config import get_settings
+
 from .pdf.render import render_invoice
 from .routes_metrics import invoices_generated_total
 from .services import billing_service
@@ -18,7 +20,12 @@ async def invoice_pdf(
     """Return a PDF (or HTML fallback) for ``invoice_id``."""
 
     items = [{"name": "Sample Item", "price": 10.0, "qty": 1}]
-    invoice = billing_service.build_invoice_context(items, gst_mode="unreg")
+    settings = get_settings()
+    invoice = billing_service.build_invoice_context(
+        items,
+        gst_mode="unreg",
+        happy_hour_windows=settings.happy_hour_windows,
+    )
     invoice["number"] = f"INV-{invoice_id}"
     content, mimetype = render_invoice(
         invoice, size=size, nonce=request.state.csp_nonce
