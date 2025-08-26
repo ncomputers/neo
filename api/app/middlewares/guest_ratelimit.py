@@ -7,7 +7,7 @@ from starlette.requests import Request
 
 from ..security import ratelimit
 from ..utils import ratelimits
-from ..utils.responses import rate_limited
+from ..utils.rate_limit import rate_limited
 from .guest_utils import _is_guest_post
 
 

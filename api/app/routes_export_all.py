@@ -29,7 +29,7 @@ from .models_tenant import (
 from .routes_exports import DEFAULT_LIMIT, SCAN_LIMIT, _session
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import rate_limited
+from .utils.rate_limit import rate_limited
 
 router = APIRouter()
 

@@ -16,7 +16,8 @@ from .auth import ALGORITHM, SECRET_KEY, Token, create_access_token
 from .providers import email_stub
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import ok, rate_limited
+from .utils.responses import ok
+from .utils.rate_limit import rate_limited
 
 router = APIRouter()
 
