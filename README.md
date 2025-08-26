@@ -103,8 +103,8 @@ Tenants can be assigned quotas via the `license_limits` JSON column in the
 Exceeding any quota results in a `403 FEATURE_LIMIT` response with a helpful
 hint. Administrators may inspect current usage and limits via
 `GET /api/outlet/{tenant}/limits/usage` when providing an `X-Tenant-ID` header.
-The admin dashboard displays these limits with usage bars and a "Request more"
-link for contacting support.
+ The admin dashboard displays these limits with usage bars and a "Request more"
+ link for contacting support via email.
 
 Copy the example environment file and adjust values as needed:
 

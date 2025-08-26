@@ -34,7 +34,7 @@ All notable changes to this project will be documented in this file.
   accepted, out for delivery, or ready.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
 - Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
-  "Request more" link.
+  "Request more" email link.
 - Script to bulk seed a large dataset for local scale testing.
 
 - Support happy-hour pricing via scheduled discount windows.
