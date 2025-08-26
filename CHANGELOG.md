@@ -4,11 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## v1.0.0-rc1 - 2025-08-25
 
-### Other
-- PR #313 (#313)
-- PR #314 (#314)
-- PR #315 (#315)
-- PR #316 (#316)
 
 ## Unreleased
 
@@ -35,6 +30,9 @@ All notable changes to this project will be documented in this file.
   webhook breaker metrics, and replica health.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
+- Admin dashboard panel shows quota usage bars for tables, items, images, and exports with a
+  "Request more" link.
+
 
 ## v1.0.0-rc - 2025-08-25
 
