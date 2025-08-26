@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Send a daily owner digest for a tenant.
 
-Summarises previous day's orders, average preparation time,
-most popular items, complimentary counts, tip totals and the
-number of webhook breaker opens. The digest is emitted via
-providers – console, optional WhatsApp and optional email – if
-their respective targets are configured in the environment.
+Summarises the previous day's orders, average preparation time,
+top 10 items, complimentary percentage, voids, tips, preparation SLA hit
+rate and the number of webhook breaker opens. Delivery happens via console
+and optionally WhatsApp or email when targets are configured. Tenants must
+opt in via the ``OWNER_DIGEST_TENANTS`` environment variable and delivery is
+throttled to reasonable hours when ``--date`` isn't specified.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from zoneinfo import ZoneInfo
 
 from app.db.tenant import get_engine as get_tenant_engine  # type: ignore
 from app.models_tenant import (  # type: ignore
+    AuditTenant,
     Invoice,
     Order,
     OrderItem,
@@ -88,6 +90,16 @@ PROVIDERS = {
 }
 
 
+def _is_opted_in(tenant: str) -> bool:
+    """Return True if ``tenant`` is opted in via ``OWNER_DIGEST_TENANTS``."""
+
+    allowed = os.getenv("OWNER_DIGEST_TENANTS", "")
+    if not allowed:
+        return False
+    opts = {t.strip() for t in allowed.split(",") if t.strip()}
+    return tenant in opts
+
+
 async def build_digest_line(tenant: str, day: date) -> str:
     """Return a formatted digest line for ``tenant`` on ``day``."""
     tz = os.getenv("DEFAULT_TZ", "UTC")
@@ -99,22 +111,27 @@ async def build_digest_line(tenant: str, day: date) -> str:
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
+    sla_secs = int(os.getenv("KDS_SLA_SECS", "900"))
     try:
         async with sessionmaker() as session:
             orders = await _orders_count(session, start, end)
             avg_prep = await _avg_prep_minutes(session, start, end)
             top_items = await _top_items(session, start, end)
-            comps = await _comps_count(session, start, end)
+            total_items = await _items_qty(session, start, end)
+            comps = await _comps_qty(session, start, end)
+            voids = await _voids_count(session, start, end)
             tips = await _tips_total(session, start, end)
+            sla_hit = await _sla_hit_rate(session, start, end, sla_secs)
     finally:
         await engine.dispose()
 
     breaker = _breaker_opens()
     top_str = ", ".join(f"{name}({qty})" for name, qty in top_items)
+    comps_pct = (comps / total_items * 100) if total_items else 0.0
     return (
         f"{day.isoformat()} | orders={orders} | avg_prep={avg_prep:.2f}m | "
-        f"top_items={top_str} | comps={comps} | tips={tips:.2f} | "
-        f"breaker_opens={breaker}"
+        f"top_items={top_str} | comps_pct={comps_pct:.2f}% | voids={voids} | "
+        f"tips={tips:.2f} | sla_hit={sla_hit:.2f}% | breaker_opens={breaker}"
     )
 
 
@@ -155,15 +172,23 @@ async def _top_items(
         .where(Order.placed_at >= start, Order.placed_at <= end)
         .group_by(OrderItem.name_snapshot)
         .order_by(desc("qty"))
-        .limit(5)
+        .limit(10)
     )
     return [(name, int(qty)) for name, qty in result.all()]
 
 
-async def _comps_count(session: AsyncSession, start: datetime, end: datetime) -> int:
+async def _items_qty(session: AsyncSession, start: datetime, end: datetime) -> int:
     result = await session.scalar(
-        select(func.count())
-        .select_from(OrderItem)
+        select(func.coalesce(func.sum(OrderItem.qty), 0))
+        .join(Order, Order.id == OrderItem.order_id)
+        .where(Order.placed_at >= start, Order.placed_at <= end)
+    )
+    return int(result or 0)
+
+
+async def _comps_qty(session: AsyncSession, start: datetime, end: datetime) -> int:
+    result = await session.scalar(
+        select(func.coalesce(func.sum(OrderItem.qty), 0))
         .join(Order, Order.id == OrderItem.order_id)
         .where(
             Order.placed_at >= start,
@@ -172,6 +197,40 @@ async def _comps_count(session: AsyncSession, start: datetime, end: datetime) ->
         )
     )
     return int(result or 0)
+
+
+async def _voids_count(session: AsyncSession, start: datetime, end: datetime) -> int:
+    result = await session.scalar(
+        select(func.count())
+        .select_from(AuditTenant)
+        .where(
+            AuditTenant.action == "order.void.approve",
+            AuditTenant.at >= start,
+            AuditTenant.at <= end,
+        )
+    )
+    return int(result or 0)
+
+
+async def _sla_hit_rate(
+    session: AsyncSession, start: datetime, end: datetime, sla_secs: int
+) -> float:
+    rows = await session.execute(
+        select(Order.placed_at, Order.served_at).where(
+            Order.served_at.is_not(None),
+            Order.placed_at.is_not(None),
+            Order.served_at >= start,
+            Order.served_at <= end,
+        )
+    )
+    total = 0
+    hits = 0
+    for placed, served in rows.all():
+        if placed and served:
+            total += 1
+            if (served - placed).total_seconds() <= sla_secs:
+                hits += 1
+    return (hits / total * 100) if total else 0.0
 
 
 async def _tips_total(session: AsyncSession, start: datetime, end: datetime) -> float:
@@ -210,9 +269,15 @@ async def main(
 
     Returns the formatted digest line.
     """
+    if not _is_opted_in(tenant):
+        return ""
+    tz = os.getenv("DEFAULT_TZ", "UTC")
+    tzinfo = ZoneInfo(tz)
     if date_str is None:
-        tz = os.getenv("DEFAULT_TZ", "UTC")
-        today = datetime.now(ZoneInfo(tz)).date()
+        now_local = datetime.now(tzinfo).time()
+        if not time(8, 0) <= now_local <= time(20, 0):
+            return ""
+        today = datetime.now(tzinfo).date()
         day = today - timedelta(days=1)
     else:
         day = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -221,7 +286,7 @@ async def main(
 
     for name in providers or ("console", "whatsapp", "email"):
         provider = PROVIDERS.get(name)
-        if provider:
+        if provider and line:
             provider.send(line)
     return line
 
