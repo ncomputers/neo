@@ -154,6 +154,7 @@ from .routes_media import router as media_router
 from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
+from .routes_ab_tests import router as ab_tests_router
 from .routes_onboarding import router as onboarding_router
 from .routes_order_void import router as order_void_router
 from .routes_orders_batch import router as orders_batch_router
@@ -904,6 +905,7 @@ app.include_router(orders_batch_router)
 app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
+app.include_router(ab_tests_router)
 app.include_router(rum_router)
 app.include_router(owner_analytics_router)
 app.include_router(owner_sla_router)
