@@ -659,6 +659,15 @@ Run a single module or test:
 pytest api/tests/test_auth.py::test_password_login_success
 ```
 
+### API contract fuzzing
+
+Critical `orders`, `billing` and `exports` routes are fuzzed with [Schemathesis](https://schemathesis.readthedocs.io/) to catch schema regressions.
+Run them locally with:
+
+```bash
+pytest tests/api_contract -q
+```
+
 ## Events
 
 The API emits domain events using a lightweight in-memory Pub/Sub dispatcher. Events
