@@ -101,6 +101,8 @@ from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
+from .routes_admin_privacy import router as admin_privacy_router
+from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -118,7 +120,6 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
-from .routes_admin_privacy import router as admin_privacy_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_help import router as help_router
@@ -879,6 +880,7 @@ app.include_router(media_router)
 app.include_router(api_keys_router)
 app.include_router(vapid_router)
 app.include_router(postman_router)
+app.include_router(admin_qrpack_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)

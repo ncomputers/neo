@@ -5,8 +5,10 @@ This repository contains three main services:
 - `api/` – FastAPI application with `/health` and `/ready` endpoints, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
 - `pwa/` – React + Tailwind front end with a placeholder home page.
 - `ops/` – Docker Compose for local development.
-
+-
 Invoices support optional FSSAI license details when provided.
+QR pack generation events are audited and can be exported via admin APIs. See
+[`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details.
 
 ## Security
 
