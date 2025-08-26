@@ -12,6 +12,7 @@ python-dotenv
 openpyxl
 python-multipart
 qrcode
+pillow
 responses
 httpx
 aiosqlite
