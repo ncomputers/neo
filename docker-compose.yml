@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile.api
     environment:
-      POSTGRES_MASTER_URL: postgresql://postgres:postgres@postgres:5432/master
-      POSTGRES_TENANT_DSN_TEMPLATE: postgresql://tenant:tenant@postgres:5432/tenant_{tenant_id}
+      POSTGRES_MASTER_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/master
+      POSTGRES_TENANT_DSN_TEMPLATE: postgresql+asyncpg://tenant:tenant@postgres:5432/tenant_{tenant_id}
       REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
@@ -20,8 +20,8 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     environment:
-      POSTGRES_MASTER_URL: postgresql://postgres:postgres@postgres:5432/master
-      POSTGRES_TENANT_DSN_TEMPLATE: postgresql://tenant:tenant@postgres:5432/tenant_{tenant_id}
+      POSTGRES_MASTER_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/master
+      POSTGRES_TENANT_DSN_TEMPLATE: postgresql+asyncpg://tenant:tenant@postgres:5432/tenant_{tenant_id}
       REDIS_URL: redis://redis:6379/0
     depends_on:
       - postgres

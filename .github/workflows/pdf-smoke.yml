@@ -32,8 +32,8 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      POSTGRES_MASTER_URL: postgresql://postgres:postgres@localhost:5432/master
-      POSTGRES_TENANT_DSN_TEMPLATE: postgresql://postgres:postgres@localhost:5432/tenant_{tenant_id}
+      POSTGRES_MASTER_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/master
+      POSTGRES_TENANT_DSN_TEMPLATE: postgresql+asyncpg://postgres:postgres@postgres:5432/tenant_{tenant_id}
       REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4

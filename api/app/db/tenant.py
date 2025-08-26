@@ -4,7 +4,6 @@ The DSN template is read from the ``POSTGRES_TENANT_DSN_TEMPLATE`` environment
 variable and is expected to include a ``{tenant_id}`` placeholder. For example::
 
     postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id}
-    postgresql://other:secret@localhost/tenant_{tenant_id}
 
 Use :func:`build_dsn` to render a DSN for a tenant and :func:`get_engine` to
 create an :class:`~sqlalchemy.ext.asyncio.AsyncEngine` for it.
