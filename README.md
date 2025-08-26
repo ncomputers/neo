@@ -289,6 +289,9 @@ A guest-facing router exposes menu data for a specific table:
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
 - `POST /g/{table_token}/bill` – generate a bill; payload may include an optional `tip` and `coupons` list.
+- `GET /guest/receipts?phone=XXXXXXXXXX` – list up to the last ten redacted
+  receipts for the contact (use `email=` to look up by email). Retention is 30
+  days by default and may be extended per tenant.
 
 
 This router relies on tenant-specific databases and is not wired into the

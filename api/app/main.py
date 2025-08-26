@@ -102,8 +102,8 @@ from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
+from .routes_admin_ops import router as admin_ops_router
 from .routes_admin_privacy import router as admin_privacy_router
-from .routes_privacy_dsar import router as privacy_dsar_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
@@ -131,6 +131,7 @@ from .routes_guest_bill import router as guest_bill_router
 from .routes_guest_consent import router as guest_consent_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
+from .routes_guest_receipts import router as guest_receipts_router
 from .routes_help import router as help_router
 from .routes_hotel_guest import router as hotel_guest_router
 from .routes_hotel_housekeeping import router as hotel_hk_router
@@ -157,6 +158,7 @@ from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
 from .routes_print_bridge import router as print_bridge_router
+from .routes_privacy_dsar import router as privacy_dsar_router
 from .routes_push import router as push_router
 from .routes_pwa_version import router as pwa_version_router
 from .routes_qrpack import router as qrpack_router
@@ -166,17 +168,16 @@ from .routes_reports import router as reports_router
 from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
 from .routes_slo import router as slo_router
-from .routes_admin_ops import router as admin_ops_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
-from .routes_troubleshoot import router as troubleshoot_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
 from .routes_tenant_sandbox import router as tenant_sandbox_router
 from .routes_time_skew import router as time_skew_router
+from .routes_troubleshoot import router as troubleshoot_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhook_tools import router as webhook_tools_router
@@ -859,6 +860,7 @@ app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
 app.include_router(guest_consent_router)
+app.include_router(guest_receipts_router)
 app.include_router(counter_guest_router)
 app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
