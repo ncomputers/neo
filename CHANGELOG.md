@@ -44,7 +44,7 @@ All notable changes to this project will be documented in this file.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
 - PWA manifest referencing external icons to enable install prompts on supported devices.
-- OWASP ZAP baseline security scan against staging with auth paths allowlisted.
+- OWASP ZAP baseline security scan against staging with auth paths allowlisted and HTML report artifact.
 - Optional PostHog/Mixpanel analytics with per-tenant consent and PII redaction.
 
 - WhatsApp guest notifications are gated by the `WHATSAPP_GUEST_UPDATES_ENABLED`
