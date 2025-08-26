@@ -21,7 +21,7 @@ from . import flags
 from .db import SessionLocal
 from .models_tenant import Category as CategoryModel
 from .models_tenant import MenuItem as MenuItemModel
-from .pricing import active_window, apply_discount
+from .pricing import active_windows, apply_discount
 from .schemas import Category, CategoryIn, Item, ItemIn
 from .utils.responses import ok
 
@@ -109,16 +109,14 @@ def list_items(include_out_of_stock: bool = False, now: datetime | None = None) 
         values = [i for i in values if i.in_stock]
 
     settings = get_settings()
-    window = None
+    windows = []
     if flags.get("happy_hour"):
-        window = active_window(
-            settings.happy_hour_windows, now.time() if now else None
-        )
+        windows = active_windows(settings.happy_hour_windows, now)
     result: list[Item] = []
     for item in values:
         data = item.model_dump()
-        if window:
-            discounted = apply_discount(Decimal(str(item.price)), window)
+        if windows:
+            discounted = apply_discount(Decimal(str(item.price)), windows)
             if discounted != Decimal(str(item.price)):
                 data["strike_price"] = item.price
                 data["price"] = int(discounted)
