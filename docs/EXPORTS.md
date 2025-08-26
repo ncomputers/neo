@@ -116,6 +116,7 @@ Lightweight CSVs allow hand-off to ledger software without a full integration.
 ```
 GET /api/outlet/{tenant}/accounting/sales_register.csv?from=YYYY-MM-DD&to=YYYY-MM-DD[&composition=true]
 GET /api/outlet/{tenant}/accounting/gst_summary.csv?from=YYYY-MM-DD&to=YYYY-MM-DD[&composition=true]
+
 ```
 
 ### Importing into Tally

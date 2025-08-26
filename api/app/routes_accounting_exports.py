@@ -9,11 +9,13 @@ from io import StringIO
 import csv
 
 from fastapi import APIRouter, HTTPException, Response, Query
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.tenant import get_engine
 from .models_tenant import Invoice, MenuItem, OrderItem
+
 
 
 router = APIRouter()
@@ -25,6 +27,7 @@ async def _session(tenant_id: str):
 
     engine = get_engine(tenant_id)
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
     try:
         async with sessionmaker() as session:
             yield session
@@ -157,6 +160,7 @@ async def sales_register_csv(
         ]
     )
 
+
     resp = Response(content=output.getvalue(), media_type="text/csv")
     resp.headers["Content-Disposition"] = "attachment; filename=sales_register.csv"
     return resp
@@ -231,6 +235,7 @@ async def gst_summary_csv(
                 f"{vals['sgst']:.2f}",
                 f"{vals['igst']:.2f}",
                 f"{total:.2f}",
+
             ]
         )
 
