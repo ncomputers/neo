@@ -30,3 +30,6 @@ properties before transmission.
 Currently the backend emits a `feedback_submitted` event whenever a guest NPS
 entry is stored.
 
+Guest opt-ins for analytics and WhatsApp updates are persisted via the `/g/consent`
+endpoint and stored against the customer's record.
+
