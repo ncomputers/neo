@@ -64,3 +64,12 @@ POST /api/admin/dlq/replay/{id}?type=webhook|export
 The list endpoint returns recent dead letters while the replay endpoint
 re-enqueues a selected job for processing.
 
+## CSP Reports
+
+Browsers can send Content-Security-Policy violation reports to `/csp/report`. The
+last 500 reports are kept in Redis for 24 hours and can be inspected via:
+
+```
+GET /admin/csp/reports
+```
+

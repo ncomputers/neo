@@ -10,6 +10,7 @@ from typing import Literal
 import qrcode
 from fastapi import APIRouter, HTTPException, Request, Response
 
+from .audit import log_qr_pack
 from .pdf.render import render_template
 from .routes_onboarding import TENANTS
 from .utils import ratelimits
@@ -17,9 +18,7 @@ from .utils import ratelimits
 router = APIRouter()
 
 
-_BLANK_PNG = (
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PQIv5gAAAABJRU5ErkJggg=="
-)
+_BLANK_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PQIv5gAAAABJRU5ErkJggg=="  # noqa: E501
 
 
 def _qr_data_url(url: str) -> str:
@@ -41,6 +40,10 @@ async def qrpack_pdf(
     per_page: int = 12,
     show_logo: bool = True,
     label_fmt: str = "Table {n}",
+    pack_id: str | None = None,
+    count: int | None = None,
+    requester: str | None = None,
+    reason: str | None = None,
 ) -> Response:
     if per_page > 24 or per_page not in (6, 12, 24):
         raise HTTPException(400, "per_page must be 6, 12 or 24")
@@ -49,8 +52,12 @@ async def qrpack_pdf(
     if not tenant:
         raise HTTPException(404, "Tenant not found")
 
+    if all([pack_id, count, requester, reason]):
+        log_qr_pack(pack_id, int(count), requester, reason)
+
     redis = getattr(request.app.state, "redis", None)
     if redis is None:
+
         class _RedisStub:
             def __init__(self):
                 self.store = {}
@@ -82,7 +89,9 @@ async def qrpack_pdf(
     if count > policy.burst:
         raise HTTPException(429, "Too many requests")
 
-    cache_key = f"qrpack:cache:{tenant_id}:{size}:{per_page}:{int(show_logo)}:{label_fmt}"
+    cache_key = (
+        f"qrpack:cache:{tenant_id}:{size}:{per_page}:{int(show_logo)}:{label_fmt}"
+    )
     cached = await redis.hgetall(cache_key)
     if cached:
         content = base64.b64decode(cached.get("content", ""))
@@ -95,11 +104,15 @@ async def qrpack_pdf(
         label = label_fmt.format(n=idx + 1, label=t.get("label", idx + 1))
         tables.append({"label": label, "qr": _qr_data_url(url)})
 
-    pages = [tables[i : i + per_page] for i in range(0, len(tables), per_page)]
+    pages = [
+        tables[i : i + per_page] for i in range(0, len(tables), per_page)  # noqa: E203
+    ]
     content, mimetype = render_template(
         "qrpack.html",
         {
-            "logo_url": tenant.get("profile", {}).get("logo_url") if show_logo else None,
+            "logo_url": tenant.get("profile", {}).get("logo_url")
+            if show_logo
+            else None,
             "pages": pages,
             "size": size,
         },

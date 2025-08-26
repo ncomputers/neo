@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import json
 import os
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path
-from enum import Enum
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -36,9 +36,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     postgres_master_url: str = "sqlite+aiosqlite:///./dev_master.db"
-    postgres_tenant_dsn_template: str = (
-        "sqlite+aiosqlite:///./tenant_{tenant_id}.db"
-    )
+    postgres_tenant_dsn_template: str = "sqlite+aiosqlite:///./tenant_{tenant_id}.db"
     postgres_super_url: str | None = None
     redis_url: str
     minio_url: str
@@ -50,6 +48,7 @@ class Settings(BaseSettings):
     sla_color_alert: bool = False
     hide_out_of_stock_items: bool = True
     audit_retention_days: int = 30
+    happy_hour: list[dict] = []
     vapid_public_key: str | None = None
     vapid_private_key: str | None = None
     max_conn_per_ip: int = 20

@@ -6789,6 +6789,58 @@
         }
       }
     },
+    "/api/pilot/{tenant}/feedback": {
+      "post": {
+        "summary": "Submit Pilot NPS",
+        "description": "Accept an NPS feedback submission for a pilot outlet.",
+        "operationId": "submit_pilot_feedback_api_pilot__tenant__feedback_post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PilotFeedbackIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Submit Pilot Feedback Api Pilot  Tenant  Feedback Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant}/media/upload": {
       "post": {
         "summary": "Upload Media",
@@ -7742,6 +7794,29 @@
         ],
         "title": "FeedbackIn",
         "description": "Incoming feedback payload from a guest."
+      },
+      "PilotFeedbackIn": {
+        "properties": {
+          "score": {
+            "type": "integer",
+            "title": "Score",
+            "description": "0-10 NPS score"
+          },
+          "comment": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Comment",
+            "description": "Optional free-form comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score"
+        ],
+        "title": "PilotFeedbackIn",
+        "description": "Incoming NPS feedback from pilot users."
       },
       "HTTPValidationError": {
         "properties": {

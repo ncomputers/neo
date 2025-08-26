@@ -10,5 +10,6 @@
   "sla_sound_alert": false,
   "sla_color_alert": false,
   "hide_out_of_stock_items": true,
-  "audit_retention_days": 30
+  "audit_retention_days": 30,
+  "happy_hour": []
 }

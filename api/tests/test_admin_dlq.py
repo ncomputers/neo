@@ -4,6 +4,7 @@ import pathlib
 import sys
 
 import fakeredis
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -15,6 +16,12 @@ from api.app.auth import create_access_token
 
 
 app.state.redis = fakeredis.aioredis.FakeRedis(decode_responses=True)
+from api.app import main as app_main  # noqa: E402
+from api.app.audit import AuditMaster  # noqa: E402
+from api.app.audit import SessionLocal as AuditSession  # noqa: E402
+from api.app.auth import create_access_token  # noqa: E402
+from api.app.main import app  # noqa: E402
+
 
 
 class _BypassSubGuard:
@@ -24,6 +31,14 @@ class _BypassSubGuard:
 
 @pytest.fixture(scope="module", autouse=True)
 def _setup_teardown():
+
+    app.state.redis = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    # reset audit tables
+    from api.app import audit
+
+    audit.Base.metadata.drop_all(bind=audit.engine)
+    audit.Base.metadata.create_all(bind=audit.engine)
+
     original_guard = app_main.subscription_guard
     app_main.subscription_guard = _BypassSubGuard()
     yield
@@ -43,6 +58,7 @@ def test_dlq_list_and_replay():
         await r.rpush(
             "jobs:dlq:webhook",
             json.dumps({"id": "1", "payload": {"foo": "bar"}}),
+
         )
 
     asyncio.run(seed())
@@ -57,6 +73,7 @@ def test_dlq_list_and_replay():
     resp = client.post(
         "/api/admin/dlq/replay/1",
         params={"type": "webhook"},
+
         headers=_admin_headers(),
     )
     assert resp.status_code == 200
