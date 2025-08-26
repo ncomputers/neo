@@ -84,6 +84,8 @@ All notable changes to this project will be documented in this file.
 - JSON logger redacts phone numbers, emails, and UTR values.
 - `LOG_SAMPLE_2XX` controls sampling of successful request logs.
 
+- Expo endpoint lists ready tickets with aging and allergen badges with hotkeys to mark picked.
+
 ### Changed
 
 - 429 responses for magic-link, guest order, exports, and webhook test now include retry hints.
