@@ -7,6 +7,7 @@ from typing import Iterable, Literal, Mapping, Sequence
 
 from ..pricing import active_windows, apply_discount
 from .. import flags
+from ..tax.gst_engine import generate_invoice
 
 GSTMode = Literal["unreg", "comp", "reg"]
 
@@ -225,72 +226,9 @@ def build_invoice_context(
 ) -> dict:
     """Build a render-friendly invoice dict based on ``gst_mode``.
 
-    Parameters
-    ----------
-    items:
-        Each mapping should include ``name`` and ``price``. Optional keys
-        include ``qty``, ``gst`` and ``hsn``.
-    gst_mode:
-        Tax mode for the invoice (``"reg"``, ``"comp"`` or ``"unreg"``).
-    gstin:
-        Optional GSTIN to include on the invoice header for registered modes.
-    is_interstate:
-        When ``True``, tax lines are reported as IGST instead of CGST/SGST.
+    The heavy lifting is delegated to :func:`tax.gst_engine.generate_invoice`.
+    Parameters unrelated to GST are accepted for backward compatibility but
+    ignored.
     """
 
-    bill = compute_bill(
-        items,
-        gst_mode,
-        rounding=rounding,
-        gst_rounding=gst_rounding,
-        rounding_mode=rounding_mode,
-        happy_hour_windows=happy_hour_windows,
-        now=now,
-    )
-    invoice = {
-        "gst_mode": gst_mode,
-        "items": [],
-        "subtotal": bill["subtotal"],
-        "tax_lines": [],
-        "grand_total": bill["total"],
-    }
-
-    if bill.get("rounding_adjustment"):
-        invoice["rounding_adjustment"] = bill["rounding_adjustment"]
-
-    if gstin and gst_mode != "unreg":
-        invoice["gstin"] = gstin
-
-    for item in items:
-        line = {
-            "name": item.get("name"),
-            "qty": item.get("qty", 1),
-            "price": item.get("price"),
-        }
-        if gst_mode == "reg":
-            if item.get("gst") is not None:
-                line["gst"] = item.get("gst")
-            if item.get("hsn"):
-                line["hsn"] = item.get("hsn")
-        invoice["items"].append(line)
-
-    if gst_mode == "reg":
-        for rate, amount in bill["tax_breakup"].items():
-            if is_interstate:
-                invoice["tax_lines"].append(
-                    {"label": f"IGST {rate}%", "amount": round(amount, 2)}
-                )
-            else:
-                half_rate = rate / 2
-                half_amount = round(amount / 2, 2)
-                invoice["tax_lines"].append(
-                    {"label": f"CGST {half_rate}%", "amount": half_amount}
-                )
-                invoice["tax_lines"].append(
-                    {"label": f"SGST {half_rate}%", "amount": half_amount}
-                )
-
-    if bill.get("discount"):
-        invoice["discount"] = bill["discount"]
-
-    return invoice
+    return generate_invoice(items, gst_mode, gstin=gstin, is_interstate=is_interstate)
