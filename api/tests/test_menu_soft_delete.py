@@ -65,7 +65,13 @@ async def test_delete_and_restore_menu_item(monkeypatch) -> None:
     @asynccontextmanager
     async def fake_session(tenant_id: str):
         class Dummy:
-            pass
+            async def get(self, model, item_id):
+                class Item:
+                    id = item_id
+                    name = "foo"
+                    deleted_at = None
+
+                return Item()
 
         yield Dummy()
 

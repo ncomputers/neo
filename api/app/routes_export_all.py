@@ -9,9 +9,8 @@ from typing import Iterator
 from zipfile import ZipFile
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, case
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from .audit import log_event
 from .auth import User
@@ -30,7 +29,7 @@ from .models_tenant import (
 from .routes_exports import DEFAULT_LIMIT, SCAN_LIMIT, _session
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import err
+from .utils.responses import rate_limited
 
 router = APIRouter()
 
@@ -97,10 +96,7 @@ async def export_all(
     )
     if not allowed:
         retry_after = await redis.ttl(f"ratelimit:{ip}:exports")
-        return JSONResponse(
-            err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
-            status_code=HTTP_429_TOO_MANY_REQUESTS,
-        )
+        return rate_limited(retry_after)
 
     bundle = BytesIO()
     async with _session(tenant_id) as session:

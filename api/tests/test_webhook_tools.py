@@ -108,6 +108,61 @@ def test_webhook_test_blocked(monkeypatch):
     assert resp.json()["error"]["message"] == "EGRESS_BLOCKED"
 
 
+def test_webhook_test_ratelimit(monkeypatch):
+    class DummyClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        async def post(self, url, content=None, headers=None):
+            return httpx.Response(200, text="ok")
+
+    class FakeHttpx:
+        AsyncClient = DummyClient
+
+    monkeypatch.setattr(routes_webhook_tools, "httpx", FakeHttpx)
+    monkeypatch.setattr(routes_webhook_tools, "is_allowed_url", lambda url: True)
+
+    calls = {"n": 0}
+
+    async def _allow(redis, ip, key, rate_per_min=60, burst=1):
+        calls["n"] += 1
+        return calls["n"] == 1
+
+    monkeypatch.setattr(routes_webhook_tools.ratelimit, "allow", _allow)
+
+    token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
+
+    async def _run():
+        async with AsyncClient(
+            transport=ASGITransport(app), base_url="http://test"
+        ) as client:
+            app.state.redis = fakeredis.aioredis.FakeRedis()
+            first = await client.post(
+                "/api/outlet/t1/webhooks/test",
+                json={"url": "http://example.com/hook", "event": "ping"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            second = await client.post(
+                "/api/outlet/t1/webhooks/test",
+                json={"url": "http://example.com/hook", "event": "ping"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        return first, second
+
+    resp_ok, resp_limit = asyncio.run(_run())
+    assert resp_ok.status_code == 200
+    assert resp_limit.status_code == 429
+    err = resp_limit.json()["error"]
+    assert err["code"] == "RATE_LIMIT"
+    assert "retry in" in err["hint"]
+
+
 def test_webhook_replay(monkeypatch):
     existing = NotificationOutbox(
         event="foo",

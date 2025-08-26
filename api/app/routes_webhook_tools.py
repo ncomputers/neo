@@ -7,15 +7,17 @@ import os
 import time
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import AnyHttpUrl, BaseModel
 
 from .auth import User, role_required
 from .models_tenant import NotificationOutbox
 from .routes_outbox_admin import _session
 from .security.webhook_egress import is_allowed_url
+from .security import ratelimit
+from .utils import ratelimits
 from .utils.audit import audit
-from .utils.responses import ok
+from .utils.responses import ok, rate_limited
 from .utils.webhook_signing import sign
 
 router = APIRouter()
@@ -31,10 +33,21 @@ class WebhookTestRequest(BaseModel):
 async def webhook_test(
     tenant_id: str,
     body: WebhookTestRequest,
+    request: Request,
     user: User = Depends(role_required("super_admin", "outlet_admin")),
 ) -> dict:
     if not is_allowed_url(str(body.url)):
         raise HTTPException(status_code=400, detail="EGRESS_BLOCKED")
+
+    redis = request.app.state.redis
+    ip = request.client.host if request.client else "unknown"
+    policy = ratelimits.exports()
+    allowed = await ratelimit.allow(
+        redis, ip, "webhook-test", rate_per_min=policy.rate_per_min, burst=policy.burst
+    )
+    if not allowed:
+        retry_after = await redis.ttl(f"ratelimit:{ip}:webhook-test")
+        return rate_limited(retry_after)
 
     payload = {"event": body.event, "sample": True}
     data = json.dumps(payload, separators=(",", ":")).encode()
