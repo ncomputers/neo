@@ -1,0 +1,62 @@
+name: pdf-smoke
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: master
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      POSTGRES_MASTER_URL: postgresql://postgres:postgres@localhost:5432/master
+      POSTGRES_TENANT_DSN_TEMPLATE: postgresql://postgres:postgres@localhost:5432/tenant_{tenant_id}
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt pillow
+      - name: Migrate and seed demo data
+        run: |
+          PYTHONPATH=. python scripts/tenant_migrate.py --tenant demo
+          PYTHONPATH=. python scripts/demo_seed.py --tenant demo --reset
+      - name: Start API
+        run: |
+          uvicorn api.app.main:app &
+          sleep 5
+      - name: Run PDF smoke test
+        run: |
+          PYTHONPATH=. python scripts/pdf_smoke.py --base-url http://127.0.0.1:8000 --outdir pdfs
+      - name: Upload PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-smoke
+          path: pdfs
