@@ -7,13 +7,17 @@ mkdir -p "$BACKUP_DIR"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 DUMPFILE="$BACKUP_DIR/db_$TIMESTAMP.sql"
-ENCRYPTED="$DUMPFILE.enc"
+ENCRYPTED="$DUMPFILE.age"
 
 # Dump Postgres database
 pg_dump "$POSTGRES_URL" > "$DUMPFILE"
 
-# Encrypt the dump
-openssl enc -aes-256-cbc -salt -in "$DUMPFILE" -out "$ENCRYPTED" -k "$BACKUP_PASSPHRASE"
+# Encrypt the dump with age
+if [ -z "${BACKUP_PUBLIC_KEY:-}" ]; then
+  echo "BACKUP_PUBLIC_KEY is required" >&2
+  exit 1
+fi
+age --encrypt -r "$BACKUP_PUBLIC_KEY" -o "$ENCRYPTED" "$DUMPFILE"
 rm "$DUMPFILE"
 
 # Upload to S3/MinIO if configured
