@@ -73,3 +73,15 @@ last 500 reports are kept in Redis for 24 hours and can be inspected via:
 GET /admin/csp/reports
 ```
 
+## Test Alert
+
+Verify paging paths by emitting a synthetic alert:
+
+```bash
+python scripts/emit_test_alert.py --message "Test alert"
+```
+
+This should trigger a Slack message in `#ops` and an email to
+`ops@example.com`. A scheduled GitHub Actions job sends this once a month
+to ensure the route stays healthy.
+
