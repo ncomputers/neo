@@ -33,6 +33,22 @@ Owners may aggregate performance across specific outlets:
 GET /api/analytics/outlets?ids=t1,t2&from=YYYY-MM-DD&to=YYYY-MM-DD
 ```
 
-The response includes combined orders, sales, average order value, top items
-and median preparation time for the selected outlets. Adding ``format=csv``
-returns a CSV export with per‑outlet metrics.
+The response includes combined orders, sales, average order value, top items,
+median preparation time (prep SLA) and a ``voids_pct`` representing the
+percentage of orders cancelled during the period.
+
+A sample payload:
+
+```json
+{
+  "orders": 42,
+  "sales": 1234.0,
+  "aov": 29.38,
+  "top_items": [{"name": "Veg Item", "qty": 10}],
+  "median_prep": 300.0,
+  "voids_pct": 5.0
+}
+```
+
+Appending ``format=csv`` returns a CSV export with per‑outlet rows, including
+the ``voids_pct`` column.
