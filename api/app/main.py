@@ -103,6 +103,7 @@ from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_privacy import router as admin_privacy_router
+from .routes_privacy_dsar import router as privacy_dsar_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
@@ -125,6 +126,7 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
+from .routes_guest_consent import router as guest_consent_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_help import router as help_router
@@ -873,6 +875,7 @@ app.include_router(auth_2fa_router)
 app.include_router(guest_menu_router)
 app.include_router(guest_order_router)
 app.include_router(guest_bill_router)
+app.include_router(guest_consent_router)
 app.include_router(counter_guest_router)
 app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
@@ -897,6 +900,7 @@ app.include_router(security_router)
 app.include_router(jobs_status_router)
 app.include_router(dlq_router)
 app.include_router(admin_privacy_router)
+app.include_router(privacy_dsar_router)
 app.include_router(outbox_admin_router)
 app.include_router(webhook_tools_router)
 app.include_router(orders_batch_router)
