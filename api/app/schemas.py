@@ -38,3 +38,4 @@ class Item(ItemIn):
     id: UUID
     image_url: Optional[str] = None
     pending_price: Optional[int] = None
+    strike_price: Optional[int] = None

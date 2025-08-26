@@ -14,11 +14,13 @@ QR pack generation events are audited and can be exported via admin APIs. See
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
-Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages.
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports are available at `/admin/csp/reports`.
 
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
+
+Tenants can define `happy_hour` windows with percent or flat discounts applied during the specified times.
 
 The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
@@ -130,6 +132,10 @@ Migration `0010_hot_path_indexes` adds indexes on frequently queried columns
 and, when running on PostgreSQL, ensures monthly partitions for `invoices` and
 `payments` based on `created_at`. SQLite deployments skip the partition step but
 still benefit from the new indexes.
+
+Hot query plans are checked in CI using `scripts/plan_guard.py`, which runs
+`EXPLAIN ANALYZE` and compares the p95 execution time against baselines in
+`.ci/baselines/`.
 
 ## Continuous Integration
 
