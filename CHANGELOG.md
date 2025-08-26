@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Update GitHub Actions workflows to use `actions/upload-artifact@v4`.
+
 ### Added
 
 - Flagged server-side menu A/B testing with deterministic bucketing and exposure tracking.
