@@ -33,3 +33,7 @@ All notable changes to this project will be documented in this file.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 
+## v1.0.0-rc - 2025-08-25
+
+- Initial release candidate.
+

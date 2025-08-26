@@ -193,7 +193,7 @@ validate_on_boot()
 settings = get_settings()
 app = FastAPI(
     title="Neo API",
-    version="0.1.0",
+    version="1.0.0-rc",
     servers=[{"url": "/"}],
     openapi_url="/openapi.json",
 )
