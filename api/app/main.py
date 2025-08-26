@@ -79,7 +79,7 @@ from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
-    CorrelationIdMiddleware,
+    RequestIdMiddleware,
     GuestBlockMiddleware,
     GuestRateLimitMiddleware,
     HTMLErrorPagesMiddleware,
@@ -99,6 +99,7 @@ from .middlewares.security import SecurityMiddleware
 from .middlewares.subscription_guard import SubscriptionGuard
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
+from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_admin_dlq import router as admin_dlq_router
 from .routes_admin_menu import router as admin_menu_router
@@ -106,8 +107,6 @@ from .routes_admin_ops import router as admin_ops_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_support import router as admin_support_router
-from .routes_admin_ops import router as admin_ops_router
-
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -126,9 +125,6 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
-from .routes_admin_dlq import router as admin_dlq_router
-from .routes_admin_privacy import router as admin_privacy_router
-
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_help import router as help_router
@@ -171,11 +167,11 @@ from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
 from .routes_tenant_sandbox import router as tenant_sandbox_router
 from .routes_time_skew import router as time_skew_router
-
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhook_tools import router as webhook_tools_router
 from .routes_webhooks import router as webhooks_router
+from .routes_whatsapp_status import router as whatsapp_status_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -222,7 +218,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)
 app.add_middleware(HTMLErrorPagesMiddleware, static_dir=static_dir)
-app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
@@ -255,26 +251,36 @@ app.include_router(menu_router, prefix="/menu")
 
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
+configure_logging(getattr(logging, LOG_LEVEL))
 logger = logging.getLogger("api")
-handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter(
-        "%(message)s" if LOG_FORMAT == "json" else "[%(levelname)s] %(message)s"
-    )
-)
-logger.addHandler(handler)
-logger.setLevel(LOG_LEVEL)
 init_sentry(env=os.getenv("ENV"))
 
 
 @app.exception_handler(StarletteHTTPException)
 async def http_error_handler(request: Request, exc: StarletteHTTPException):
+    logger.warning(
+        exc.detail,
+        extra={
+            "status": exc.status_code,
+            "route": request.url.path,
+            "tenant": request.headers.get("X-Tenant"),
+            "user": request.headers.get("X-User"),
+        },
+    )
     return JSONResponse(err(exc.status_code, exc.detail), status_code=exc.status_code)
 
 
 @app.exception_handler(Exception)
 async def general_error_handler(request: Request, exc: Exception):
+    logger.exception(
+        "unhandled_error",
+        extra={
+            "status": 500,
+            "route": request.url.path,
+            "tenant": request.headers.get("X-Tenant"),
+            "user": request.headers.get("X-User"),
+        },
+    )
     capture_exception(exc)
     return JSONResponse(err(500, "Internal Server Error"), status_code=500)
 
@@ -895,6 +901,7 @@ app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
+app.include_router(whatsapp_status_router)
 app.include_router(checkout_router)
 app.include_router(feedback_router)
 app.include_router(pilot_feedback_router)

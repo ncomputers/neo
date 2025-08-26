@@ -1,4 +1,3 @@
-from .correlation import CorrelationIdMiddleware
 from .error_pages import HTMLErrorPagesMiddleware
 from .feature_flags import FeatureFlagsMiddleware
 from .guest_block import GuestBlockMiddleware
@@ -13,9 +12,10 @@ from .security import SecurityMiddleware
 from .table_state_guard import TableStateGuardMiddleware
 from .api_key_auth import APIKeyAuthMiddleware
 from .pin_security import PinSecurityMiddleware
+from .request_id import RequestIdMiddleware
 
 __all__ = [
-    "CorrelationIdMiddleware",
+    "RequestIdMiddleware",
     "LoggingMiddleware",
     "GuestRateLimitMiddleware",
     "GuestBlockMiddleware",

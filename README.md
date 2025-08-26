@@ -24,7 +24,7 @@ Dedicated GitHub Actions workflows run Bandit, pip-audit, and ruff on every pull
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
 
-Tenants can define `happy_hour` windows with percent or flat discounts applied during the specified times.
+Tenants can define `happy_hour_windows` with percent or flat discounts applied during the specified times. Enable the `FLAG_HAPPY_HOUR` feature to activate this discounting.
 
 The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
@@ -458,8 +458,8 @@ hits exactly `0` when an order is `ready` or `served`.
 Guests who share a phone number and opt in to WhatsApp receive order status
 updates when their order is accepted, out for delivery, or ready. Messages are
 queued through the notification outbox and delivered via the configured
-WhatsApp provider. Set `WHATSAPP_GUEST_UPDATES_ENABLED=true` to enable these
-messages.
+WhatsApp provider. Set `WHATSAPP_GUEST_UPDATES_ENABLED=true` and enable the
+`WA_ENABLED` feature flag (`FLAG_WA_ENABLED=1`) to activate these messages.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
 ### Guest request limits

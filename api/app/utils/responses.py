@@ -16,7 +16,7 @@ def err(
     hint: str | None = None,
 ) -> Dict[str, Any]:
     """Return an error envelope."""
-    from ..middlewares.logging import request_id_ctx
+    from ..middlewares.request_id import request_id_ctx
 
     error: Dict[str, Any] = {"code": code, "message": message}
     if hint:

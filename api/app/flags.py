@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Central registry for feature flags.
 
 Flags support a three-level precedence order:
@@ -8,6 +6,8 @@ Flags support a three-level precedence order:
 2. Per-tenant override via model attributes or ``tenant.features`` mapping
 3. Default defined in :data:`REGISTRY`
 """
+
+from __future__ import annotations
 
 import os
 from typing import Any, Dict
@@ -19,6 +19,9 @@ REGISTRY: Dict[str, Dict[str, Any]] = {
     "hotel_mode": {"default": False, "tenant_attr": "enable_hotel"},
     "counter_mode": {"default": False, "tenant_attr": "enable_counter"},
     "simple_modifiers": {"default": False},
+    "wa_enabled": {"default": False},
+    "happy_hour": {"default": False},
+
 }
 
 

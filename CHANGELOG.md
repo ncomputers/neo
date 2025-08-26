@@ -19,10 +19,14 @@ All notable changes to this project will be documented in this file.
 - Soft-delete support for menu items and tables with restore endpoints and
   status included in exports.
 - Bandit, pip-audit, and ruff GitHub Actions workflows to block risky code and dependencies.
+
+- Request-id middleware with JSON log configuration for request correlation.
+
 - Admin APIs to soft-delete and restore tables and menu items with optional
   inclusion of deleted records via ``include_deleted``.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
+- Controlled cancellation flow with `/orders/{id}/void/request` and `/void/approve` endpoints, reversing stock, adjusting invoices and auditing each step.
 - Printable invoice and KOT templates consume middleware-provided CSP nonces on inline styles to harden rendering.
 - Add tests ensuring CSP nonces are applied on printable invoice and KOT pages.
 - Slow query logging with WARNs above the configurable threshold and 1% sampling of regular queries.
@@ -36,6 +40,8 @@ All notable changes to this project will be documented in this file.
   accepted, out for delivery, or ready.
 - WhatsApp guest notifications are gated by the `WHATSAPP_GUEST_UPDATES_ENABLED`
   environment variable.
+- Status updates are sent via the WhatsApp provider with retry/backoff and
+  audit logging, gated by the `FLAG_WA_ENABLED` feature flag.
 - Menu items support JSON-defined modifiers and combos with server-side pricing.
 - Menu items expose dietary and allergen tags with guest filter support.
 - Feature-flagged menu modifiers and combos with server-side pricing (`FLAG_SIMPLE_MODIFIERS`).
@@ -48,7 +54,7 @@ All notable changes to this project will be documented in this file.
 
 - Script to bulk seed a large dataset for local scale testing.
 
-- Support happy-hour pricing via scheduled discount windows.
+- Feature-flagged happy-hour pricing via scheduled `happy_hour_windows` with coupons disabled during discount windows.
 
 ### Fixed
 

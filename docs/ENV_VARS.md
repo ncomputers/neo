@@ -35,6 +35,7 @@ The application relies on the following environment variables:
 | `BUILT_AT` (optional) | Build timestamp exposed by the `/version` endpoint. | `2024-01-01T00:00:00Z` |
 | `ENV` (optional) | Deployment environment (`prod`, `staging`, or `dev`). | `prod` |
 | `FLAG_SIMPLE_MODIFIERS` | Enable basic menu modifiers and combos. | `1` |
+| `FLAG_WA_ENABLED` | Enable WhatsApp status notifications. | `1` |
 
 ## JWT/JOSE
 
