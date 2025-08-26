@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- L1 support console for tenant/table/order lookup with safe actions (resend invoice, reprint KOT, replay webhook, unlock PIN) and audit logging.
 - Cache last 50 invoice PDFs per outlet for offline review.
 - Collect CSP violation reports via `/csp/report` with paginated admin viewer and query/token redaction.
 - /time/skew endpoint returns server epoch for client clock skew detection.
@@ -40,6 +41,8 @@ All notable changes to this project will be documented in this file.
 - Idempotent offline order queue using client-side `op_id` dedupe.
 - Consent-gated guest receipts vault with `/guest/receipts` listing the last 10
   redacted bills. Retention defaults to 30 days and is configurable per tenant.
+- Offline queue and background sync for guest/counter orders with
+  `Idempotency-Key` deduplication.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
