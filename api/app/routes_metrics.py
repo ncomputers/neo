@@ -67,6 +67,16 @@ notifications_outbox_failed_total = Counter(
 )
 notifications_outbox_failed_total.inc(0)
 
+ab_exposures_total = Counter(
+    "ab_exposures_total", "Experiment exposures", ["experiment", "variant"]
+)
+ab_exposures_total.labels(experiment="sample", variant="control").inc(0)
+
+ab_conversions_total = Counter(
+    "ab_conversions_total", "Experiment conversions", ["experiment", "variant"]
+)
+ab_conversions_total.labels(experiment="sample", variant="control").inc(0)
+
 webhook_attempts_total = Counter(
     "webhook_attempts_total", "Total webhook delivery attempts", ["destination"]
 )
@@ -128,6 +138,11 @@ kot_delay_alerts_total = Counter(
     "kot_delay_alerts_total", "Total KOT delay alerts"
 )
 kot_delay_alerts_total.inc(0)
+
+
+def record_ab_conversion(experiment: str, variant: str) -> None:
+    """Increment conversion counter for an experiment variant."""
+    ab_conversions_total.labels(experiment=experiment, variant=variant).inc()
 
 router = APIRouter()
 

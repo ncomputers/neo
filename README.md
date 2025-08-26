@@ -88,6 +88,26 @@ Request bodies and query parameters are scrubbed of sensitive keys such as
 JSON logger further redacts phone numbers, email addresses, and UTR values in
 log messages using regex filters.
 
+## A/B testing
+
+The API includes a deterministic allocator that maps device IDs into weighted
+experiment variants. Clients can query their assignment via
+`GET /api/ab/{experiment}` by providing a `device-id` header or `device_id`
+query parameter. Set `FLAG_AB_TESTS=0` to globally disable experiments and
+force the `"control"` variant.
+
+Prometheus metrics capture experiment outcomes:
+
+* `ab_exposures_total` – incremented when a variant is served.
+* `ab_conversions_total` – helper counter for recording conversions.
+
+Example:
+
+```bash
+curl -H 'device-id: 123' http://localhost:8000/api/ab/sample
+{"variant": "control"}
+```
+
 Media files can be persisted using either the local filesystem or S3. Configure
 storage with:
 
