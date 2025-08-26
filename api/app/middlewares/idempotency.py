@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from ..routes_metrics import idempotency_hits_total, idempotency_conflicts_total
+from ..routes_metrics import idempotency_conflicts_total, idempotency_hits_total
 
 
 class IdempotencyMetricsMiddleware(BaseHTTPMiddleware):
@@ -33,13 +34,12 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if (
             request.method == "POST"
-            and request.url.path.startswith(
-                ("/g/", "/h/", "/c/", "/api/outlet/")
-            )
+            and request.url.path.startswith(("/g/", "/h/", "/c/", "/api/outlet/"))
             and (key := request.headers.get("Idempotency-Key"))
         ):
             redis = request.app.state.redis
-            cache_key = f"idem:{request.url.path}:{key}"
+            key_hash = hashlib.sha256(key.encode()).hexdigest()
+            cache_key = f"idem:{request.url.path}:{key_hash}"
             cached = await redis.get(cache_key)
             if cached:
                 data = json.loads(cached)
@@ -54,7 +54,7 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
             await redis.set(
                 cache_key,
                 json.dumps({"status": response.status_code, "body": body.decode()}),
-                ex=300,
+                ex=86400,
             )
             return Response(
                 content=body,

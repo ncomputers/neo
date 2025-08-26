@@ -18,7 +18,7 @@ def _fetch(url: str, out_path: Path) -> None:
     with urlopen(url, timeout=10) as resp:  # noqa: S310 # nosec - controlled URL
         data = resp.read()
         elapsed = time.perf_counter() - start
-        if resp.status >= 400:
+        if resp.status != 200:
             raise RuntimeError(f"{url} -> {resp.status}")
         if elapsed > TIME_LIMIT:
             raise RuntimeError(f"{url} took {elapsed:.2f}s")

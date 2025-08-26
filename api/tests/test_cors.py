@@ -64,6 +64,7 @@ def test_security_headers(monkeypatch):
     assert "secure" in lower_cookie
     assert "samesite=lax" in lower_cookie
 
+
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
     monkeypatch.delenv("ENABLE_HSTS", raising=False)
     with pytest.raises(RuntimeError):
