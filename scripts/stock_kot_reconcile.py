@@ -12,12 +12,14 @@ Environment variables:
 - SMTP_USER: optional username for SMTP authentication
 - SMTP_PASS: optional password for SMTP authentication
 - OPS_EMAIL: destination email address for alerts
+- SMTP_FROM: optional override for the From header
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import logging
 import os
 import smtplib
 from email.message import EmailMessage
@@ -35,13 +37,41 @@ def parse_args() -> argparse.Namespace:
         default=5,
         help="Variance threshold to flag (default: 5)",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable debug logging",
+    )
     return parser.parse_args()
+
+
+REQUIRED_FIELDS = ["item", "sold_qty", "KOT_cnt", "variance"]
 
 
 def load_anomalies(path: str, threshold: int) -> List[Dict[str, str]]:
     with open(path, newline="") as fh:
         reader = csv.DictReader(fh)
-        anomalies = [row for row in reader if abs(int(row["variance"])) > threshold]
+        anomalies: List[Dict[str, str]] = []
+        for row in reader:
+            if not all(row.get(f) for f in REQUIRED_FIELDS):
+                logging.warning("Skipping row with missing fields: %s", row)
+                continue
+            try:
+                sold_qty = int(row["sold_qty"])
+                kot_cnt = int(row["KOT_cnt"])
+                variance = int(row["variance"])
+            except ValueError:
+                logging.warning("Skipping row with non-numeric values: %s", row)
+                continue
+            if abs(variance) > threshold:
+                anomalies.append(
+                    {
+                        "item": row["item"],
+                        "sold_qty": str(sold_qty),
+                        "KOT_cnt": str(kot_cnt),
+                        "variance": str(variance),
+                    }
+                )
     return anomalies
 
 
@@ -49,12 +79,15 @@ def send_email(anomalies: List[Dict[str, str]], threshold: int) -> None:
     host = os.getenv("SMTP_HOST")
     to_addr = os.getenv("OPS_EMAIL")
     if not host or not to_addr:
-        print("Skipping email. Set SMTP_HOST and OPS_EMAIL to enable alerts.")
+        logging.warning(
+            "Skipping email. Set SMTP_HOST and OPS_EMAIL to enable alerts."
+        )
         return
 
     port = int(os.getenv("SMTP_PORT", "25"))
     user = os.getenv("SMTP_USER")
     password = os.getenv("SMTP_PASS")
+    from_addr = os.getenv("SMTP_FROM") or user or "noreply@example.com"
 
     body_lines = [f"Variance greater than {threshold} detected:"]
     for row in anomalies:
@@ -64,7 +97,7 @@ def send_email(anomalies: List[Dict[str, str]], threshold: int) -> None:
 
     msg = EmailMessage()
     msg["Subject"] = "Stock vs KOT reconciliation anomalies"
-    msg["From"] = user or "noreply@example.com"
+    msg["From"] = from_addr
     msg["To"] = to_addr
     msg.set_content("\n".join(body_lines))
 
@@ -74,16 +107,21 @@ def send_email(anomalies: List[Dict[str, str]], threshold: int) -> None:
             server.login(user, password)
         server.send_message(msg)
 
-    print(f"Alert emailed to {to_addr} for {len(anomalies)} anomalies")
+    logging.info("Alert emailed to %s for %d anomalies", to_addr, len(anomalies))
 
 
 def main() -> None:
     args = parse_args()
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(levelname)s: %(message)s",
+    )
+
     anomalies = load_anomalies(args.csv, args.threshold)
     if anomalies:
         send_email(anomalies, args.threshold)
     else:
-        print("No anomalies above threshold")
+        logging.info("No anomalies above threshold")
 
 
 if __name__ == "__main__":
