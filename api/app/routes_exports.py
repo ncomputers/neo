@@ -14,7 +14,6 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from .db.replica import read_only
 from .db.tenant import get_engine
@@ -23,7 +22,7 @@ from .pdf.render import render_invoice
 from .repos_sqlalchemy import invoices_repo_sql
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import err
+from .utils.responses import err, rate_limited
 
 router = APIRouter()
 
@@ -78,10 +77,7 @@ async def daily_export(
     )
     if not allowed:
         retry_after = await redis.ttl(f"ratelimit:{ip}:exports")
-        return JSONResponse(
-            err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
-            status_code=HTTP_429_TOO_MANY_REQUESTS,
-        )
+        return rate_limited(retry_after)
 
     tz = os.getenv("DEFAULT_TZ", "UTC")
     tzinfo = ZoneInfo(tz)

@@ -3,8 +3,8 @@
 `GuestRateLimitMiddleware` throttles anonymous guest traffic hitting `/g/*`
 endpoints. It uses `security.ratelimit.allow` to enforce a limit of 60 requests
 per minute with a burst capacity of 100. When the limit is exceeded, the
-middleware returns `err("RATELIMITED", "TooManyRequests", {"retry_after": <seconds>})`
-with HTTP 429.
+middleware responds with `err("RATE_LIMIT", "TooManyRequests", hint="retry in Xs")`
+and HTTP 429.
 
 Guest POST bodies are also capped at 256KB; larger payloads trigger a
 `PAYLOAD_TOO_LARGE` (HTTP 413) response.

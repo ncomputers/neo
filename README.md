@@ -423,8 +423,8 @@ The API includes a Redis-backed rate limiter that blocks an IP after three conse
 ### Guest request limits
 
 Anonymous guest POSTs under `/g/*` are capped at 256KB. When rate limits are
-exceeded, responses use error code `RATELIMITED` and include a `retry_after`
-hint in seconds.
+exceeded, responses use error code `RATE_LIMIT` and include a hint like
+`retry in 10s`.
 
 ### Idempotency
 

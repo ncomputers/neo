@@ -14,7 +14,6 @@ from datetime import datetime
 
 import qrcode
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from .audit import log_event
@@ -23,7 +22,7 @@ from .db import SessionLocal
 from .models_master import TwoFactorBackupCode, TwoFactorSecret
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import err, ok
+from .utils.responses import err, ok, rate_limited
 
 router = APIRouter()
 
@@ -137,10 +136,7 @@ async def verify_2fa(
     )
     if not allowed:
         retry_after = await redis.ttl(f"ratelimit:{ip}:2fa-verify")
-        return JSONResponse(
-            err("RATELIMITED", "TooManyRequests", {"retry_after": max(retry_after, 0)}),
-            status_code=429,
-        )
+        return rate_limited(retry_after)
     with SessionLocal() as db:
         record = db.get(TwoFactorSecret, user.username)
         if not record or not record.confirmed_at:
