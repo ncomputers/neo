@@ -543,6 +543,7 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 ## Billing
 
 Admins can view their current plan and renewal date at `/billing`. The page links to a UPI or gateway URL for self‑serve renewals, and successful payment webhooks automatically extend the license.
+Set the `LICENSE_PAY_URL` environment variable to the payment link displayed on this page.
 
 ## PWA
 
