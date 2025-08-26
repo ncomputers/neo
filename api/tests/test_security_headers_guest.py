@@ -3,6 +3,7 @@ import pathlib
 import sys
 
 import fakeredis.aioredis
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
@@ -11,19 +12,25 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 def test_guest_page_headers(monkeypatch):
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("ENABLE_HSTS", "1")
-    monkeypatch.setenv("DB_URL", "postgresql://localhost/test")
-    monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
-    from api.app import main as app_main
 
-    importlib.reload(app_main)
-    app_main.app.state.redis = fakeredis.aioredis.FakeRedis()
+    import api.app.config.cors as cors
 
-    @app_main.app.get("/g/test")
+    importlib.reload(cors)
+    import api.app.middlewares.security as security
+
+    importlib.reload(security)
+    SecurityMiddleware = security.SecurityMiddleware
+
+    app = FastAPI()
+    app.state.redis = fakeredis.aioredis.FakeRedis()
+    app.add_middleware(SecurityMiddleware)
+
+    @app.get("/g/test")
     def _guest():
         return {"ok": True}
 
-    client = TestClient(app_main.app)
+    client = TestClient(app)
     resp = client.get("/g/test", headers={"Origin": "https://allowed.com"})
     assert resp.headers.get("X-Frame-Options") == "DENY"
     assert resp.headers.get("Referrer-Policy") == "same-origin"

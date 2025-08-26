@@ -14,7 +14,7 @@ QR pack generation events are audited and can be exported via admin APIs. See
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
-Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports (kept for 24 hours) are available at `/admin/csp/reports`.
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. HTML pages also emit a `Content-Security-Policy-Report-Only` header directing violation details to `/csp/report`. The endpoint retains the latest 500 reports for 24 hours with any `token` query parameters redacted; administrators can review them at `/admin/csp/reports`.
 
 Guest-facing order endpoints accept an `Idempotency-Key` header (UUID). Successful responses are cached for 24 hours and the key is recorded in audit logs to guard against duplicate charges.
 
