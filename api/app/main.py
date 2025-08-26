@@ -166,6 +166,7 @@ from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
 from .routes_tenant_sandbox import router as tenant_sandbox_router
+from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_time_skew import router as time_skew_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
@@ -897,6 +898,7 @@ app.include_router(legal_router)
 app.include_router(maintenance_router)
 app.include_router(tenant_close_router)
 app.include_router(tenant_sandbox_router)
+app.include_router(sandbox_bootstrap_router)
 app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
