@@ -37,8 +37,9 @@ endpoint and stored against the customer's record.
 ## Web Vitals RUM
 
 When the `analytics` feature flag is enabled and a guest or admin has granted
-consent, the PWA reports [Web Vitals](https://web.dev/vitals/) metrics for both
-contexts. Largest Contentful Paint (LCP), Cumulative Layout Shift (CLS) and
-Interaction to Next Paint (INP) are POSTed to `/rum/vitals` and exported as
-Prometheus histograms.
+consent, the PWA reports [Web Vitals](https://web.dev/vitals/) for each route
+without using any third-party libraries. Largest Contentful Paint (LCP),
+Cumulative Layout Shift (CLS), Interaction to Next Paint (INP) and Time to
+First Byte (TTFB) are POSTed to `/rum/vitals` along with the current route and
+exported as Prometheus histograms.
 

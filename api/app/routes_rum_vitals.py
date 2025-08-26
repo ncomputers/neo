@@ -19,28 +19,35 @@ router = APIRouter(prefix="/rum")
 lcp_hist = Histogram(
     "web_vitals_lcp_seconds",
     "Largest Contentful Paint (s)",
-    ["ctx"],
+    ["route"],
     buckets=(0.5, 1, 2.5, 4, 6, 10),
 )
 cls_hist = Histogram(
     "web_vitals_cls",
     "Cumulative Layout Shift",
-    ["ctx"],
+    ["route"],
     buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1, 2),
 )
 inp_hist = Histogram(
     "web_vitals_inp_seconds",
     "Interaction to Next Paint (s)",
-    ["ctx"],
+    ["route"],
     buckets=(0.1, 0.25, 0.5, 1, 2.5, 4, 6, 10),
+)
+ttfb_hist = Histogram(
+    "web_vitals_ttfb_seconds",
+    "Time to First Byte (s)",
+    ["route"],
+    buckets=(0.05, 0.1, 0.25, 0.5, 1, 2, 4),
 )
 
 
 class VitalsPayload(BaseModel):
-    ctx: str = "guest"
+    route: str
     lcp: float | None = None
     cls: float | None = None
     inp: float | None = None
+    ttfb: float | None = None
     consent: bool = False
 
 
@@ -64,13 +71,15 @@ async def collect_vitals(
     if not payload.consent or not await _analytics_enabled(tenant_id):
         return ok({})
 
-    labels = {"ctx": payload.ctx}
+    labels = {"route": payload.route}
     if payload.lcp is not None:
         lcp_hist.labels(**labels).observe(payload.lcp)
     if payload.cls is not None:
         cls_hist.labels(**labels).observe(payload.cls)
     if payload.inp is not None:
         inp_hist.labels(**labels).observe(payload.inp)
+    if payload.ttfb is not None:
+        ttfb_hist.labels(**labels).observe(payload.ttfb)
     return ok({})
 
 
