@@ -111,6 +111,7 @@ from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
+from .routes_billing import router as billing_router
 from .routes_checkout_gateway import router as checkout_router
 from .routes_counter_admin import router as counter_admin_router
 from .routes_counter_guest import router as counter_guest_router
@@ -510,29 +511,6 @@ async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> di
     return ok({"status": "verified"})
 
 
-@app.get("/billing")
-async def billing_info(x_tenant_id: str = Header(...)) -> dict:
-    tenant = TENANTS.get(x_tenant_id)
-    if tenant is None:
-        raise HTTPException(status_code=404, detail="Tenant not found")
-    plan = tenant.get("plan")
-    next_renewal = tenant.get("subscription_expires_at")
-    pay_url = os.getenv("LICENSE_PAY_URL", "")
-    grace_days = tenant.get("grace_period_days", 7)
-    now = datetime.utcnow()
-    grace = False
-    if next_renewal:
-        grace = next_renewal < now <= next_renewal + timedelta(days=grace_days)
-    return ok(
-        {
-            "plan": plan,
-            "next_renewal": next_renewal,
-            "pay_url": pay_url,
-            "grace": grace,
-        }
-    )
-
-
 @app.get("/health")
 async def health() -> dict:
     return ok({"status": "ok"})
@@ -876,6 +854,7 @@ app.include_router(guest_bill_router)
 app.include_router(counter_guest_router)
 app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
+app.include_router(billing_router)
 app.include_router(onboarding_router)
 app.include_router(qrpack_router)
 app.include_router(order_void_router)
