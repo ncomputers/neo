@@ -118,6 +118,7 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
+from .routes_admin_dlq import router as admin_dlq_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
@@ -845,6 +846,7 @@ app.include_router(menu_import_router)
 app.include_router(alerts_router)
 app.include_router(security_router)
 app.include_router(jobs_status_router)
+app.include_router(admin_dlq_router)
 app.include_router(admin_privacy_router)
 app.include_router(outbox_admin_router)
 app.include_router(webhook_tools_router)
