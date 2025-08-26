@@ -418,6 +418,13 @@ notifications. Messages are fanned out via Redis channels named
 an `eta_secs` field. The ETA is computed from an exponential moving
 average and decreases with elapsed prep time. It never goes below zero and
 hits exactly `0` when an order is `ready` or `served`.
+
+### Guest Notifications
+
+Guests who share a phone number and opt in to WhatsApp receive order status
+updates when their order is accepted, out for delivery, or ready. Messages are
+queued through the notification outbox and delivered via the configured
+WhatsApp provider.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
 ### Guest request limits
