@@ -99,13 +99,35 @@ force the `"control"` variant.
 Prometheus metrics capture experiment outcomes:
 
 * `ab_exposures_total` – incremented when a variant is served.
-* `ab_conversions_total` – helper counter for recording conversions.
+* `ab_conversions_total` – helper counter for recording conversions. A bill
+  generation records a conversion for the requester's variant.
 
 Example:
 
 ```bash
 curl -H 'device-id: 123' http://localhost:8000/api/ab/sample
 {"variant": "control"}
+```
+
+To review experiment performance, aggregate stats via:
+
+```bash
+curl \
+  'http://localhost:8000/exp/ab/report?experiment=sample&from=2023-01-01&to=2023-01-31'
+```
+
+```json
+{
+  "variant_stats": [
+    {
+      "name": "control",
+      "exposures": 100,
+      "conversions": 10,
+      "conv_rate": 0.1,
+      "lift_vs_control": 0.0
+    }
+  ]
+}
 ```
 
 Media files can be persisted using either the local filesystem or S3. Configure

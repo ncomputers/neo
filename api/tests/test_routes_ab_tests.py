@@ -1,6 +1,7 @@
 import os
 import pathlib
 import sys
+import types
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
@@ -8,6 +9,9 @@ os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
+
+sys.modules.setdefault("api.app.routes_admin_pilot", types.SimpleNamespace(router=None))
+sys.modules.setdefault("api.app.routes_admin_print", types.SimpleNamespace(router=None))
 
 from fastapi.testclient import TestClient
 import fakeredis.aioredis

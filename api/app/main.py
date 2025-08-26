@@ -102,6 +102,7 @@ from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_ab_tests import router as ab_tests_router
+from .routes_ab_report import router as ab_report_router
 from .routes_accounting import router as accounting_router
 from .routes_accounting_exports import router as accounting_exports_router
 from .routes_admin_devices import router as admin_devices_router
@@ -923,6 +924,7 @@ app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
 app.include_router(ab_tests_router)
+app.include_router(ab_report_router)
 app.include_router(rum_router)
 app.include_router(analytics_outlets_router)
 app.include_router(owner_analytics_router)

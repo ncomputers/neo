@@ -10,6 +10,42 @@
     }
   ],
   "paths": {
+    "/exp/ab/report": {
+      "get": {
+        "summary": "Experiment report",
+        "operationId": "ab_report_exp_ab_report_get",
+        "parameters": [
+          {
+            "name": "experiment",
+            "in": "query",
+            "required": true,
+            "schema": {"title": "Experiment", "type": "string"}
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {"title": "From", "type": "string"}
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {"title": "To", "type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ABReport"}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/accounting/sales_register.csv": {
       "get": {
         "tags": [
@@ -8417,6 +8453,36 @@
   },
   "components": {
     "schemas": {
+      "ABVariantStat": {
+        "title": "ABVariantStat",
+        "required": [
+          "name",
+          "exposures",
+          "conversions",
+          "conv_rate",
+          "lift_vs_control"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {"title": "Name", "type": "string"},
+          "exposures": {"title": "Exposures", "type": "number"},
+          "conversions": {"title": "Conversions", "type": "number"},
+          "conv_rate": {"title": "Conv Rate", "type": "number"},
+          "lift_vs_control": {"title": "Lift Vs Control", "type": "number"}
+        }
+      },
+      "ABReport": {
+        "title": "ABReport",
+        "required": ["variant_stats"],
+        "type": "object",
+        "properties": {
+          "variant_stats": {
+            "title": "Variant Stats",
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/ABVariantStat"}
+          }
+        }
+      },
       "BatchPayload": {
         "properties": {
           "orders": {
