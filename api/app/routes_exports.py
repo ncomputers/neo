@@ -6,8 +6,10 @@ import asyncio
 import csv
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timedelta, timezone
 from io import BytesIO, StringIO, TextIOWrapper
+from zipfile import ZipFile
+
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
@@ -17,10 +19,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.replica import read_only
 from .db.tenant import get_engine
-from .models_tenant import Invoice
+from .models_tenant import Invoice, Payment
+from .pdf.render import render_invoice
+from .repos_sqlalchemy import invoices_repo_sql
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.csv_stream import stream_rows
+from .utils.csv_stream import stream_csv
+
 from .utils.rate_limit import rate_limited
 from .utils.responses import err
 
@@ -59,20 +64,20 @@ def _iter_bytes(buffer: BytesIO):
         yield chunk
 
 
-@router.get(
-    "/api/outlet/{tenant_id}/exports/sample.csv",
-    responses={200: {"content": {"text/event-stream": {}}}},
-)
-async def sample_export(
+@router.get("/api/outlet/{tenant_id}/exports/invoices.csv")
+@read_only
+async def invoices_export(
     tenant_id: str,
     request: Request,
-    rows: int = 0,
     limit: int = DEFAULT_LIMIT,
+    cursor: int | None = None,
+    job: str | None = None,
+    chunk_size: int = 1000,
 ) -> StreamingResponse:
-    """Stream a sample CSV with progress events for testing."""
-    await request.body()  # consume request body to avoid ASGI warnings
+    """Stream invoice rows as CSV."""
 
-    limit, _ = _cap_limit(min(rows, limit))
+    limit, cap_hint = _cap_limit(limit)
+
 
     redis = request.app.state.redis
     ip = request.client.host if request.client else "unknown"
@@ -83,20 +88,78 @@ async def sample_export(
     if not allowed:
         retry_after = await redis.ttl(f"ratelimit:{ip}:exports")
         return rate_limited(retry_after)
-    if rows > HARD_LIMIT:
-        return JSONResponse(
-            err("ROW_LIMIT", "row limit exceeded", hint="max 100k rows"),
-            status_code=400,
-        )
+    if job:
+        await redis.set(f"export:{job}:progress", 0)
 
-    def event_gen():
-        chunks = stream_rows(((i,) for i in range(limit)), header=["id"])
-        count = 0
-        for chunk in chunks:
-            yield f"data: {chunk}\n\n"
-            count += 1
-            if count % 1000 == 0:
-                yield f"event: progress\ndata: {count}\n\n"
+    async with _session(tenant_id) as session:
+
+        async def row_iter():
+            exported = 0
+            last_id = cursor or 0
+            while exported < limit:
+                chunk = min(SCAN_LIMIT, limit - exported)
+                stmt = (
+                    select(
+                        Invoice.id,
+                        Invoice.number,
+                        Invoice.total,
+                        Invoice.created_at,
+                    )
+                    .where(Invoice.id > last_id)
+                    .order_by(Invoice.id)
+                    .limit(chunk)
+                )
+                rows = (await session.execute(stmt)).all()
+                if not rows:
+                    break
+                for inv_id, number, total_amt, created_at in rows:
+                    exported += 1
+                    if job and exported % 1000 == 0:
+                        await redis.set(f"export:{job}:progress", exported)
+                    yield [
+                        inv_id,
+                        number,
+                        float(total_amt),
+                        created_at.isoformat(),
+                    ]
+                    last_id = inv_id
+                    if exported >= limit:
+                        break
+            if cap_hint:
+                yield ["", "", "", "cap hit"]
+
+        headers = ["id", "number", "total", "created_at"]
+        iterator = stream_csv(headers, row_iter(), chunk_size=chunk_size)
+    return StreamingResponse(iterator, media_type="text/csv")
+
+
+@router.get(
+    "/api/outlet/{tenant_id}/exports/invoices/progress/{job}",
+    response_class=StreamingResponse,
+    responses={200: {"content": {"text/event-stream": {}}}},
+)
+async def invoices_export_progress(
+    tenant_id: str, job: str, request: Request
+) -> StreamingResponse:
+    """Emit invoice export progress via SSE."""
+
+    redis = request.app.state.redis
+
+    async def event_gen():
+        last = 0
+        while True:
+            val = await redis.get(f"export:{job}:progress")
+            if val is None:
+                if last:
+                    break
+                await asyncio.sleep(0.1)
+                continue
+            count = int(val)
+            if count > last:
+                yield f'event: progress\ndata: {{"count": {count}}}\n\n'
+                last = count
+            await asyncio.sleep(0.1)
+
 
     return StreamingResponse(event_gen(), media_type="text/event-stream")
 
@@ -298,7 +361,6 @@ async def daily_export(
 
         headers = {"Content-Disposition": "attachment; filename=export.zip"}
         more = await session.scalar(
-
             select(Invoice.id)
             .where(
                 Invoice.created_at >= start_dt,
@@ -321,60 +383,6 @@ async def daily_export(
                 .limit(1)
             )
 
-        async def row_iter():
-            exported = 0
-            last = cursor
-            header = ["id", "no", "date", "subtotal", "tax", "tip", "total", "settled"]
-            yield ",".join(header) + "\n"
-            while exported < limit:
-                chunk = min(SCAN_LIMIT, limit - exported)
-                conditions = [
-                    Invoice.created_at >= start_dt,
-                    Invoice.created_at <= end_dt,
-                    Invoice.id > last,
-                ]
-                if last_id is not None:
-                    conditions.append(Invoice.id <= last_id)
-                stmt = (
-                    select(
-                        Invoice.id,
-                        Invoice.number,
-                        Invoice.bill_json,
-                        Invoice.tip,
-                        Invoice.total,
-                        Invoice.settled,
-                        Invoice.created_at,
-                    )
-                    .where(*conditions)
-                    .order_by(Invoice.id)
-                    .limit(chunk)
-                )
-                rows = (await session.execute(stmt)).all()
-                if not rows:
-                    break
-                for (
-                    inv_id,
-                    number,
-                    bill,
-                    tip,
-                    total_amt,
-                    settled,
-                    created_at,
-                ) in rows:
-                    inv_date = created_at.astimezone(tzinfo).date().isoformat()
-                    subtotal = bill.get("subtotal", 0)
-                    tax = sum(bill.get("tax_breakup", {}).values())
-                    line = f"{inv_id},{number},{inv_date},{subtotal},{tax},{float(tip or 0)},{float(total_amt)},{settled}\n"
-                    yield line
-                    exported += 1
-                    last = inv_id
-                    if progress:
-                        request.app.state.export_progress[progress] = exported
-                if len(rows) < chunk or (last_id and last >= last_id):
-                    break
-            if progress:
-                request.app.state.export_progress.pop(progress, None)
-
         headers = {"Content-Disposition": "attachment; filename=invoices.csv"}
         if more is not None:
             headers["Next-Cursor"] = str(last_id)
@@ -382,7 +390,9 @@ async def daily_export(
             headers["X-Row-Limit"] = str(HARD_LIMIT)
         if job:
             await redis.delete(f"export:{job}:progress")
-        return StreamingResponse(_iter_bytes(bundle), media_type="application/zip", headers=headers)
+        return StreamingResponse(
+            _iter_bytes(bundle), media_type="application/zip", headers=headers
+        )
 
 
 @router.get(
@@ -390,7 +400,9 @@ async def daily_export(
     response_class=StreamingResponse,
     responses={200: {"content": {"text/event-stream": {}}}},
 )
-async def daily_export_progress(tenant_id: str, job: str, request: Request) -> StreamingResponse:
+async def daily_export_progress(
+    tenant_id: str, job: str, request: Request
+) -> StreamingResponse:
     """Stream export progress via SSE."""
 
     redis = request.app.state.redis
