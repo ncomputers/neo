@@ -84,6 +84,6 @@ python scripts/emit_test_alert.py --message "Test alert"
 ```
 
 This should trigger a Slack message in `#ops` and an email to
-`ops@example.com`. A scheduled GitHub Actions job sends this once a month
-to ensure the route stays healthy.
+`ops@example.com`. Scheduled GitHub Actions jobs send this once a month
+against both production and staging to ensure the route stays healthy.
 
