@@ -39,3 +39,5 @@ Use the gateway dashboard to simulate the webhook call back to
    reset the invoice's `settled` status. Include an `Idempotency-Key` header;
    results are cached for 24 hours and repeated calls with the same key
    return the original response without issuing a second refund.
+   Manual refunds can also be triggered with `POST /payments/{id}/refund`,
+   which requires the same header and shares the 24 hour response cache.

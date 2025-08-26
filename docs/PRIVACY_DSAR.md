@@ -7,6 +7,13 @@ Two administrative endpoints expose one-click Data Subject Access Request (DSAR)
 
 Both endpoints accept a JSON body with either a `phone` or `email` field. The delete route also accepts a `dry_run` flag that reports the number of affected rows without modifying data.
 
+For self-service requests the API also exposes tenant-agnostic routes:
+
+- `POST /privacy/dsar/export`
+- `POST /privacy/dsar/delete`
+
+These return customer, invoice and payment records for the supplied phone or email with payment UTRs redacted. Delete anonymises matching rows and zeroes consent flags.
+
 All invocations are audited and leverage existing retention/anonymisation helpers.
 
 ## DPDP data principal rights

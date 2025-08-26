@@ -11,16 +11,18 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from db.tenant import get_engine
 from domain import OrderStatus, can_transition
 from models_tenant import Order, OrderItem
 from .hooks import order_rejection
-from .services import ema as ema_service, push, whatsapp
+from .services import ema as ema_service, push, whatsapp, notifications
 from .services import printer_watchdog
+
 from repos_sqlalchemy import orders_repo_sql
+from .routes_metrics import kds_oldest_kot_seconds
 from utils.responses import ok
 from utils.audit import audit
 
@@ -46,13 +48,51 @@ async def _session(tenant_id: str):
 async def list_queue(tenant_id: str, request: Request) -> dict:
     """Return active orders along with printer agent status."""
     redis = request.app.state.redis
-    stale, qlen = await printer_watchdog.check(redis, tenant_id)
+    stale, qlen, oldest = await printer_watchdog.check(redis, tenant_id)
+
     async with _session(tenant_id) as session:
         try:
             orders = await orders_repo_sql.list_active(session, tenant_id)
+            result = await session.execute(
+                select(func.min(Order.placed_at)).where(
+                    Order.status.in_(
+                        [
+                            OrderStatus.PLACED.value,
+                            OrderStatus.ACCEPTED.value,
+                            OrderStatus.IN_PROGRESS.value,
+                            OrderStatus.READY.value,
+                            OrderStatus.HOLD.value,
+                        ]
+                    )
+                )
+            )
+            oldest = result.scalar_one_or_none()
         except PermissionError:
             raise HTTPException(status_code=403, detail="forbidden") from None
-    data = {"orders": orders, "printer_stale": stale, "retry_queue": qlen}
+    delay = 0.0
+    if oldest is not None:
+        now = datetime.now(timezone.utc)
+        if oldest.tzinfo is None:
+            oldest = oldest.replace(tzinfo=timezone.utc)
+        delay = (now - oldest).total_seconds()
+    kds_oldest_kot_seconds.labels(tenant=tenant_id).set(delay)
+    threshold = 900
+    delayed = delay > threshold
+    if delayed:
+        try:
+            await notifications.enqueue(
+                tenant_id, "kds.kot_delay", {"delay_secs": delay}
+            )
+        except Exception:  # pragma: no cover - best effort
+            pass
+
+    data = {
+        "orders": orders,
+        "printer_stale": stale,
+        "retry_queue": qlen,
+        "kot_delay": delayed,
+
+    }
     return ok(data)
 
 
@@ -72,6 +112,7 @@ async def _transition_order(tenant_id: str, order_id: int, dest: OrderStatus) ->
         if table_code and dest in {OrderStatus.ACCEPTED, OrderStatus.READY}:
             try:
                 from ..main import redis_client  # lazy import
+
                 phone = await redis_client.get(f"rt:wa:{tenant_id}:{table_code}")
             except Exception:  # pragma: no cover - best effort
                 phone = None
@@ -140,7 +181,6 @@ async def serve_order(tenant_id: str, order_id: int) -> dict:
     return await _transition_order(tenant_id, order_id, OrderStatus.SERVED)
 
 
-
 @router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/reject")
 @audit("reject_order")
 async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
@@ -149,6 +189,8 @@ async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
     ip = request.client.host if request.client else "unknown"
     await order_rejection.on_rejected(tenant_id, ip, request.app.state.redis)
     return result
+
+
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept")
 @audit("accept_item")
 async def accept_item(tenant_id: str, order_item_id: int) -> dict:
@@ -175,6 +217,7 @@ async def ready_item(tenant_id: str, order_item_id: int) -> dict:
 async def serve_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as served."""
     return await _transition_item(tenant_id, order_item_id, OrderStatus.SERVED)
+
 
 @router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/reject")
 @audit("reject_item")

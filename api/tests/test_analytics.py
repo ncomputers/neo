@@ -25,7 +25,7 @@ _capture_post.calls = []  # type: ignore[attr-defined]
 
 
 def test_track_requires_consent(monkeypatch):
-    monkeypatch.setenv("FLAG_ANALYTICS", "1")
+    monkeypatch.setenv("TENANT_ANALYTICS_ENABLED", "1")
     monkeypatch.setenv("POSTHOG_API_KEY", "phkey")
     monkeypatch.setenv("ANALYTICS_TENANTS", "")
     importlib.reload(analytics)
@@ -36,7 +36,7 @@ def test_track_requires_consent(monkeypatch):
     asyncio.run(analytics.track("demo", "evt", {"foo": "bar"}))
     assert _capture_post.calls == []  # no consent
 def test_track_redacts_pii(monkeypatch):
-    monkeypatch.setenv("FLAG_ANALYTICS", "1")
+    monkeypatch.setenv("TENANT_ANALYTICS_ENABLED", "1")
     monkeypatch.setenv("POSTHOG_API_KEY", "phkey")
     monkeypatch.setenv("ANALYTICS_TENANTS", "demo")
     importlib.reload(analytics)
@@ -52,6 +52,6 @@ def test_track_redacts_pii(monkeypatch):
         )
     )
     assert _capture_post.calls
-    props = _capture_post.calls[0]["json"]["properties"]
+    props = _capture_post.calls[0]["json"]["batch"][0]["properties"]
     assert props == {"foo": "bar"}
 

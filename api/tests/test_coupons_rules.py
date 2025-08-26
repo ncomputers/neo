@@ -105,6 +105,7 @@ async def test_non_stackable_codes_rejected(session):
         )
     assert exc.value.code == "NON_STACKABLE"
     assert "cannot be stacked" in str(exc.value)
+    assert exc.value.hint == "Remove non-stackable coupon"
 
 
 @pytest.mark.anyio

@@ -74,7 +74,7 @@ export default function GuestOrder() {
           </li>
         ))}
       </ul>
-      <footer className="mt-8 text-sm text-gray-500">
+      <footer className="mt-8 text-sm text-gray-600">
         <a
           href="/legal/privacy"
           className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
@@ -87,10 +87,16 @@ export default function GuestOrder() {
         >
           Terms
         </a>
-        <a href="/legal/refund" className="mx-2 hover:underline">
+        <a
+          href="/legal/refund"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           Refunds
         </a>
-        <a href="/legal/contact" className="mx-2 hover:underline">
+        <a
+          href="/legal/contact"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           Contact
         </a>
       </footer>
