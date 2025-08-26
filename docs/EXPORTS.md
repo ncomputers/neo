@@ -1,6 +1,7 @@
 # Exports
 
 Big export endpoints support cursor-based pagination so interrupted downloads can resume.
+Export downloads are provided via tenant-scoped, signed URLs to ensure isolation.
 
 ## Owner data export
 
