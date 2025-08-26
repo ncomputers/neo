@@ -1,10 +1,11 @@
-"""Pilot telemetry endpoints."""
+"""Pilot telemetry endpoints for ops dashboard."""
 
 from __future__ import annotations
 
 import statistics
 import time
-from typing import Any
+from collections import deque
+from typing import Any, Deque, Tuple
 
 from fastapi import APIRouter, Request
 
@@ -14,6 +15,7 @@ from .routes_metrics import (
     http_requests_total,
     kds_oldest_kot_seconds,
     orders_created_total,
+    sse_clients_gauge,
     webhook_breaker_state,
 )
 from .utils.responses import ok
@@ -23,7 +25,9 @@ router = APIRouter()
 _CACHE: dict[str, Any] = {"ts": 0.0, "data": None}
 _LAST_ORDERS_TOTAL: float | None = None
 _LAST_ORDERS_TS: float | None = None
+_ERROR_HISTORY: Deque[Tuple[float, float, float]] = deque()
 _CACHE_TTL = 60
+_ERR_WINDOW = 300  # 5 minutes
 
 
 def _orders_per_min(now: float) -> float:
@@ -41,7 +45,7 @@ def _orders_per_min(now: float) -> float:
     return rate
 
 
-def _avg_prep() -> float:
+def _avg_prep_s() -> float:
     """Average prep time from in-memory trackers."""
     from . import main as main_mod  # local import to avoid circular
 
@@ -49,7 +53,7 @@ def _avg_prep() -> float:
     return float(statistics.mean(emas)) if emas else 0.0
 
 
-def _breaker_open_pct() -> float:
+def _webhook_breaker_open_pct() -> float:
     metrics = webhook_breaker_state._metrics.values()
     total = len(metrics)
     if not total:
@@ -58,12 +62,12 @@ def _breaker_open_pct() -> float:
     return (opened / total) * 100.0
 
 
-def _kot_queue_age() -> float:
+def _kot_queue_oldest_s() -> float:
     metrics = kds_oldest_kot_seconds._metrics.values()
     return max((m._value.get() for m in metrics), default=0.0)
 
 
-def _latency_p95() -> float:
+def _p95_latency_ms() -> float:
     samples = list(latency_samples)
     if not samples:
         return 0.0
@@ -72,10 +76,20 @@ def _latency_p95() -> float:
     return float(samples[idx])
 
 
-def _error_rate() -> float:
-    total = sum(m._value.get() for m in http_requests_total._metrics.values())
-    errors = sum(m._value.get() for m in http_errors_total._metrics.values())
-    return errors / total if total else 0.0
+def _error_rate_5m(now: float) -> float:
+    req_total = sum(m._value.get() for m in http_requests_total._metrics.values())
+    err_total = sum(m._value.get() for m in http_errors_total._metrics.values())
+    _ERROR_HISTORY.append((now, req_total, err_total))
+    while _ERROR_HISTORY and _ERROR_HISTORY[0][0] < now - _ERR_WINDOW:
+        _ERROR_HISTORY.popleft()
+    first_ts, first_req, first_err = _ERROR_HISTORY[0]
+    delta_req = req_total - first_req
+    delta_err = err_total - first_err
+    return delta_err / delta_req if delta_req else 0.0
+
+
+def _sse_clients() -> float:
+    return sse_clients_gauge._value.get()
 
 
 @router.get("/api/admin/pilot/telemetry")
@@ -88,11 +102,13 @@ async def pilot_telemetry(_request: Request) -> dict[str, Any]:
 
     data = {
         "orders_per_min": _orders_per_min(now),
-        "avg_prep": _avg_prep(),
-        "breaker_open_pct": _breaker_open_pct(),
-        "kot_queue_age": _kot_queue_age(),
-        "latency_p95_ms": _latency_p95(),
-        "error_rate": _error_rate(),
+        "avg_prep_s": _avg_prep_s(),
+        "kot_queue_oldest_s": _kot_queue_oldest_s(),
+        "p95_latency_ms": _p95_latency_ms(),
+        "error_rate_5m": _error_rate_5m(now),
+        "webhook_breaker_open_pct": _webhook_breaker_open_pct(),
+        "sse_clients": _sse_clients(),
+        "timestamp": int(now),
     }
     _CACHE["ts"] = now
     _CACHE["data"] = data

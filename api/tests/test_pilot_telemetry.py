@@ -16,19 +16,20 @@ import types
 
 from fastapi import FastAPI
 
-from api.app import routes_admin_pilot  # noqa: E402
+from api.app import routes_pilot_telemetry  # noqa: E402
 from api.app.routes_metrics import orders_created_total  # noqa: E402
 
 sys.modules.setdefault("api.app.main", types.SimpleNamespace(prep_trackers={}))
 app = FastAPI()
-app.include_router(routes_admin_pilot.router)
+app.include_router(routes_pilot_telemetry.router)
 
 
 def setup_function() -> None:
-    routes_admin_pilot._CACHE["ts"] = 0.0
-    routes_admin_pilot._CACHE["data"] = None
-    routes_admin_pilot._LAST_ORDERS_TOTAL = None
-    routes_admin_pilot._LAST_ORDERS_TS = None
+    routes_pilot_telemetry._CACHE["ts"] = 0.0
+    routes_pilot_telemetry._CACHE["data"] = None
+    routes_pilot_telemetry._LAST_ORDERS_TOTAL = None
+    routes_pilot_telemetry._LAST_ORDERS_TS = None
+    routes_pilot_telemetry._ERROR_HISTORY.clear()
     orders_created_total._value.set(0)  # type: ignore[attr-defined]
     app.state.redis = fakeredis.aioredis.FakeRedis()
 
@@ -40,16 +41,26 @@ def test_telemetry_shape():
     data = resp.json()["data"]
     assert {
         "orders_per_min",
-        "avg_prep",
-        "breaker_open_pct",
-        "kot_queue_age",
-        "latency_p95_ms",
-        "error_rate",
+        "avg_prep_s",
+        "kot_queue_oldest_s",
+        "p95_latency_ms",
+        "error_rate_5m",
+        "webhook_breaker_open_pct",
+        "sse_clients",
+        "timestamp",
     } == set(data.keys())
+    assert data["orders_per_min"] >= 0
+    assert data["avg_prep_s"] >= 0
+    assert data["kot_queue_oldest_s"] >= 0
+    assert data["p95_latency_ms"] >= 0
+    assert 0 <= data["error_rate_5m"] <= 1
+    assert 0 <= data["webhook_breaker_open_pct"] <= 100
+    assert data["sse_clients"] >= 0
+    assert data["timestamp"] > 0
 
 
 def test_telemetry_cache(monkeypatch):
-    from api.app import routes_admin_pilot
+    from api.app import routes_pilot_telemetry
 
     class DummyTime:
         def __init__(self):
@@ -59,7 +70,7 @@ def test_telemetry_cache(monkeypatch):
             return self.now
 
     dummy = DummyTime()
-    monkeypatch.setattr(routes_admin_pilot.time, "time", dummy.time)
+    monkeypatch.setattr(routes_pilot_telemetry.time, "time", dummy.time)
 
     client = TestClient(app)
     resp1 = client.get("/api/admin/pilot/telemetry")
