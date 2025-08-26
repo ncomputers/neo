@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Enforce environment validation at application startup and audit required
   variables during the CI lint step.
 - Chunked CSV exports stream rows with a 100k cap and SSE progress events.
+- RBAC test ensuring only managers can unlock cashier PINs.
 - Lock out staff PIN login for 15 minutes after 5 failed attempts per user/IP
   and log lock/unlock events.
 - Require staff PIN rotation every 90 days with a warning emitted after 80 days.
@@ -27,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Bandit, pip-audit, and ruff GitHub Actions workflows to block risky code and dependencies.
 
 - Request-id middleware with JSON log configuration for request correlation.
+- feat(acc): sales register + GST summary exports.
 
 - Admin APIs to soft-delete and restore tables and menu items with optional
   inclusion of deleted records via ``include_deleted``.

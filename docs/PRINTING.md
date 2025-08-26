@@ -29,9 +29,10 @@ browser before sending it to hardware.
 
 ## Admin test route
 
-POST `/admin/print/test` accepts `{"printer": "58mm"|"80mm"}` and returns the
-ESC/POS text used for preview while also publishing a message for connected print
-agents. This helps verify printer connectivity from the dashboard.
+POST `/admin/print/test` accepts `{"printer": "58mm"|"80mm"}` and returns
+preview text containing the outlet name, a title, and a current ISO timestamp
+while also publishing a message for connected print agents. This helps verify
+printer connectivity from the dashboard.
 
 ## Security
 

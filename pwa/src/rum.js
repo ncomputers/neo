@@ -1,3 +1,5 @@
+import { apiFetch } from './api'
+
 export function initRUM() {
   let consent = false
   try {
@@ -45,7 +47,7 @@ export function initRUM() {
   if (nav) metrics.ttfb = nav.responseStart / 1000
 
   const send = () => {
-    fetch('/rum/vitals', {
+    apiFetch('/rum/vitals', {
       method: 'POST',
       keepalive: true,
       headers: { 'Content-Type': 'application/json' },
