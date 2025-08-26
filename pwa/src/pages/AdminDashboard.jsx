@@ -43,6 +43,18 @@ export default function AdminDashboard() {
         </table>
       )}
       <footer className="mt-8 text-sm text-gray-500">
+        <a href="/legal/terms" className="mx-2 hover:underline">
+          Terms
+        </a>
+        <a href="/legal/privacy" className="mx-2 hover:underline">
+          Privacy
+        </a>
+        <a href="/legal/refund" className="mx-2 hover:underline">
+          Refunds
+        </a>
+        <a href="/legal/contact" className="mx-2 hover:underline">
+          Contact
+        </a>
         <a href="/legal/subprocessors" className="mx-2 hover:underline">
           Subprocessors
         </a>
