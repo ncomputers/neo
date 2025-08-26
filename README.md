@@ -18,7 +18,7 @@ Responses include a strict Content-Security-Policy with per-request nonces appli
 
 Guest-facing order endpoints accept an `Idempotency-Key` header (UUID). Successful responses are cached for 24 hours and the key is recorded in audit logs to guard against duplicate charges.
 
-All pull requests run Bandit, pip-audit, and ruff checks in CI to block risky code and dependencies.
+Dedicated GitHub Actions workflows run Bandit, pip-audit, and ruff on every pull request to block risky code and dependencies.
 
 ## Configuration
 

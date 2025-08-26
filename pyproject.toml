@@ -4,10 +4,11 @@ target-version = ['py311']
 
 [tool.ruff]
 line-length = 88
-exclude = ["clickup_structure_blueprint"]
+exclude = ["clickup_structure_blueprint", "api/tests", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F"]
+ignore = ["E402", "E501"]
 
 [tool.isort]
 profile = "black"

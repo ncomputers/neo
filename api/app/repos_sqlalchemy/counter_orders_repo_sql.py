@@ -4,20 +4,19 @@ from __future__ import annotations
 
 from typing import List
 
-from sqlalchemy import select, update, func
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..utils import invoice_counter
 from .. import flags
-
 from ..models_tenant import (
-    MenuItem,
     Counter,
     CounterOrder,
     CounterOrderItem,
     CounterOrderStatus,
     Invoice,
+    MenuItem,
 )
+from ..utils import invoice_counter
 
 
 async def create_order(
@@ -39,7 +38,7 @@ async def create_order(
     session.add(order)
     await session.flush()
 
-    item_ids = [int(l["item_id"]) for l in lines]
+    item_ids = [int(line["item_id"]) for line in lines]
     if item_ids:
         result = await session.execute(
             select(
