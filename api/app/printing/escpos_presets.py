@@ -4,10 +4,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict, Any
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "templates" / "escpos"
-_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR), autoescape=False)
+_env = Environment(
+    loader=FileSystemLoader(TEMPLATE_DIR),
+    autoescape=select_autoescape(["html", "xml"]),
+)
 
 TEMPLATE_MAP: Dict[str, str] = {
     "58mm": "58mm.txt",

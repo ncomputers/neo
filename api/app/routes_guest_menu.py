@@ -80,7 +80,9 @@ async def fetch_menu(
     if settings.ab_tests_enabled:
         variant = request.cookies.get("ab_menu")
         if variant not in {"A", "B"}:
-            bucket = int(hashlib.md5(table_token.encode()).hexdigest(), 16) % 2
+            bucket = int(
+                hashlib.md5(table_token.encode(), usedforsecurity=False).hexdigest(), 16
+            ) % 2
             variant = "B" if bucket else "A"
             response.set_cookie("ab_menu", variant, path="/")
         resp_data["ab_variant"] = variant

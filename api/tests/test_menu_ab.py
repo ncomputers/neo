@@ -61,7 +61,7 @@ def test_menu_ab_allocation_and_exposure(monkeypatch):
     assert resp.status_code == 200
     body = resp.json()
     variant = body["data"]["ab_variant"]
-    expected = "B" if int(hashlib.md5(b"T1").hexdigest(), 16) % 2 else "A"
+    expected = "B" if int(hashlib.md5(b"T1", usedforsecurity=False).hexdigest(), 16) % 2 else "A"
     assert variant == expected
     assert resp.cookies.get("ab_menu") == expected
     assert captured["url"].endswith("/analytics/ab")
