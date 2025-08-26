@@ -21,6 +21,7 @@ REGISTRY: Dict[str, Dict[str, Any]] = {
     "simple_modifiers": {"default": False},
     "wa_enabled": {"default": False},
     "happy_hour": {"default": False},
+    "analytics": {"default": False},
 
 }
 

@@ -76,6 +76,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             f"script-src 'self' 'nonce-{nonce}'"
         )
         response.headers.setdefault("Content-Security-Policy", csp)
+        if response.headers.get("content-type", "").startswith("text/html"):
+            ro = f"{csp}; report-uri /csp/report"
+            response.headers.setdefault("Content-Security-Policy-Report-Only", ro)
         raw_headers: list[tuple[bytes, bytes]] = []
         for name, value in response.raw_headers:
             if name.lower() == b"set-cookie":

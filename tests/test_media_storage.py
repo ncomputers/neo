@@ -106,3 +106,28 @@ def test_s3_presign(monkeypatch):
     assert client.last["Params"]["ResponseCacheControl"] == "public, max-age=86400"
     assert get_url == f"https://example.com/get_object/{key}"
     assert etag == "abc"
+
+
+def test_s3_urls_scoped_and_signed(monkeypatch):
+    monkeypatch.setenv("STORAGE_BACKEND", "s3")
+    monkeypatch.setenv("S3_BUCKET", "bkt")
+
+    class DummyClient:
+        def generate_presigned_url(self, op, Params, ExpiresIn):
+            return f"https://example.com/{op}/{Params['Key']}?Signature=abc"
+
+        def get_object(self, Bucket, Key):
+            return {"Body": BytesIO(b"data")}
+
+        def head_object(self, Bucket, Key):
+            return {"Metadata": {"etag": "abc"}, "ETag": '"abc"'}
+
+    import api.app.storage.s3_backend as s3_backend
+
+    backend = s3_backend.S3Backend(client=DummyClient())
+    upload = UploadFile(filename="foo.txt", file=BytesIO(b"x"), headers={"ETag": "abc"})
+    url, key = asyncio.run(backend.save("tenant1", upload))
+    assert key.startswith("tenant1/")
+    assert "Signature=" in url
+    get_url, _ = backend.url(key)
+    assert "Signature=" in get_url

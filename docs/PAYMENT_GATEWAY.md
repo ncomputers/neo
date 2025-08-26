@@ -36,4 +36,6 @@ Use the gateway dashboard to simulate the webhook call back to
    `event_id`. Duplicate webhooks with the same `event_id` return
    `attached: False` and do not create a second payment.
 3. Post a `refund` webhook with HMAC of `order_id|invoice_id|amount|refund` to
-   reset the invoice's `settled` status.
+   reset the invoice's `settled` status. Include an `Idempotency-Key` header;
+   results are cached for 24 hours and repeated calls with the same key
+   return the original response without issuing a second refund.

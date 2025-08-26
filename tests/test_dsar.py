@@ -96,6 +96,7 @@ def test_dsar_export_and_delete(tmp_path, monkeypatch):
     with AuditSession() as s:
         row = s.query(AuditTenant).filter_by(action="dsar_export").first()
         assert row is not None
+        assert row.meta["payload"]["phone"] == "***"
 
     resp = client.post(
         f"/api/outlet/{tenant}/privacy/dsar/delete",
@@ -140,3 +141,4 @@ def test_dsar_export_and_delete(tmp_path, monkeypatch):
     with AuditSession() as s:
         row = s.query(AuditTenant).filter_by(action="dsar_delete").first()
         assert row is not None
+        assert row.meta["payload"]["phone"] == "***"

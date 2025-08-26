@@ -23,7 +23,7 @@ export default function AdminDashboard() {
       <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
       <LimitsUsageWidget />
       {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (
         <table className="w-full border">
           <thead>
@@ -42,6 +42,14 @@ export default function AdminDashboard() {
           </tbody>
         </table>
       )}
+      <footer className="mt-8 text-sm text-gray-500">
+        <a href="/legal/subprocessors" className="mx-2 hover:underline">
+          Subprocessors
+        </a>
+        <a href="/legal/sla" className="mx-2 hover:underline">
+          SLA
+        </a>
+      </footer>
     </div>
   )
 }
