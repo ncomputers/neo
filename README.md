@@ -147,7 +147,8 @@ GitHub Actions runs the test suite along with `pre-commit`, `pa11y-ci`, `pip-aud
 all pull requests. To mirror these checks locally:
 
 ```bash
-pip install pre-commit pip-audit gitleaks
+pip install pre-commit pip-audit
+brew install gitleaks # or grab a binary from https://github.com/gitleaks/gitleaks/releases
 pre-commit run --all-files
 npx pa11y-ci -c pa11y-ci.json
 pip-audit
