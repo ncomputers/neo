@@ -1,0 +1,24 @@
+name: perf-sanity
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Locust
+        run: pip install locust
+      - name: Run sanity load test
+        env:
+          HOST: ${{ secrets.STAGING_HOST }}
+          TABLE_TOKEN: ${{ secrets.STAGING_TABLE_TOKEN }}
+          TENANT: ${{ secrets.STAGING_TENANT }}
+        run: |
+          locust --headless -f load/locustfile.py -u 10 -r 10 -t 1m
