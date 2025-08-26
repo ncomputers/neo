@@ -101,9 +101,12 @@ from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
+from .routes_accounting import router as accounting_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_ops import router as admin_ops_router
+
 from .routes_admin_pilot import router as admin_pilot_router
+
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
@@ -944,6 +947,7 @@ app.include_router(daybook_pdf_router)
 app.include_router(digest_router)
 app.include_router(reports_router)
 app.include_router(csp_router)
+app.include_router(accounting_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
 app.include_router(export_all_router)
