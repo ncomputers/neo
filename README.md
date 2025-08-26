@@ -523,6 +523,10 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 
 `scripts/grace_reminder.py` scans tenant subscriptions and enqueues owner alerts when a license is set to expire in 7, 3 or 1 days, or while it remains within the grace window. A systemd timer (`deploy/systemd/neo-grace.timer`) runs this helper daily.
 
+## Billing
+
+Admins can view their current plan and renewal date at `/billing`. The page links to a UPI or gateway URL for self‑serve renewals, and successful payment webhooks automatically extend the license.
+
 ## PWA
 
 ```bash

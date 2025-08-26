@@ -4,6 +4,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import CashierDashboard from './pages/CashierDashboard'
 import KitchenDashboard from './pages/KitchenDashboard'
 import CleanerDashboard from './pages/CleanerDashboard'
+import Billing from './pages/Billing'
 import RequireRole from './components/RequireRole'
 import { useAuth } from './contexts/AuthContext'
 
@@ -25,6 +26,7 @@ export default function App() {
         <Link to="/">Home</Link>
         <Link to="/guest">Guest</Link>
         <Link to="/admin">Admin</Link>
+        <Link to="/billing">Billing</Link>
         {user.role === 'admin' && (
           <a href="/help" target="_blank" rel="noopener noreferrer">
             Help Center
@@ -53,6 +55,14 @@ export default function App() {
           element={
             <RequireRole roles={['admin']}>
               <AdminDashboard />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <RequireRole roles={['admin']}>
+              <Billing />
             </RequireRole>
           }
         />
