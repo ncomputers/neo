@@ -7,6 +7,7 @@ import csv
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, time, timezone
+from io import BytesIO, StringIO, TextIOWrapper
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
@@ -19,6 +20,7 @@ from .db.tenant import get_engine
 from .models_tenant import Invoice
 from .security import ratelimit
 from .utils import ratelimits
+from .utils.csv_stream import stream_rows
 from .utils.rate_limit import rate_limited
 from .utils.responses import err
 
@@ -55,6 +57,48 @@ def _iter_bytes(buffer: BytesIO):
     buffer.seek(0)
     while chunk := buffer.read(8192):
         yield chunk
+
+
+@router.get(
+    "/api/outlet/{tenant_id}/exports/sample.csv",
+    responses={200: {"content": {"text/event-stream": {}}}},
+)
+async def sample_export(
+    tenant_id: str,
+    request: Request,
+    rows: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> StreamingResponse:
+    """Stream a sample CSV with progress events for testing."""
+    await request.body()  # consume request body to avoid ASGI warnings
+
+    limit, _ = _cap_limit(min(rows, limit))
+
+    redis = request.app.state.redis
+    ip = request.client.host if request.client else "unknown"
+    policy = ratelimits.exports()
+    allowed = await ratelimit.allow(
+        redis, ip, "exports", rate_per_min=policy.rate_per_min, burst=policy.burst
+    )
+    if not allowed:
+        retry_after = await redis.ttl(f"ratelimit:{ip}:exports")
+        return rate_limited(retry_after)
+    if rows > HARD_LIMIT:
+        return JSONResponse(
+            err("ROW_LIMIT", "row limit exceeded", hint="max 100k rows"),
+            status_code=400,
+        )
+
+    def event_gen():
+        chunks = stream_rows(((i,) for i in range(limit)), header=["id"])
+        count = 0
+        for chunk in chunks:
+            yield f"data: {chunk}\n\n"
+            count += 1
+            if count % 1000 == 0:
+                yield f"event: progress\ndata: {count}\n\n"
+
+    return StreamingResponse(event_gen(), media_type="text/event-stream")
 
 
 @router.get("/api/outlet/{tenant_id}/exports/daily")

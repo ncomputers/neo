@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Guard hot queries with a p95 regression check.
 - Enforce environment validation at application startup and audit required
   variables during the CI lint step.
+- Chunked CSV exports stream rows with a 100k cap and SSE progress events.
 - RBAC test ensuring only managers can unlock cashier PINs.
 - Lock out staff PIN login for 15 minutes after 5 failed attempts per user/IP
   and log lock/unlock events.
