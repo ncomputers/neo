@@ -59,14 +59,14 @@
         <th>Item</th>
         <th>Price</th>
         <th>Qty</th>
-        {% if invoice['gst_mode'] == 'reg' %}<th>HSN</th>{% endif %}
+        {% if invoice['gst_mode'] == 'reg' %}<th>GST%</th><th>HSN</th>{% endif %}
       </tr>
       {% for item in invoice['items'] %}
       <tr>
         <td>{{ item.name }}</td>
         <td>{{ item.price }}</td>
         <td>{{ item.qty }}</td>
-        {% if invoice['gst_mode'] == 'reg' %}<td>{{ item.hsn or '' }}</td>{% endif %}
+        {% if invoice['gst_mode'] == 'reg' %}<td>{{ item.gst or '' }}</td><td>{{ item.hsn or '' }}</td>{% endif %}
       </tr>
       {% endfor %}
     </table>
