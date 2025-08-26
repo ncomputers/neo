@@ -9,6 +9,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from .menu.dietary import DietaryInfo
+from .menu.modifiers import Combo, Modifier
+
 
 class CategoryIn(BaseModel):
     """Input schema for creating a category."""
@@ -22,7 +25,7 @@ class Category(CategoryIn):
     id: UUID
 
 
-class ItemIn(BaseModel):
+class ItemIn(DietaryInfo):
     """Input schema for creating or updating an item."""
 
     name: str
@@ -30,8 +33,8 @@ class ItemIn(BaseModel):
     category_id: Optional[UUID] = None
     in_stock: bool = True
     show_fssai_icon: bool = False
-    dietary: list[str] = Field(default_factory=list)
-    allergens: list[str] = Field(default_factory=list)
+    modifiers: list[Modifier] = Field(default_factory=list)
+    combos: list[Combo] = Field(default_factory=list)
 
 
 class Item(ItemIn):

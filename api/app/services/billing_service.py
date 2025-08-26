@@ -115,6 +115,34 @@ def compute_bill(
                 tax = tax.quantize(Decimal("0.01"), rounding=rounding_constant)
             tax_breakup[gst_rate] += tax
 
+        for mod in item.get("mods", []):
+            m_qty = Decimal(str(mod.get("qty", 1)))
+            m_price = Decimal(str(mod["price"]))
+            m_gst = Decimal(str(mod.get("gst", item.get("gst", 0))))
+            subtotal += m_qty * m_price
+            discounted = apply_discount(m_price, window)
+            discount_total += (m_price - discounted) * m_qty
+            d_total = m_qty * discounted
+            if gst_mode == "reg" and m_gst:
+                tax = d_total * m_gst / Decimal("100")
+                if gst_rounding == "item-wise":
+                    tax = tax.quantize(Decimal("0.01"), rounding=rounding_constant)
+                tax_breakup[m_gst] += tax
+
+        for combo in item.get("combos", []):
+            c_qty = Decimal(str(combo.get("qty", 1)))
+            c_price = Decimal(str(combo["price"]))
+            c_gst = Decimal(str(combo.get("gst", item.get("gst", 0))))
+            subtotal += c_qty * c_price
+            discounted = apply_discount(c_price, window)
+            discount_total += (c_price - discounted) * c_qty
+            d_total = c_qty * discounted
+            if gst_mode == "reg" and c_gst:
+                tax = d_total * c_gst / Decimal("100")
+                if gst_rounding == "item-wise":
+                    tax = tax.quantize(Decimal("0.01"), rounding=rounding_constant)
+                tax_breakup[c_gst] += tax
+
     tip_amount = Decimal(str(tip or 0))
 
     if gst_rounding == "invoice-total":

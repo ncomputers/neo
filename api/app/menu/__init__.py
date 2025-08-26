@@ -17,12 +17,12 @@ from sqlalchemy import select
 
 from config import get_settings
 
-from .db import SessionLocal
-from .models_tenant import Category as CategoryModel
-from .models_tenant import MenuItem as MenuItemModel
-from .pricing import active_window, apply_discount
-from .schemas import Category, CategoryIn, Item, ItemIn
-from .utils.responses import ok
+from ..db import SessionLocal
+from ..models_tenant import Category as CategoryModel
+from ..models_tenant import MenuItem as MenuItemModel
+from ..pricing import active_window, apply_discount
+from ..schemas import Category, CategoryIn, Item, ItemIn
+from ..utils.responses import ok
 
 router = APIRouter()
 
@@ -51,10 +51,12 @@ def _item_to_schema(item: MenuItemModel) -> Item:
         pending_price=item.pending_price,
         dietary=item.dietary or [],
         allergens=item.allergens or [],
+        modifiers=item.modifiers or [],
+        combos=item.combos or [],
     )
 
 
-IMAGE_DIR = os.path.join(os.path.dirname(__file__), "static", "images")
+IMAGE_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "images")
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
 

@@ -5,16 +5,15 @@ import sys
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 import fakeredis.aioredis
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from api.app.middlewares.security import SecurityMiddleware
-
-from api.app.models_tenant import Base, Category, MenuItem
 from api.app import routes_guest_menu
 from api.app.deps.tenant import get_tenant_id as header_tenant_id
+from api.app.middlewares.security import SecurityMiddleware
+from api.app.models_tenant import Base, Category, MenuItem
 
 
 async def _setup_db():
@@ -60,7 +59,6 @@ async def _setup_db():
     return Session
 
 
-
 Session = asyncio.run(_setup_db())
 
 
@@ -81,7 +79,9 @@ def _client() -> TestClient:
 
 def test_filter_dietary_inclusion():
     client = _client()
-    resp = client.get("/g/T1/menu?filter=dietary:vegan", headers={"X-Tenant-ID": "demo"})
+    resp = client.get(
+        "/g/T1/menu?filter=dietary:vegan", headers={"X-Tenant-ID": "demo"}
+    )
     assert resp.status_code == 200
     names = {i["name"] for i in resp.json()["data"]["items"]}
     assert names == {"Veg Salad", "Fruit Salad"}
@@ -97,3 +97,13 @@ def test_filter_dietary_and_allergen_exclusion():
     items = resp.json()["data"]["items"]
     assert [i["name"] for i in items] == ["Fruit Salad"]
 
+
+def test_filter_multiple_inclusion():
+    client = _client()
+    resp = client.get(
+        "/g/T1/menu?filter=dietary:vegan,allergen:nuts",
+        headers={"X-Tenant-ID": "demo"},
+    )
+    assert resp.status_code == 200
+    items = resp.json()["data"]["items"]
+    assert [i["name"] for i in items] == ["Veg Salad"]
