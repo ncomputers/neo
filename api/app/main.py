@@ -173,7 +173,7 @@ from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_refunds import router as refunds_router
 from .routes_reports import router as reports_router
-from .routes_rum import router as rum_router
+from .routes_rum_vitals import router as rum_router
 from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
 from .routes_slo import router as slo_router
