@@ -40,6 +40,7 @@ All notable changes to this project will be documented in this file.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
+- Optional PostHog/Mixpanel analytics with per-tenant consent and PII redaction.
 - WhatsApp guest notifications are gated by the `WHATSAPP_GUEST_UPDATES_ENABLED`
   environment variable.
 - Status updates are sent via the WhatsApp provider with retry/backoff and
