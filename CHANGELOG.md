@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
   inclusion of deleted records via ``include_deleted``.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
+- Admin endpoint to probe webhook SLA, capturing TLS details and latency and
+  storing reports for later review.
 - Webhook rule creation probes target latency and TLS, warning on slow or
   self-signed endpoints.
 - Controlled cancellation flow with `/orders/{id}/void/request` and `/void/approve` endpoints, reversing stock, adjusting invoices and auditing each step.
