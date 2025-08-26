@@ -1,10 +1,8 @@
 # Exports
 
 Big export endpoints support cursor-based pagination so interrupted downloads can resume.
-Each request is capped at **100 000 rows**; when the cap is hit the response includes an
-`X-Row-Limit` header and a `Next-Cursor` value to continue from.
-
-Each request caps output to **100k rows**; if hit, the `X-Export-Hint` header advises clients to refine the range and resume with the provided cursor.
+Each request is capped at **100 000 rows**. When the cap is hit the CSV ends with a `cap hit`
+row and the response includes `X-Row-Limit` and `Next-Cursor` headers to continue from.
 
 Export downloads are provided via tenant-scoped, signed URLs to ensure isolation.
 
@@ -69,15 +67,6 @@ with open("daily.csv", "ab") as fh:
             break
 ```
 
-### Progress via SSE
-
-Provide a `progress` query parameter to the export request and listen on:
-
-```
-GET /api/outlet/demo/exports/progress/{progress}
-```
-
-Each event reports rows exported so far.
 
 ## Helper CLI
 
@@ -107,8 +96,7 @@ corresponding progress stream:
 curl -N http://localhost:8000/api/outlet/demo/exports/daily/progress/abc
 ```
 
-The stream emits `progress` events with the number of rows exported and ends
-with a `complete` event.
+The stream emits `progress` events every 1 000 rows and ends with a `complete` event.
 ## Accounting exports
 
 Lightweight CSVs allow hand-off to ledger software without a full integration.

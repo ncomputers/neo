@@ -96,37 +96,41 @@ async def invoices_export(
         async def row_iter():
             exported = 0
             last_id = cursor or 0
-            while exported < limit:
-                chunk = min(SCAN_LIMIT, limit - exported)
-                stmt = (
-                    select(
-                        Invoice.id,
-                        Invoice.number,
-                        Invoice.total,
-                        Invoice.created_at,
+            try:
+                while exported < limit:
+                    chunk = min(SCAN_LIMIT, limit - exported)
+                    stmt = (
+                        select(
+                            Invoice.id,
+                            Invoice.number,
+                            Invoice.total,
+                            Invoice.created_at,
+                        )
+                        .where(Invoice.id > last_id)
+                        .order_by(Invoice.id)
+                        .limit(chunk)
                     )
-                    .where(Invoice.id > last_id)
-                    .order_by(Invoice.id)
-                    .limit(chunk)
-                )
-                rows = (await session.execute(stmt)).all()
-                if not rows:
-                    break
-                for inv_id, number, total_amt, created_at in rows:
-                    exported += 1
-                    if job and exported % 1000 == 0:
-                        await redis.set(f"export:{job}:progress", exported)
-                    yield [
-                        inv_id,
-                        number,
-                        float(total_amt),
-                        created_at.isoformat(),
-                    ]
-                    last_id = inv_id
-                    if exported >= limit:
+                    rows = (await session.execute(stmt)).all()
+                    if not rows:
                         break
-            if cap_hint:
-                yield ["", "", "", "cap hit"]
+                    for inv_id, number, total_amt, created_at in rows:
+                        exported += 1
+                        if job and exported % 1000 == 0:
+                            await redis.set(f"export:{job}:progress", exported)
+                        yield [
+                            inv_id,
+                            number,
+                            float(total_amt),
+                            created_at.isoformat(),
+                        ]
+                        last_id = inv_id
+                        if exported >= limit:
+                            break
+                if cap_hint:
+                    yield ["", "", "", "cap hit"]
+            finally:
+                if job:
+                    await redis.delete(f"export:{job}:progress")
 
         headers = ["id", "number", "total", "created_at"]
         iterator = stream_csv(headers, row_iter(), chunk_size=chunk_size)
@@ -151,6 +155,7 @@ async def invoices_export_progress(
             val = await redis.get(f"export:{job}:progress")
             if val is None:
                 if last:
+                    yield "event: complete\ndata: {}\n\n"
                     break
                 await asyncio.sleep(0.1)
                 continue
@@ -360,17 +365,6 @@ async def daily_export(
                 zf.writestr(f"invoices/{number}.{ext}", content)
 
         headers = {"Content-Disposition": "attachment; filename=export.zip"}
-        more = await session.scalar(
-            select(Invoice.id)
-            .where(
-                Invoice.created_at >= start_dt,
-                Invoice.created_at <= end_dt,
-                Invoice.id > cursor,
-            )
-            .order_by(Invoice.id)
-            .offset(limit - 1)
-            .limit(1)
-        )
         more = None
         if last_id is not None:
             more = await session.scalar(
@@ -382,8 +376,6 @@ async def daily_export(
                 )
                 .limit(1)
             )
-
-        headers = {"Content-Disposition": "attachment; filename=invoices.csv"}
         if more is not None:
             headers["Next-Cursor"] = str(last_id)
         if limit == HARD_LIMIT and exported >= HARD_LIMIT and more is not None:
