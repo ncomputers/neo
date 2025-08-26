@@ -77,6 +77,12 @@ export default function GuestOrder() {
         <a href="/legal/terms" className="mx-2 hover:underline">
           Terms
         </a>
+        <a href="/legal/refund" className="mx-2 hover:underline">
+          Refunds
+        </a>
+        <a href="/legal/contact" className="mx-2 hover:underline">
+          Contact
+        </a>
       </footer>
     </div>
   )
