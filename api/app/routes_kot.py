@@ -59,7 +59,7 @@ async def kot_pdf(
         for name, qty, mods in item_rows.all():
             items.append({"name": name, "qty": qty, "notes": ""})
             for mod in mods or []:
-                items.append({"name": f"- {mod['name']}", "qty": qty, "notes": ""})
+                items.append({"name": f"- {mod['label']}", "qty": qty, "notes": ""})
     else:
         row = (
             await session.execute(
@@ -82,7 +82,7 @@ async def kot_pdf(
             for name, qty, mods in item_rows.all():
                 items.append({"name": name, "qty": qty, "notes": ""})
                 for mod in mods or []:
-                    items.append({"name": f"- {mod['name']}", "qty": qty, "notes": ""})
+                    items.append({"name": f"- {mod['label']}", "qty": qty, "notes": ""})
         else:
             row = (
                 await session.execute(
@@ -105,7 +105,7 @@ async def kot_pdf(
                 for name, qty, mods in item_rows.all():
                     items.append({"name": name, "qty": qty, "notes": ""})
                     for mod in mods or []:
-                        items.append({"name": f"- {mod['name']}", "qty": qty, "notes": ""})
+                        items.append({"name": f"- {mod['label']}", "qty": qty, "notes": ""})
             else:
                 raise HTTPException(status_code=404, detail="order not found")
 

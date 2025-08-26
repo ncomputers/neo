@@ -15,8 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import StaticPool
 
 from api.app import routes_order_void
+from api.app.auth import User
 from api.app.db import SessionLocal
-from api.app.main import app
+from fastapi import FastAPI
 from api.app.models_tenant import (
     AuditTenant,
     Base,
@@ -72,7 +73,14 @@ async def test_request_approve_void() -> None:
         async with Session() as session:
             yield session
 
+    app = FastAPI()
+    app.include_router(routes_order_void.router)
     app.dependency_overrides[routes_order_void.get_session_from_path] = _session
+
+    async def _guard() -> User:
+        return User(username="mgr", role="manager")
+
+    app.dependency_overrides[routes_order_void.manager_guard] = _guard
     app.state.redis = fakeredis.aioredis.FakeRedis()
 
     transport = ASGITransport(app=app)

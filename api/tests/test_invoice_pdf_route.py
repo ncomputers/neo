@@ -30,8 +30,9 @@ def test_invoice_pdf_route_html_fallback():
 
 def test_render_invoice_pdf_with_fake_weasyprint(monkeypatch):
     class DummyHTML:
-        def __init__(self, string):
+        def __init__(self, string, base_url=None):
             self.string = string
+            self.base_url = base_url
 
         def write_pdf(self):
             return b"%PDF-1.4"
@@ -92,3 +93,23 @@ def test_invoice_template_nonce(monkeypatch):
     )
     assert mimetype == "text/html"
     assert b'<style nonce="abc">' in content
+
+
+def test_invoice_gujarati_item(monkeypatch):
+    def fake_import(name):
+        raise ImportError
+
+    monkeypatch.setattr(pdf_render.importlib, "import_module", fake_import)
+    html_bytes, mimetype = pdf_render.render_invoice(
+        {
+            "number": "1",
+            "items": [{"name": "કાઠીયાવાડી", "qty": 1, "price": "₹1"}],
+            "subtotal": "₹1",
+            "grand_total": "₹1",
+            "gst_mode": "unreg",
+        }
+    )
+    text = html_bytes.decode("utf-8")
+    assert "કાઠીયાવાડી" in text
+    assert "₹" in text
+    assert "Noto Sans" in text

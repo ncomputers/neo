@@ -49,6 +49,8 @@ def _item_to_schema(item: MenuItemModel) -> Item:
         show_fssai_icon=item.show_fssai_icon,
         image_url=item.image_url,
         pending_price=item.pending_price,
+        dietary=item.dietary or [],
+        allergens=item.allergens or [],
     )
 
 

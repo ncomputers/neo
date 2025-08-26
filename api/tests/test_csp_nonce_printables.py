@@ -42,7 +42,7 @@ def test_kot_csp_nonce():
 
     class DummyResult2:
         def all(self):
-            return [("Tea", 1)]
+            return [("Tea", 1, None)]
 
     class DummySession:
         def __init__(self):

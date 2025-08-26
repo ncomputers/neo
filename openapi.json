@@ -155,7 +155,7 @@
       },
       "get": {
         "summary": "List Items",
-        "description": "List items, optionally including out-of-stock ones.",
+        "description": "List items with optional time-based discounts.",
         "operationId": "list_items_menu_items_get",
         "parameters": [
           {
@@ -166,6 +166,23 @@
               "type": "boolean",
               "default": false,
               "title": "Include Out Of Stock"
+            }
+          },
+          {
+            "name": "now",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Now"
             }
           }
         ],
@@ -2678,6 +2695,70 @@
               "default": "Table {n}",
               "title": "Label Fmt"
             }
+          },
+          {
+            "name": "pack_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pack Id"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Count"
+            }
+          },
+          {
+            "name": "requester",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Requester"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reason"
+            }
           }
         ],
         "responses": {
@@ -2686,6 +2767,118 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/orders/{order_id}/void/request": {
+      "post": {
+        "summary": "Request Void",
+        "description": "Record a void request for ``order_id`` with ``reason``.",
+        "operationId": "request_void_api_outlet__tenant_id__orders__order_id__void_request_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Request Void Api Outlet  Tenant Id  Orders  Order Id  Void Request Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant_id}/orders/{order_id}/void/approve": {
+      "post": {
+        "summary": "Approve Void",
+        "description": "Approve a pending void and adjust invoice totals.",
+        "operationId": "approve_void_api_outlet__tenant_id__orders__order_id__void_approve_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Approve Void Api Outlet  Tenant Id  Orders  Order Id  Void Approve Post"
+                }
               }
             }
           },
@@ -5988,6 +6181,57 @@
         }
       }
     },
+    "/time/skew": {
+      "get": {
+        "summary": "Time Skew",
+        "description": "Return server time and advice for client clock skew.",
+        "operationId": "time_skew_time_skew_get",
+        "parameters": [
+          {
+            "name": "client_ts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Client timestamp in ms",
+              "title": "Client Ts"
+            },
+            "description": "Client timestamp in ms"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Time Skew Time Skew Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/pwa/version": {
       "get": {
         "summary": "Pwa Version",
@@ -6042,6 +6286,53 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Ready Ready Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/help": {
+      "get": {
+        "summary": "Help Index",
+        "description": "Return help index with optional outlet branding.",
+        "operationId": "help_index_help_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -6124,6 +6415,77 @@
             }
           }
         }
+      }
+    },
+    "/support/ticket": {
+      "post": {
+        "summary": "Create Ticket",
+        "operationId": "create_ticket_support_ticket_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Ticket Support Ticket Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/support": {
+      "get": {
+        "summary": "List Tickets",
+        "description": "List all support tickets with their status.",
+        "operationId": "list_tickets_admin_support_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Tickets Admin Support Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/outlet/{tenant_id}/support/bundle.zip": {
@@ -6373,6 +6735,32 @@
             }
           }
         }
+      }
+    },
+    "/api/admin/tenant/sandbox": {
+      "post": {
+        "summary": "Create Sandbox Tenant",
+        "description": "Create a temporary sandbox tenant with demo data.\n\nThe sandbox copies menu/settings without personal information,\nseeds a couple of demo orders and expires automatically in 7 days.",
+        "operationId": "create_sandbox_tenant_api_admin_tenant_sandbox_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Sandbox Tenant Api Admin Tenant Sandbox Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/outlet/{tenant_id}/backup": {
@@ -6678,7 +7066,7 @@
     "/api/outlet/{tenant}/feedback": {
       "post": {
         "summary": "Submit Feedback",
-        "description": "Accept a feedback submission from a guest.",
+        "description": "Accept an NPS feedback submission from a guest.",
         "operationId": "submit_feedback_api_outlet__tenant__feedback_post",
         "security": [
           {
@@ -6735,7 +7123,7 @@
     "/api/outlet/{tenant}/feedback/summary": {
       "get": {
         "summary": "Feedback Summary",
-        "description": "Return aggregated feedback counts within the given day range.",
+        "description": "Return aggregated NPS metrics within the given day range.",
         "operationId": "feedback_summary_api_outlet__tenant__feedback_summary_get",
         "security": [
           {
@@ -6791,8 +7179,8 @@
     },
     "/api/pilot/{tenant}/feedback": {
       "post": {
-        "summary": "Submit Pilot NPS",
-        "description": "Accept an NPS feedback submission for a pilot outlet.",
+        "summary": "Submit Pilot Feedback",
+        "description": "Accept an NPS feedback submission for ``tenant``.",
         "operationId": "submit_pilot_feedback_api_pilot__tenant__feedback_post",
         "parameters": [
           {
@@ -7115,6 +7503,200 @@
         }
       }
     },
+    "/api/admin/qrpacks/logs": {
+      "get": {
+        "summary": "List Qrpack Logs",
+        "operationId": "list_qrpack_logs_api_admin_qrpacks_logs_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pack Id"
+            }
+          },
+          {
+            "name": "requester",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Requester"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reason"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Qrpack Logs Api Admin Qrpacks Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/qrpacks/export": {
+      "get": {
+        "summary": "Export Qrpack Logs",
+        "operationId": "export_qrpack_logs_api_admin_qrpacks_export_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pack Id"
+            }
+          },
+          {
+            "name": "requester",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Requester"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reason"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/reports/daybook.pdf": {
       "get": {
         "summary": "Owner Daybook Pdf",
@@ -7280,6 +7862,38 @@
             }
           }
         }
+      }
+    },
+    "/csp/report": {
+      "post": {
+        "summary": "Csp Report",
+        "operationId": "csp_report_csp_report_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/admin/csp/reports": {
+      "get": {
+        "summary": "Get Csp Reports",
+        "operationId": "get_csp_reports_admin_csp_reports_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/outlet/{tenant_id}/reports/gst/monthly": {
@@ -7760,21 +8374,14 @@
       },
       "FeedbackIn": {
         "properties": {
-          "table_code": {
-            "type": "string",
-            "title": "Table Code",
-            "description": "Table identifier"
+          "score": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "NPS score 0-10"
           },
-          "rating": {
-            "type": "string",
-            "enum": [
-              "up",
-              "down"
-            ],
-            "title": "Rating",
-            "description": "Thumbs up or down"
-          },
-          "note": {
+          "comment": {
             "anyOf": [
               {
                 "type": "string"
@@ -7782,30 +8389,6 @@
               {
                 "type": "null"
               }
-            ],
-            "title": "Note",
-            "description": "Optional free-form note"
-          }
-        },
-        "type": "object",
-        "required": [
-          "table_code",
-          "rating"
-        ],
-        "title": "FeedbackIn",
-        "description": "Incoming feedback payload from a guest."
-      },
-      "PilotFeedbackIn": {
-        "properties": {
-          "score": {
-            "type": "integer",
-            "title": "Score",
-            "description": "0-10 NPS score"
-          },
-          "comment": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
             ],
             "title": "Comment",
             "description": "Optional free-form comment"
@@ -7815,8 +8398,8 @@
         "required": [
           "score"
         ],
-        "title": "PilotFeedbackIn",
-        "description": "Incoming NPS feedback from pilot users."
+        "title": "FeedbackIn",
+        "description": "Incoming NPS feedback payload from a guest."
       },
       "HTTPValidationError": {
         "properties": {
@@ -8019,6 +8602,35 @@
         ],
         "title": "Payments",
         "description": "Payment configuration for the tenant."
+      },
+      "PilotFeedbackIn": {
+        "properties": {
+          "score": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "0-10 NPS score"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment",
+            "description": "Optional free-form comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score"
+        ],
+        "title": "PilotFeedbackIn",
+        "description": "Incoming NPS feedback from pilot users."
       },
       "PinLogin": {
         "properties": {
@@ -8393,6 +9005,33 @@
         "title": "Tax",
         "description": "Tax configuration for the tenant."
       },
+      "TicketIn": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "Short summary"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body",
+            "description": "Detailed description"
+          },
+          "screenshots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Screenshots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "body"
+        ],
+        "title": "TicketIn"
+      },
       "UnblockIPPayload": {
         "properties": {
           "ip": {
@@ -8459,6 +9098,20 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VoidRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "VoidRequest",
+        "description": "Payload when staff requests a void."
       },
       "WebhookPayload": {
         "properties": {

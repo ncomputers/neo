@@ -12,10 +12,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from .db.tenant import get_engine
 from .domain import OrderStatus
 from .models_tenant import Invoice, Order, OrderItem
+from .auth import User
+from .routes_auth_2fa import stepup_guard
 from .utils.audit import audit
 from .utils.responses import ok
 
 router = APIRouter()
+
+# Require manager role and honor 2FA step-up if enabled
+manager_guard = stepup_guard("manager")
 
 
 class VoidRequest(BaseModel):
@@ -60,6 +65,7 @@ async def request_void(
 async def approve_void(
     tenant_id: str,
     order_id: int,
+    user: User = Depends(manager_guard),
     session: AsyncSession = Depends(get_session_from_path),
 ) -> dict:
     """Approve a pending void and adjust invoice totals."""

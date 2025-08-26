@@ -14,7 +14,7 @@ QR pack generation events are audited and can be exported via admin APIs. See
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
-Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports are available at `/admin/csp/reports`.
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports (kept for 24 hours) are available at `/admin/csp/reports`.
 
 Guest-facing order endpoints accept an `Idempotency-Key` header (UUID). Successful responses are cached for 24 hours and the key is recorded in audit logs to guard against duplicate charges.
 
@@ -247,7 +247,9 @@ A guest-facing router exposes menu data for a specific table:
 
 - `GET /g/{table_token}/menu` – list menu categories and items. Responses
   include an `ETag` derived from a menu version that increments whenever the
-  menu is modified, ensuring caches invalidate reliably.
+  menu is modified, ensuring caches invalidate reliably. Use
+  `filter=dietary:vegan,-allergen:nuts` to include only items matching dietary
+  tags and excluding specific allergens.
 - `GET /h/{room_token}/menu` – list menu for hotel rooms.
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
@@ -440,7 +442,8 @@ hits exactly `0` when an order is `ready` or `served`.
 Guests who share a phone number and opt in to WhatsApp receive order status
 updates when their order is accepted, out for delivery, or ready. Messages are
 queued through the notification outbox and delivered via the configured
-WhatsApp provider.
+WhatsApp provider. Set `WHATSAPP_GUEST_UPDATES_ENABLED=true` to enable these
+messages.
 The API includes a Redis-backed rate limiter that blocks an IP after three consecutive failed requests.
 
 ### Guest request limits
@@ -475,11 +478,15 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `ws_messages_total`: WebSocket messages delivered
 - `sse_clients_gauge`: currently connected SSE clients
 - `digest_sent_total`: daily KPI digests sent (via route or CLI)
+- `slo_requests_total` / `slo_errors_total`: per-route SLO tracking
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
 Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
 - Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
   `POST /api/admin/dlq/replay` re-enqueues a job by ID.
+
+Rolling 30-day error budgets per route are available from the admin endpoint
+`/admin/ops/slo`.
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
@@ -580,6 +587,16 @@ python scripts/tenant_qr_tools.py list_tables --tenant TENANT_ID
 python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
 python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
 ```
+
+To generate a sizable dataset for local load testing, use the large outlet seeder:
+
+```bash
+POSTGRES_TENANT_DSN_TEMPLATE=sqlite+aiosqlite:///tmp/{tenant_id}.db \
+python scripts/seed_large_outlet.py --tenant TENANT_ID \
+    --items 5000 --tables 300 --orders 50000
+```
+
+
 
 For local scale testing, a helper seeds large volumes of data using bulk
 inserts:

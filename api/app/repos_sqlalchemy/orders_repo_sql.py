@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import flags
+
 from ..domain import OrderStatus
 from ..models_tenant import MenuItem, Order, OrderItem, Table
 from ..utils.soft_delete import guard_not_deleted
@@ -65,14 +67,14 @@ async def create_order(
         if item is None:  # pragma: no cover - menu item missing
             raise ValueError(f"menu item {line['item_id']!r} not found")
         guard_not_deleted(item, "Menu item is inactive/deleted")
-        mods = line.get("mods", [])
+        mods = line.get("mods", []) if flags.get("simple_modifiers") else []
         chosen = []
         extra = 0.0
         for mid in mods:
             for mod in item.modifiers or []:
                 if mod.get("id") == mid:
                     chosen.append(mod)
-                    extra += float(mod.get("price", 0))
+                    extra += float(mod.get("delta", 0))
                     break
         price = float(item.price) + extra
         session.add(
@@ -210,14 +212,14 @@ async def add_round(
             raise ValueError(f"menu item {line['item_id']!r} not found")
         if data.deleted_at is not None:
             raise ValueError("GONE_RESOURCE")
-        mods = line.get("mods", [])
+        mods = line.get("mods", []) if flags.get("simple_modifiers") else []
         chosen = []
         extra = 0.0
         for mid in mods:
             for mod in data.modifiers or []:
                 if mod.get("id") == mid:
                     chosen.append(mod)
-                    extra += float(mod.get("price", 0))
+                    extra += float(mod.get("delta", 0))
                     break
         price = float(data.price) + extra
         session.add(

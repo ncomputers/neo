@@ -3,6 +3,7 @@ from __future__ import annotations
 """WhatsApp notification helpers."""
 
 import logging
+import os
 from typing import Optional
 
 from ..db import SessionLocal
@@ -15,9 +16,13 @@ logger = logging.getLogger("whatsapp")
 async def notify_status(tenant: str, phone: Optional[str], order_id: int, status: str) -> None:
     """Queue a WhatsApp message for an order status update.
 
-    If ``phone`` is ``None`` the notification is skipped. A corresponding audit
-    entry is recorded with the queued message identifier.
+    If WhatsApp updates are disabled or ``phone`` is ``None`` the notification
+    is skipped. A corresponding audit entry is recorded with the queued message
+    identifier when enqueued.
     """
+
+    if os.getenv("WHATSAPP_GUEST_UPDATES_ENABLED", "").lower() not in {"1", "true", "yes"}:
+        return
 
     if not phone:
         return

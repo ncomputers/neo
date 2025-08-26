@@ -34,3 +34,9 @@ Owners can request help directly from the service.
 
 - `POST /support/ticket` – submit a ticket with a subject, body and optional screenshots.
 - `GET /admin/support` – list submitted tickets and their status (admin only).
+
+## Time
+
+Clients can compare their clock against the server.
+
+- `GET /time/skew` – returns the current server epoch timestamp.

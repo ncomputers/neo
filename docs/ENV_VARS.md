@@ -12,7 +12,7 @@ The application relies on the following environment variables:
 | `JWT_SECRET` | Secret key used to sign JWT tokens. | `your_jwt_secret_key` |
 | `JWKS_URL` (optional) | JWKS endpoint for verifying JWT signatures. | `https://auth.example.com/jwks.json` |
 | `REDIS_URL` | URL for Redis instance. | `redis://localhost:6379/0` |
-| `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Defaults to `*`. | `https://example.com,https://app.com` |
+| `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Must be set. | `https://example.com,https://app.com` |
 | `ENABLE_HSTS` | When set to `1`, adds Strict-Transport-Security header to responses. | `1` |
 | `BODY_MAX_KB` | Maximum request body size accepted by the API. | `128` |
 | `ADMIN_API_ENABLED` | Enables superadmin endpoints when set to `true`. | `false` |
@@ -34,6 +34,7 @@ The application relies on the following environment variables:
 | `GIT_SHA` (optional) | Git commit SHA exposed by the `/version` endpoint. | `c0ffee` |
 | `BUILT_AT` (optional) | Build timestamp exposed by the `/version` endpoint. | `2024-01-01T00:00:00Z` |
 | `ENV` (optional) | Deployment environment (`prod`, `staging`, or `dev`). | `prod` |
+| `FLAG_SIMPLE_MODIFIERS` | Enable basic menu modifiers and combos. | `1` |
 
 ## JWT/JOSE
 

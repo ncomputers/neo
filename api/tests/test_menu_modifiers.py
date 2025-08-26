@@ -35,7 +35,10 @@ async def _setup_db():
             name="Tea",
             price=10,
             is_veg=False,
-            modifiers=[{"id": 1, "name": "Sugar", "price": 2}, {"id": 2, "name": "Milk", "price": 3}],
+            modifiers=[
+                {"id": 1, "label": "Sugar", "delta": 2},
+                {"id": 2, "label": "Milk", "delta": 3},
+            ],
             combos=[],
         )
         counter = Counter(id=1, code="C1", qr_token="ctr1")
@@ -46,13 +49,14 @@ async def _setup_db():
         )
     return Session, order_id
 
-Session, order_id = asyncio.run(_setup_db())
+Session = order_id = None
 
 async def _session_dep(tenant_id: str = Depends(header_tenant_id)):
     async with Session() as session:
         yield session
 
-def test_menu_modifiers_price_and_printable():
+def test_menu_modifiers_price_and_printable(monkeypatch):
+    monkeypatch.setenv("FLAG_SIMPLE_MODIFIERS", "1")
     app = FastAPI()
     app.state.redis = fakeredis.aioredis.FakeRedis()
     app.add_middleware(SecurityMiddleware)
@@ -62,6 +66,8 @@ def test_menu_modifiers_price_and_printable():
     app.dependency_overrides[routes_guest_menu.get_tenant_session] = _session_dep
     app.dependency_overrides[routes_kot.get_session_from_path] = _session_dep
 
+    global Session, order_id
+    Session, order_id = asyncio.run(_setup_db())
     client = TestClient(app)
     resp = client.get("/g/T1/menu", headers={"X-Tenant-ID": "demo"})
     assert resp.status_code == 200

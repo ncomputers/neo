@@ -11,7 +11,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))  # noqa: E402
 os.environ.setdefault("DB_URL", "postgresql://localhost/test")
 os.environ.setdefault("REDIS_URL", "redis://redis:6379/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
-os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 
 from api.app.audit import Audit  # noqa: E402
 from api.app.audit import SessionLocal as AuditSession  # noqa: E402
