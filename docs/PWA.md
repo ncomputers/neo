@@ -18,6 +18,9 @@ basic offline support.
   client‑generated `op_id` to avoid double submissions. Items show a **pending**
   badge until the service worker syncs them, after which they are marked
   **synced**.
+* Guest and counter POST requests are queued when offline and replayed via
+  background sync with an `Idempotency-Key` header to deduplicate on the
+  server.
 * Invoice PDFs are cached per outlet with an LRU cap of 50 for offline review.
 * Updates are picked up when the service worker changes.
 

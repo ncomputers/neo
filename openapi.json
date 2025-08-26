@@ -10,475 +10,6 @@
     }
   ],
   "paths": {
-    "/menu/categories": {
-      "get": {
-        "summary": "List Categories",
-        "description": "Return all categories.",
-        "operationId": "list_categories_menu_categories_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response List Categories Menu Categories Get"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create Category",
-        "description": "Create a new category and return it.",
-        "operationId": "create_category_menu_categories_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CategoryIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Create Category Menu Categories Post"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menu/categories/{category_id}": {
-      "delete": {
-        "summary": "Delete Category",
-        "description": "Delete a category if it exists.",
-        "operationId": "delete_category_menu_categories__category_id__delete",
-        "parameters": [
-          {
-            "name": "category_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Category Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Delete Category Menu Categories  Category Id  Delete"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menu/items": {
-      "post": {
-        "summary": "Create Item",
-        "description": "Create a menu item.",
-        "operationId": "create_item_menu_items_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ItemIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Create Item Menu Items Post"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "List Items",
-        "description": "List items with optional time-based discounts.",
-        "operationId": "list_items_menu_items_get",
-        "parameters": [
-          {
-            "name": "include_out_of_stock",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Include Out Of Stock"
-            }
-          },
-          {
-            "name": "now",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Now"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response List Items Menu Items Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menu/items/export": {
-      "get": {
-        "summary": "Export Items",
-        "description": "Export current items to an Excel sheet.",
-        "operationId": "export_items_menu_items_export_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menu/items/import": {
-      "post": {
-        "summary": "Import Items",
-        "description": "Import items from an uploaded Excel sheet.",
-        "operationId": "import_items_menu_items_import_post",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_import_items_menu_items_import_post"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Import Items Menu Items Import Post"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menu/items/{item_id}": {
-      "get": {
-        "summary": "Get Item",
-        "description": "Fetch a single item by ID.",
-        "operationId": "get_item_menu_items__item_id__get",
-        "parameters": [
-          {
-            "name": "item_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Item Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get Item Menu Items  Item Id  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "Update Item",
-        "description": "Update an item; price changes are staged as pending.",
-        "operationId": "update_item_menu_items__item_id__put",
-        "parameters": [
-          {
-            "name": "item_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Item Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ItemIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Update Item Menu Items  Item Id  Put"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete Item",
-        "description": "Remove an item if present.",
-        "operationId": "delete_item_menu_items__item_id__delete",
-        "parameters": [
-          {
-            "name": "item_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Item Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Delete Item Menu Items  Item Id  Delete"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menu/items/apply-pending": {
-      "post": {
-        "summary": "Apply Pending Prices",
-        "description": "Apply any staged price updates.",
-        "operationId": "apply_pending_prices_menu_items_apply_pending_post",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Apply Pending Prices Menu Items Apply Pending Post"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menu/items/{item_id}/image": {
-      "post": {
-        "summary": "Upload Image",
-        "description": "Attach an image to an item by saving the uploaded file.",
-        "operationId": "upload_image_menu_items__item_id__image_post",
-        "parameters": [
-          {
-            "name": "item_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Item Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_upload_image_menu_items__item_id__image_post"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Upload Image Menu Items  Item Id  Image Post"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/login/email": {
       "post": {
         "tags": [
@@ -1996,6 +1527,64 @@
         }
       }
     },
+    "/g/consent": {
+      "post": {
+        "summary": "Save Consent",
+        "operationId": "save_consent_g_consent_post",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Save Consent G Consent Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/c/{counter_token}/menu": {
       "get": {
         "summary": "Fetch Menu",
@@ -2355,6 +1944,48 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/billing": {
+      "get": {
+        "summary": "Billing Info",
+        "description": "Return subscription details and payment link for the tenant.",
+        "operationId": "billing_info_billing_get",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Billing Info Billing Get"
+                }
               }
             }
           },
@@ -2849,6 +2480,11 @@
         "summary": "Approve Void",
         "description": "Approve a pending void and adjust invoice totals.",
         "operationId": "approve_void_api_outlet__tenant_id__orders__order_id__void_approve_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "tenant_id",
@@ -2956,7 +2592,7 @@
     "/api/outlet/{tenant_id}/kds/queue": {
       "get": {
         "summary": "List Queue",
-        "description": "Return active orders for the KDS queue view.",
+        "description": "Return active orders along with printer agent status.",
         "operationId": "list_queue_api_outlet__tenant_id__kds_queue_get",
         "parameters": [
           {
@@ -4112,6 +3748,53 @@
         }
       }
     },
+    "/admin/ops/slo": {
+      "get": {
+        "summary": "Slo Error Budget",
+        "description": "Return 30\u2011day error budget by route.",
+        "operationId": "slo_error_budget_admin_ops_slo_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "additionalProperties": {
+                      "type": "number"
+                    },
+                    "type": "object"
+                  },
+                  "type": "object",
+                  "title": "Response Slo Error Budget Admin Ops Slo Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ops/summary": {
+      "get": {
+        "summary": "Admin Ops Summary",
+        "description": "Return uptime and delivery metrics for owners.",
+        "operationId": "admin_ops_summary_api_admin_ops_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Admin Ops Summary Api Admin Ops Summary Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant}/limits/usage": {
       "get": {
         "summary": "Licensing Usage",
@@ -4521,20 +4204,11 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "title": "ReplayDlqPayload",
-                "required": [
-                  "id"
-                ],
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "title": "Id"
-                  }
-                }
+                "$ref": "#/components/schemas/ReplayRequest"
               }
             }
           }
@@ -4660,6 +4334,86 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Dsar Delete Api Outlet  Tenant Id  Privacy Dsar Delete Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/privacy/dsar/export": {
+      "post": {
+        "summary": "Dsar Export",
+        "operationId": "dsar_export_privacy_dsar_export_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DSARRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Dsar Export Privacy Dsar Export Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/privacy/dsar/delete": {
+      "post": {
+        "summary": "Dsar Delete",
+        "operationId": "dsar_delete_privacy_dsar_delete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DSARRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Dsar Delete Privacy Dsar Delete Post"
                 }
               }
             }
@@ -5578,6 +5332,26 @@
         }
       }
     },
+    "/api/owner/sla": {
+      "get": {
+        "summary": "Owner Sla",
+        "operationId": "owner_sla_api_owner_sla_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Owner Sla Api Owner Sla Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/dashboard/tiles": {
       "get": {
         "summary": "Owner Dashboard Tiles",
@@ -6194,47 +5968,17 @@
     "/time/skew": {
       "get": {
         "summary": "Time Skew",
-        "description": "Return server time and advice for client clock skew.",
+        "description": "Return the current server epoch time.",
         "operationId": "time_skew_time_skew_get",
-        "parameters": [
-          {
-            "name": "client_ts",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Client timestamp in ms",
-              "title": "Client Ts"
-            },
-            "description": "Client timestamp in ms"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Time Skew Time Skew Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -6303,46 +6047,20 @@
         }
       }
     },
-    "/help": {
+    "/admin/troubleshoot": {
       "get": {
-        "summary": "Help Index",
-        "description": "Return help index with optional outlet branding.",
-        "operationId": "help_index_help_get",
-        "parameters": [
-          {
-            "name": "tenant_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Tenant Id"
-            }
-          }
-        ],
+        "summary": "Troubleshoot",
+        "description": "Run connectivity and version checks for admins.",
+        "operationId": "troubleshoot_admin_troubleshoot_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Troubleshoot Admin Troubleshoot Get"
                 }
               }
             }
@@ -6350,21 +6068,12 @@
         }
       }
     },
-    "/help/{page}": {
+    "/help": {
       "get": {
-        "summary": "Help Page",
-        "description": "Return the named help page with optional outlet branding.",
-        "operationId": "help_page_help__page__get",
+        "summary": "Help Center",
+        "description": "Render bundled help documents with optional outlet branding.",
+        "operationId": "help_center_help_get",
         "parameters": [
-          {
-            "name": "page",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Page"
-            }
-          },
           {
             "name": "tenant_id",
             "in": "query",
@@ -6428,6 +6137,29 @@
       }
     },
     "/support/ticket": {
+      "get": {
+        "summary": "List My Tickets",
+        "operationId": "list_my_tickets_support_ticket_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List My Tickets Support Ticket Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
       "post": {
         "summary": "Create Ticket",
         "operationId": "create_ticket_support_ticket_post",
@@ -6496,6 +6228,133 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/admin/webhooks/probe": {
+      "post": {
+        "summary": "Admin Webhook Probe",
+        "description": "Probe ``payload.url`` and store a report for later inspection.",
+        "operationId": "admin_webhook_probe_admin_webhooks_probe_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProbePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Admin Webhook Probe Admin Webhooks Probe Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/integrations": {
+      "get": {
+        "summary": "List Integrations",
+        "operationId": "list_integrations_admin_integrations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Integrations Admin Integrations Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/integrations/{kind}/probe": {
+      "post": {
+        "summary": "Probe Integration",
+        "operationId": "probe_integration_admin_integrations__kind__probe_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kind"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProbePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Probe Integration Admin Integrations  Kind  Probe Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/outlet/{tenant_id}/support/bundle.zip": {
@@ -6773,6 +6632,32 @@
         ]
       }
     },
+    "/admin/tenant/sandbox": {
+      "post": {
+        "summary": "Bootstrap Sandbox",
+        "description": "Create a temporary sandbox tenant with demo data.\n\nThe sandbox copies menu/settings without personal information, seeds demo\norders and expires automatically in 7 days. An audit entry records the newly\ncreated sandbox tenant identifier.",
+        "operationId": "bootstrap_sandbox_admin_tenant_sandbox_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Bootstrap Sandbox Admin Tenant Sandbox Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/api/outlet/{tenant_id}/backup": {
       "post": {
         "summary": "Backup Tenant",
@@ -6910,6 +6795,46 @@
         }
       }
     },
+    "/api/outlet/{tenant}/print/status": {
+      "get": {
+        "summary": "Printer Status",
+        "description": "Return printer agent heartbeat status and retry queue length.",
+        "operationId": "printer_status_api_outlet__tenant__print_status_get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant}/push/subscribe": {
       "post": {
         "summary": "Subscribe",
@@ -6954,6 +6879,57 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Subscribe Api Outlet  Tenant  Push Subscribe Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/outlet/{tenant}/whatsapp/status": {
+      "post": {
+        "summary": "Whatsapp Status",
+        "operationId": "whatsapp_status_api_outlet__tenant__whatsapp_status_post",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Whatsapp Status Api Outlet  Tenant  Whatsapp Status Post"
                 }
               }
             }
@@ -7056,6 +7032,64 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Checkout Webhook Api Outlet  Tenant  Checkout Webhook Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{payment_id}/refund": {
+      "post": {
+        "summary": "Refund Payment",
+        "description": "Issue a refund for ``payment_id`` and cache the result for 24h.",
+        "operationId": "refund_payment_payments__payment_id__refund_post",
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Payment Id"
+            }
+          },
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Refund Payment Payments  Payment Id  Refund Post"
                 }
               }
             }
@@ -7222,6 +7256,66 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Submit Pilot Feedback Api Pilot  Tenant  Feedback Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pilot/admin/feedback/summary": {
+      "get": {
+        "summary": "Pilot Feedback Summary",
+        "description": "Return aggregated score buckets for the given date range.",
+        "operationId": "pilot_feedback_summary_api_pilot_admin_feedback_summary_get",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Pilot Feedback Summary Api Pilot Admin Feedback Summary Get"
                 }
               }
             }
@@ -7707,6 +7801,57 @@
         }
       }
     },
+    "/api/admin/outlets/{tenant_id}/qrposters.zip": {
+      "get": {
+        "summary": "Qr Poster Pack",
+        "operationId": "qr_poster_pack_api_admin_outlets__tenant_id__qrposters_zip_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "A4",
+                "A5"
+              ],
+              "type": "string",
+              "default": "A4",
+              "title": "Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/outlet/{tenant_id}/reports/daybook.pdf": {
       "get": {
         "summary": "Owner Daybook Pdf",
@@ -7889,6 +8034,36 @@
       "get": {
         "summary": "Get Csp Reports",
         "operationId": "get_csp_reports_admin_csp_reports_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -7897,13 +8072,18 @@
                 "schema": {}
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/outlet/{tenant_id}/reports/gst/monthly": {
@@ -8133,20 +8313,6 @@
         "title": "BatchPayload",
         "description": "Batch of queued orders."
       },
-      "Body_import_items_menu_items_import_post": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "format": "binary",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_import_items_menu_items_import_post"
-      },
       "Body_menu_import_dryrun_api_outlet__tenant_id__menu_import_dryrun_post": {
         "properties": {
           "file": {
@@ -8174,20 +8340,6 @@
           "screenshot"
         ],
         "title": "Body_renew_subscription_tenants__tenant_id__subscription_renew_post"
-      },
-      "Body_upload_image_menu_items__item_id__image_post": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "format": "binary",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_upload_image_menu_items__item_id__image_post"
       },
       "Body_upload_media_api_outlet__tenant__media_upload_post": {
         "properties": {
@@ -8283,20 +8435,6 @@
         "title": "CartItem",
         "description": "An item added by a guest to the cart."
       },
-      "CategoryIn": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "title": "CategoryIn",
-        "description": "Input schema for creating a category."
-      },
       "CheckoutStart": {
         "properties": {
           "invoice_id": {
@@ -8327,6 +8465,33 @@
           "code"
         ],
         "title": "CodePayload"
+      },
+      "ConsentPayload": {
+        "properties": {
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "allow_analytics": {
+            "type": "boolean",
+            "title": "Allow Analytics",
+            "default": false
+          },
+          "allow_wa": {
+            "type": "boolean",
+            "title": "Allow Wa",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "ConsentPayload"
       },
       "DSARRequest": {
         "properties": {
@@ -8437,47 +8602,6 @@
         ],
         "title": "ItemCreate",
         "description": "Minimal payload for creating a menu item."
-      },
-      "ItemIn": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "price": {
-            "type": "integer",
-            "title": "Price"
-          },
-          "category_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Category Id"
-          },
-          "in_stock": {
-            "type": "boolean",
-            "title": "In Stock",
-            "default": true
-          },
-          "show_fssai_icon": {
-            "type": "boolean",
-            "title": "Show Fssai Icon",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "price"
-        ],
-        "title": "ItemIn",
-        "description": "Input schema for creating or updating an item."
       },
       "LoginPayload": {
         "properties": {
@@ -8633,6 +8757,12 @@
             ],
             "title": "Comment",
             "description": "Optional free-form comment"
+          },
+          "contact_opt_in": {
+            "type": "boolean",
+            "title": "Contact Opt In",
+            "description": "Consent for follow-up contact",
+            "default": false
           }
         },
         "type": "object",
@@ -8681,6 +8811,40 @@
           "order_id"
         ],
         "title": "PrintNotify"
+      },
+      "PrintStatus": {
+        "properties": {
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "queue": {
+            "type": "integer",
+            "title": "Queue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stale",
+          "queue"
+        ],
+        "title": "PrintStatus"
+      },
+      "ProbePayload": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "ProbePayload"
       },
       "Profile": {
         "properties": {
@@ -8783,6 +8947,19 @@
         ],
         "title": "QueuedOrder",
         "description": "Order payload queued for later ingestion."
+      },
+      "ReplayRequest": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "ReplayRequest"
       },
       "RuleCreate": {
         "properties": {
@@ -8901,6 +9078,29 @@
           "status"
         ],
         "title": "StatusPayload"
+      },
+      "StatusUpdate": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone",
+          "order_id",
+          "status"
+        ],
+        "title": "StatusUpdate"
       },
       "TableCreate": {
         "properties": {

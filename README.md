@@ -110,6 +110,10 @@ infrequent access after 30 days and purges delete markers after a week:
 }
 ```
 
+## BI parquet dumps
+
+Nightly exports for business intelligence can be generated via `scripts/bi_dump.py`. The script writes Parquet files for orders, order items and payments partitioned by date and uploads them to an S3-compatible bucket. See [`docs/bi_dumps.md`](docs/bi_dumps.md) for configuration details.
+
 ## Licensing limits
 
 Tenants can be assigned quotas via the `license_limits` JSON column in the
@@ -289,6 +293,9 @@ A guest-facing router exposes menu data for a specific table:
 - `POST /h/{room_token}/order` – place a room service order.
 - `POST /h/{room_token}/request/cleaning` – request housekeeping for the room.
 - `POST /g/{table_token}/bill` – generate a bill; payload may include an optional `tip` and `coupons` list.
+- `GET /guest/receipts?phone=XXXXXXXXXX` – list up to the last ten redacted
+  receipts for the contact (use `email=` to look up by email). Retention is 30
+  days by default and may be extended per tenant.
 
 
 This router relies on tenant-specific databases and is not wired into the
@@ -385,6 +392,8 @@ Configure and inspect notification rules:
 - `POST /api/outlet/{tenant_id}/outbox/{id}/retry` – reset a notification for another delivery attempt.
 - `POST /api/outlet/{tenant_id}/webhooks/test` – send a sample webhook payload to a URL.
 - `POST /api/outlet/{tenant_id}/webhooks/{id}/replay` – re-enqueue a webhook from outbox history.
+- `GET /admin/integrations` – list available webhook integration types with sample payloads.
+- `POST /admin/integrations/{type}/probe` – probe a webhook destination and send a sample payload.
 - `GET /api/outlet/{tenant_id}/dlq?limit=100` – view dead-lettered notifications.
 - `POST /api/outlet/{tenant_id}/dlq/{id}/requeue` – move a dead-lettered event back to the outbox.
 - `DELETE /api/outlet/{tenant_id}/dlq/{id}` – discard a dead-lettered event.

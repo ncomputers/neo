@@ -94,3 +94,24 @@ python scripts/export_resume.py \
   --cursor abc123
 ```
 
+## Accounting exports
+
+Lightweight CSVs allow hand-off to ledger software without a full integration.
+
+```
+GET /api/outlet/{tenant}/accounting/sales_register.csv?start=YYYY-MM-DD&end=YYYY-MM-DD
+GET /api/outlet/{tenant}/accounting/gst_summary.csv?start=YYYY-MM-DD&end=YYYY-MM-DD
+```
+
+### Importing into Tally
+
+1. Download the relevant CSV export.
+2. In Tally, navigate to **Gateway of Tally → Import Data → Vouchers**.
+3. Choose the CSV file and accept the import prompts.
+
+### Importing into Zoho Books
+
+1. Download the CSV export.
+2. In Zoho Books, go to **Sales → Invoices → More Options → Import Invoices**.
+3. Upload the file and map the columns as prompted.
+
