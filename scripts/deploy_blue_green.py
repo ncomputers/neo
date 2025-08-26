@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Blue/green deployment helper.
 
-Creates a new application instance, gates on health, runs smoke and canary
-checks, flips the Nginx upstream and finally retires the previous instance.
+Creates a new application instance, gates on preflight/ready health, runs
+smoke and canary checks, flips the Nginx upstream and finally retires the
+previous instance. Smoke failures trigger an automatic rollback.
 """
 
 from __future__ import annotations
@@ -14,7 +15,6 @@ import time
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
-
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -29,7 +29,7 @@ def healthcheck(url: str, timeout: int = 60) -> None:
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            with urlopen(url, timeout=5) as resp:  # noqa: S310 - controlled URL
+            with urlopen(url, timeout=5) as resp:  # noqa: S310 # nosec - controlled URL
                 if resp.status == 200:
                     return
         except (HTTPError, URLError):
@@ -57,20 +57,26 @@ def main() -> None:
     args = parser.parse_args()
 
     run(["systemctl", "start", args.new])
+    healthcheck(f"{args.base_url}/preflight")
     healthcheck(f"{args.base_url}/ready")
 
-    run(
-        [
-            sys.executable,
-            str(SCRIPT_DIR / "smoke_release.py"),
-            "--tenant",
-            args.tenant,
-            "--table",
-            args.table,
-            "--base-url",
-            args.base_url,
-        ]
-    )
+    try:
+        run(
+            [
+                sys.executable,
+                str(SCRIPT_DIR / "canary_probe.py"),
+                "--tenant",
+                args.tenant,
+                "--table",
+                args.table,
+                "--base-url",
+                args.base_url,
+                "--minimal",
+            ]
+        )
+    except subprocess.CalledProcessError:
+        run(["systemctl", "stop", args.new])
+        raise
     run(
         [
             sys.executable,
