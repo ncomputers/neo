@@ -56,4 +56,11 @@ jobs:
         run: pre-commit run --hook-stage manual i18n-lint --all-files
       - name: Test
         run: pytest --cov --cov-report=term --cov-fail-under=80 -q
+      - name: Save print-test PNG
+        run: python scripts/save_print_test_png.py
+      - name: Upload print-test PNG
+        uses: actions/upload-artifact@v4
+        with:
+          name: print-test-${{ matrix.db }}
+          path: print-test.png
 
