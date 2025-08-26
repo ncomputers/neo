@@ -20,3 +20,5 @@ python scripts/chaos_mini.py
 ```
 
 The script only mutates local environment variables and sleeps between checks. Run during a low-traffic window and abort with `Ctrl+C` if needed.
+
+For experiments triggered during drills, aggregate exposure and conversion stats using `GET /exp/ab/report`.

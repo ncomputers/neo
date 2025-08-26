@@ -11,6 +11,8 @@ from .repos_sqlalchemy import invoices_repo_sql
 from .services import billing_service, notifications
 from .services.receipt_vault import ReceiptVault
 from .utils.responses import ok
+from .exp.ab_allocator import get_variant
+from .routes_metrics import record_ab_conversion
 
 
 async def get_tenant_id() -> str:  # pragma: no cover - placeholder dependency
@@ -81,6 +83,9 @@ async def generate_bill(
     if contact and payload and payload.get("consent") and request is not None:
         vault = ReceiptVault(request.app.state.redis)
         await vault.add(contact, invoice_payload)
+    device_id = request.headers.get("device-id", "")
+    variant = get_variant(device_id, "MENU_COPY_V1")
+    record_ab_conversion("MENU_COPY_V1", variant)
     await notifications.enqueue(
         tenant_id, "bill.generated", {"table_token": table_token}
     )
