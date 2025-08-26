@@ -485,7 +485,7 @@ The API includes a Redis-backed rate limiter that blocks an IP after three conse
 
 Anonymous guest POSTs under `/g/*` are capped at 256KB. When rate limits are
 exceeded, endpoints return HTTP 429 with JSON
-`{"code": "RATE_LIMIT", "message": "TooManyRequests", "hint": "retry in 10s"}`.
+`{"code": "RATE_LIMIT", "hint": "retry in 10s"}`.
 
 ### Idempotency
 
@@ -501,7 +501,7 @@ All HTTP responses follow a simple envelope structure of
 `{"ok": true, "data": ...}` for success or
 `{"ok": false, "error": {"code": ..., "message": ...}}` for failures,
 except rate-limit errors which return
-`{"code": "RATE_LIMIT", "message": "TooManyRequests", "hint": "retry in Xs"}`.
+`{"code": "RATE_LIMIT", "hint": "retry in Xs"}`.
 Prometheus metrics are exposed at `/metrics`. Key metrics include:
 
 - `http_requests_total`: total HTTP requests labelled by path/method/status

@@ -22,7 +22,8 @@ from .db import SessionLocal
 from .models_master import TwoFactorBackupCode, TwoFactorSecret
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import ok, rate_limited
+from .utils.responses import ok
+from .utils.rate_limit import rate_limited
 
 router = APIRouter()
 

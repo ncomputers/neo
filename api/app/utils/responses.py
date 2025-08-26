@@ -1,8 +1,5 @@
 from typing import Any, Dict
 
-from fastapi.responses import JSONResponse
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS
-
 
 def ok(data: Any) -> Dict[str, Any]:
     """Return a success envelope."""
@@ -25,10 +22,3 @@ def err(
         error["details"] = details
 
     return {"ok": False, "request_id": request_id_ctx.get(None), "error": error}
-
-
-def rate_limited(retry_after: int) -> JSONResponse:
-    """Return a standardized rate limit response."""
-    hint = f"retry in {max(retry_after, 0)}s"
-    body = {"code": "RATE_LIMIT", "hint": hint}
-    return JSONResponse(body, status_code=HTTP_429_TOO_MANY_REQUESTS)

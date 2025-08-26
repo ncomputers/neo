@@ -22,7 +22,8 @@ from .pdf.render import render_invoice
 from .repos_sqlalchemy import invoices_repo_sql
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import err, rate_limited
+from .utils.responses import err
+from .utils.rate_limit import rate_limited
 
 router = APIRouter()
 

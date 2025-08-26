@@ -17,7 +17,8 @@ from .security.webhook_egress import is_allowed_url
 from .security import ratelimit
 from .utils import ratelimits
 from .utils.audit import audit
-from .utils.responses import ok, rate_limited
+from .utils.responses import ok
+from .utils.rate_limit import rate_limited
 from .utils.webhook_signing import sign
 
 router = APIRouter()
