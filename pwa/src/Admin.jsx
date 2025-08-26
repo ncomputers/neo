@@ -21,7 +21,10 @@ export default function Admin() {
   return (
     <div className="p-4">
       {warning && (
-        <div className="mb-4 border border-warning bg-warning p-2 text-white">
+        <div
+          role="alert"
+          className="mb-4 border border-warning bg-warning p-2 text-white"
+        >
           {warning}
         </div>
       )}
@@ -29,7 +32,7 @@ export default function Admin() {
       <div className="mt-4">
         <Link
           to="/admin/troubleshoot"
-          className="text-blue-600 underline hover:text-blue-800"
+          className="text-blue-600 underline hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
           Troubleshoot common issues
         </Link>

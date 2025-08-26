@@ -42,11 +42,17 @@ export default function AdminDashboard() {
           </tbody>
         </table>
       )}
-      <footer className="mt-8 text-sm text-gray-500">
-        <a href="/legal/subprocessors" className="mx-2 hover:underline">
+      <footer className="mt-8 text-sm text-gray-600">
+        <a
+          href="/legal/subprocessors"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           Subprocessors
         </a>
-        <a href="/legal/sla" className="mx-2 hover:underline">
+        <a
+          href="/legal/sla"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           SLA
         </a>
       </footer>
