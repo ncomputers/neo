@@ -104,6 +104,7 @@ from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
+from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
@@ -439,6 +440,8 @@ async def create_tenant(name: str, licensed_tables: int) -> dict:
         "name": name,
         "licensed_tables": licensed_tables,
         "subscription_expires_at": datetime.utcnow(),
+        "plan": "basic",
+        "grace_period_days": 7,
     }
     return ok({"tenant_id": tenant_id})
 
@@ -505,6 +508,29 @@ async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> di
         "payment.verified", {"tenant_id": tenant_id, "payment_id": payment_id}
     )
     return ok({"status": "verified"})
+
+
+@app.get("/billing")
+async def billing_info(x_tenant_id: str = Header(...)) -> dict:
+    tenant = TENANTS.get(x_tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    plan = tenant.get("plan")
+    next_renewal = tenant.get("subscription_expires_at")
+    pay_url = os.getenv("LICENSE_PAY_URL", "")
+    grace_days = tenant.get("grace_period_days", 7)
+    now = datetime.utcnow()
+    grace = False
+    if next_renewal:
+        grace = next_renewal < now <= next_renewal + timedelta(days=grace_days)
+    return ok(
+        {
+            "plan": plan,
+            "next_renewal": next_renewal,
+            "pay_url": pay_url,
+            "grace": grace,
+        }
+    )
 
 
 @app.get("/health")
@@ -912,6 +938,7 @@ app.include_router(api_keys_router)
 app.include_router(vapid_router)
 app.include_router(postman_router)
 app.include_router(admin_qrpack_router)
+app.include_router(admin_qrposter_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)

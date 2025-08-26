@@ -7,6 +7,7 @@ export default function KitchenDashboard() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [printerStale, setPrinterStale] = useState(false)
 
   const fetchOrders = () => {
     setLoading(true)
@@ -19,6 +20,10 @@ export default function KitchenDashboard() {
 
   useEffect(() => {
     fetchOrders()
+    apiFetch('/print/status')
+      .then((res) => res.json())
+      .then((data) => setPrinterStale(data.stale))
+      .catch(() => {})
   }, [])
 
   const updateOrder = (tableId, index, action) => {
@@ -31,10 +36,18 @@ export default function KitchenDashboard() {
 
   return (
     <div className="p-4">
+      {printerStale && (
+        <div
+          className="mb-4 rounded bg-red-600 p-2 text-white"
+          data-testid="printer-alert"
+        >
+          Printer offline. Tickets queued.
+        </div>
+      )}
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Kitchen Dashboard</h2>
       {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (
         <table className="w-full border">
           <thead>
@@ -55,13 +68,15 @@ export default function KitchenDashboard() {
                 <td className="p-2 border capitalize">{o.status}</td>
                 <td className="p-2 border space-x-2 text-center">
                   <button
-                    className="px-2 py-1 bg-green-500 text-white rounded"
+                    aria-label="Accept order"
+                    className="px-2 py-1 bg-success text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-success"
                     onClick={() => updateOrder(o.table_id, o.index, 'accept')}
                   >
                     Accept
                   </button>
                   <button
-                    className="px-2 py-1 bg-red-500 text-white rounded"
+                    aria-label="Reject order"
+                    className="px-2 py-1 bg-danger text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-danger"
                     onClick={() => updateOrder(o.table_id, o.index, 'reject')}
                   >
                     Reject

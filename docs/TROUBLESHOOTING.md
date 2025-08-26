@@ -6,6 +6,7 @@ Common issues and quick fixes.
 - Verify printer power and paper.
 - Check network or USB connections.
 - Restart the device and retry.
+- If the KDS shows a red printer offline banner, inspect the printer agent heartbeat and retry queue.
 
 ## Network
 - Ensure Wi-Fi is connected and stable.

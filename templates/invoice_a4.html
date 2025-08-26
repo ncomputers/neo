@@ -2,11 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+Gujarati:wght@400;700&display=swap"
-    />
     <style{% if csp_nonce %} nonce="{{ csp_nonce }}"{% endif %}>
+      @font-face {
+        font-family: 'Noto Sans';
+        src: url('static/fonts/NotoSans-Regular.ttf') format('truetype');
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: 'Noto Sans';
+        src: url('static/fonts/NotoSans-Bold.ttf') format('truetype');
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: 'Noto Sans Devanagari';
+        src: url('static/fonts/NotoSansDevanagari-Regular.ttf') format('truetype');
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: 'Noto Sans Devanagari';
+        src: url('static/fonts/NotoSansDevanagari-Bold.ttf') format('truetype');
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: 'Noto Sans Gujarati';
+        src: url('static/fonts/NotoSansGujarati-Regular.ttf') format('truetype');
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: 'Noto Sans Gujarati';
+        src: url('static/fonts/NotoSansGujarati-Bold.ttf') format('truetype');
+        font-weight: 700;
+      }
       body {
         color: #000;
         background: #fff;
@@ -59,5 +85,11 @@
     {% elif invoice['gst_mode'] == 'unreg' %}
       <p>Tax not applicable</p>
     {% endif %}
+    <p>
+      <a href="/legal/terms">Terms</a> |
+      <a href="/legal/privacy">Privacy</a> |
+      <a href="/legal/refund">Refunds</a> |
+      <a href="/legal/contact">Contact</a>
+    </p>
   </body>
 </html>

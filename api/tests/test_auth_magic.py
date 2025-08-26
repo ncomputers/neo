@@ -51,9 +51,11 @@ def test_magic_login_throttling_and_captcha():
             == 200
         )
 
-    assert (
-        local_client.post("/auth/magic/start", json={"email": email}).status_code == 429
-    )
+    resp_limit = local_client.post("/auth/magic/start", json={"email": email})
+    assert resp_limit.status_code == 429
+    body = resp_limit.json()
+    assert body["code"] == "RATE_LIMIT"
+    assert "retry in" in body["hint"]
 
     for _ in range(3):
         assert (
@@ -67,9 +69,11 @@ def test_magic_login_throttling_and_captcha():
 
     asyncio.run(app.state.redis.delete(f"ratelimit:{ip}:magic-start"))
 
-    assert (
-        local_client.post("/auth/magic/start", json={"email": email}).status_code == 429
-    )
+    resp_limit2 = local_client.post("/auth/magic/start", json={"email": email})
+    assert resp_limit2.status_code == 429
+    body2 = resp_limit2.json()
+    assert body2["code"] == "RATE_LIMIT"
+    assert "retry in" in body2["hint"]
 
     assert (
         local_client.post(

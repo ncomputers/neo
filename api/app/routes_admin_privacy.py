@@ -49,7 +49,7 @@ async def _session(tenant_id: str):
 
 
 @router.post("/api/outlet/{tenant_id}/privacy/dsar/export")
-@audit("dsar_export")
+@audit("dsar_export", {"phone", "email"})
 async def dsar_export(
     tenant_id: str,
     payload: DSARRequest,
@@ -77,7 +77,7 @@ async def dsar_export(
 
 
 @router.post("/api/outlet/{tenant_id}/privacy/dsar/delete")
-@audit("dsar_delete")
+@audit("dsar_delete", {"phone", "email"})
 async def dsar_delete(
     tenant_id: str,
     payload: DSARRequest,
