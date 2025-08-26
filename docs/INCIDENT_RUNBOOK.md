@@ -1,11 +1,14 @@
 # Incident Runbook
 
-## SEV Levels
-- **SEV0** – Complete outage or critical data loss. Immediate, all hands response.
-- **SEV1** – Major functional loss impacting many tenants; no workaround.
-- **SEV2** – Partial degradation with limited workaround for some tenants.
-- **SEV3** – Minor functionality issue or bug with available workaround.
-- **SEV4** – Informational issue or monitoring alert requiring follow up.
+## Severity Ladder
+
+| SEV | Impact | Communication |
+| --- | ------ | ------------- |
+| **SEV0** | Complete outage or critical data loss. | Page on-call immediately, open incident bridge, notify leadership, and update Status Page and #incidents every 15 min. |
+| **SEV1** | Major functional loss impacting many tenants; no workaround. | Page on-call, update #incidents and Status Page every 30 min. |
+| **SEV2** | Partial degradation with limited workaround for some tenants. | Notify #ops channel and provide updates hourly. |
+| **SEV3** | Minor functionality issue with available workaround. | Discuss asynchronously in #ops and include in daily summary. |
+| **SEV4** | Informational issue or monitoring alert requiring follow up. | Log for follow-up; no real-time comms. |
 
 ## Roles
 - **Incident Commander** – leads response and decision making.

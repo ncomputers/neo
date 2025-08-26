@@ -56,6 +56,8 @@ class MenuItem(Base):
     hsn_sac = Column(String, nullable=True)
     show_fssai = Column(Boolean, nullable=False, default=False)
     out_of_stock = Column(Boolean, nullable=False, default=False)
+    modifiers = Column(JSON, nullable=False, server_default="[]")
+    combos = Column(JSON, nullable=False, server_default="[]")
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -153,6 +155,7 @@ class RoomOrderItem(Base):
     price_snapshot = Column(Numeric(10, 2), nullable=False)
     qty = Column(Integer, nullable=False)
     status = Column(String, nullable=False)
+    mods_snapshot = Column(JSON, nullable=False, server_default="[]")
 
 
 class Order(Base):
@@ -181,6 +184,7 @@ class OrderItem(Base):
     price_snapshot = Column(Numeric(10, 2), nullable=False)
     qty = Column(Integer, nullable=False)
     status = Column(String, nullable=False)
+    mods_snapshot = Column(JSON, nullable=False, server_default="[]")
 
 
 class Invoice(Base):
@@ -279,6 +283,7 @@ class CounterOrderItem(Base):
     name_snapshot = Column(String, nullable=False)
     price_snapshot = Column(Numeric(10, 2), nullable=False)
     qty = Column(Integer, nullable=False)
+    mods_snapshot = Column(JSON, nullable=False, server_default="[]")
 
 
 class EMAStat(Base):

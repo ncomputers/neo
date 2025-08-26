@@ -51,6 +51,8 @@ class MenuRepoSQL(MenuRepo):
                     "hsn_sac": item.hsn_sac,
                     "show_fssai": item.show_fssai,
                     "out_of_stock": item.out_of_stock,
+                    "modifiers": item.modifiers or [],
+                    "combos": item.combos or [],
                 }
             )
         return items
