@@ -47,6 +47,7 @@ export default function KitchenDashboard() {
       )}
       {printerStale && (
         <div
+          role="alert"
           className="mb-4 rounded bg-red-600 p-2 text-white"
           data-testid="printer-alert"
         >

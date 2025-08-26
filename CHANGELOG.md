@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Cache last 50 invoice PDFs per outlet for offline review.
+- Collect CSP violation reports via `/csp/report` with paginated admin viewer and query/token redaction.
 - /time/skew endpoint returns server epoch for client clock skew detection.
 - Guard hot queries with a p95 regression check.
 - Enforce environment validation at application startup and audit required
@@ -27,6 +28,8 @@ All notable changes to this project will be documented in this file.
   inclusion of deleted records via ``include_deleted``.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
+- Admin endpoint to probe webhook SLA, capturing TLS details and latency and
+  storing reports for later review.
 - Webhook rule creation probes target latency and TLS, warning on slow or
   self-signed endpoints.
 - Controlled cancellation flow with `/orders/{id}/void/request` and `/void/approve` endpoints, reversing stock, adjusting invoices and auditing each step.
@@ -38,11 +41,14 @@ All notable changes to this project will be documented in this file.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
 - Stricter `/api/admin/preflight` checks for soft-delete indexes, quotas,
   webhook breaker metrics, and replica health.
+- Per-coupon usage caps (per day/guest/outlet) with valid-from/to windows and
+  usage auditing, returning helpful hints when limits are exceeded.
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
-- PWA manifest referencing external icons to enable install prompts on supported devices.
+- Fetch PWA icons (192x192 and 512x512) via script with iOS meta tags for better install prompts.
 - OWASP ZAP baseline security scan against staging with auth paths allowlisted.
+
 - Optional PostHog/Mixpanel analytics with per-tenant consent and PII redaction.
 
 - WhatsApp guest notifications are gated by the `WHATSAPP_GUEST_UPDATES_ENABLED`
@@ -61,6 +67,8 @@ All notable changes to this project will be documented in this file.
 
   "Request more" link.
 - Track per-route SLO metrics, expose `/admin/ops/slo` endpoint and Grafana dashboard.
+- Owner dashboard includes SLA/ops widget with uptime, webhook success rate,
+  breaker open time, and median KOT prep time.
 
 - Script to bulk seed a large dataset for local scale testing.
 

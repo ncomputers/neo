@@ -38,9 +38,12 @@ the `SLACK_WEBHOOK_URL` environment variable.
 
 ## Webhook Targets
 
-Creating an alert rule with `channel` set to `webhook` triggers a quick probe
-of the target URL. The API reports latency and TLS status and warns if the
-destination is slow or uses a self-signed certificate.
+Creating an alert rule with `channel` set to `webhook` triggers a probe of the
+target URL. The API captures TLS details, HTTP status codes and latency
+percentiles and checks the destination against the webhook IP allowlist.
+Use `/admin/webhooks/probe` to preflight URLs and store these reports. Any
+warnings (slow, invalid status, self-signed or blocked IPs) are surfaced during
+registration.
 
 ## Webhook Signing
 

@@ -24,6 +24,7 @@ The queue endpoint returns a payload:
     "printer_stale": false,
     "retry_queue": 0,
     "kot_delay": false
+
   }
 }
 ```
@@ -32,3 +33,4 @@ The queue endpoint returns a payload:
 heartbeat within a minute. `retry_queue` exposes the length of the bridge's
 retry list for basic monitoring. `kot_delay` flips to `true` when the oldest
 pending order exceeds the SLA, nudging staff when the kitchen falls behind.
+
