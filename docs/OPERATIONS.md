@@ -58,7 +58,7 @@ Administrators can inspect and replay failed webhook or export jobs.
 
 ```
 GET /api/admin/dlq?type=webhook|export
-POST /api/admin/dlq/replay/{id}?type=webhook|export
+POST /api/admin/dlq/replay?type=webhook|export {"id": "..."}
 ```
 
 The list endpoint returns recent dead letters while the replay endpoint

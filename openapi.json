@@ -4500,25 +4500,16 @@
         }
       }
     },
-    "/api/admin/dlq/replay/{item_id}": {
+    "/api/admin/dlq/replay": {
       "post": {
         "summary": "Replay Dlq",
-        "operationId": "replay_dlq_api_admin_dlq_replay__item_id__post",
+        "operationId": "replay_dlq_api_admin_dlq_replay_post",
         "security": [
           {
             "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
-          {
-            "name": "item_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Item Id"
-            }
-          },
           {
             "name": "type",
             "in": "query",
@@ -4529,6 +4520,25 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "ReplayDlqPayload",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "title": "Id"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4537,7 +4547,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": true,
-                  "title": "Response Replay Dlq Api Admin Dlq Replay  Item Id  Post"
+                  "title": "Response Replay Dlq Api Admin Dlq Replay Post"
                 }
               }
             }
