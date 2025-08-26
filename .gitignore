@@ -212,3 +212,6 @@ node_modules/
 dist/
 package-lock.json
 **/.env
+
+# Downloaded fonts
+static/fonts/*.ttf

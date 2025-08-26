@@ -54,6 +54,9 @@ def test_render_invoice_pdf_with_fake_weasyprint(monkeypatch):
                     def __init__(self):
                         pass
 
+                    def add_font_face(self, *args, **kwargs):
+                        pass
+
     def fake_import(name):  # pragma: no cover - simple mock
         if name == "weasyprint":
             return DummyWeasy()
@@ -147,3 +150,5 @@ def test_invoice_pdf_indic_fonts(tmp_path):
     assert "કાઠીયાવાડી" in text
     assert "पाव भाजी" in text
     assert "₹" in text
+    assert "\ufffd" not in text
+    assert len(pdf_bytes) < 200_000
