@@ -1,0 +1,29 @@
+name: DWH parquet dump
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt
+      - name: Export daily dump
+        env:
+          DWH_DB_DSN: ${{ secrets.DWH_DB_DSN_STAGING }}
+          DWH_S3_URL: ${{ secrets.DWH_S3_URL }}
+          DWH_S3_KEY: ${{ secrets.DWH_S3_KEY }}
+          DWH_S3_SECRET: ${{ secrets.DWH_S3_SECRET }}
+          DWH_S3_BUCKET: ${{ secrets.DWH_S3_BUCKET }}
+          DWH_PREFIX: nightly
+        run: |
+          python scripts/dwh_parquet_dump.py
