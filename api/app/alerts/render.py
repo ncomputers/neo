@@ -14,7 +14,7 @@ _email_env = Environment(
 )
 _text_env = Environment(
     loader=FileSystemLoader(TEMPLATE_DIR / "message"),
-    autoescape=False,
+    autoescape=False,  # nosec B701: plain-text templates
 )
 
 
@@ -28,7 +28,7 @@ def render_email(template: str, vars: Dict[str, str], subject_tpl: str) -> Tuple
     Returns:
         Tuple of rendered subject and HTML body.
     """
-    subject = Environment().from_string(subject_tpl).render(**vars)
+    subject = Environment(autoescape=True).from_string(subject_tpl).render(**vars)
     body = _email_env.get_template(template).render(**vars)
     return subject, body
 

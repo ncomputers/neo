@@ -52,6 +52,7 @@ slo_errors_total = Counter(
 )
 slo_errors_total.labels(route="/sample").inc(0)
 
+
 notifications_outbox_delivered_total = Counter(
     "notifications_outbox_delivered_total",
     "Total notifications delivered from outbox",

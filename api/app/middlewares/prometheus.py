@@ -9,6 +9,7 @@ from ..routes_metrics import http_requests_total, slo_errors_total, slo_requests
 from ..slo import slo_tracker
 
 
+
 class PrometheusMiddleware(BaseHTTPMiddleware):
     """Increment HTTP request counters."""
 
@@ -26,4 +27,5 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         if error:
             slo_errors_total.labels(route=path).inc()
         slo_tracker.record(path, error=error)
+
         return response

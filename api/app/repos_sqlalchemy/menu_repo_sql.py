@@ -109,4 +109,4 @@ class MenuRepoSQL(MenuRepo):
         """Return a hash derived from the tenant's menu version."""
         version = await session.scalar(select(TenantMeta.menu_version)) or 0
         payload = str(version).encode()
-        return hashlib.sha1(payload).hexdigest()
+        return hashlib.sha1(payload, usedforsecurity=False).hexdigest()

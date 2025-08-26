@@ -8,14 +8,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from .db import SessionLocal
 from .db.tenant import get_engine
 from .deps.tenant import get_tenant_id
 from .events import event_bus
 from .hooks import order_rejection
+from .models_tenant import AuditTenant
 from .repos_sqlalchemy import orders_repo_sql
-from .utils.responses import ok
 from .routes_metrics import orders_created_total
-
+from .utils.responses import ok
 
 router = APIRouter(prefix="/g")
 
@@ -33,11 +34,15 @@ class OrderPayload(BaseModel):
     items: List[OrderLine]
 
 
-async def get_tenant_session(tenant_id: str = Depends(get_tenant_id)) -> AsyncGenerator[AsyncSession, None]:
+async def get_tenant_session(
+    tenant_id: str = Depends(get_tenant_id),
+) -> AsyncGenerator[AsyncSession, None]:
     """Yield an ``AsyncSession`` bound to the tenant's database."""
 
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with sessionmaker() as session:  # pragma: no cover - simple generator
         yield session
 
@@ -67,9 +72,20 @@ async def create_guest_order(
 
     try:  # optional pubsub notification
         await event_bus.publish(
-            "order.placed", {"tenant_id": tenant_id, "table_token": table_token, "order_id": order_id}
+            "order.placed",
+            {"tenant_id": tenant_id, "table_token": table_token, "order_id": order_id},
         )
     except Exception:  # pragma: no cover - pubsub unavailable
         pass
     orders_created_total.inc()
+    if key := request.headers.get("Idempotency-Key"):
+        with SessionLocal() as audit_session:
+            audit_session.add(
+                AuditTenant(
+                    actor="guest",
+                    action="order.create",
+                    meta={"idempotency_key": key, "order_id": order_id},
+                )
+            )
+            audit_session.commit()
     return ok({"order_id": order_id})
