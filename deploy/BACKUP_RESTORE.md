@@ -89,3 +89,10 @@ Schedule a weekly check via cron::
 
     0 4 * * 0 python /path/to/scripts/backup_verify.py \
         --file "/var/backups/TENANT-*.sql" --sqlite-tmp /tmp/verify.db
+
+### CI smoke test
+
+`scripts/backup_smoke.sh` exercises the full backup pipeline by dumping the
+primary database, encrypting the SQL with `age`, restoring it into a temporary
+Postgres database, and reporting the encrypted size and timings. The
+`backup-smoke` GitHub workflow runs this weekly against the staging cluster.
