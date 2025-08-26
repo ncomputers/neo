@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from api.app.auth import create_access_token, UserInDB, fake_users_db
 from api.app.routes_feedback import router, FEEDBACK_STORE
+import scripts.nps_digest as nps_digest
 
 app = FastAPI()
 app.include_router(router)
@@ -33,7 +34,7 @@ def test_submit_and_summary():
     assert (
         client.post(
             "/api/outlet/demo/feedback",
-            json={"table_code": "T1", "rating": "up"},
+            json={"score": 9, "comment": "great"},
             headers=headers_guest,
         ).status_code
         == 200
@@ -41,7 +42,7 @@ def test_submit_and_summary():
     assert (
         client.post(
             "/api/outlet/demo/feedback",
-            json={"table_code": "T1", "rating": "down", "note": "slow"},
+            json={"score": 4, "comment": "slow"},
             headers=headers_guest,
         ).status_code
         == 200
@@ -50,4 +51,14 @@ def test_submit_and_summary():
     resp = client.get("/api/outlet/demo/feedback/summary", headers=headers_admin)
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert data == {"up": 1, "down": 1}
+    assert data == {
+        "nps": 0.0,
+        "promoters": 1,
+        "detractors": 1,
+        "responses": 2,
+    }
+
+    from datetime import datetime
+
+    summary = nps_digest.aggregate(datetime.utcnow().date())
+    assert summary["demo"] == 0.0

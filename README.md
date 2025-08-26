@@ -95,6 +95,8 @@ Tenants can be assigned quotas via the `license_limits` JSON column in the
 Exceeding any quota results in a `403 FEATURE_LIMIT` response with a helpful
 hint. Administrators may inspect current usage and limits via
 `GET /api/outlet/{tenant}/limits/usage` when providing an `X-Tenant-ID` header.
+The admin dashboard displays these limits with usage bars and a "Request more"
+link for contacting support.
 
 Copy the example environment file and adjust values as needed:
 
@@ -218,6 +220,7 @@ Attempts to combine a non-stackable coupon with others raise a `CouponError` wit
 - `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
 - `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregate ratings for admins over the last `range` days (default 30).
 - `POST /api/pilot/{tenant}/feedback` – submit an NPS score (0-10) with optional comment.
+\
 
 ### Super Admin
 
