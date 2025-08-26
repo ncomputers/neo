@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 
 - Admin APIs to soft-delete and restore tables and menu items with optional
   inclusion of deleted records via ``include_deleted``.
+- ESC/POS print templates for 58/80mm and `/admin/print/test` preview endpoint.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
 - Admin endpoint to probe webhook SLA, capturing TLS details and latency and
