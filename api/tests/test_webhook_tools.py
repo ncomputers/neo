@@ -11,7 +11,7 @@ import types  # noqa: E402
 os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
-os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 
 sys.modules.setdefault("PIL", types.ModuleType("PIL"))
 sys.modules.setdefault("PIL.Image", types.ModuleType("Image"))

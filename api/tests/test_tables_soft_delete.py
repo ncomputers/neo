@@ -18,7 +18,7 @@ _webhook_tools = types.ModuleType("routes_webhook_tools")
 _webhook_tools.router = APIRouter()
 sys.modules.setdefault("api.app.routes_webhook_tools", _webhook_tools)
 
-os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 os.environ.setdefault("DB_URL", "postgresql://u:p@localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost")
 os.environ.setdefault("SECRET_KEY", "x" * 32)

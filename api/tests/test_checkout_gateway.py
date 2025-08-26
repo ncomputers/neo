@@ -16,7 +16,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 _webhooks_stub = types.ModuleType("routes_webhooks")
 _webhooks_stub.router = None
 sys.modules.setdefault("api.app.routes_webhooks", _webhooks_stub)
-os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 os.environ.setdefault("DB_URL", "https://example.com")
 os.environ.setdefault("REDIS_URL", "redis://localhost")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
