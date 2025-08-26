@@ -643,12 +643,18 @@ Create a virtual environment and install development dependencies:
 python -m venv .venv
 source .venv/bin/activate
 pip install -r api/requirements.txt
+pip install pre-commit pytest-cov
 ```
-
-Run the full test suite:
+Run linters and formatters:
 
 ```bash
-pytest
+pre-commit run --all-files
+```
+
+Run the full test suite with coverage (fails under 80%):
+
+```bash
+pytest --cov=api --cov-report=term --cov-fail-under=80
 ```
 
 Run a single module or test:

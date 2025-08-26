@@ -41,7 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pre-commit
           pip install -r api/requirements.txt
-          pip install pytest
+          pip install pytest pytest-cov pillow
           if [ "${{ matrix.db }}" = "postgres" ]; then pip install asyncpg; fi
       - name: Run tenant migrations
         if: matrix.db == 'postgres'
@@ -49,18 +49,10 @@ jobs:
           python scripts/tenant_create_db.py --tenant demo
           python scripts/tenant_seed.py --tenant demo
       - name: Lint
-        run: |
-          if grep -q "[tool.black]" pyproject.toml 2>/dev/null; then
-            pip install black
-            black --check . || true
-          fi
-          if [ -f ".flake8" ] || [ -f "setup.cfg" ] || [ -f "tox.ini" ]; then
-            pip install flake8
-            flake8 . || true
-          fi
+        run: pre-commit run --all-files --show-diff-on-failure
       - name: Audit environment
         run: python scripts/env_audit.py
       - name: Check i18n keys
         run: pre-commit run --hook-stage manual i18n-lint --all-files
       - name: Test
-        run: pytest -q
+        run: pytest --cov=api --cov-report=term --cov-fail-under=80 -q
