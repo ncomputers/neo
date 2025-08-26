@@ -203,7 +203,7 @@ uvicorn app.main:app --reload
 
 Visit <http://localhost:8000/health> for liveness and <http://localhost:8000/ready> for readiness checks.
 Use `/support/contact` to fetch support email, phone, hours, documentation links, and legal policy URLs.
-Legal policy pages are available at `/legal/{page}` (for example, `/legal/privacy` or `/legal/terms`) and support optional outlet branding.
+Legal policy pages are available at `/legal/{page}` (for example, `/legal/privacy`, `/legal/terms`, `/legal/subprocessors`, or `/legal/sla`) and support optional outlet branding.
 Bundled diagnostics for an outlet can be downloaded by admin users at `/api/outlet/{tenant}/support/bundle.zip`.
 Browsers requesting `text/html` receive simple static pages for 403, 404, and 500 errors.
 
