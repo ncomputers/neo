@@ -106,12 +106,17 @@ from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_ops import router as admin_ops_router
 from .routes_admin_pilot import router as admin_pilot_router
+from .routes_admin_print import router as admin_print_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_admin_support_console import router as admin_support_console_router
 from .routes_admin_webhooks import router as admin_webhooks_router
+
+from .routes_admin_devices import router as admin_devices_router
+from .routes_print_test import router as print_test_router
+from .routes_integrations import router as integrations_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -142,6 +147,7 @@ from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_housekeeping import router as housekeeping_router
 from .routes_integrations import router as integrations_router
 from .routes_integrations_marketplace import router as integrations_marketplace_router
+
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_jobs_status import router as jobs_status_router
 from .routes_kot import router as kot_router
@@ -160,6 +166,7 @@ from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_owner_analytics import router as owner_analytics_router
 from .routes_owner_sla import router as owner_sla_router
 from .routes_pilot_feedback import router as pilot_feedback_router
+from .routes_pilot_telemetry import router as pilot_telemetry_router
 from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
@@ -202,6 +209,7 @@ sys.modules.setdefault("repos_sqlalchemy", app_repos_sqlalchemy)
 sys.modules.setdefault("utils", app_utils)
 kds_router = importlib.import_module(".routes_kds", __package__).router
 kds_sla_router = importlib.import_module(".routes_kds_sla", __package__).router
+kds_expo_router = importlib.import_module(".routes_kds_expo", __package__).router
 superadmin_router = importlib.import_module(".routes_superadmin", __package__).router
 
 
@@ -882,6 +890,7 @@ app.include_router(order_void_router)
 app.include_router(kot_router)
 app.include_router(kds_router)
 app.include_router(kds_sla_router)
+app.include_router(kds_expo_router)
 
 # Admin domain
 app.include_router(counter_admin_router)
@@ -942,7 +951,7 @@ app.include_router(checkout_router)
 app.include_router(refunds_router)
 app.include_router(feedback_router)
 app.include_router(pilot_feedback_router)
-app.include_router(admin_pilot_router)
+app.include_router(pilot_telemetry_router)
 app.include_router(media_router)
 app.include_router(api_keys_router)
 app.include_router(vapid_router)
