@@ -31,4 +31,5 @@ All notable changes to this project will be documented in this file.
   of regular queries.
 - Idempotent offline order queue using client-side `op_id` dedupe.
 - Dry-run mode for soft-deleted purge script with nightly CI report.
+- Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 
