@@ -32,6 +32,13 @@ async def help_center(request: Request, tenant_id: str | None = None) -> HTMLRes
         html = markdown(md)
         sections.append(f"<article><h2>{title}</h2>{html}</article>")
 
+    sections.append(
+        "<article><h2>Legal</h2><ul>"
+        "<li><a href='/legal/subprocessors'>Subprocessors</a></li>"
+        "<li><a href='/legal/sla'>Service Level Agreement</a></li>"
+        "</ul></article>"
+    )
+
     body = "".join(sections) or "<p>No help available.</p>"
     html = f"<html><head><title>Help</title></head><body>{body}</body></html>"
 
