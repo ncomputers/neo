@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- /time/skew endpoint returns server epoch for client clock skew detection.
 - Guard hot queries with a p95 regression check.
 - Enforce environment validation at application startup and audit required
   variables during the CI lint step.
