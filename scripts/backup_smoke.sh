@@ -29,7 +29,23 @@ printf '%s' "$BACKUP_PRIVATE_KEY" > "$KEY_FILE"
 start=$(date +%s)
 age --decrypt -i "$KEY_FILE" "$ENC" | psql "$RESTORE_URL" >/dev/null
 restore_time=$(( $(date +%s) - start ))
+tenant_count=$(psql "$RESTORE_URL" -Atc "SELECT COUNT(*) FROM tenants;")
+if [[ "$tenant_count" -lt 1 ]]; then
+    echo "no tenants found" >&2
+    exit 1
+fi
 
 psql "$ADMIN_URL" -c "DROP DATABASE \"$TMP_DB\";" >/dev/null
 
-echo "size=$size dump_time=${dump_time}s restore_time=${restore_time}s"
+summary="size=$size dump_time=${dump_time}s restore_time=${restore_time}s tenants=$tenant_count"
+echo "$summary"
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    {
+        echo "### Backup smoke results"
+        echo
+        echo "- size: $size"
+        echo "- dump time: ${dump_time}s"
+        echo "- restore time: ${restore_time}s"
+        echo "- tenants: $tenant_count"
+    } >> "$GITHUB_STEP_SUMMARY"
+fi
