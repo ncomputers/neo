@@ -16,6 +16,8 @@ Owner and admin accounts can enable optional TOTP-based two-factor authenticatio
 
 Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages.
 
+All pull requests run Bandit, pip-audit, and ruff checks in CI to block risky code and dependencies.
+
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
