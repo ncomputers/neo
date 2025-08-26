@@ -101,7 +101,9 @@ from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
+from .routes_accounting_exports import router as accounting_exports_router
 from .routes_accounting import router as accounting_router
+
 from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_ops import router as admin_ops_router
@@ -147,7 +149,6 @@ from .routes_hotel_housekeeping import router as hotel_hk_router
 from .routes_housekeeping import router as housekeeping_router
 from .routes_integrations import router as integrations_router
 from .routes_integrations_marketplace import router as integrations_marketplace_router
-
 from .routes_invoice_pdf import router as invoice_pdf_router
 from .routes_jobs_status import router as jobs_status_router
 from .routes_kot import router as kot_router
@@ -965,7 +966,7 @@ app.include_router(daybook_pdf_router)
 app.include_router(digest_router)
 app.include_router(reports_router)
 app.include_router(csp_router)
-app.include_router(accounting_router)
+app.include_router(accounting_exports_router)
 app.include_router(gst_monthly_router)
 app.include_router(exports_router)
 app.include_router(export_all_router)

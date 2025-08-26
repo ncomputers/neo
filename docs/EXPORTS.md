@@ -114,8 +114,8 @@ with a `complete` event.
 Lightweight CSVs allow hand-off to ledger software without a full integration.
 
 ```
-GET /api/outlet/{tenant}/accounting/sales_register.csv?start=YYYY-MM-DD&end=YYYY-MM-DD
-GET /api/outlet/{tenant}/accounting/gst_summary.csv?start=YYYY-MM-DD&end=YYYY-MM-DD
+GET /api/outlet/{tenant}/accounting/sales_register.csv?from=YYYY-MM-DD&to=YYYY-MM-DD
+GET /api/outlet/{tenant}/accounting/gst_summary.csv?from=YYYY-MM-DD&to=YYYY-MM-DD
 ```
 
 ### Importing into Tally
