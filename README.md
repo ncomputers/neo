@@ -110,6 +110,10 @@ infrequent access after 30 days and purges delete markers after a week:
 }
 ```
 
+## BI parquet dumps
+
+Nightly exports for business intelligence can be generated via `scripts/bi_dump.py`. The script writes Parquet files for orders, order items and payments partitioned by date and uploads them to an S3-compatible bucket. See [`docs/bi_dumps.md`](docs/bi_dumps.md) for configuration details.
+
 ## Licensing limits
 
 Tenants can be assigned quotas via the `license_limits` JSON column in the
