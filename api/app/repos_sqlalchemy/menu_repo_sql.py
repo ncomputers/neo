@@ -53,8 +53,10 @@ class MenuRepoSQL(MenuRepo):
                     "hsn_sac": item.hsn_sac,
                     "show_fssai": item.show_fssai,
                     "out_of_stock": item.out_of_stock,
-                    "modifiers": item.modifiers if use_mods else [],
-                    "combos": item.combos if use_mods else [],
+                    "modifiers": item.modifiers or [],
+                    "combos": item.combos or [],
+                    "dietary": item.dietary or [],
+                    "allergens": item.allergens or [],
 
                 }
             )
