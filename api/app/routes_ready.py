@@ -20,7 +20,7 @@ async def ready() -> dict:
         with SessionLocal() as session:
             session.execute(text("SELECT 1"))
         # Import lazily to avoid circular import with main.py
-        from .main import redis_client  # noqa: WPS433 (import within function)
+        from .main import redis_client
 
         if redis_client is not None:
             await redis_client.ping()

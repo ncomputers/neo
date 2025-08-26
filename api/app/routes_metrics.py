@@ -7,7 +7,6 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, Response
 from datetime import datetime, timezone
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
-from datetime import datetime, timezone
 
 # Counters
 http_requests_total = Counter(

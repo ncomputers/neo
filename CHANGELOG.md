@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Update GitHub Actions workflows to use `actions/upload-artifact@v4`.
+- Clean up redundant imports and outdated ``noqa`` comment to satisfy ``ruff``.
 
 ### Added
 
