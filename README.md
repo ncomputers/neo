@@ -566,6 +566,13 @@ python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
 python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
 ```
 
+For local scale testing, a helper seeds large volumes of data using bulk
+inserts:
+
+```bash
+python scripts/seed_large_outlet.py --tenant TENANT_ID --tables 300 --items 5000 --orders 50000 --days 60
+```
+
 To compute daily Z-report totals and enqueue a day-close notification into the
 master outbox, run:
 

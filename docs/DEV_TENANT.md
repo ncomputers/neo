@@ -26,4 +26,9 @@ Run each command from the project root:
    python scripts/tenant_seed_counter.py --tenant demo
    ```
 
+6. (Optional) Seed a large dataset for scale testing
+   ```bash
+   python scripts/seed_large_outlet.py --tenant demo --tables 300 --items 5000 --orders 50000 --days 60
+   ```
+
 These commands set up a fully initialized `demo` tenant ready for development.
