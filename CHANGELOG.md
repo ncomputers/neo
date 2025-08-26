@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- L1 support console for tenant/table/order lookup with safe actions (resend invoice, reprint KOT, replay webhook, unlock PIN) and audit logging.
 - Cache last 50 invoice PDFs per outlet for offline review.
 - Collect CSP violation reports via `/csp/report` with paginated admin viewer and query/token redaction.
 - /time/skew endpoint returns server epoch for client clock skew detection.
