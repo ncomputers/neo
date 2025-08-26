@@ -12,7 +12,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { initRUM } from './rum'
 
-initRUM(window.location.pathname.startsWith('/admin') ? 'admin' : 'guest')
+initRUM()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

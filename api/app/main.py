@@ -112,6 +112,10 @@ from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_admin_support_console import router as admin_support_console_router
 from .routes_admin_webhooks import router as admin_webhooks_router
+
+from .routes_admin_devices import router as admin_devices_router
+from .routes_print_test import router as print_test_router
+from .routes_integrations import router as integrations_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -171,7 +175,7 @@ from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_refunds import router as refunds_router
 from .routes_reports import router as reports_router
-from .routes_rum import router as rum_router
+from .routes_rum_vitals import router as rum_router
 from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
 from .routes_slo import router as slo_router
@@ -922,7 +926,7 @@ app.include_router(support_router)
 app.include_router(admin_support_router)
 app.include_router(admin_support_console_router)
 app.include_router(admin_webhooks_router)
-app.include_router(admin_print_router)
+app.include_router(print_test_router)
 app.include_router(integrations_router)
 app.include_router(slo_router)
 app.include_router(support_bundle_router)
