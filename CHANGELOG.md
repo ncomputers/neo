@@ -48,6 +48,9 @@ All notable changes to this project will be documented in this file.
 - Per-coupon usage caps (per day/guest/outlet) with valid-from/to windows and
   usage auditing, returning helpful hints when limits are exceeded.>>>>>>> main
 
+- Opt-in owner digest with richer stats (top 10 items, comps %, voids, tips,
+  prep SLA hit rate) and after-hours throttling.
+
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.

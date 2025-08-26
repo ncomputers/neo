@@ -116,6 +116,7 @@ async def test_owner_digest_line(tenant_setup, monkeypatch, capsys):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
+    monkeypatch.setenv("OWNER_DIGEST_TENANTS", tenant_id)
     monkeypatch.setattr(module, "_breaker_opens", lambda: 3)
 
     await module.main(tenant_id, "2024-01-01", providers=("console",))
@@ -123,6 +124,7 @@ async def test_owner_digest_line(tenant_setup, monkeypatch, capsys):
     expected = (
         "2024-01-01 | orders=1 | avg_prep=5.00m | "
         "top_items=Veg Item(2), Non-Veg Item(1), Free Item(1) | "
-        "comps=1 | tips=10.00 | breaker_opens=3"
+        "comps_pct=25.00% | voids=0 | tips=10.00 | sla_hit=100.00% | "
+        "breaker_opens=3"
     )
     assert captured.out.strip() == expected
