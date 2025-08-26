@@ -519,6 +519,8 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
 Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
+- Owner SLA metrics are available from `/owner/sla` for uptime, webhook success,
+  median prep time, and KOT delay alerts.
 - Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
   `POST /api/admin/dlq/replay` re-enqueues a job by ID supplied in the JSON body.
 
