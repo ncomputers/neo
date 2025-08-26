@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { apiFetch } from '../api'
 import LimitsUsageWidget from '../components/LimitsUsageWidget'
+import OpsWidget from '../components/OpsWidget'
 
 export default function AdminDashboard() {
   const { logo } = useTheme()
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
       <LimitsUsageWidget />
+      <OpsWidget />
       {loading && <p>Loading...</p>}
       {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (
@@ -42,23 +44,17 @@ export default function AdminDashboard() {
           </tbody>
         </table>
       )}
-      <footer className="mt-8 text-sm text-gray-500">
-        <a href="/legal/terms" className="mx-2 hover:underline">
-          Terms
-        </a>
-        <a href="/legal/privacy" className="mx-2 hover:underline">
-          Privacy
-        </a>
-        <a href="/legal/refund" className="mx-2 hover:underline">
-          Refunds
-        </a>
-        <a href="/legal/contact" className="mx-2 hover:underline">
-          Contact
-        </a>
-        <a href="/legal/subprocessors" className="mx-2 hover:underline">
+      <footer className="mt-8 text-sm text-gray-600">
+        <a
+          href="/legal/subprocessors"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           Subprocessors
         </a>
-        <a href="/legal/sla" className="mx-2 hover:underline">
+        <a
+          href="/legal/sla"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
           SLA
         </a>
       </footer>

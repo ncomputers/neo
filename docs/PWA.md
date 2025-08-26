@@ -12,7 +12,7 @@ basic offline support.
 ## Offline & Updates
 
 * Static assets are cached on first load via `sw.js`.
-* Icons are loaded from a remote URL to avoid bundling binaries.
+* Run `scripts/download_pwa_icons.py` to fetch icons locally while keeping binaries out of the repo.
 * Menu API requests use a network‑first strategy with cached fallback.
 * A background sync queue named `order-queue` batches offline additions with a
   client‑generated `op_id` to avoid double submissions. Items show a **pending**
