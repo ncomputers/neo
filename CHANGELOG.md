@@ -26,6 +26,8 @@ All notable changes to this project will be documented in this file.
   inclusion of deleted records via ``include_deleted``.
 - Admin endpoints to test webhook destinations and replay webhooks from the
   notification outbox.
+- Webhook rule creation probes target latency and TLS, warning on slow or
+  self-signed endpoints.
 - Controlled cancellation flow with `/orders/{id}/void/request` and `/void/approve` endpoints, reversing stock, adjusting invoices and auditing each step.
 - Printable invoice and KOT templates consume middleware-provided CSP nonces on inline styles to harden rendering.
 - Add tests ensuring CSP nonces are applied on printable invoice and KOT pages.
