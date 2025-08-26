@@ -113,6 +113,7 @@ from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
 from .routes_admin_support_console import router as admin_support_console_router
 from .routes_admin_webhooks import router as admin_webhooks_router
+from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_print import router as admin_print_router
 from .routes_integrations import router as integrations_router
 from .routes_alerts import router as alerts_router
@@ -948,6 +949,7 @@ app.include_router(vapid_router)
 app.include_router(postman_router)
 app.include_router(admin_qrpack_router)
 app.include_router(admin_qrposter_router)
+app.include_router(admin_devices_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)

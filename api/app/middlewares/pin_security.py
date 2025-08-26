@@ -13,7 +13,7 @@ from ..audit import log_event
 from ..utils.responses import err
 
 MAX_ATTEMPTS = 5
-LOCK_TTL = 15 * 60  # 15 minutes
+LOCK_TTL = 10 * 60  # 10 minutes
 ROTATE_DAYS = 90
 WARN_DAYS = 80
 
