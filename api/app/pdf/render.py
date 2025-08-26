@@ -30,7 +30,7 @@ def render_template(
     html = template.render(**context)
     try:
         weasyprint = importlib.import_module("weasyprint")
-        pdf_bytes = weasyprint.HTML(string=html).write_pdf()
+        pdf_bytes = weasyprint.HTML(string=html, base_url=str(TEMPLATE_DIR)).write_pdf()
         return pdf_bytes, "application/pdf"
     except Exception:
         return html.encode("utf-8"), "text/html"
@@ -52,7 +52,7 @@ def render_invoice(
     html = template.render(invoice=invoice_json, csp_nonce=nonce)
     try:
         weasyprint = importlib.import_module("weasyprint")
-        pdf_bytes = weasyprint.HTML(string=html).write_pdf()
+        pdf_bytes = weasyprint.HTML(string=html, base_url=str(TEMPLATE_DIR)).write_pdf()
         return pdf_bytes, "application/pdf"
     except Exception:
         return html.encode("utf-8"), "text/html"

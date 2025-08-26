@@ -3,7 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <style{% if csp_nonce %} nonce="{{ csp_nonce }}"{% endif %}>
-      body { color: #000; background: #fff; }
+      @font-face {
+        font-family: 'Noto Sans';
+        font-weight: 400;
+        src: url('fonts/NotoSans-Regular.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'Noto Sans';
+        font-weight: 700;
+        src: url('fonts/NotoSans-Bold.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'Noto Sans Devanagari';
+        font-weight: 400;
+        src: url('fonts/NotoSansDevanagari-Regular.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'Noto Sans Devanagari';
+        font-weight: 700;
+        src: url('fonts/NotoSansDevanagari-Bold.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'Noto Sans Gujarati';
+        font-weight: 400;
+        src: url('fonts/NotoSansGujarati-Regular.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'Noto Sans Gujarati';
+        font-weight: 700;
+        src: url('fonts/NotoSansGujarati-Bold.ttf') format('truetype');
+      }
+      body {
+        color: #000;
+        background: #fff;
+        font-family: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Gujarati', sans-serif;
+      }
       a:focus, button:focus { outline: 2px solid #005fcc; }
     </style>
   </head>
