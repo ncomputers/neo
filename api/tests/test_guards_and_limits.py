@@ -142,7 +142,7 @@ def test_guest_post_rate_limit(client, monkeypatch):
         json={"items": [{"item_id": "1", "qty": 1}]},
     )
     assert resp.status_code == 429
-    body = resp.json()["error"]
+    body = resp.json()
     assert body["code"] == "RATE_LIMIT"
     assert "retry in" in body["hint"]
 

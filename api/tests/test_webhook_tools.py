@@ -158,9 +158,9 @@ def test_webhook_test_ratelimit(monkeypatch):
     resp_ok, resp_limit = asyncio.run(_run())
     assert resp_ok.status_code == 200
     assert resp_limit.status_code == 429
-    err = resp_limit.json()["error"]
-    assert err["code"] == "RATE_LIMIT"
-    assert "retry in" in err["hint"]
+    body = resp_limit.json()
+    assert body["code"] == "RATE_LIMIT"
+    assert "retry in" in body["hint"]
 
 
 def test_webhook_replay(monkeypatch):

@@ -30,7 +30,5 @@ def err(
 def rate_limited(retry_after: int) -> JSONResponse:
     """Return a standardized rate limit response."""
     hint = f"retry in {max(retry_after, 0)}s"
-    return JSONResponse(
-        err("RATE_LIMIT", "TooManyRequests", hint=hint),
-        status_code=HTTP_429_TOO_MANY_REQUESTS,
-    )
+    body = {"code": "RATE_LIMIT", "message": "TooManyRequests", "hint": hint}
+    return JSONResponse(body, status_code=HTTP_429_TOO_MANY_REQUESTS)
