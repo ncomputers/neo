@@ -31,7 +31,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -246,6 +246,14 @@ app = FastAPI(
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
+
+
+@app.get("/status.json")
+async def status_json():
+    return FileResponse(
+        Path(__file__).resolve().parent.parent.parent / "status.json",
+        media_type="application/json",
+    )
 init_tracing(app)
 asyncio.set_event_loop(asyncio.new_event_loop())
 app.state.redis = from_url(settings.redis_url, decode_responses=True)

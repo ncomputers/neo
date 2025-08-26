@@ -35,3 +35,16 @@ Ops
 ---
 
 During a SEV, the `/status.json` file is automatically updated to reflect the current `state` and any active `incidents` so external systems can track progress.
+Valid values for `state` include `operational`, `degraded`, and `down`.
+
+Start an incident and mark the status page as degraded:
+
+```
+python ops/scripts/status_page.py start "<title>" "<details>"
+```
+
+Resolve an incident and restore the status page when all issues are cleared:
+
+```
+python ops/scripts/status_page.py resolve "<title>"
+```

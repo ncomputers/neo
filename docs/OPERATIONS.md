@@ -1,5 +1,15 @@
 # Operations
 
+## Status Endpoint
+
+External monitors can poll `GET /status.json` to observe platform health. The file contains a top-level `state` (`operational` or `degraded`) and a list of active `incidents`.
+Use the helper script to start or resolve incidents:
+
+```
+python ops/scripts/status_page.py start "<title>" "<details>"
+python ops/scripts/status_page.py resolve "<title>"
+```
+
 ## Data Purge
 
 The `scripts/purge_data.py` helper removes expired customer PII and delivered
