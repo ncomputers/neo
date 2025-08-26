@@ -35,6 +35,12 @@ The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
 notification is triggered.
 
+## Testing
+
+Playwright end-to-end tests reside under `e2e/playwright`. The `kds_expo_ready_picked.spec.ts` test places an order, marks it ready, verifies it on the `/kds/expo` dashboard and uses the `P` hotkey to pick the ticket, asserting an `expo.picked` audit log entry. Playwright captures video and screenshots for failing tests.
+
+The Expo dashboard also supports keyboard shortcuts; pressing `P` removes the last order from the list.
+
 Logging can be tuned via:
 
 - `LOG_LEVEL` – set log verbosity (default `INFO`)

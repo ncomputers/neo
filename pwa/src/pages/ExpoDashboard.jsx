@@ -4,23 +4,23 @@ import { apiFetch } from '../api'
 
 export default function ExpoDashboard() {
   const { logo } = useTheme()
-  const [tickets, setTickets] = useState([])
+  const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchTickets = () => {
+  const fetchOrders = () => {
     setLoading(true)
     apiFetch('/kds/expo')
       .then((res) => res.json())
       .then((data) => {
-        setTickets(data.tickets || [])
+        setOrders(data.tickets || [])
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
-    fetchTickets()
+    fetchOrders()
   }, [])
 
   const markPicked = (id) => {
@@ -31,6 +31,7 @@ export default function ExpoDashboard() {
 
   useEffect(() => {
     const handler = (e) => {
+      // Hotkey support: "P" marks the last order as picked
       if (e.key === 'p' || e.key === 'P') {
         if (orders.length > 0) {
           markPicked(orders[orders.length - 1].order_id)
@@ -45,7 +46,7 @@ export default function ExpoDashboard() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [tickets])
+  }, [orders])
 
   return (
     <div className="p-4">
