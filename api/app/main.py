@@ -103,6 +103,7 @@ from .otel import init_tracing
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
+from .routes_admin_ops import router as admin_ops_router
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -843,6 +844,7 @@ app.include_router(kds_sla_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
+app.include_router(admin_ops_router)
 app.include_router(limits_router)
 app.include_router(menu_import_router)
 app.include_router(alerts_router)

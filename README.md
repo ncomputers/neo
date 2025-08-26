@@ -453,12 +453,14 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `idempotency_hits_total` / `idempotency_conflicts_total`: idempotency key usage
 - `table_locked_denied_total` / `room_locked_denied_total`: requests denied due to locks
 - `http_errors_total`: HTTP errors labelled by status
+- `slo_requests_total` / `slo_errors_total`: guest requests and errors by route
 - `notifications_outbox_delivered_total` / `notifications_outbox_failed_total`: notification worker results
 - `ws_messages_total`: WebSocket messages delivered
 - `sse_clients_gauge`: currently connected SSE clients
 - `digest_sent_total`: daily KPI digests sent (via route or CLI)
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
+Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
