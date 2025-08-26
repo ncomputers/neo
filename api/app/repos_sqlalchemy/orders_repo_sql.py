@@ -8,21 +8,20 @@ retained even if the menu changes later.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Iterable, List
 import json
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Iterable, List
 
-from sqlalchemy import select, update, func
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import flags
-
 from ..domain import OrderStatus
 from ..models_tenant import MenuItem, Order, OrderItem, Table
+from ..services import ema
 from ..utils.soft_delete import guard_not_deleted
 from . import ema_repo_sql
-from ..services import ema
 
 
 @dataclass
@@ -55,9 +54,11 @@ async def create_order(
     session.add(order)
     await session.flush()  # obtain order.id
 
-    item_ids = [l["item_id"] for l in lines]
+    item_ids = [line["item_id"] for line in lines]
     if item_ids:
-        result = await session.execute(select(MenuItem).where(MenuItem.id.in_(item_ids)))
+        result = await session.execute(
+            select(MenuItem).where(MenuItem.id.in_(item_ids))
+        )
         items = {item.id: item for item in result.scalars()}
     else:  # pragma: no cover - empty order
         items = {}
@@ -191,7 +192,7 @@ async def add_round(
     ``lines`` has the same structure as for :func:`create_order`.
     """
 
-    item_ids = [l["item_id"] for l in lines]
+    item_ids = [line["item_id"] for line in lines]
     if not item_ids:
         return
 

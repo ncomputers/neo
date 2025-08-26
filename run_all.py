@@ -32,9 +32,13 @@ ENV_FILE = ROOT / ".env"
 ENV_EXAMPLE = ROOT / ".env.example"
 VENV_DIR = ROOT / ".venv"
 
+
 def run(cmd, cwd=None, env=None, check=True):
     print(f"\n$ {' '.join(cmd)}  (cwd={cwd or ROOT})")
-    return subprocess.run(cmd, cwd=cwd or ROOT, env=env or os.environ.copy(), check=check)
+    return subprocess.run(
+        cmd, cwd=cwd or ROOT, env=env or os.environ.copy(), check=check
+    )
+
 
 def ensure_python_venv():
     if VENV_DIR.exists():
@@ -44,18 +48,22 @@ def ensure_python_venv():
     run([sys.executable, "-m", "venv", str(VENV_DIR)])
     print("✅ Virtualenv created.")
 
+
 def pip_exe():
     if platform.system() == "Windows":
         return str(VENV_DIR / "Scripts" / "pip.exe")
     return str(VENV_DIR / "bin" / "pip")
+
 
 def python_exe():
     if platform.system() == "Windows":
         return str(VENV_DIR / "Scripts" / "python.exe")
     return str(VENV_DIR / "bin" / "python")
 
+
 def which(cmd):
     return shutil.which(cmd)
+
 
 def install_backend():
     ensure_python_venv()
@@ -68,6 +76,7 @@ def install_backend():
     run([pip, "install", "-U", "pip", "wheel", "setuptools"])
     run([pip, "install", "-r", str(req)])
     print("✅ Backend deps installed.")
+
 
 def install_frontend():
     if not (PWA_DIR / "package.json").exists():
@@ -82,6 +91,7 @@ def install_frontend():
     run(["npm", "install"], cwd=PWA_DIR)
     print("✅ PWA deps installed.")
 
+
 def copy_env_if_needed():
     if ENV_FILE.exists():
         print("✅ .env already exists.")
@@ -93,13 +103,13 @@ def copy_env_if_needed():
     else:
         print("⚠️ No .env.example found; skipping.")
 
+
 def run_docker_compose():
     dc_yml = OPS_DIR / "docker-compose.yml"
     if not dc_yml.exists():
         print("⚠️ ops/docker-compose.yml not found. Skipping Docker.")
         return
     docker = which("docker")
-    compose = which("docker-compose") or which("docker")
     if not docker:
         print("⚠️ Docker not installed or not on PATH.")
         return
@@ -111,11 +121,24 @@ def run_docker_compose():
             run(["docker-compose", "up", "-d"], cwd=OPS_DIR)
         else:
             raise
-    print("✅ Docker services started (postgres, redis, minio, proxy, api if configured).")
+    print(
+        "✅ Docker services started (postgres, redis, minio, proxy, api if configured)."
+    )
+
 
 def start_processes():
     # Backend: uvicorn api.app.main:app
-    uvicorn = [python_exe(), "-m", "uvicorn", "api.app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    uvicorn = [
+        python_exe(),
+        "-m",
+        "uvicorn",
+        "api.app.main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+    ]
     # Frontend: vite in pwa
     vite_cmd = ["npm", "run", "dev"]
 
@@ -148,6 +171,7 @@ def start_processes():
                 p.kill()
         print("✅ Stopped.")
 
+
 def run_tests():
     ensure_python_venv()
     pip = pip_exe()
@@ -156,13 +180,30 @@ def run_tests():
     print("🧪 Running backend tests ...")
     run([python_exe(), "-m", "pytest", "-q"], cwd=API_DIR)
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Run and test the Neo monorepo from one script.")
-    parser.add_argument("--install", action="store_true", help="Install backend and frontend dependencies")
-    parser.add_argument("--run", action="store_true", help="Run FastAPI and PWA together")
-    parser.add_argument("--test", action="store_true", help="Run backend tests with pytest")
-    parser.add_argument("--docker", action="store_true", help="Start docker services from ops/docker-compose.yml")
-    parser.add_argument("--env", action="store_true", help="Copy .env.example to .env if missing")
+    parser = argparse.ArgumentParser(
+        description="Run and test the Neo monorepo from one script."
+    )
+    parser.add_argument(
+        "--install",
+        action="store_true",
+        help="Install backend and frontend dependencies",
+    )
+    parser.add_argument(
+        "--run", action="store_true", help="Run FastAPI and PWA together"
+    )
+    parser.add_argument(
+        "--test", action="store_true", help="Run backend tests with pytest"
+    )
+    parser.add_argument(
+        "--docker",
+        action="store_true",
+        help="Start docker services from ops/docker-compose.yml",
+    )
+    parser.add_argument(
+        "--env", action="store_true", help="Copy .env.example to .env if missing"
+    )
     args = parser.parse_args()
 
     if args.env:
@@ -179,6 +220,7 @@ def main():
 
     if not any([args.install, args.run, args.test, args.docker, args.env]):
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()

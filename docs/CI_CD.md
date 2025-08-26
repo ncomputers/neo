@@ -4,6 +4,8 @@ This repository uses a GitHub Actions workflow for safe staging→production dep
 
 A separate `gitleaks` workflow scans for committed secrets on every push and pull request.
 
+Bandit, pip-audit, and ruff workflows run on every push and pull request to block risky code and dependencies.
+
 A nightly `pdf-smoke` workflow renders sample invoice and KOT PDFs for the demo tenant, asserting 200 responses within two seconds and uploading the outputs as build artifacts.
 
 1. **build-and-push** – builds the API and worker images and pushes them to the registry tagged with the commit SHA.

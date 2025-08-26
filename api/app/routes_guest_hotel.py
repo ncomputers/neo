@@ -2,24 +2,25 @@ from __future__ import annotations
 
 """Guest-facing hotel room routes."""
 
-from fastapi import APIRouter, HTTPException, Header, Request, Response
+import asyncio
+import hashlib
+import json
+
+from fastapi import APIRouter, Header, HTTPException, Request, Response
 from pydantic import BaseModel
 from sqlalchemy import func
-import asyncio
-import json
-import hashlib
 
 from .db import SessionLocal
+from .i18n import get_msg, resolve_lang
 from .models_tenant import (
     Category,
     MenuItem,
+    NotificationOutbox,
     Room,
     RoomOrder,
     RoomOrderItem,
-    NotificationOutbox,
 )
 from .utils.responses import ok
-from .i18n import resolve_lang, get_msg
 
 router = APIRouter(prefix="/h")
 
@@ -46,7 +47,9 @@ def fetch_menu(
     with SessionLocal() as session:
         cat_ts = session.query(func.max(Category.updated_at)).scalar()
         item_ts = session.query(func.max(MenuItem.updated_at)).scalar()
-    etag = hashlib.sha1(f"{cat_ts}{item_ts}".encode(), usedforsecurity=False).hexdigest()
+    etag = hashlib.sha1(
+        f"{cat_ts}{item_ts}".encode(), usedforsecurity=False
+    ).hexdigest()
     if if_none_match == etag:
         return Response(status_code=304, headers={"ETag": etag})
 
@@ -68,14 +71,14 @@ def fetch_menu(
                     "name": i.name,
                     "price": float(i.price),
                     "is_veg": i.is_veg,
-                    "gst_rate": float(i.gst_rate)
-                    if i.gst_rate is not None
-                    else None,
+                    "gst_rate": float(i.gst_rate) if i.gst_rate is not None else None,
                     "hsn_sac": i.hsn_sac,
                     "show_fssai": i.show_fssai,
                     "out_of_stock": i.out_of_stock,
                 }
-                for i in session.query(MenuItem).filter(MenuItem.out_of_stock.is_(False))
+                for i in session.query(MenuItem).filter(
+                    MenuItem.out_of_stock.is_(False)
+                )
             ]
         data = {"categories": categories, "items": items}
         asyncio.run(redis.set(cache_key, json.dumps(data), ex=60))
@@ -98,10 +101,9 @@ def create_order(room_token: str, payload: OrderPayload) -> dict:
         order = RoomOrder(room_id=room.id, status="NEW", placed_at=func.now())
         session.add(order)
         session.flush()
-        item_ids = [l["item_id"] for l in lines]
+        item_ids = [line["item_id"] for line in lines]
         items = {
-            i.id: i
-            for i in session.query(MenuItem).filter(MenuItem.id.in_(item_ids))
+            i.id: i for i in session.query(MenuItem).filter(MenuItem.id.in_(item_ids))
         }
         for line in lines:
             data = items.get(line["item_id"])
