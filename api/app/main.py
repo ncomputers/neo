@@ -140,6 +140,7 @@ from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_owner_analytics import router as owner_analytics_router
+from .routes_pilot_feedback import router as pilot_feedback_router
 from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
 from .routes_print import router as print_router
@@ -875,6 +876,7 @@ app.include_router(print_bridge_router)
 app.include_router(push_router)
 app.include_router(checkout_router)
 app.include_router(feedback_router)
+app.include_router(pilot_feedback_router)
 app.include_router(media_router)
 app.include_router(api_keys_router)
 app.include_router(vapid_router)

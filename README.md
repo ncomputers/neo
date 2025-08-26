@@ -217,9 +217,10 @@ Attempts to combine a non-stackable coupon with others raise a `CouponError` wit
 
 ### Feedback
 
-- `POST /api/outlet/{tenant}/feedback` – submit an NPS score (`0-10`) with optional comment using a guest token.
-- `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregated NPS metrics for admins over the last `range` days (default 30).
-- `scripts/nps_digest.py` – cron-friendly script that emails the previous day's NPS per outlet.
+- `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
+- `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregate ratings for admins over the last `range` days (default 30).
+- `POST /api/pilot/{tenant}/feedback` – submit an NPS score (0-10) with optional comment.
+\
 
 ### Super Admin
 
@@ -464,6 +465,8 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 `scripts/digest_scheduler.py` scans all active tenants and triggers the KPI digest once the local time passes **09:00** in each tenant's timezone. The last sent date is stored in Redis under `digest:last:{tenant}` to prevent duplicates. A systemd timer (`deploy/systemd/neo-digest.timer`) runs this script every five minutes.
 
 `scripts/pilot_digest.py` collects pilot-tenant telemetry (orders, notification failures, SLA breaches, breaker opens and export errors) and sends a summary via email and Slack each day at **20:00 IST**. Tenants are configured through the `PILOT_TENANTS` environment variable.
+
+`scripts/pilot_nps_digest.py` aggregates pilot NPS feedback per outlet and emails a daily summary.
 
 
 ## Grace/Expiry Reminders
