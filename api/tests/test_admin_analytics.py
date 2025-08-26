@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
-os.environ.setdefault("ALLOWED_ORIGINS", "*")
+os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 os.environ.setdefault("DB_URL", "postgresql://user:pass@localhost/db")
 os.environ.setdefault(
     "POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db"

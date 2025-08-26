@@ -9,12 +9,10 @@ from pathlib import Path
 
 import httpx
 from fastapi import APIRouter, UploadFile
-from prometheus_client import generate_latest
 from sqlalchemy import text
 
 from .db import SessionLocal, engine
 from .storage import storage
-from .routes_metrics import db_replica_healthy
 
 router = APIRouter()
 
