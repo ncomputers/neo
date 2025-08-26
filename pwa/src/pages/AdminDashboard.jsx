@@ -4,6 +4,7 @@ import { apiFetch } from '../api'
 import LimitsUsageWidget from '../components/LimitsUsageWidget'
 import OpsWidget from '../components/OpsWidget'
 import PilotTelemetryWidget from '../components/PilotTelemetryWidget'
+import OwnerSlaWidget from '../components/OwnerSlaWidget'
 
 export default function AdminDashboard() {
   const { logo } = useTheme()
@@ -26,6 +27,8 @@ export default function AdminDashboard() {
       <LimitsUsageWidget />
       <OpsWidget />
       <PilotTelemetryWidget />
+      <OwnerSlaWidget />
+
       {loading && <p>Loading...</p>}
       {error && <p className="text-danger">{error}</p>}
       {!loading && !error && (

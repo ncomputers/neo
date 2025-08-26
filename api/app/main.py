@@ -152,6 +152,7 @@ from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
 from .routes_owner_aggregate import router as owner_aggregate_router
 from .routes_owner_analytics import router as owner_analytics_router
+from .routes_owner_sla import router as owner_sla_router
 from .routes_pilot_feedback import router as pilot_feedback_router
 from .routes_postman import router as postman_router
 from .routes_preflight import router as preflight_router
@@ -893,6 +894,7 @@ app.include_router(housekeeping_router)
 app.include_router(hotel_hk_router)
 app.include_router(metrics_router)
 app.include_router(owner_analytics_router)
+app.include_router(owner_sla_router)
 app.include_router(dashboard_router)
 app.include_router(dashboard_charts_router)
 app.include_router(owner_aggregate_router)

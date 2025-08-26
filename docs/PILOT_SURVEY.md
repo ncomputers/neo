@@ -15,5 +15,9 @@ Use this form to collect staff feedback after the pilot.
 - Share a summary with stakeholders after the pilot.
 
 ## API
-Submit NPS feedback via `POST /api/pilot/{tenant}/feedback` with JSON `{"score": 9, "comment": "Great"}`.
-A daily cron runs `scripts/pilot_nps_digest.py` to email NPS summaries per outlet.
+Submit NPS feedback via `POST /api/pilot/{tenant}/feedback` with JSON
+`{"score": 9, "comment": "Great", "contact_opt_in": true}`.
+Review aggregated results with
+`GET /api/pilot/admin/feedback/summary?from=YYYY-MM-DD&to=YYYY-MM-DD`.
+`scripts/pilot_nps_digest.py` emails a daily summary at **20:00 IST** using the
+configured mailer.

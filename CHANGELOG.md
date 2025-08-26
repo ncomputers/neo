@@ -48,6 +48,9 @@ All notable changes to this project will be documented in this file.
 - Per-coupon usage caps (per day/guest/outlet) with valid-from/to windows and
   usage auditing, returning helpful hints when limits are exceeded.>>>>>>> main
 
+- Opt-in owner digest with richer stats (top 10 items, comps %, voids, tips,
+  prep SLA hit rate) and after-hours throttling.
+
 - Owner dashboard displays licensing usage bars for tables, items, images, and exports.
 - Guests opting into WhatsApp receive order status updates when orders are
   accepted, out for delivery, or ready.
@@ -72,8 +75,8 @@ All notable changes to this project will be documented in this file.
 
   "Request more" link.
 - Track per-route SLO metrics, expose `/admin/ops/slo` endpoint and Grafana dashboard.
-- Owner dashboard includes SLA/ops widget with uptime, webhook success rate,
-  breaker open time, and median KOT prep time.
+- Owner dashboard includes SLA widget with uptime, webhook success rate,
+  median prep time, and KOT delay alerts.
 
 - Script to bulk seed a large dataset for local scale testing.
 
