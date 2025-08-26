@@ -106,8 +106,6 @@ from .routes_admin_ops import router as admin_ops_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_support import router as admin_support_router
-from .routes_admin_ops import router as admin_ops_router
-
 from .routes_alerts import router as alerts_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
@@ -126,9 +124,6 @@ from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
-from .routes_admin_dlq import router as admin_dlq_router
-from .routes_admin_privacy import router as admin_privacy_router
-
 from .routes_guest_menu import router as guest_menu_router
 from .routes_guest_order import router as guest_order_router
 from .routes_help import router as help_router
@@ -171,11 +166,11 @@ from .routes_tables_sse import router as tables_sse_router
 from .routes_tenant_close import router as tenant_close_router
 from .routes_tenant_sandbox import router as tenant_sandbox_router
 from .routes_time_skew import router as time_skew_router
-
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhook_tools import router as webhook_tools_router
 from .routes_webhooks import router as webhooks_router
+from .routes_whatsapp_status import router as whatsapp_status_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
@@ -895,6 +890,7 @@ app.include_router(backup_router)
 app.include_router(print_router)
 app.include_router(print_bridge_router)
 app.include_router(push_router)
+app.include_router(whatsapp_status_router)
 app.include_router(checkout_router)
 app.include_router(feedback_router)
 app.include_router(pilot_feedback_router)
