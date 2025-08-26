@@ -59,6 +59,10 @@ All notable changes to this project will be documented in this file.
 
 - Feature-flagged happy-hour pricing via scheduled `happy_hour_windows` (day/time windows) with best-overlap discounting and coupons disabled during discount windows.
 
+### Changed
+
+- 429 responses for magic-link, guest order, exports, and webhook test now include retry hints.
+
 ### Fixed
 
 - Bundle Noto Sans fonts for printable invoices and KOTs, covering the ₹ sign and Gujarati/Hindi glyphs.
