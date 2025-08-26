@@ -17,7 +17,6 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from config import get_settings
 
-
 Base = declarative_base()
 
 
@@ -45,6 +44,19 @@ class Audit(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class QrPackLog(Base):
+    """Log entries for QR pack generation and reprints."""
+
+    __tablename__ = "qr_pack_log"
+
+    id = Column(Integer, primary_key=True)
+    pack_id = Column(String, nullable=False)
+    count = Column(Integer, nullable=False)
+    requester = Column(String, nullable=False)
+    reason = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 # Simple SQLite backing store for demonstration and tests.
 engine = create_engine(
     "sqlite:///./audit.db", connect_args={"check_same_thread": False}
@@ -62,6 +74,21 @@ def log_event(actor: str, action: str, entity: str, master: bool = False) -> Non
         session.commit()
 
 
+def log_qr_pack(pack_id: str, count: int, requester: str, reason: str) -> None:
+    """Persist a QR pack generation or reprint event."""
+
+    with SessionLocal() as session:
+        session.add(
+            QrPackLog(
+                pack_id=pack_id,
+                count=count,
+                requester=requester,
+                reason=reason,
+            )
+        )
+        session.commit()
+
+
 def purge_old_logs(days: Optional[int] = None) -> int:
     """Delete audit rows older than ``days`` and return number purged.
 
@@ -73,12 +100,8 @@ def purge_old_logs(days: Optional[int] = None) -> int:
     cutoff = datetime.utcnow() - timedelta(days=retention)
     with SessionLocal() as session:
         removed = (
-            session.query(AuditMaster)
-            .filter(AuditMaster.created_at < cutoff)
-            .delete()
-            + session.query(Audit)
-            .filter(Audit.created_at < cutoff)
-            .delete()
+            session.query(AuditMaster).filter(AuditMaster.created_at < cutoff).delete()
+            + session.query(Audit).filter(Audit.created_at < cutoff).delete()
         )
         session.commit()
     return removed
@@ -86,4 +109,3 @@ def purge_old_logs(days: Optional[int] = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
     purge_old_logs()
-
