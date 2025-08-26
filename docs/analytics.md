@@ -34,3 +34,11 @@ entry is stored.
 Guest opt-ins for analytics and WhatsApp updates are persisted via the `/g/consent`
 endpoint and stored against the customer's record.
 
+## Web Vitals RUM
+
+When the `analytics` feature flag is enabled and a guest or admin has granted
+consent, the PWA reports [Web Vitals](https://web.dev/vitals/) metrics for both
+contexts. Largest Contentful Paint (LCP), Cumulative Layout Shift (CLS) and
+Interaction to Next Paint (INP) are POSTed to `/rum/vitals` and exported as
+Prometheus histograms.
+
