@@ -7,6 +7,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, Response
 from datetime import datetime, timezone
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
+from datetime import datetime, timezone
 
 # Counters
 http_requests_total = Counter(
@@ -110,7 +111,9 @@ printer_retry_queue = Gauge(
 )
 printer_retry_queue.set(0)
 printer_retry_queue_age = Gauge(
-    "printer_retry_queue_age", "Oldest job age in printer retry queue"
+    "printer_retry_queue_age",
+    "Age in seconds of the oldest job awaiting retry",
+
 )
 printer_retry_queue_age.set(0)
 
@@ -124,24 +127,26 @@ async def metrics_endpoint(request: Request) -> Response:
     redis = getattr(request.app.state, "redis", None)
     if redis:
         total = 0
-        oldest = 0
-        keys = []
-        keys.extend(await redis.keys("print:retry:*"))
-        keys.extend(await redis.keys("print:q:*"))
+        max_age = 0
         now = datetime.now(timezone.utc)
-        for key in keys:
-            qlen = await redis.llen(key)
-            total += qlen
-            if qlen:
-                raw = await redis.lindex(key, -1)
-                if isinstance(raw, bytes):
-                    raw = raw.decode()
-                from .kds.printer_watchdog import _job_age
-
-                age = _job_age(raw, now)
-                if age > oldest:
-                    oldest = age
+        for key in await redis.keys("print:retry:*"):
+            length = await redis.llen(key)
+            total += length
+            head = await redis.lindex(key, 0)
+            if head:
+                if isinstance(head, bytes):
+                    head = head.decode()
+                try:
+                    ts = datetime.fromisoformat(head)
+                    if ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=timezone.utc)
+                    age = (now - ts).total_seconds()
+                    if age > max_age:
+                        max_age = age
+                except ValueError:
+                    pass
         printer_retry_queue.set(total)
-        printer_retry_queue_age.set(oldest)
+        printer_retry_queue_age.set(max_age)
+
     data = generate_latest()
     return Response(data, media_type=CONTENT_TYPE_LATEST)

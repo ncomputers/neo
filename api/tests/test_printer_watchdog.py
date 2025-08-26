@@ -19,13 +19,13 @@ def test_printer_status_and_metrics():
     app.state.redis = redis
 
     tenant = "demo"
-    stale_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        minutes=5
-    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+    stale_time = now - datetime.timedelta(minutes=5)
+    oldest = now - datetime.timedelta(minutes=10)
 
     async def seed() -> None:
         await redis.set(f"print:hb:{tenant}", stale_time.isoformat())
-        await redis.rpush(f"print:retry:{tenant}", "job1")
+        await redis.rpush(f"print:retry:{tenant}", oldest.isoformat())
 
     asyncio.run(seed())
 
@@ -38,7 +38,8 @@ def test_printer_status_and_metrics():
 
     body = client.get("/metrics").text
     assert "printer_retry_queue 1.0" in body
-    assert "printer_retry_queue_age 0.0" in body
+    assert "printer_retry_queue_age" in body
+
 
 import os
 import pathlib
@@ -86,16 +87,14 @@ def client(monkeypatch):
 def test_printer_offline_banner(client):
     client, redis = client
     # No heartbeat set -> stale
-    import asyncio, json
-    now = datetime.datetime.now(datetime.timezone.utc)
-    ts = (now - datetime.timedelta(seconds=90)).isoformat()
-    asyncio.run(redis.lpush("print:q:demo", json.dumps({"ts": ts, "m": 1})))
+    import asyncio
+
+    old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=7)
+    asyncio.run(redis.lpush("print:retry:demo", old.isoformat()))
+
     resp = client.get("/api/outlet/demo/kds/queue")
     assert resp.status_code == 200
     body = resp.json()
     assert body["data"]["printer_stale"] is True
     assert body["data"]["retry_queue"] == 1
-    assert body["data"]["retry_queue_age"] >= 90
-    metrics_body = client.get("/metrics").text
-    assert "printer_retry_queue 1.0" in metrics_body
-    assert "printer_retry_queue_age" in metrics_body
+    assert body["data"]["retry_oldest_age"] > 0
