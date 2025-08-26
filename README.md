@@ -170,6 +170,12 @@ pip-audit
 gitleaks detect -c .gitleaks.toml
 ```
 
+## Accessibility
+
+Buttons across major flows include descriptive ARIA labels, visible focus
+outlines, and high-contrast color tokens. Run `npx pa11y-ci -c pa11y-ci.json`
+to verify key screens remain accessible.
+
 ## Localization
 
 Translation files live in `api/app/i18n`. A pre-commit hook verifies that English,
