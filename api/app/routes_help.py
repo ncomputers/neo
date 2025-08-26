@@ -12,6 +12,14 @@ from .routes_onboarding import TENANTS
 router = APIRouter()
 
 
+@router.get("/help", response_class=HTMLResponse)
+async def help_index(
+    request: Request, tenant_id: str | None = None
+) -> HTMLResponse:
+    """Return help index with optional outlet branding."""
+    return await help_page("index", request, tenant_id)
+
+
 @router.get("/help/{page}", response_class=HTMLResponse)
 async def help_page(page: str, request: Request, tenant_id: str | None = None) -> HTMLResponse:
     """Return the named help page with optional outlet branding."""

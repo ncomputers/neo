@@ -2,21 +2,25 @@
 
 This repository contains three main services:
 
-- `api/` – FastAPI application with `/health` and `/ready` endpoints, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
+- `api/` – FastAPI application with `/health`, `/ready` and `/time/skew` endpoints, Alembic migrations, and service helpers such as EMA-based ETA utilities with per-tenant persistence.
 - `pwa/` – React + Tailwind front end with a placeholder home page.
 - `ops/` – Docker Compose for local development.
-
+-
 Invoices support optional FSSAI license details when provided.
+QR pack generation events are audited and can be exported via admin APIs. See
+[`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details.
 
 ## Security
 
 Owner and admin accounts can enable optional TOTP-based two-factor authentication. See [`docs/auth_2fa.md`](docs/auth_2fa.md) for available endpoints. Sensitive operations like secret rotation, full exports and tenant closure require a fresh step-up verification.
 
-Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages.
+Responses include a strict Content-Security-Policy with per-request nonces applied to inline styles and scripts in printable invoices and KOT pages. A report-only variant sends violation details to `/csp/report`; the latest 500 reports are available at `/admin/csp/reports`.
 
 ## Configuration
 
 Runtime settings are defined in `config.json` and may be overridden by environment variables loaded from a local `.env` file. The `config.py` module exposes a `get_settings()` helper that reads both sources.
+
+Tenants can define `happy_hour` windows with percent or flat discounts applied during the specified times.
 
 The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
@@ -95,6 +99,8 @@ Tenants can be assigned quotas via the `license_limits` JSON column in the
 Exceeding any quota results in a `403 FEATURE_LIMIT` response with a helpful
 hint. Administrators may inspect current usage and limits via
 `GET /api/outlet/{tenant}/limits/usage` when providing an `X-Tenant-ID` header.
+The admin dashboard displays these limits with usage bars and a "Request more"
+link for contacting support.
 
 Copy the example environment file and adjust values as needed:
 
@@ -126,6 +132,10 @@ Migration `0010_hot_path_indexes` adds indexes on frequently queried columns
 and, when running on PostgreSQL, ensures monthly partitions for `invoices` and
 `payments` based on `created_at`. SQLite deployments skip the partition step but
 still benefit from the new indexes.
+
+Hot query plans are checked in CI using `scripts/plan_guard.py`, which runs
+`EXPLAIN ANALYZE` and compares the p95 execution time against baselines in
+`.ci/baselines/`.
 
 ## Continuous Integration
 
@@ -217,6 +227,8 @@ Attempts to combine a non-stackable coupon with others raise a `CouponError` wit
 
 - `POST /api/outlet/{tenant}/feedback` – submit a thumbs-up or thumbs-down rating with optional note using a guest token.
 - `GET /api/outlet/{tenant}/feedback/summary?range=30` – aggregate ratings for admins over the last `range` days (default 30).
+- `POST /api/pilot/{tenant}/feedback` – submit an NPS score (0-10) with optional comment.
+\
 
 ### Super Admin
 
@@ -460,6 +472,8 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
 - `digest_sent_total`: daily KPI digests sent (via route or CLI)
 - Background job status: `/api/admin/jobs/status` returns worker heartbeats,
   processed counts, recent failures, and queue depths.
+- Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
+  `POST /api/admin/dlq/replay` re-enqueues a job by ID.
 
 The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI both increment `digest_sent_total`.
 
@@ -468,6 +482,8 @@ The `/api/outlet/{tenant_id}/digest/run` route and the `daily_digest.py` CLI bot
 `scripts/digest_scheduler.py` scans all active tenants and triggers the KPI digest once the local time passes **09:00** in each tenant's timezone. The last sent date is stored in Redis under `digest:last:{tenant}` to prevent duplicates. A systemd timer (`deploy/systemd/neo-digest.timer`) runs this script every five minutes.
 
 `scripts/pilot_digest.py` collects pilot-tenant telemetry (orders, notification failures, SLA breaches, breaker opens and export errors) and sends a summary via email and Slack each day at **20:00 IST**. Tenants are configured through the `PILOT_TENANTS` environment variable.
+
+`scripts/pilot_nps_digest.py` aggregates pilot NPS feedback per outlet and emails a daily summary.
 
 
 ## Grace/Expiry Reminders
@@ -557,6 +573,13 @@ python scripts/tenant_seed_counter.py --tenant TENANT_ID
 python scripts/tenant_qr_tools.py list_tables --tenant TENANT_ID
 python scripts/tenant_qr_tools.py regen_qr --tenant TENANT_ID --table TABLE_CODE
 python scripts/tenant_qr_tools.py bulk_add_tables --tenant TENANT_ID --count 10
+```
+
+For local scale testing, a helper seeds large volumes of data using bulk
+inserts:
+
+```bash
+python scripts/seed_large_outlet.py --tenant TENANT_ID --tables 300 --items 5000 --orders 50000 --days 60
 ```
 
 To compute daily Z-report totals and enqueue a day-close notification into the

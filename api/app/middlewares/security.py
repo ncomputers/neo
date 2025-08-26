@@ -82,6 +82,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             f"script-src 'self' 'nonce-{nonce}'"
         )
         response.headers.setdefault("Content-Security-Policy", csp)
+        csp_report = csp + "; report-uri /csp/report"
+        response.headers.setdefault("Content-Security-Policy-Report-Only", csp_report)
         if self.hsts_enabled:
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
