@@ -5454,9 +5454,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
-                  "title": "Response Owner Sla Api Owner Sla Get"
+                  "title": "OwnerSlaResponse",
+                  "properties": {
+                    "uptime_7d": {"type": "number"},
+                    "uptime_trend": {"type": "number"},
+                    "webhook_success": {"type": "number"},
+                    "webhook_success_trend": {"type": "number"},
+                    "median_prep": {"type": "number"},
+                    "median_prep_trend": {"type": "number"},
+                    "kot_delay_alerts": {"type": "integer"},
+                    "kot_delay_alerts_trend": {"type": "integer"}
+                  }
                 }
               }
             }

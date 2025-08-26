@@ -534,7 +534,30 @@ Prometheus metrics are exposed at `/metrics`. Key metrics include:
   processed counts, recent failures, and queue depths.
 Rolling 30-day error budgets per guest route are exposed at `/admin/ops/slo`.
 - Owner SLA metrics are available from `/owner/sla` for uptime, webhook success,
-  median prep time, and KOT delay alerts.
+  median prep time, and KOT delay alerts. Each value includes a corresponding
+  `<field>_trend` delta comparing the current 7‑day window with the preceding
+  one. The PWA uses these deltas to render arrows and colors based on SLA
+  thresholds.
+  
+  Example:
+  ```json
+  {
+    "data": {
+      "uptime_7d": 100.0,
+      "uptime_trend": 10.0,
+      "webhook_success": 0.67,
+      "webhook_success_trend": -0.08,
+      "median_prep": 20.0,
+      "median_prep_trend": -20.0,
+      "kot_delay_alerts": 2,
+      "kot_delay_alerts_trend": 1
+    }
+  }
+  ```
+  
+  UI thresholds (configurable in `OwnerSlaWidget.jsx`): uptime ≥99.9% green,
+  ≥99% yellow; webhook success ≥99% green, ≥95% yellow; median prep <600s green,
+  <900s yellow; KOT alerts 0 green, ≤3 yellow, otherwise red.
 - Dead-letter queue: `/api/admin/dlq?type=webhook|export` lists failed jobs;
   `POST /api/admin/dlq/replay` re-enqueues a job by ID supplied in the JSON body.
 - Pilot telemetry for ops is available at `/api/admin/pilot/telemetry` and

@@ -29,9 +29,22 @@ def test_owner_sla(tmp_path, monkeypatch):
     webhook_failures_total.clear()
     kot_delay_alerts_total._value.set(0)
     db_replica_healthy.set(1)
-    webhook_attempts_total.labels(destination="x").inc(3)
-    webhook_failures_total.labels(destination="x").inc(1)
-    kot_delay_alerts_total.inc(2)
+
+    # Counters hold cumulative totals. Seed previous 7-day snapshot and current
+    # increments separately for trend verification.
+    app.state.owner_sla_history = {
+        "webhook_attempts_14d": 0,
+        "webhook_failures_14d": 0,
+        "webhook_attempts_7d": 4,
+        "webhook_failures_7d": 1,
+        "kot_delay_alerts_14d": 0,
+        "kot_delay_alerts_7d": 1,
+        "uptime_prev": 90.0,
+    }
+
+    webhook_attempts_total.labels(destination="x").inc(7)  # 4 prev + 3 current
+    webhook_failures_total.labels(destination="x").inc(2)  # 1 prev + 1 current
+    kot_delay_alerts_total.inc(3)  # 1 prev + 2 current
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path}/t.db")
 
@@ -43,13 +56,19 @@ def test_owner_sla(tmp_path, monkeypatch):
     async def seed():
         async with AsyncSession(engine) as session:
             now = datetime.datetime.utcnow()
-            order = Order(
+            order_curr = Order(
                 table_id=1,
                 status=OrderStatus.READY,
                 accepted_at=now,
                 ready_at=now + datetime.timedelta(seconds=20),
             )
-            session.add(order)
+            order_prev = Order(
+                table_id=1,
+                status=OrderStatus.READY,
+                accepted_at=now - datetime.timedelta(days=8),
+                ready_at=now - datetime.timedelta(days=8) + datetime.timedelta(seconds=40),
+            )
+            session.add_all([order_curr, order_prev])
             await session.commit()
     asyncio.run(seed())
 
@@ -60,6 +79,10 @@ def test_owner_sla(tmp_path, monkeypatch):
     assert resp.status_code == 200
     data = resp.json()["data"]
     assert data["uptime_7d"] == 100.0
+    assert data["uptime_trend"] == 10.0
     assert round(data["webhook_success"], 2) == 0.67
+    assert round(data["webhook_success_trend"], 2) == -0.08
     assert data["median_prep"] == 20.0
+    assert data["median_prep_trend"] == -20.0
     assert data["kot_delay_alerts"] == 2
+    assert data["kot_delay_alerts_trend"] == 1
