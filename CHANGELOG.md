@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 
 - 24×7 synthetic order monitor with CI alerts and dashboards.
 
+### Fixed
+
+- Remove invalid conditional from python-tests workflow to restore CI checks.
+
 ## v1.0.0 - 2025-08-26
 
 ### Fixed
