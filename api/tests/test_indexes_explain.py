@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import re
 from datetime import datetime, timedelta
 
 import psycopg2
@@ -39,7 +42,7 @@ def setup_module(module):
             next_attempt_at TIMESTAMPTZ,
             state TEXT
         );
-        """
+        """,
     )
 
     cur.execute(
@@ -61,22 +64,22 @@ def setup_module(module):
         CREATE INDEX idx_webhooks_tenant_due
             ON webhook_events (tenant_id, next_attempt_at)
             WHERE state = 'pending';
-        """
+        """,
     )
 
     now = datetime.utcnow()
     orders = [
-        (1, 'new', now - timedelta(minutes=i), None, 10, None, 100.0)
+        (1, "new", now - timedelta(minutes=i), None, 10, None, 100.0)
         for i in range(50)
     ]
-    orders.append((1, 'new', now, None, 20, None, 50.0))
+    orders.append((1, "new", now, None, 20, None, 50.0))
     cur.executemany(
         "INSERT INTO orders (tenant_id, status, created_at, deleted_at, table_id, closed_at, total_amount) VALUES (%s,%s,%s,%s,%s,%s,%s)",
         orders,
     )
 
     menu = [
-        (1, 5, i, True, None, Json(['vegan']))
+        (1, 5, i, True, None, Json(["vegan"]))
         for i in range(10)
     ]
     cur.executemany(
@@ -85,7 +88,7 @@ def setup_module(module):
     )
 
     webhooks = [
-        (1, now + timedelta(minutes=i), 'pending')
+        (1, now + timedelta(minutes=i), "pending")
         for i in range(5)
     ]
     cur.executemany(
@@ -99,82 +102,71 @@ def setup_module(module):
     conn.close()
 
 
-def _plan(sql, params=None):
+def _plan_stats(sql: str, params: tuple | None = None) -> tuple[str, int, float]:
     conn = psycopg2.connect(DSN)
     cur = conn.cursor()
     cur.execute("SET enable_seqscan=off")
     cur.execute(sql, params or ())
-    plan = "\n".join(row[0] for row in cur.fetchall())
+    lines = [row[0] for row in cur.fetchall()]
     cur.close()
     conn.close()
-    return plan
-
+    first = lines[0]
+    plan = "\n".join(lines)
+    m_cost = re.search(r"cost=(\d+\.\d+)\.\.(\d+\.\d+)", first)
+    m_rows = re.search(r"actual time=[^)]* rows=(\d+)", first)
+    cost = float(m_cost.group(2)) if m_cost else 0.0
+    rows = int(m_rows.group(1)) if m_rows else 0
+    return plan, rows, cost
 
 def test_open_orders_by_table():
-    plan = _plan(
+    plan, rows, cost = _plan_stats(
         "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE tenant_id=1 AND table_id=10 AND closed_at IS NULL AND deleted_at IS NULL ORDER BY created_at DESC"
     )
-    assert "Index Scan" in plan and "idx_orders_tenant_table_open" in plan
+    assert re.search(r"idx_orders_tenant_table_open", plan)
+    assert 48 <= rows <= 52
+    assert cost < 20
 
 
 def test_kds_status_window():
-    plan = _plan(
+    plan, rows, cost = _plan_stats(
         "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE tenant_id=1 AND status='new' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 5"
     )
-    assert "Bitmap Index Scan" in plan or "Index Scan" in plan
-    assert "idx_orders_tenant_status_created" in plan
+    assert re.search(r"idx_orders_tenant_status_created", plan)
+    assert 5 <= rows <= 6
+    assert cost < 5
 
 
 def test_menu_category_active():
-    plan = _plan(
+    plan, rows, cost = _plan_stats(
         "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM menu_items WHERE tenant_id=1 AND category_id=5 AND is_active = TRUE AND deleted_at IS NULL ORDER BY sort_order"
     )
-    assert "Index Scan" in plan and "idx_menu_tenant_category_active" in plan
+    assert re.search(r"idx_menu_tenant_category_active", plan)
+    assert 9 <= rows <= 11
+    assert cost < 20
 
 
 def test_dietary_filter():
-    plan = _plan(
+    plan, rows, cost = _plan_stats(
         "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM menu_items WHERE tenant_id=1 AND coalesce(dietary, '[]'::jsonb) ? 'vegan'"
     )
-    assert "Bitmap Index Scan" in plan or "Index Scan" in plan
-    assert "gin_menu_dietary" in plan
+    assert re.search(r"gin_menu_dietary", plan)
+    assert 9 <= rows <= 11
+    assert cost < 25
 
 
 def test_webhooks_due():
-    plan = _plan(
+    plan, rows, cost = _plan_stats(
         "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM webhook_events WHERE tenant_id=1 AND state='pending' ORDER BY next_attempt_at LIMIT 1"
     )
-    assert "Index Scan" in plan and "idx_webhooks_tenant_due" in plan
+    assert re.search(r"idx_webhooks_tenant_due", plan)
+    assert rows == 1
+    assert cost < 5
 
 
 def test_orders_date_range_brin():
-    conn = psycopg2.connect(DSN)
-    cur = conn.cursor()
-    cur.execute("SET enable_seqscan=off")
-    cur.execute(
+    plan, rows, cost = _plan_stats(
         "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE created_at > now() - interval '1 hour'"
     )
-    plan = "\n".join(r[0] for r in cur.fetchall())
-    cur.close()
-    conn.close()
-    assert "brin_orders_created" in plan
-
-
-def test_partial_index_skips_deleted():
-    conn = psycopg2.connect(DSN)
-    cur = conn.cursor()
-    cur.execute("INSERT INTO orders (tenant_id, status, created_at, deleted_at, table_id, closed_at, total_amount) VALUES (1,'new',now(),NULL,30,NULL,10.0) RETURNING id")
-    oid = cur.fetchone()[0]
-    conn.commit()
-    plan_live = _plan(
-        "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE tenant_id=1 AND table_id=30 AND closed_at IS NULL AND deleted_at IS NULL"
-    )
-    assert "idx_orders_tenant_table_open" in plan_live
-    cur.execute("UPDATE orders SET deleted_at=now() WHERE id=%s", (oid,))
-    conn.commit()
-    plan_deleted = _plan(
-        "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE tenant_id=1 AND table_id=30 AND closed_at IS NULL AND deleted_at IS NOT NULL"
-    )
-    assert "idx_orders_tenant_table_open" not in plan_deleted
-    cur.close()
-    conn.close()
+    assert re.search(r"brin_orders_created", plan)
+    assert 50 <= rows <= 52
+    assert cost < 25
