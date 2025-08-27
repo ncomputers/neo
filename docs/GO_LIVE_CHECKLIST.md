@@ -18,6 +18,7 @@
 - DNS cutover plan approved
 - SSL certs deployed on GA domain
 - Canary release toggled; metrics healthy
+- Weighted canary ramp 5→25→50→100 with rollback gate
 - Blue/green switch rehearsed
 - Rollback path documented and tested
 - Alert routing to on-call channels confirmed
