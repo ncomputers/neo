@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - chore(print): print-test PNG artifacts in CI for 58/80mm printers.
 - feat(analytics): multi-outlet summary with CSV export and voids percentage.
 - Flagged server-side menu A/B testing with deterministic bucketing and exposure tracking.
-- L1 support console for tenant/table/order lookup with safe actions (resend invoice, reprint KOT, replay webhook, unlock PIN) and audit logging.
+- L1 support console for tenant/table/order lookup with safe actions (resend invoice, reprint KOT, replay webhook, unlock PIN), audit logging, and HTML UI with macro picker.
 - Cache last 50 invoice PDFs per outlet for offline review.
 - Block abusive user agents and apply temporary IP cooldowns after repeated order rejections.
 - Collect CSP violation reports via `/csp/report` with paginated admin viewer and query/token redaction.
