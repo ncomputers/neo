@@ -30,6 +30,7 @@ jobs:
       POSTGRES_PASSWORD: ${{ matrix.db == 'postgres' && 'postgres' || '' }}
       POSTGRES_DB: ${{ matrix.db == 'postgres' && 'postgres' || '' }}
       POSTGRES_TENANT_DSN_TEMPLATE: ${{ matrix.db == 'postgres' && 'postgresql+asyncpg://postgres:postgres@localhost:5432/{tenant_id}' || '' }}
+      WEBHOOK: ${{ secrets.WEBHOOK }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
