@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import csv
 import io
-from typing import Any, AsyncIterable, AsyncIterator, Iterable
+from typing import Any, AsyncIterable, AsyncIterator, Iterable, Iterator
 
 
 class CSVStream:
@@ -62,4 +62,19 @@ def stream_csv(
     iterator = csv_stream(row_iter, flush_size=chunk_size)
     iterator.write_row(headers)
     return iterator
+
+
+def stream_rows(
+    rows: Iterable[Iterable[Any]],
+    header: Iterable[Any] | None = None,
+) -> Iterator[str]:
+    """Yield CSV-formatted rows synchronously.
+
+    This helper is primarily used in tests where an asynchronous stream is
+    unnecessary. ``header`` will be yielded first if provided.
+    """
+    if header is not None:
+        yield ",".join(map(str, header))
+    for row in rows:
+        yield ",".join(map(str, row))
 
