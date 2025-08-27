@@ -8,7 +8,7 @@ This repository contains three main services:
 Monitoring tools such as UptimeRobot should poll the `/status.json` endpoint for platform health. Status is persisted in Redis with `status.json` on disk as a fallback. Administrators can override it via `POST /admin/status` or the helper script in `ops/scripts/status_page.py` during incidents.
 Invoices support optional FSSAI license details when provided.
 QR pack generation events are audited and can be exported via admin APIs. See
-[`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details.
+[`docs/qrpack_audit.md`](docs/qrpack_audit.md) for details. For manual rollouts, `make stage` deploys to staging, `make pilot` runs the staging smoke suite, and `make prod` promotes to production.
 Per-tenant product analytics can be enabled with tenant consent. See
 [`docs/analytics.md`](docs/analytics.md) for setup instructions.
 
@@ -851,8 +851,8 @@ supplied.
 
 ## Release
 
-Run `python scripts/release_tag.py` to generate a changelog entry and tag a new version. The helper queries merged pull requests since the last tag and groups entries by label. A `release` workflow is available for manual triggering via the GitHub UI.
+Run `python scripts/release_tag.py` to generate a changelog entry and tag a new version. Use `make release-rc` for a release candidate or `make release-ga` for a GA tag. The helper queries merged pull requests since the last tag and groups entries by label. A `release` workflow is available for manual triggering via the GitHub UI.
 
 ## Deployment
 
-A `deploy` GitHub Actions workflow builds Docker images, verifies staging with preflight, smoke, canary, and accessibility gates, then waits for manual approval before a blue/green production rollout with automatic rollback on failure. See `docs/CI_CD.md` for details.
+A `deploy` GitHub Actions workflow builds Docker images, verifies staging with preflight, smoke, canary, and accessibility gates, then waits for manual approval before a blue/green production rollout with automatic rollback on failure. See `docs/CI_CD.md` for details. For manual rollouts, `make stage` deploys to staging, `make pilot` runs the staging smoke suite, and `make prod` promotes to production.
