@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 
 from .auth import User, role_required
 from .db import SessionLocal
@@ -104,9 +104,12 @@ async def reprint_kot(
 @audit("support.console.replay_webhook")
 async def replay_webhook(
     order_id: int,
+    confirm: bool = Query(False),
     user: User = Depends(role_required("super_admin")),
 ) -> dict:
     """Replay webhook events for ``order_id``."""
+    if not confirm:
+        raise HTTPException(status_code=400, detail="confirmation required")
     try:
         with SessionLocal() as session:
             ord_row = session.get(Order, order_id)
@@ -126,9 +129,12 @@ async def replay_webhook(
 @audit("support.console.unlock_pin")
 async def unlock_pin(
     staff_id: int,
+    confirm: bool = Query(False),
     user: User = Depends(role_required("super_admin")),
 ) -> dict:
     """Unlock a staff member's PIN."""
+    if not confirm:
+        raise HTTPException(status_code=400, detail="confirmation required")
     with SessionLocal() as session:
         staff = session.get(Staff, staff_id)
         if not staff:
