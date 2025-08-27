@@ -203,7 +203,8 @@ the test suite:
 ```bash
 pip install -r requirements.txt
 python run_all.py --env --install
-alembic upgrade head
+cd api && python -m alembic -c alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head
+cd ..
 pytest -q
 ```
 
@@ -479,7 +480,7 @@ pip install -r requirements.txt python-dotenv
 python start_app.py
 ```
 
-The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini` via `python -m alembic`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r requirements.txt`.
+The script loads environment variables from `.env`, runs `python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r requirements.txt`.
 
 ### Notification Worker
 

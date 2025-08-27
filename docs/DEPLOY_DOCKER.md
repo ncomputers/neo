@@ -15,7 +15,7 @@ docker compose build
 Run migrations once the database is ready. This uses the Alembic configuration bundled with the API image.
 
 ```bash
-docker compose run --rm api alembic -c api/alembic.ini upgrade head
+docker compose run --rm api bash -c "cd api && python -m alembic -c alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head"
 ```
 
 ## Launch services
