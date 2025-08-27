@@ -1,11 +1,15 @@
-FROM python:3.11-slim
+FROM python@sha256:1d6131b5d479888b43200645e03a78443c7157efbdb730e6b48129740727c312
 
 WORKDIR /app
 
 COPY api/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt \
+    && pip install --no-cache-dir --upgrade setuptools
 
 COPY api /app/api
 COPY scripts /app/scripts
+
+RUN useradd -m app && chown -R app /app
+USER app
 
 CMD ["python", "scripts/notify_worker.py"]
