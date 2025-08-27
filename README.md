@@ -37,7 +37,7 @@ notification is triggered.
 
 ## Testing
 
-Playwright end-to-end tests reside under `e2e/playwright`. The `kds_expo_ready_picked.spec.ts` test places an order, marks it ready, verifies it on the `/kds/expo` dashboard and uses the `P` hotkey to pick the ticket, asserting an `expo.picked` audit log entry. Playwright captures video and screenshots for failing tests.
+Playwright end-to-end tests reside under `e2e/playwright`. The `kds_expo.spec.ts` test places an order, marks it ready, verifies the ticket's age increments on the `/kds/expo` dashboard, and uses the `P` hotkey to pick the ticket, asserting an `expo.picked` audit log entry. Playwright captures video and screenshots for failing tests.
 
 The Expo dashboard also supports keyboard shortcuts; pressing `P` removes the last order from the list.
 
