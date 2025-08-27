@@ -13,19 +13,19 @@ jobs:
       - name: Ensure experimental flags default to OFF
         run: |
           python - <<'PY'
-import pathlib, sys
-path = pathlib.Path('config/feature_flags.yaml')
-text = path.read_text()
-flags = {}
-for line in text.splitlines():
-    line = line.split('#',1)[0].strip()
-    if not line:
-        continue
-    k, _, v = line.partition(':')
-    flags[k.strip()] = v.strip().lower() in {'1','true','yes','on'}
-experimental = ['ab_tests','wa_enabled','happy_hour','marketplace','analytics']
-bad = [f for f in experimental if flags.get(f)]
-if bad:
-    print('Experimental flags enabled by default:', ', '.join(bad))
-    sys.exit(1)
-PY
+          import pathlib, sys
+          path = pathlib.Path('config/feature_flags.yaml')
+          text = path.read_text()
+          flags = {}
+          for line in text.splitlines():
+              line = line.split('#',1)[0].strip()
+              if not line:
+                  continue
+              k, _, v = line.partition(':')
+              flags[k.strip()] = v.strip().lower() in {'1','true','yes','on'}
+          experimental = ['ab_tests','wa_enabled','happy_hour','marketplace','analytics']
+          bad = [f for f in experimental if flags.get(f)]
+          if bad:
+              print('Experimental flags enabled by default:', ', '.join(bad))
+              sys.exit(1)
+          PY
