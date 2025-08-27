@@ -1,6 +1,6 @@
 # Support Macros
 
-Common replies and runbooks for L1 operations staff. Use these canned responses in the support console or ticketing system.
+Common replies and runbooks for L1 operations staff. Use these canned responses in the support console or ticketing system. The console exposes them via an "Insert macro" dropdown for quick replies.
 
 ## Canned Replies
 

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 """L1 support console routes for operations staff."""
 
+import html
 import json
+import pathlib
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
+from fastapi.responses import HTMLResponse
 
 from .auth import User, role_required
 from .db import SessionLocal
@@ -16,6 +19,68 @@ from .utils.audit import audit
 from .utils.responses import err, ok
 
 router = APIRouter()
+
+
+_MACRO_FILE = pathlib.Path(__file__).resolve().parents[2] / "docs" / "SUPPORT_MACROS.md"
+
+
+def _load_macros() -> dict[str, str]:
+    """Parse ``SUPPORT_MACROS.md`` into a mapping of title->text."""
+    macros: dict[str, str] = {}
+    current: str | None = None
+    buf: list[str] = []
+    for line in _MACRO_FILE.read_text().splitlines():
+        if line.startswith("### "):
+            if current:
+                macros[current] = "\n".join(buf).strip()
+            current = line[4:].strip()
+            buf = []
+        elif line.startswith("- ") and current:
+            buf.append(line[2:].strip())
+    if current:
+        macros[current] = "\n".join(buf).strip()
+    return macros
+
+
+@router.get("/admin/support/console", response_class=HTMLResponse)
+@audit("support.console.page")
+async def console_page(
+    user: User = Depends(role_required("super_admin")),
+) -> HTMLResponse:
+    """Render the support console HTML page."""
+    macros = _load_macros()
+    options = "".join(
+        f'<option value="{html.escape(text)}">{html.escape(name)}</option>'
+        for name, text in macros.items()
+    )
+    html_body = f"""
+    <html>
+      <body>
+        <h1>Support Console</h1>
+        <form id=\"search\">
+          <input name=\"tenant\" placeholder=\"tenant id\" required />
+          <input name=\"table\" placeholder=\"table code\" />
+          <input name=\"order\" placeholder=\"order id\" type=\"number\" />
+          <button type=\"submit\">Search</button>
+        </form>
+        <textarea id=\"reply\" rows=\"10\" cols=\"80\"></textarea>
+        <select id=\"macro\">
+          <option value=\"\">Insert macro...</option>
+          {options}
+        </select>
+        <script>
+        document.getElementById('macro').addEventListener('change', function() {{
+            if (this.value) {{
+                const ta = document.getElementById('reply');
+                ta.value += (ta.value ? '\n' : '') + this.value;
+                this.value = '';
+            }}
+        }});
+        </script>
+      </body>
+    </html>
+    """
+    return HTMLResponse(html_body)
 
 
 @router.get("/admin/support/console/search")
