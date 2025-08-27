@@ -60,6 +60,9 @@ export default function OwnerOnboardingWizard() {
       <div className="p-4">
         <h2 className="text-xl font-bold mb-4">Onboarding Complete</h2>
         <p className="mb-4">You're ready to go live.</p>
+        <a href="/help/owner_onboarding" className="text-blue-600 underline">
+          Launch checklist
+        </a>
       </div>
     )
   }

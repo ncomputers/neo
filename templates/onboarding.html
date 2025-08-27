@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Owner Onboarding</title>
+    <link rel="stylesheet" href="/static/app.css" />
+    <script src="/static/js/onboarding.js" defer></script>
+    <style>
+      body { color: #000; background: #fff; font-family: sans-serif; }
+      .step { display: none; }
+      .step[aria-hidden="false"] { display: block; }
+      label { display: block; margin-bottom: 0.5rem; }
+      a:focus, button:focus, input:focus, select:focus, textarea:focus { outline: 2px solid #005fcc; }
+    </style>
+  </head>
+  <body>
+    <main id="wizard">
+      <form id="onboarding-form">
+        <section class="step" data-step="0" aria-hidden="true">
+          <h2>Brand &amp; Logo</h2>
+          <label>Brand Name <input name="name" /></label>
+          <label>Logo URL <input name="logo_url" /></label>
+        </section>
+        <section class="step" data-step="1" aria-hidden="true">
+          <h2>Tables Count</h2>
+          <label>Count <input type="number" name="count" min="1" /></label>
+        </section>
+        <section class="step" data-step="2" aria-hidden="true">
+          <h2>Menu Import</h2>
+          <label>Menu File <input type="file" name="menu" /></label>
+        </section>
+        <section class="step" data-step="3" aria-hidden="true">
+          <h2>Printer Test</h2>
+          <p>Send a test print from your browser and verify the receipt.</p>
+        </section>
+        <section class="step" data-step="4" aria-hidden="true">
+          <h2>Payment Mode</h2>
+          <label>UPI VPA <input name="vpa" /></label>
+        </section>
+        <section class="step" data-step="5" aria-hidden="true">
+          <h2>Alerts Rules</h2>
+          <label>Rules <textarea name="rules"></textarea></label>
+        </section>
+        <div id="controls">
+          <button type="button" id="back">Back</button>
+          <button type="submit" id="next">Next</button>
+        </div>
+      </form>
+      <p id="done" hidden>
+        Onboarding complete.
+        <a href="/help/owner_onboarding">Launch checklist</a>
+      </p>
+    </main>
+  </body>
+</html>

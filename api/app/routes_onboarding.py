@@ -5,15 +5,15 @@ from __future__ import annotations
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 
+from .onboarding_store import delete_session, load_session, save_session
 from .utils.responses import ok
 
 router = APIRouter()
 
-# In-memory stores for onboarding sessions and tenants
-ONBOARDING_SESSIONS: dict[str, dict] = {}
+# Persistent tenants store remains in-memory for demo
 TENANTS: dict[str, dict] = {}
 
 
@@ -59,10 +59,8 @@ class Payments(BaseModel):
 
 
 def _session(onboarding_id: str) -> dict:
-    session = ONBOARDING_SESSIONS.get(onboarding_id)
-    if not session:
-        raise HTTPException(404, "Invalid onboarding session")
-    return session
+    """Fetch or create a session for the given onboarding identifier."""
+    return load_session(onboarding_id)
 
 
 @router.post("/api/onboarding/start")
@@ -70,14 +68,23 @@ async def start_onboarding() -> dict:
     """Create an onboarding session and return its identifier."""
 
     onboarding_id = uuid.uuid4().hex
-    ONBOARDING_SESSIONS[onboarding_id] = {"id": onboarding_id}
+    save_session({"id": onboarding_id, "current_step": "start"})
     return ok({"onboarding_id": onboarding_id})
+
+
+@router.get("/api/onboarding/{onboarding_id}")
+async def get_onboarding(onboarding_id: str) -> dict:
+    """Return the stored onboarding session state."""
+    session = _session(onboarding_id)
+    return ok(session)
 
 
 @router.post("/api/onboarding/{onboarding_id}/profile")
 async def set_profile(onboarding_id: str, profile: Profile) -> dict:
     session = _session(onboarding_id)
     session["profile"] = profile.model_dump()
+    session["current_step"] = "profile"
+    save_session(session)
     return ok(True)
 
 
@@ -85,6 +92,8 @@ async def set_profile(onboarding_id: str, profile: Profile) -> dict:
 async def set_tax(onboarding_id: str, tax: Tax) -> dict:
     session = _session(onboarding_id)
     session["tax"] = tax.model_dump()
+    session["current_step"] = "tax"
+    save_session(session)
     return ok(True)
 
 
@@ -102,6 +111,8 @@ async def set_tables(onboarding_id: str, tables: Tables) -> dict:
             }
         )
     session["tables"] = allocated
+    session["current_step"] = "tables"
+    save_session(session)
     return ok(allocated)
 
 
@@ -109,14 +120,17 @@ async def set_tables(onboarding_id: str, tables: Tables) -> dict:
 async def set_payments(onboarding_id: str, payments: Payments) -> dict:
     session = _session(onboarding_id)
     session["payments"] = payments.model_dump()
+    session["current_step"] = "payments"
+    save_session(session)
     return ok(True)
 
 
 @router.post("/api/onboarding/{onboarding_id}/finish")
 async def finish_onboarding(onboarding_id: str) -> dict:
     session = _session(onboarding_id)
+    session["current_step"] = "finished"
     TENANTS[onboarding_id] = session
-    ONBOARDING_SESSIONS.pop(onboarding_id, None)
+    delete_session(onboarding_id)
     return ok({"tenant_id": onboarding_id})
 
 

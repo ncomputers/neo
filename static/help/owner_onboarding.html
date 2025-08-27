@@ -10,10 +10,21 @@
 </head>
 <body>
 <h1>Owner Onboarding</h1>
-<p>Visit <code>/admin/onboarding</code> for a guided setup wizard. Progress is saved in your browser so you can return later.</p>
-<h2>QR Setup</h2>
-<p>Generate QR codes in the dashboard, place them on tables and test scanning.</p>
-<h2>Table Map</h2>
-<p>Arrange tables in the dashboard to match the floor and save the layout.</p>
+<p>
+  Visit <code>/admin/onboarding</code> for a guided setup wizard. Progress is
+  saved so you can close the page and return later.
+</p>
+<ol>
+  <li><strong>Brand &amp; Logo</strong> – enter your outlet name and logo URL.</li>
+  <li><strong>Tables Count</strong> – specify how many tables to create.</li>
+  <li><strong>Menu Import</strong> – upload a CSV or spreadsheet of menu items.</li>
+  <li><strong>Printer Test</strong> – send a test print to verify receipts.</li>
+  <li><strong>Payment Mode</strong> – configure UPI, cash or card options.</li>
+  <li><strong>Alerts Rules</strong> – set up notification rules for events.</li>
+</ol>
+<p>
+  The wizard tracks the last completed step and resumes from where you left off
+  using the new <code>/api/onboarding/&lt;id&gt;</code> endpoint.
+</p>
 </body>
 </html>
