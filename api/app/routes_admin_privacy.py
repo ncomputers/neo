@@ -3,7 +3,6 @@ from __future__ import annotations
 """Admin privacy routes for DSAR export and delete."""
 
 from contextlib import asynccontextmanager
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -14,6 +13,7 @@ from .auth import User, role_required
 from .db.tenant import get_engine
 from .utils.audit import audit
 from .utils.responses import ok
+from .utils.sql import build_where_clause
 
 router = APIRouter()
 
@@ -22,19 +22,6 @@ class DSARRequest(BaseModel):
     phone: str | None = None
     email: str | None = None
     dry_run: bool = False
-
-    def filters(self) -> tuple[str, dict[str, Any]]:
-        clauses: list[str] = []
-        params: dict[str, Any] = {}
-        if self.phone:
-            clauses.append("phone = :phone")
-            params["phone"] = self.phone
-        if self.email:
-            clauses.append("email = :email")
-            params["email"] = self.email
-        if not clauses:
-            raise HTTPException(status_code=400, detail="phone or email required")
-        return " OR ".join(clauses), params
 
 
 @asynccontextmanager
@@ -55,24 +42,19 @@ async def dsar_export(
     payload: DSARRequest,
     user: User = Depends(role_required("super_admin", "outlet_admin")),
 ) -> dict:
-    clause, params = payload.filters()
+    filters = payload.dict(exclude_none=True, exclude={"dry_run"})
+    if not filters:
+        raise HTTPException(status_code=400, detail="phone or email required")
+    where_sql, where_params = build_where_clause(filters)
     async with _session(tenant_id) as session:
-        cust_rows = (
-            await session.execute(
-                text(
-                    f"SELECT id, name, phone, email, created_at FROM customers WHERE {clause}"
-                ),
-                params,
-            )
-        ).mappings().all()
-        inv_rows = (
-            await session.execute(
-                text(
-                    f"SELECT id, name, phone, email, created_at FROM invoices WHERE {clause}"
-                ),
-                params,
-            )
-        ).mappings().all()
+        stmt = text(
+            "SELECT id, name, phone, email, created_at FROM customers WHERE " + where_sql
+        ).bindparams(**where_params)  # nosec B608
+        cust_rows = (await session.execute(stmt)).mappings().all()
+        stmt = text(
+            "SELECT id, name, phone, email, created_at FROM invoices WHERE " + where_sql
+        ).bindparams(**where_params)  # nosec B608
+        inv_rows = (await session.execute(stmt)).mappings().all()
     return ok({"customers": [dict(r) for r in cust_rows], "invoices": [dict(r) for r in inv_rows]})
 
 
@@ -83,32 +65,31 @@ async def dsar_delete(
     payload: DSARRequest,
     user: User = Depends(role_required("super_admin", "outlet_admin")),
 ) -> dict:
-    clause, params = payload.filters()
+    filters = payload.dict(exclude_none=True, exclude={"dry_run"})
+    if not filters:
+        raise HTTPException(status_code=400, detail="phone or email required")
+    where_sql, where_params = build_where_clause(filters)
     async with _session(tenant_id) as session:
         if payload.dry_run:
-            cust_count = (
-                await session.execute(
-                    text(f"SELECT COUNT(*) FROM customers WHERE {clause}"), params
-                )
-            ).scalar()
-            inv_count = (
-                await session.execute(
-                    text(f"SELECT COUNT(*) FROM invoices WHERE {clause}"), params
-                )
-            ).scalar()
+            stmt = text(
+                "SELECT COUNT(*) FROM customers WHERE " + where_sql
+            ).bindparams(**where_params)  # nosec B608
+            cust_count = (await session.execute(stmt)).scalar()
+            stmt = text(
+                "SELECT COUNT(*) FROM invoices WHERE " + where_sql
+            ).bindparams(**where_params)  # nosec B608
+            inv_count = (await session.execute(stmt)).scalar()
         else:
-            cust_res = await session.execute(
-                text(
-                    f"UPDATE customers SET name = NULL, phone = NULL, email = NULL WHERE {clause}"
-                ),
-                params,
-            )
-            inv_res = await session.execute(
-                text(
-                    f"UPDATE invoices SET name = NULL, phone = NULL, email = NULL WHERE {clause}"
-                ),
-                params,
-            )
+            stmt = text(
+                "UPDATE customers SET name = NULL, phone = NULL, email = NULL WHERE "
+                + where_sql
+            ).bindparams(**where_params)  # nosec B608
+            cust_res = await session.execute(stmt)
+            stmt = text(
+                "UPDATE invoices SET name = NULL, phone = NULL, email = NULL WHERE "
+                + where_sql
+            ).bindparams(**where_params)  # nosec B608
+            inv_res = await session.execute(stmt)
             cust_count = cust_res.rowcount or 0
             inv_count = inv_res.rowcount or 0
             await session.commit()
