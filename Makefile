@@ -1,4 +1,4 @@
-.PHONY: release-rc stage pilot release-ga prod
+.PHONY: release-rc stage pilot release-ga prod analyze-hot
 
 release-rc:
 	python scripts/release_tag.py --rc
@@ -19,5 +19,8 @@ release-ga:
 	python scripts/release_tag.py --ga
 
 prod:
-	python scripts/deploy_blue_green.py --env=prod
-	python scripts/weighted_canary_ramp.py --env=prod --steps "5,25,50,100"
+        python scripts/deploy_blue_green.py --env=prod
+        python scripts/weighted_canary_ramp.py --env=prod --steps "5,25,50,100"
+
+analyze-hot:
+        python scripts/auto_analyze_hot_tables.py
