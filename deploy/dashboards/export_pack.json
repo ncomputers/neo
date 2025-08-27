@@ -1,0 +1,58 @@
+{
+  "dashboards": [
+    {
+      "uid": "pilot-telemetry",
+      "title": "Pilot telemetry",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": []
+    },
+    {
+      "uid": "slo-sla",
+      "title": "SLO/SLA",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": []
+    },
+    {
+      "uid": "rum",
+      "title": "RUM",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": []
+    },
+    {
+      "uid": "kds-queue-age",
+      "title": "KDS queue age",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": []
+    },
+    {
+      "uid": "error-budget",
+      "title": "Error budget",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": []
+    },
+    {
+      "uid": "webhook-breaker",
+      "title": "Webhook breaker",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": []
+    }
+  ]
+}
