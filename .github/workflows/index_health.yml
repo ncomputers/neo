@@ -1,0 +1,28 @@
+name: index health
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt
+      - name: Generate index health report
+        env:
+          DATABASE_URL: ${{ secrets.POSTGRES_URL }}
+        run: python scripts/index_health_report.py --output index_health_report.md
+      - name: Upload index health report
+        uses: actions/upload-artifact@v4
+        with:
+          name: index-health
+          path: index_health_report.md

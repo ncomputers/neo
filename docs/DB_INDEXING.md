@@ -75,3 +75,4 @@ Monthly partitions (`audit_log_yYYYYmMM`) keep the table lean. Remove old partit
 1. Populate sample data: `python scripts/seed_large_outlet.py`
 2. Run the plan check: `pytest api/tests/test_indexes_explain.py`
 3. Compare query plans against baselines with `python scripts/plan_guard.py baseline.json new_run.json`
+4. Spot unused or bloated indexes with `python scripts/index_health_report.py`.
