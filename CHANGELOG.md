@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
   variables during the CI lint step.
 - Chunked CSV exports stream rows with a 100k cap and SSE progress events.
 - RBAC test ensuring only managers can unlock cashier PINs.
+- test(perf): streaming CSV export progress, cap hints, and quota usage.
 - Lock out staff PIN login for 15 minutes after 5 failed attempts per user/IP
   and log lock/unlock events.
 - Require staff PIN rotation every 90 days with a warning emitted after 80 days.
