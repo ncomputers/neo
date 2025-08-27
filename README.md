@@ -208,6 +208,9 @@ cd ..
 pytest -q
 ```
 
+The Alembic environment now pulls metadata from both `MasterBase` and `TenantBase`
+so migrations cover the master schema as well as tenant-specific tables.
+
 Dependencies are pinned in `api/requirements.txt`, generated from
 `api/requirements.in` using `pip-compile`. Update the `.in` file and
 rerun `pip-compile` to refresh locked versions.
