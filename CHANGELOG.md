@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Clean up redundant imports and outdated ``noqa`` comment to satisfy ``ruff``.
 - Point GHCR workflow to the API Dockerfile so image builds succeed.
 - Configure gitleaks workflow with env vars and job-level permissions.
+- Ensure pa11y workflow waits for Postgres and migrates before tests.
 
 ### Added
 
