@@ -1,0 +1,15 @@
+name: rollback-drill
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dry-run rollback on staging
+        run: |
+          python scripts/rollback_blue_green.py --env=staging --to=latest --dry-run
