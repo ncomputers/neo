@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Remove invalid conditional from python-tests workflow to restore CI checks.
+- Correct tenant DB creation script to import `build_dsn` from `api.app.db`.
 
 ## v1.0.0 - 2025-08-26
 
