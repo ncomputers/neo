@@ -1,0 +1,32 @@
+name: GameDay drills
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+jobs:
+  gameday:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scenario: [kds_offline, webhook_slow, payment_dns_fail, printer_jam, db_readonly]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: pip install requests
+      - name: Run GameDay
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.schedule }}" = "0 6 * * 1" ]; then
+            FLAGS="--dry-run"
+          fi
+          python scripts/gameday_inject.py --scenario ${{ matrix.scenario }} $FLAGS --output result_${{ matrix.scenario }}.json --retries 1 2>&1 | tee log_${{ matrix.scenario }}.txt
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: gameday-${{ matrix.scenario }}
+          path: |
+            result_${{ matrix.scenario }}.json
+            log_${{ matrix.scenario }}.txt

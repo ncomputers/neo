@@ -121,5 +121,37 @@
         }
       ]
     }
+    ,
+    {
+      "uid": "gameday",
+      "title": "GameDay",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": [
+        {
+          "type": "graph",
+          "title": "GameDay pass rate (last 30d)",
+          "targets": [
+            {"expr": "avg_over_time(gameday_pass[30d])"}
+          ]
+        },
+        {
+          "type": "graph",
+          "title": "Time to alert (per scenario)",
+          "targets": [
+            {"expr": "avg by (scenario) (gameday_alert_seconds)"}
+          ]
+        },
+        {
+          "type": "graph",
+          "title": "Breaker open duration (webhook_slow)",
+          "targets": [
+            {"expr": "avg(gameday_webhook_breaker_open_seconds)"}
+          ]
+        }
+      ]
+    }
   ]
 }
