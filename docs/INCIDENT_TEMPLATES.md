@@ -34,8 +34,8 @@ Ops
 
 ---
 
-During a SEV, the `/status.json` file is automatically updated to reflect the current `state` and any active `incidents` so external systems can track progress.
-Valid values for `state` include `operational`, `degraded`, and `down`.
+During a SEV, `/status.json` is backed by Redis and reflects the current `state` and any active incidents so external systems can track progress.
+Valid values for `state` include `ok`, `degraded`, and `outage`.
 
 Start an incident and mark the status page as degraded:
 

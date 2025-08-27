@@ -1,4 +1,6 @@
 {
-  "state": "operational",
+  "state": "ok",
+  "message": null,
+  "components": [],
   "incidents": []
 }

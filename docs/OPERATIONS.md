@@ -2,8 +2,16 @@
 
 ## Status Endpoint
 
-External monitors can poll `GET /status.json` to observe platform health. The file contains a top-level `state` (`operational` or `degraded`) and a list of active `incidents`.
-Use the helper script to start or resolve incidents:
+External monitors can poll `GET /status.json` to observe platform health. The status is primarily stored in Redis with `status.json` on disk as a fallback.
+Administrators can override it via `POST /admin/status`:
+
+```
+curl -X POST "$API_URL/admin/status" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"state":"degraded","message":"db","components":[]}'
+```
+
+Use the helper script to start or resolve incidents (which calls the endpoint and updates the fallback file):
 
 ```
 python ops/scripts/status_page.py start "<title>" "<details>"

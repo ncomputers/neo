@@ -185,6 +185,7 @@ from .routes_slo import router as slo_router
 from .routes_staff import router as staff_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
+from .routes_status_json import router as status_json_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
@@ -238,14 +239,6 @@ app = FastAPI(
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
-
-
-@app.get("/status.json")
-async def status_json():
-    return FileResponse(
-        Path(__file__).resolve().parent.parent.parent / "status.json",
-        media_type="application/json",
-    )
 
 
 init_tracing(app)
@@ -938,6 +931,7 @@ app.include_router(tables_qr_rotate_router)
 app.include_router(tables_sse_router)
 app.include_router(time_skew_router)
 app.include_router(pwa_version_router)
+app.include_router(status_json_router)
 app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(troubleshoot_router)
