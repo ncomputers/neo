@@ -1,0 +1,6 @@
++ python scripts/rollback_blue_green.py --env=staging --to=v1.0.0 --dry-run
++ kubectl set image deploy/web-staging app=myapp:v1.0.0
++ kubectl rollout status deploy/web-staging --timeout=300s
+Rolled back staging to v1.0.0
++ echo '✅ rollback dry-run completed'
+✅ rollback dry-run completed
