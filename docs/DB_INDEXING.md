@@ -52,6 +52,8 @@ This project relies on a focused set of indexes to keep multi-tenant queries fas
 | --- | --- | --- | --- |
 | `brin_audit_created` | Audit exports ([`scripts/audit_dump.py`](../scripts/audit_dump.py)) | `created_at BETWEEN ? AND ?` | BRIN is tiny and ideal for append-only logs |
 
+Monthly partitions (`audit_log_yYYYYmMM`) keep the table lean. Remove old partitions with `scripts/audit_partition_retention.py` (run with `--keep-months` to control retention).
+
 ## Devices
 | Index | Route/Repo benefiting | WHERE clause shape | Notes |
 | --- | --- | --- | --- |
