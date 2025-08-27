@@ -259,6 +259,25 @@ docker build -t worker -f Dockerfile.worker .
 trivy image --severity HIGH,CRITICAL api worker
 ```
 
+## Monitoring
+
+The synthetic monitor posts its results to a chat channel via a webhook URL. Export the webhook locally so
+messages can be delivered:
+
+```bash
+export WEBHOOK=https://hooks.example.com/endpoint
+```
+
+In GitHub Actions workflows, expose a repository secret and map it to the same environment variable:
+
+```yaml
+env:
+  WEBHOOK: ${{ secrets.WEBHOOK }}
+```
+
+Refer to the [webhook verification runbook](docs/runbooks/webhook_verification.md) for obtaining the URL and
+troubleshooting failures.
+
 ## Accessibility
 
 Buttons across major flows include descriptive ARIA labels, visible focus

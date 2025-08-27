@@ -27,6 +27,12 @@ def main() -> None:
 
     url = os.environ.get("ALERTMANAGER_URL")
     if url:
+        try:
+            ping = requests.get(url, timeout=5)
+            ping.raise_for_status()
+        except Exception as exc:
+            raise SystemExit(f"Alertmanager unreachable at {url}: {exc}") from exc
+
         payload = [
             {
                 "labels": {"alertname": "SyntheticTestAlert", "severity": "critical"},

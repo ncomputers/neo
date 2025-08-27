@@ -126,7 +126,7 @@ def test_slack_delivery(monkeypatch):
     rule_id = uuid.uuid4()
     event_id = uuid.uuid4()
     url = "http://slack.local/webhook"
-    monkeypatch.setenv("SLACK_WEBHOOK_URL", url)
+    monkeypatch.setenv("WEBHOOK", url)
 
     with responses.RequestsMock() as rsps:
         rsps.add(responses.POST, url, json={}, status=200)
@@ -151,6 +151,15 @@ def test_slack_delivery(monkeypatch):
         evt = session.get(notify_worker.NotificationOutbox, event_id)
         assert evt is not None
         assert evt.status == "delivered"
+
+
+def test_slack_missing_webhook(monkeypatch):
+    monkeypatch.delenv("WEBHOOK", raising=False)
+    monkeypatch.delenv("SLACK_WEBHOOK_URL", raising=False)
+    from api.app.providers import slack_stub
+
+    with pytest.raises(RuntimeError, match="WEBHOOK not configured"):
+        slack_stub.send(None, {"text": "hi"}, None)
 
 
 def test_webhook_failures_move_to_dlq(monkeypatch):
