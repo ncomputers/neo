@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { apiFetch } from '../api'
 import InvoiceLink from '../components/InvoiceLink'
+import StatusPill from '../components/StatusPill'
 
 export default function CashierDashboard() {
   const { logo } = useTheme()
@@ -9,6 +10,7 @@ export default function CashierDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [invoices, setInvoices] = useState([])
+  const [refundInfo, setRefundInfo] = useState({})
 
   useEffect(() => {
     apiFetch('/orders')
@@ -21,6 +23,19 @@ export default function CashierDashboard() {
       .then((data) => setInvoices(data.invoices || []))
       .catch(() => {})
   }, [])
+
+  const handleRefund = (invoiceId) => {
+    if (!window.confirm('Are you sure?')) return
+    const key = crypto.randomUUID()
+    apiFetch(`/payments/${invoiceId}/refund`, {
+      method: 'POST',
+      headers: { 'Idempotency-Key': key },
+    })
+      .then(() => {
+        setRefundInfo((prev) => ({ ...prev, [invoiceId]: key }))
+      })
+      .catch(() => {})
+  }
 
   return (
     <div className="p-4">
@@ -57,6 +72,17 @@ export default function CashierDashboard() {
                 {invoices.map((inv) => (
                   <li key={inv.invoice_id}>
                     <InvoiceLink invoiceId={inv.invoice_id} />
+                    <button
+                      onClick={() => handleRefund(inv.invoice_id)}
+                      className="ml-2 text-sm text-red-600 underline"
+                    >
+                      Refund
+                    </button>
+                    {refundInfo[inv.invoice_id] && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        Key: {refundInfo[inv.invoice_id]}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -64,6 +90,27 @@ export default function CashierDashboard() {
           )}
         </>
       )}
+      <footer className="mt-8 text-sm text-gray-600 flex items-center space-x-2">
+        <StatusPill />
+        <a
+          href="/legal/terms"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
+          Terms
+        </a>
+        <a
+          href="/legal/refund"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
+          Refund
+        </a>
+        <a
+          href="/legal/contact"
+          className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
+          Contact
+        </a>
+      </footer>
     </div>
   )
 }
