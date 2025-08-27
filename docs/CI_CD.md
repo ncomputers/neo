@@ -17,4 +17,4 @@ A `lighthouse-ci` workflow audits /guest, /admin, and /kds against LCP, INP, tra
 3. **manual-approval** – requires a human reviewer before production rollout.
 4. **deploy-prod** – performs a blue/green deployment, repeats preflight and smoke/canary checks, and automatically rolls back on failure.
 
-KUBE_CONFIG_* secrets are required for cluster access; GHCR authentication uses the provided `GITHUB_TOKEN`.
+KUBE_CONFIG_* secrets are required for cluster access. An IAM role (`GitHubActionsECR`) trusts GitHub's `token.actions.githubusercontent.com` OIDC provider and grants the ECR permissions needed to push API and worker images. Workflows assume this role via `aws-actions/configure-aws-credentials@v2`, so no AWS access keys are stored.
