@@ -9,7 +9,9 @@ Run each command from the project root:
    ```
 2. Apply database migrations
    ```bash
+   POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id} \
    python scripts/tenant_migrate.py --tenant demo
+   # or: python scripts/tenant_migrate.py --tenant demo --dsn-template 'postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id}'
    ```
 3. Seed the database with demo data
    ```bash

@@ -744,9 +744,12 @@ python scripts/tenant_create_db.py --tenant TENANT_ID
 
 The script will print `READY` once the database is available.
 
-To apply migrations for an existing tenant database, run:
+To apply migrations for an existing tenant database, provide a DSN template via
+``--dsn-template`` or the ``POSTGRES_TENANT_DSN_TEMPLATE`` environment variable
+(e.g. ``postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id}``) and run:
 
 ```bash
+POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id} \
 python scripts/tenant_migrate.py --tenant TENANT_ID
 ```
 

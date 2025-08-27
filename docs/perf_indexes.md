@@ -20,8 +20,11 @@ exports:
 - `idx_orders_tenant_status_created` on `orders(tenant_id, status, created_at DESC)`
 - `idx_audit_tenant_created` on `audit_tenant(tenant_id, created_at DESC)`
 
-Run tenant migrations as usual to apply the indexes:
+Run tenant migrations as usual to apply the indexes. Supply a DSN template via
+``--dsn-template`` or the ``POSTGRES_TENANT_DSN_TEMPLATE`` environment
+variable::
 
 ```bash
+POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id} \
 python scripts/tenant_migrate.py --tenant <tenant>
 ```
