@@ -201,7 +201,7 @@ database migrations for both the master schema and an example tenant, and run
 the test suite:
 
 ```bash
-pip install -r api/requirements.txt
+pip install -r requirements.txt
 python run_all.py --env --install
 alembic upgrade head
 pytest -q
@@ -471,11 +471,11 @@ Admins can pin tables on a floor plan and retrieve their states:
 Run migrations and launch the API with a single command once dependencies are installed:
 
 ```bash
-pip install -r api/requirements.txt python-dotenv
+pip install -r requirements.txt python-dotenv
 python start_app.py
 ```
 
-The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini` via `python -m alembic`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r api/requirements.txt`.
+The script loads environment variables from `.env`, executes `alembic upgrade head` using `api/alembic.ini` via `python -m alembic`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r requirements.txt`.
 
 ### Notification Worker
 
@@ -803,7 +803,7 @@ Create a virtual environment and install development dependencies:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r api/requirements.txt
+pip install -r requirements.txt
 pip install pre-commit pytest-cov
 ```
 Run linters and formatters:

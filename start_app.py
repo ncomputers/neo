@@ -6,8 +6,8 @@ from __future__ import annotations
 import subprocess
 import sys
 
-from dotenv import load_dotenv
 import uvicorn
+from dotenv import load_dotenv
 
 import config
 
@@ -30,9 +30,7 @@ def main() -> None:
             check=True,
         )
     except FileNotFoundError:
-        print(
-            "Install dependencies first: pip install -r api/requirements.txt"
-        )
+        print("Install dependencies first: pip install -r requirements.txt")
         return
     uvicorn.run("api.app.main:app")
 
