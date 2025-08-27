@@ -8,6 +8,7 @@ The application relies on the following environment variables:
 | `POSTGRES_TENANT_DSN_TEMPLATE` | Template DSN for tenant databases, with `{tenant_id}` placeholder. Defaults to local SQLite files. | `postgresql+asyncpg://postgres:postgres@postgres:5432/tenant_{tenant_id}` |
 | `POSTGRES_SUPER_URL` (optional) | Superuser connection URL used when creating databases. Not required for SQLite. |  |
 | `DB_SLOW_QUERY_MS` (optional) | Emit a warning when a DB query exceeds this many milliseconds. Defaults to `200`. | `250` |
+| `ONBOARDING_DB` | Path to onboarding session SQLite DB. Defaults to the system temp directory. | `/var/lib/neo/onboarding.db` |
 | `DEFAULT_TZ` | Default timezone for application processes. | `UTC` |
 | `JWT_SECRET` | Secret key used to sign JWT tokens. | `your_jwt_secret_key` |
 | `JWKS_URL` (optional) | JWKS endpoint for verifying JWT signatures. | `https://auth.example.com/jwks.json` |

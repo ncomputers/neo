@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-"""Admin privacy routes for DSAR export and delete."""
+"""Admin privacy routes for DSAR export and delete.
+
+Queries now use SQLAlchemy expressions to avoid string concatenation vulnerabilities.
+"""
 
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import column, func, select, table, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .auth import User, role_required
@@ -16,6 +19,24 @@ from .utils.responses import ok
 from .utils.sql import build_where_clause
 
 router = APIRouter()
+
+customers = table(
+    "customers",
+    column("id"),
+    column("name"),
+    column("phone"),
+    column("email"),
+    column("created_at"),
+)
+
+invoices = table(
+    "invoices",
+    column("id"),
+    column("name"),
+    column("phone"),
+    column("email"),
+    column("created_at"),
+)
 
 
 class DSARRequest(BaseModel):
@@ -27,7 +48,9 @@ class DSARRequest(BaseModel):
 @asynccontextmanager
 async def _session(tenant_id: str):
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     try:
         async with sessionmaker() as session:
             yield session
@@ -45,17 +68,30 @@ async def dsar_export(
     filters = payload.dict(exclude_none=True, exclude={"dry_run"})
     if not filters:
         raise HTTPException(status_code=400, detail="phone or email required")
-    where_sql, where_params = build_where_clause(filters)
+    where_clause = build_where_clause(filters)
     async with _session(tenant_id) as session:
-        stmt = text(
-            "SELECT id, name, phone, email, created_at FROM customers WHERE " + where_sql
-        ).bindparams(**where_params)  # nosec B608
-        cust_rows = (await session.execute(stmt)).mappings().all()
-        stmt = text(
-            "SELECT id, name, phone, email, created_at FROM invoices WHERE " + where_sql
-        ).bindparams(**where_params)  # nosec B608
-        inv_rows = (await session.execute(stmt)).mappings().all()
-    return ok({"customers": [dict(r) for r in cust_rows], "invoices": [dict(r) for r in inv_rows]})
+        cust_stmt = select(
+            customers.c.id,
+            customers.c.name,
+            customers.c.phone,
+            customers.c.email,
+            customers.c.created_at,
+        ).where(where_clause)
+        cust_rows = (await session.execute(cust_stmt)).mappings().all()
+        inv_stmt = select(
+            invoices.c.id,
+            invoices.c.name,
+            invoices.c.phone,
+            invoices.c.email,
+            invoices.c.created_at,
+        ).where(where_clause)
+        inv_rows = (await session.execute(inv_stmt)).mappings().all()
+    return ok(
+        {
+            "customers": [dict(r) for r in cust_rows],
+            "invoices": [dict(r) for r in inv_rows],
+        }
+    )
 
 
 @router.post("/api/outlet/{tenant_id}/privacy/dsar/delete")
@@ -68,32 +104,32 @@ async def dsar_delete(
     filters = payload.dict(exclude_none=True, exclude={"dry_run"})
     if not filters:
         raise HTTPException(status_code=400, detail="phone or email required")
-    where_sql, where_params = build_where_clause(filters)
+    where_clause = build_where_clause(filters)
     async with _session(tenant_id) as session:
         if payload.dry_run:
-            stmt = text(
-                "SELECT COUNT(*) FROM customers WHERE " + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            cust_count = (await session.execute(stmt)).scalar()
-            stmt = text(
-                "SELECT COUNT(*) FROM invoices WHERE " + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            inv_count = (await session.execute(stmt)).scalar()
+            cust_stmt = select(func.count()).select_from(customers).where(where_clause)
+            cust_count = (await session.execute(cust_stmt)).scalar()
+            inv_stmt = select(func.count()).select_from(invoices).where(where_clause)
+            inv_count = (await session.execute(inv_stmt)).scalar()
         else:
-            stmt = text(
-                "UPDATE customers SET name = NULL, phone = NULL, email = NULL WHERE "
-                + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            cust_res = await session.execute(stmt)
-            stmt = text(
-                "UPDATE invoices SET name = NULL, phone = NULL, email = NULL WHERE "
-                + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            inv_res = await session.execute(stmt)
+            cust_stmt = (
+                update(customers)
+                .where(where_clause)
+                .values(name=None, phone=None, email=None)
+            )
+            cust_res = await session.execute(cust_stmt)
+            inv_stmt = (
+                update(invoices)
+                .where(where_clause)
+                .values(name=None, phone=None, email=None)
+            )
+            inv_res = await session.execute(inv_stmt)
             cust_count = cust_res.rowcount or 0
             inv_count = inv_res.rowcount or 0
             await session.commit()
-    return ok({"customers": cust_count, "invoices": inv_count, "dry_run": payload.dry_run})
+    return ok(
+        {"customers": cust_count, "invoices": inv_count, "dry_run": payload.dry_run}
+    )
 
 
 __all__ = ["router"]

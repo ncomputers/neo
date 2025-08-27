@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-"""Privacy DSAR endpoints for data principals."""
+"""Privacy DSAR endpoints for data principals.
+
+SQLAlchemy expressions are used to avoid unsafe string concatenation.
+"""
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import column, func, literal, select, table, update
 
 from .db import SessionLocal
 from .utils.audit import audit
@@ -12,6 +15,37 @@ from .utils.responses import ok
 from .utils.sql import build_where_clause
 
 router = APIRouter()
+
+customers = table(
+    "customers",
+    column("id"),
+    column("name"),
+    column("phone"),
+    column("email"),
+    column("allow_analytics"),
+    column("allow_wa"),
+    column("created_at"),
+)
+
+invoices = table(
+    "invoices",
+    column("id"),
+    column("name"),
+    column("phone"),
+    column("email"),
+    column("created_at"),
+)
+
+payments = table(
+    "payments",
+    column("id"),
+    column("invoice_id"),
+    column("mode"),
+    column("amount"),
+    column("utr"),
+    column("verified"),
+    column("created_at"),
+)
 
 
 class DSARRequest(BaseModel):
@@ -26,22 +60,42 @@ async def dsar_export(payload: DSARRequest) -> dict:
     filters = payload.dict(exclude_none=True, exclude={"dry_run"})
     if not filters:
         raise HTTPException(status_code=400, detail="phone or email required")
-    where_sql, where_params = build_where_clause(filters)
+    where_clause = build_where_clause(filters)
     with SessionLocal() as session:
-        stmt = text(
-            "SELECT id, name, phone, email, created_at, allow_analytics, allow_wa FROM customers WHERE "
-            + where_sql
-        ).bindparams(**where_params)  # nosec B608
-        cust_rows = session.execute(stmt).mappings().all()
-        stmt = text(
-            "SELECT id, name, phone, email, created_at FROM invoices WHERE " + where_sql
-        ).bindparams(**where_params)  # nosec B608
-        inv_rows = session.execute(stmt).mappings().all()
-        stmt = text(
-            "SELECT p.id, p.invoice_id, p.mode, p.amount, NULL as utr, p.verified, p.created_at "
-            "FROM payments p JOIN invoices i ON p.invoice_id = i.id WHERE " + where_sql
-        ).bindparams(**where_params)  # nosec B608
-        pay_rows = session.execute(stmt).mappings().all()
+        cust_stmt = select(
+            customers.c.id,
+            customers.c.name,
+            customers.c.phone,
+            customers.c.email,
+            customers.c.created_at,
+            customers.c.allow_analytics,
+            customers.c.allow_wa,
+        ).where(where_clause)
+        cust_rows = session.execute(cust_stmt).mappings().all()
+        inv_stmt = select(
+            invoices.c.id,
+            invoices.c.name,
+            invoices.c.phone,
+            invoices.c.email,
+            invoices.c.created_at,
+        ).where(where_clause)
+        inv_rows = session.execute(inv_stmt).mappings().all()
+        pay_stmt = (
+            select(
+                payments.c.id,
+                payments.c.invoice_id,
+                payments.c.mode,
+                payments.c.amount,
+                literal(None).label("utr"),
+                payments.c.verified,
+                payments.c.created_at,
+            )
+            .select_from(
+                payments.join(invoices, payments.c.invoice_id == invoices.c.id)
+            )
+            .where(where_clause)
+        )
+        pay_rows = session.execute(pay_stmt).mappings().all()
     return ok(
         {
             "customers": [dict(r) for r in cust_rows],
@@ -57,39 +111,44 @@ async def dsar_delete(payload: DSARRequest) -> dict:
     filters = payload.dict(exclude_none=True, exclude={"dry_run"})
     if not filters:
         raise HTTPException(status_code=400, detail="phone or email required")
-    where_sql, where_params = build_where_clause(filters)
+    where_clause = build_where_clause(filters)
     with SessionLocal() as session:
         if payload.dry_run:
-            stmt = text(
-                "SELECT COUNT(*) FROM customers WHERE " + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            cust_count = session.execute(stmt).scalar()
-            stmt = text(
-                "SELECT COUNT(*) FROM invoices WHERE " + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            inv_count = session.execute(stmt).scalar()
-            stmt = text(
-                "SELECT COUNT(*) FROM payments p JOIN invoices i ON p.invoice_id = i.id WHERE "
-                + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            pay_count = session.execute(stmt).scalar()
+            cust_stmt = select(func.count()).select_from(customers).where(where_clause)
+            cust_count = session.execute(cust_stmt).scalar()
+            inv_stmt = select(func.count()).select_from(invoices).where(where_clause)
+            inv_count = session.execute(inv_stmt).scalar()
+            pay_stmt = (
+                select(func.count())
+                .select_from(
+                    payments.join(invoices, payments.c.invoice_id == invoices.c.id)
+                )
+                .where(where_clause)
+            )
+            pay_count = session.execute(pay_stmt).scalar()
         else:
-            stmt = text(
-                "UPDATE payments SET utr = NULL WHERE invoice_id IN (SELECT id FROM invoices WHERE "
-                + where_sql
-                + ")"
-            ).bindparams(**where_params)  # nosec B608
-            pay_res = session.execute(stmt)
-            stmt = text(
-                "UPDATE invoices SET name = NULL, phone = NULL, email = NULL WHERE "
-                + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            inv_res = session.execute(stmt)
-            stmt = text(
-                "UPDATE customers SET name = NULL, phone = NULL, email = NULL, allow_analytics = 0, allow_wa = 0 WHERE "
-                + where_sql
-            ).bindparams(**where_params)  # nosec B608
-            cust_res = session.execute(stmt)
+            pay_stmt = (
+                update(payments)
+                .where(
+                    payments.c.invoice_id.in_(select(invoices.c.id).where(where_clause))
+                )
+                .values(utr=None)
+            )
+            pay_res = session.execute(pay_stmt)
+            inv_stmt = (
+                update(invoices)
+                .where(where_clause)
+                .values(name=None, phone=None, email=None)
+            )
+            inv_res = session.execute(inv_stmt)
+            cust_stmt = (
+                update(customers)
+                .where(where_clause)
+                .values(
+                    name=None, phone=None, email=None, allow_analytics=0, allow_wa=0
+                )
+            )
+            cust_res = session.execute(cust_stmt)
             pay_count = pay_res.rowcount or 0
             inv_count = inv_res.rowcount or 0
             cust_count = cust_res.rowcount or 0
