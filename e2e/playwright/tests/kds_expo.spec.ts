@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// End-to-end flow ensuring expo hotkey picks orders
+// End-to-end flow ensuring expo hotkey picks orders and age increments
 // Assumes API server available at baseURL and tenant resolved via headers
 
-test('expo ticket is picked via hotkey', async ({ page, request }) => {
+test('expo ticket age increments and is picked via hotkey', async ({ page, request }) => {
   // Place an order and mark it ready
   const orderResp = await request.post('/api/outlet/demo/guest/order', {
     data: {
@@ -18,7 +18,12 @@ test('expo ticket is picked via hotkey', async ({ page, request }) => {
   await page.goto('/kds/expo', { waitUntil: 'networkidle' });
   const ticket = page.getByText(`Table ${order.table}`);
   await expect(ticket).toBeVisible();
-  await expect(ticket.locator('..').locator('text=m')).not.toHaveText('0m');
+
+  // Age should increase over time
+  const age = ticket.locator('..').locator('text=m');
+  const initialAge = await age.textContent();
+  await page.waitForTimeout(1000);
+  await expect(age).not.toHaveText(initialAge || '');
 
   // Pick via hotkey and wait for API
   const picked = page.waitForResponse(
@@ -32,5 +37,7 @@ test('expo ticket is picked via hotkey', async ({ page, request }) => {
   // Audit should record expo.picked
   const audit = await request.get('/api/admin/audit/logs');
   const auditData = await audit.json();
-  expect(auditData.data.find((e: any) => e.action === 'expo.picked' && e.meta.order_id === order.id)).toBeTruthy();
+  expect(
+    auditData.data.find((e: any) => e.action === 'expo.picked' && e.meta.order_id === order.id)
+  ).toBeTruthy();
 });
