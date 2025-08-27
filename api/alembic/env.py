@@ -14,7 +14,9 @@ sys.path.append(str(BASE_DIR.parent))
 from app.db import MasterBase, TenantBase  # type: ignore  # noqa: E402
 
 from config import get_settings  # type: ignore  # noqa: E402
-from app import models_master, models_tenant  # type: ignore  # noqa: E402
+# Import models to register them with SQLAlchemy's metadata for Alembic.
+import app.models_master  # type: ignore  # noqa: E402,F401
+import app.models_tenant  # type: ignore  # noqa: E402,F401
 
 
 config = context.config
