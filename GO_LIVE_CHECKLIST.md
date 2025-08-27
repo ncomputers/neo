@@ -4,8 +4,9 @@
 - [ ] Verify service health and metrics
 - [ ] Announce release to stakeholders
 - [ ] Run pilot rollout
-    - `python scripts/release_tag.py --rc`
-    - `python scripts/deploy_blue_green.py --env=staging`
-    - `python scripts/weighted_canary_ramp.py --env=staging`
-    - `python scripts/canary_probe.py --env=staging`
+    - `make pilot`
     - enable telemetry/NPS flags
+- [ ] Tag GA release
+    - `make release-ga`
+- [ ] Run production rollout
+    - `make prod`
