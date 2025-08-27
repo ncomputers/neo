@@ -1,10 +1,55 @@
 {
   "info": {
     "name": "Neo API",
-    "_postman_id": "89ada69e-e956-537b-ad87-37ad88683865",
+    "_postman_id": "4030f9b8-bf30-5efc-aa59-9b8ed4801002",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "Accounting",
+      "item": [
+        {
+          "name": "GST summary CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/accounting/gst_summary.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "accounting",
+                "gst_summary.csv"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sales register CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/accounting/sales_register.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "accounting",
+                "sales_register.csv"
+              ]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "Auth",
       "item": [
@@ -149,6 +194,25 @@
           }
         },
         {
+          "name": "Admin Ops Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/ops/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "ops",
+                "summary"
+              ]
+            }
+          }
+        },
+        {
           "name": "Admin Owner Analytics",
           "request": {
             "method": "GET",
@@ -168,19 +232,41 @@
           }
         },
         {
-          "name": "Apply Pending Prices",
+          "name": "Admin Webhook Probe",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/menu/items/apply-pending",
+              "raw": "{{baseUrl}}/admin/webhooks/probe",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "menu",
-                "items",
-                "apply-pending"
+                "admin",
+                "webhooks",
+                "probe"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Void",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/orders/{order_id}/void/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "orders",
+                "{order_id}",
+                "void",
+                "approve"
               ]
             }
           }
@@ -218,6 +304,40 @@
                 "outlet",
                 "{tenant_id}",
                 "backup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Billing Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/billing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bootstrap Sandbox",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/tenant/sandbox",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "tenant",
+                "sandbox"
               ]
             }
           }
@@ -301,23 +421,6 @@
           }
         },
         {
-          "name": "Create Category",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/categories",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "categories"
-              ]
-            }
-          }
-        },
-        {
           "name": "Create Guest Order",
           "request": {
             "method": "POST",
@@ -331,23 +434,6 @@
                 "g",
                 "{table_token}",
                 "order"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items"
               ]
             }
           }
@@ -445,6 +531,25 @@
           }
         },
         {
+          "name": "Create Sandbox Tenant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tenant/sandbox",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tenant",
+                "sandbox"
+              ]
+            }
+          }
+        },
+        {
           "name": "Create Table",
           "request": {
             "method": "POST",
@@ -475,6 +580,40 @@
               ],
               "path": [
                 "tenants"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Ticket",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/support/ticket",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "support",
+                "ticket"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Csp Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/csp/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "csp",
+                "report"
               ]
             }
           }
@@ -540,24 +679,6 @@
           }
         },
         {
-          "name": "Delete Category",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/categories/{category_id}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "categories",
-                "{category_id}"
-              ]
-            }
-          }
-        },
-        {
           "name": "Delete Dlq",
           "request": {
             "method": "DELETE",
@@ -572,24 +693,6 @@
                 "outlet",
                 "{tenant_id}",
                 "dlq",
-                "{item_id}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Item",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
                 "{item_id}"
               ]
             }
@@ -678,6 +781,24 @@
           }
         },
         {
+          "name": "Dsar Delete",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/privacy/dsar/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "privacy",
+                "dsar",
+                "delete"
+              ]
+            }
+          }
+        },
+        {
           "name": "Dsar Export",
           "request": {
             "method": "POST",
@@ -691,6 +812,24 @@
                 "api",
                 "outlet",
                 "{tenant_id}",
+                "privacy",
+                "dsar",
+                "export"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dsar Export",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/privacy/dsar/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
                 "privacy",
                 "dsar",
                 "export"
@@ -717,6 +856,24 @@
           }
         },
         {
+          "name": "Experiment report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exp/ab/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exp",
+                "ab",
+                "report"
+              ]
+            }
+          }
+        },
+        {
           "name": "Export All",
           "request": {
             "method": "GET",
@@ -737,18 +894,19 @@
           }
         },
         {
-          "name": "Export Items",
+          "name": "Export Qrpack Logs",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/menu/items/export",
+              "raw": "{{baseUrl}}/api/admin/qrpacks/export",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "menu",
-                "items",
+                "api",
+                "admin",
+                "qrpacks",
                 "export"
               ]
             }
@@ -886,19 +1044,19 @@
           }
         },
         {
-          "name": "Get Item",
+          "name": "Get Csp Reports",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}",
+              "raw": "{{baseUrl}}/admin/csp/reports",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "menu",
-                "items",
-                "{item_id}"
+                "admin",
+                "csp",
+                "reports"
               ]
             }
           }
@@ -978,36 +1136,17 @@
           }
         },
         {
-          "name": "Help Page",
+          "name": "Help Center",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/help/{page}",
+              "raw": "{{baseUrl}}/help",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "help",
-                "{page}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Import Items",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "import"
+                "help"
               ]
             }
           }
@@ -1167,23 +1306,6 @@
           }
         },
         {
-          "name": "List Categories",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/categories",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "categories"
-              ]
-            }
-          }
-        },
-        {
           "name": "List Dlq",
           "request": {
             "method": "GET",
@@ -1221,18 +1343,18 @@
           }
         },
         {
-          "name": "List Items",
+          "name": "List Integrations",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/menu/items",
+              "raw": "{{baseUrl}}/admin/integrations",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "menu",
-                "items"
+                "admin",
+                "integrations"
               ]
             }
           }
@@ -1253,6 +1375,23 @@
                 "{tenant_id}",
                 "menu",
                 "items"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List My Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/support/ticket",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "support",
+                "ticket"
               ]
             }
           }
@@ -1292,6 +1431,25 @@
                 "outlet",
                 "{tenant_id}",
                 "outbox"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Qrpack Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/qrpacks/logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "qrpacks",
+                "logs"
               ]
             }
           }
@@ -1348,6 +1506,23 @@
               ],
               "path": [
                 "tables"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/support",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "support"
               ]
             }
           }
@@ -1650,6 +1825,44 @@
           }
         },
         {
+          "name": "Owner Sla",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/sla",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "sla"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pilot Feedback Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pilot/admin/feedback/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pilot",
+                "admin",
+                "feedback",
+                "summary"
+              ]
+            }
+          }
+        },
+        {
           "name": "Postman Collection",
           "request": {
             "method": "GET",
@@ -1700,6 +1913,45 @@
                 "{tenant}",
                 "print",
                 "test"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Printer Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/print/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "print",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Probe Integration",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/integrations/{kind}/probe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "integrations",
+                "{kind}",
+                "probe"
               ]
             }
           }
@@ -1761,6 +2013,26 @@
               "path": [
                 "pwa",
                 "version"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Qr Poster Pack",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/outlets/{tenant_id}/qrposters.zip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "outlets",
+                "{tenant_id}",
+                "qrposters.zip"
               ]
             }
           }
@@ -1845,6 +2117,24 @@
           }
         },
         {
+          "name": "Refund Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/{payment_id}/refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "{payment_id}",
+                "refund"
+              ]
+            }
+          }
+        },
+        {
           "name": "Reject Item",
           "request": {
             "method": "POST",
@@ -1912,10 +2202,6 @@
           "request": {
             "method": "POST",
             "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"1\"\n}"
-            },
             "url": {
               "raw": "{{baseUrl}}/api/admin/dlq/replay",
               "host": [
@@ -1945,6 +2231,28 @@
                 "{room_token}",
                 "request",
                 "cleaning"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request Void",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant_id}/orders/{order_id}/void/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant_id}",
+                "orders",
+                "{order_id}",
+                "void",
+                "request"
               ]
             }
           }
@@ -2092,6 +2400,23 @@
                 "{tenant_id}",
                 "digest",
                 "run"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Save Consent",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/g/consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "g",
+                "consent"
               ]
             }
           }
@@ -2297,6 +2622,24 @@
           }
         },
         {
+          "name": "Slo Error Budget",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/ops/slo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "ops",
+                "slo"
+              ]
+            }
+          }
+        },
+        {
           "name": "Staff Area",
           "request": {
             "method": "GET",
@@ -2474,6 +2817,25 @@
           }
         },
         {
+          "name": "Submit Pilot Feedback",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pilot/{tenant}/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pilot",
+                "{tenant}",
+                "feedback"
+              ]
+            }
+          }
+        },
+        {
           "name": "Subscribe",
           "request": {
             "method": "POST",
@@ -2531,6 +2893,23 @@
           }
         },
         {
+          "name": "Time Skew",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/time/skew",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "time",
+                "skew"
+              ]
+            }
+          }
+        },
+        {
           "name": "Toggle Out Of Stock",
           "request": {
             "method": "POST",
@@ -2548,6 +2927,23 @@
                 "item",
                 "{item_id}",
                 "out_of_stock"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Troubleshoot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/troubleshoot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "troubleshoot"
               ]
             }
           }
@@ -2573,24 +2969,6 @@
           }
         },
         {
-          "name": "Update Item",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "{item_id}"
-              ]
-            }
-          }
-        },
-        {
           "name": "Update Status",
           "request": {
             "method": "POST",
@@ -2607,25 +2985,6 @@
                 "counters",
                 "{order_id}",
                 "status"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Upload Image",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/menu/items/{item_id}/image",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "menu",
-                "items",
-                "{item_id}",
-                "image"
               ]
             }
           }
@@ -2742,6 +3101,26 @@
                 "{tenant_id}",
                 "webhooks",
                 "test"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Whatsapp Status",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/outlet/{tenant}/whatsapp/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "outlet",
+                "{tenant}",
+                "whatsapp",
+                "status"
               ]
             }
           }
