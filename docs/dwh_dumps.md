@@ -19,3 +19,9 @@ Set the following environment variables:
 
 Each run uploads files under `<prefix><dataset>/dt=<YYYY-MM-DD>/` and writes a
 manifest to `<prefix>manifest/<YYYY-MM-DD>.json` listing the generated keys.
+
+## CI
+
+A nightly workflow [dwh_parquet.yml](../.github/workflows/dwh_parquet.yml) runs the export
+against the staging environment and uploads the manifest along with a sample
+Parquet file as artifacts.
