@@ -1,0 +1,33 @@
+{% if is_admin %}
+<h1>Support Console</h1>
+<form id="search">
+  <input name="tenant" placeholder="tenant id" required />
+  <input name="table" placeholder="table code" />
+  <input name="order" placeholder="order id" type="number" />
+  <button type="submit">Search</button>
+</form>
+<div id="actions">
+  <button id="resend-invoice">Resend Invoice</button>
+  <button id="reprint-kot">Reprint KOT</button>
+  <button id="replay-webhook">Replay Webhook</button>
+  <button id="unlock-pin">Unlock PIN</button>
+</div>
+<textarea id="reply" rows="10" cols="80"></textarea>
+<select id="macro">
+  <option value="">Insert macro...</option>
+  {% for name, text in macros.items() %}
+  <option value="{{ text|e }}">{{ name }}</option>
+  {% endfor %}
+</select>
+<script>
+document.getElementById('macro').addEventListener('change', function() {
+  if (this.value) {
+    const ta = document.getElementById('reply');
+    ta.value += (ta.value ? '\n' : '') + this.value;
+    this.value = '';
+  }
+});
+</script>
+{% else %}
+<p>You do not have permission to use the support console.</p>
+{% endif %}

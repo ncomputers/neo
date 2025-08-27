@@ -73,7 +73,14 @@ The ZIP includes:
 
 ## L1 Support Console
 
-Operations staff can perform safe remediation actions via a minimal support console. The API exposes:
+Operations staff can perform safe remediation actions via a minimal support console.
+The HTML page lives at `/admin/support/console`. Super admins see search inputs for
+tenant, table, and order along with remediation buttons such as **Resend Invoice**,
+**Reprint KOT**, **Replay Webhook**, and **Unlock PIN**. Other roles receive a guard
+message instead of the full UI. The page also offers an "Insert macro" dropdown
+sourced from `docs/SUPPORT_MACROS.md` for quick canned replies.
+
+The API exposes:
 
 ```
 GET /admin/support/console/search?tenant=<id>&table=<code>&order=<id>
@@ -83,7 +90,7 @@ POST /admin/support/console/order/{order_id}/replay_webhook
 POST /admin/support/console/staff/{staff_id}/unlock_pin
 ```
 
-All endpoints require a `super_admin` role. Requests lacking this role return:
+All action endpoints require a `super_admin` role. Requests lacking this role return:
 
 ```json
 HTTP 403
