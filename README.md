@@ -37,6 +37,22 @@ The configuration includes the `kds_sla_secs` threshold (default 900 seconds)
 that determines how long a KDS item may remain `in_progress` before a breach
 notification is triggered.
 
+## Database migrations
+
+Run master migrations:
+
+```bash
+python -m alembic -c api/alembic.ini upgrade head
+```
+
+Run tenant migrations:
+
+```bash
+python -m alembic -c api/alembic.ini -x db=tenant upgrade head
+```
+
+Index revisions verify table existence before creating or dropping indexes, allowing these commands to run safely even if some tables are missing.
+
 ## Testing
 
 Playwright end-to-end tests reside under `e2e/playwright`. The `kds_expo.spec.ts` test places an order, marks it ready, verifies the ticket's age increments on the `/kds/expo` dashboard, and uses the `P` hotkey to pick the ticket, asserting an `expo.picked` audit log entry. Playwright captures video and screenshots for failing tests.

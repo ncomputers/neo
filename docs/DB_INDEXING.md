@@ -2,6 +2,8 @@
 
 This project relies on a focused set of indexes to keep multi-tenant queries fast while avoiding bloat. The tables below list each index, the code that benefits from it, the shape of the filtered query, and why a partial, GIN, BRIN or INCLUDE clause is used.
 
+Recent migrations create these indexes only when their tables exist. This allows hot-path index migrations to run safely on partial schemas without failing.
+
 **Note:** Run `make analyze-hot` after big seeding/import to refresh planner statistics.
 
 ## Orders
