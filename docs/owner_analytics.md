@@ -37,6 +37,10 @@ The response includes combined orders, sales, average order value, top items,
 median preparation time (prep SLA) and a ``voids_pct`` representing the
 percentage of orders cancelled during the period.
 
+The ``x-tenant-ids`` header defines the tenant scope. All ``ids`` in the query
+string must be within this scope or a ``403`` will be returned. The ``from`` and
+``to`` dates are inclusive.
+
 A sample payload:
 
 ```json
