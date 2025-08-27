@@ -18,3 +18,7 @@ A quick exercise to keep rollback muscle memory fresh.
 A GitHub Actions workflow performs a weekly dry-run against staging so the team
 practises these steps regularly. It runs every Monday at 09:00 IST and rolls back
 to the previous release tag.
+
+## Dry-run verification
+
+- 2025-08-27: Confirmed GitHub Actions dry-run triggers rollback script with previous tag. See [rollback-dryrun.txt](rollback-dryrun.txt) for output.
