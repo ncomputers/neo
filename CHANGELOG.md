@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Configure gitleaks workflow with env vars and job-level permissions.
 - Ensure pa11y workflow waits for Postgres and migrates before tests.
 - Add checkout footer links and confirm refund flow with idempotency key note in admin.
+- Show checkout totals with optional tip, legal links, and confirmation before idempotent refunds.
 
 ### Added
 
