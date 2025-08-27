@@ -16,6 +16,8 @@ These return customer, invoice and payment records for the supplied phone or ema
 
 All invocations are audited and leverage existing retention/anonymisation helpers.
 
+Queries are built with SQLAlchemy expressions and bound parameters to prevent SQL injection.
+
 ## DPDP data principal rights
 
 The Digital Personal Data Protection Act grants data principals the right to:

@@ -3,9 +3,13 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import tempfile
+from pathlib import Path
 from typing import Any, Dict
 
-_DB_PATH = os.getenv("ONBOARDING_DB", "/tmp/onboarding.db")
+_DB_PATH = Path(
+    os.getenv("ONBOARDING_DB", Path(tempfile.gettempdir()) / "onboarding.db")
+)
 _conn: sqlite3.Connection | None = None
 
 
