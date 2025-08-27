@@ -2,6 +2,8 @@
 
 This project relies on a focused set of indexes to keep multi-tenant queries fast while avoiding bloat. The tables below list each index, the code that benefits from it, the shape of the filtered query, and why a partial, GIN, BRIN or INCLUDE clause is used.
 
+**Note:** Run `make analyze-hot` after big seeding/import to refresh planner statistics.
+
 ## Orders
 | Index | Route/Repo benefiting | WHERE clause shape | Notes |
 | --- | --- | --- | --- |
