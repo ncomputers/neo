@@ -1,0 +1,55 @@
+name: lighthouse-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: neo
+          POSTGRES_PASSWORD: neo
+          POSTGRES_DB: neo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U neo" --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      DATABASE_URL: postgresql+asyncpg://neo:neo@localhost:5432/neo
+      SYNC_DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
+      SQLALCHEMY_DATABASE_URI: postgresql://neo:neo@localhost:5432/neo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install Python dependencies
+        run: pip install -r api/requirements.txt
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -U neo; do
+            echo "Waiting for Postgres..."
+            sleep 1
+          done
+      - name: Run migrations
+        run: |
+          python -m alembic -c api/alembic.ini upgrade head -x db_url=$SYNC_DATABASE_URL
+      - name: Run Lighthouse CI
+        run: |
+          python start_app.py &
+          sleep 5
+          lhci autorun --config=lighthouserc.json
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: lighthouse

@@ -1,0 +1,24 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:8000/guest",
+        "http://localhost:8000/admin",
+        "http://localhost:8000/kds"
+      ],
+      "numberOfRuns": 1,
+      "output": ["html"],
+      "reportFilenamePattern": "%%PATHNAME%%-lighthouse.%%EXTENSION%%",
+      "settings": {
+        "budgetsPath": "budgets.json"
+      }
+    },
+    "assert": {
+      "budgetsFile": "budgets.json"
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "./lighthouse"
+    }
+  }
+}
