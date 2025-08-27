@@ -14,6 +14,8 @@ sys.path.append(str(BASE_DIR.parent))
 from app.db import MasterBase, TenantBase  # type: ignore  # noqa: E402
 
 from config import get_settings  # type: ignore  # noqa: E402
+from app import models_master  # type: ignore  # noqa: E402
+
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -24,7 +26,8 @@ DB_URLS = {
     "tenant": settings.postgres_tenant_dsn_template.format(tenant_id="tenant"),
 }
 
-target_metadata = [MasterBase.metadata, TenantBase.metadata]
+target_metadata = models_master.Base.metadata
+
 
 
 def _get_url() -> str:
