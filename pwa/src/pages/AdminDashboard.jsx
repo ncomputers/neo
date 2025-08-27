@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { apiFetch } from '../api'
 import LimitsUsageWidget from '../components/LimitsUsageWidget'
@@ -26,6 +27,12 @@ export default function AdminDashboard() {
     <div className="p-4">
       {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
       <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
+      <Link
+        to="/admin/onboarding"
+        className="text-blue-600 underline mb-4 inline-block"
+      >
+        Start Onboarding Wizard
+      </Link>
       <LimitsUsageWidget />
       <OpsWidget />
       <PilotTelemetryWidget />
