@@ -40,8 +40,15 @@ The application relies on the following environment variables:
 | `POSTHOG_HOST` (optional) | PostHog host; defaults to `https://app.posthog.com`. | `https://posthog.example.com` |
 | `MIXPANEL_TOKEN` (optional) | Token for Mixpanel analytics. | `token` |
 | `FLAG_SIMPLE_MODIFIERS` | Enable basic menu modifiers and combos. | `1` |
-| `FLAG_WA_ENABLED` | Enable WhatsApp status notifications. | `1` |
-| `AB_TESTS_ENABLED` | Enable server-side A/B testing for menu copy/pricing. | `0` |
+| `FLAG_WA_ENABLED` | Enable WhatsApp status notifications. | `0` |
+| `FLAG_HAPPY_HOUR` | Enable time-based discounts during configured windows. | `0` |
+| `FLAG_MARKETPLACE` | Enable integrations marketplace endpoints. | `0` |
+| `FLAG_ANALYTICS` | Enable optional product analytics. | `0` |
+| `FLAG_AB_TESTS` | Enable server-side A/B testing for menu copy/pricing. | `0` |
+
+Defaults for these experimental flags are maintained in `config/feature_flags.yaml`.
+They must remain disabled in production; `validate_on_boot` enforces this when
+`ENV=prod`.
 
 ## JWT/JOSE
 
