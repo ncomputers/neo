@@ -45,7 +45,7 @@ jobs:
 
       - name: Run migrations
         run: |
-          python -m alembic -c api/alembic.ini upgrade head -x db_url=$SYNC_DATABASE_URL
+          python -m alembic -x db_url=$SYNC_DATABASE_URL -c api/alembic.ini upgrade head
 
       - name: Start API
         run: |
