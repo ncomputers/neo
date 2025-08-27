@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import logging
 import os
 import random
 import sys
@@ -88,12 +89,18 @@ def _format_sla_breach(channel: str, payload: dict) -> dict:
 FORMATTERS = {"sla_breach": _format_sla_breach}
 
 
+logger = logging.getLogger(__name__)
+
 try:  # Optional Redis client for replay protection
     import redis  # type: ignore
     from redis.exceptions import RedisError  # type: ignore
-except Exception:  # pragma: no cover - redis not installed
+except ImportError as exc:  # pragma: no cover - redis not installed
+    logger.debug("Redis not installed: %s", exc)
     redis = None  # type: ignore
-    RedisError = Exception  # type: ignore
+
+    class RedisError(Exception):
+        pass
+
 
 REDIS_CLIENT = None
 if redis is not None:
@@ -101,7 +108,8 @@ if redis is not None:
     if redis_url:
         try:
             REDIS_CLIENT = redis.from_url(redis_url)
-        except Exception:  # pragma: no cover - connection issues
+        except RedisError as exc:  # pragma: no cover - connection issues
+            logger.warning("Redis connection failed: %s", exc)
             REDIS_CLIENT = None
 
 
@@ -309,7 +317,7 @@ def process_once(engine) -> None:
 
             try:
                 _deliver(rule, event)
-            except Exception as exc:
+            except requests.exceptions.RequestException as exc:  # network or HTTP error
                 if url_hash:
                     webhook_failures_total.labels(destination=url_hash).inc()
                     breaker_on_failure(
@@ -351,6 +359,9 @@ def process_once(engine) -> None:
                     event.next_attempt_at = _next_attempt(event.attempts)
                     session.add(event)
                 continue
+            except Exception as exc:
+                logger.exception("Unexpected error delivering notification")
+                raise
             else:
                 if url_hash:
                     breaker_on_success(REDIS_CLIENT, url_hash)
@@ -371,6 +382,7 @@ def main() -> None:
             process_once(engine)
         except Exception as exc:  # pragma: no cover - defensive
             capture_exception(exc)
+            logger.error("Worker loop failed: %s", exc)
         time.sleep(poll)
 
 

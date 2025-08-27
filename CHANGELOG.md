@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Security
+
+- Pin ``ecdsa`` dependency to ``>=0.19.2`` to address upstream vulnerability.
+- Pin worker image to a digest-based Python base, upgrade ``setuptools`` during build, and run as non-root ``app`` user.
+
 ## v1.0.0 - 2025-08-26
 
 ### Fixed
