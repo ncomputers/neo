@@ -10,3 +10,4 @@
     - `make release-ga`
 - [ ] Run production rollout
     - `make prod`
+    - weighted canary ramp 5→25→50→100 with rollback gate
