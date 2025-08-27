@@ -53,6 +53,73 @@
       "version": 1,
       "refresh": "5m",
       "panels": []
+    },
+    {
+      "uid": "synthetic-monitor",
+      "title": "Synthetic monitor",
+      "timezone": "",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "5m",
+      "panels": [
+        {
+          "type": "graph",
+          "title": "Synthetic success rate (last 24h)",
+          "targets": [
+            {
+              "expr": "avg_over_time(synthetic_order_success[24h])"
+            }
+          ]
+        },
+        {
+          "type": "graph",
+          "title": "Latency p50/p95",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.5, rate(synthetic_order_total_ms_bucket[5m]))",
+              "legendFormat": "total p50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, rate(synthetic_order_total_ms_bucket[5m]))",
+              "legendFormat": "total p95"
+            },
+            {
+              "expr": "histogram_quantile(0.5, rate(synthetic_order_kds_appear_ms_bucket[5m]))",
+              "legendFormat": "kds p50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, rate(synthetic_order_kds_appear_ms_bucket[5m]))",
+              "legendFormat": "kds p95"
+            },
+            {
+              "expr": "histogram_quantile(0.5, rate(synthetic_order_invoice_ms_bucket[5m]))",
+              "legendFormat": "invoice p50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, rate(synthetic_order_invoice_ms_bucket[5m]))",
+              "legendFormat": "invoice p95"
+            },
+            {
+              "expr": "histogram_quantile(0.5, rate(synthetic_order_refund_ms_bucket[5m]))",
+              "legendFormat": "refund p50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, rate(synthetic_order_refund_ms_bucket[5m]))",
+              "legendFormat": "refund p95"
+            }
+          ]
+        },
+        {
+          "type": "graph",
+          "title": "Failures by step",
+          "stack": true,
+          "targets": [
+            {
+              "expr": "sum by (step_failed) (increase(synthetic_order_failures_total[1h]))"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 - Pin ``ecdsa`` dependency to ``>=0.19.1`` to address upstream vulnerability.
 - Pin worker image to a digest-based Python base, upgrade ``setuptools`` during build, and run as non-root ``app`` user.
 
+### Added
+
+- 24×7 synthetic order monitor with CI alerts and dashboards.
+
 ## v1.0.0 - 2025-08-26
 
 ### Fixed
