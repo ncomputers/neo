@@ -1,0 +1,15 @@
+name: rollback-dryrun
+
+on:
+  schedule: [{ cron: "0 9 * * 1" }]  # Mon 09:00 IST
+  workflow_dispatch:
+
+jobs:
+  dryrun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dry-run rollback on staging
+        run: |
+          python scripts/rollback_blue_green.py --env=staging --to=$(python scripts/release_tag.py --prev)
+          echo "✅ rollback dry-run completed"
