@@ -6,6 +6,7 @@ import KitchenDashboard from './pages/KitchenDashboard'
 import CleanerDashboard from './pages/CleanerDashboard'
 import Billing from './pages/Billing'
 import ExpoDashboard from './pages/ExpoDashboard'
+import OwnerOnboardingWizard from './pages/OwnerOnboardingWizard'
 import RequireRole from './components/RequireRole'
 import ConsentBanner from './components/ConsentBanner'
 import { useAuth } from './contexts/AuthContext'
@@ -59,6 +60,14 @@ export default function App() {
           element={
             <RequireRole roles={['admin']}>
               <AdminDashboard />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/admin/onboarding"
+          element={
+            <RequireRole roles={['admin']}>
+              <OwnerOnboardingWizard />
             </RequireRole>
           }
         />

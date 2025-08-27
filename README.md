@@ -298,6 +298,9 @@ A minimal onboarding flow captures tenant details:
 - `POST /api/onboarding/{id}/payments` – configure payment modes and VPA.
 - `POST /api/onboarding/{id}/finish` – finalize and activate the tenant.
 
+Admins can also use the `/admin/onboarding` web wizard for a guided setup. The
+wizard saves progress locally so owners can return and complete steps later.
+
 ### QR Pack
 
 - `GET /api/outlet/{tenant}/qrpack.pdf?size=A4&per_page=12&show_logo=true&label_fmt=Table%20{n}` – generate a printable sheet of table labels with QR codes and the outlet logo.
