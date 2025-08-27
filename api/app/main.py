@@ -101,12 +101,13 @@ from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
 from .otel import init_tracing
-from .routes_ab_tests import router as ab_tests_router
 from .routes_ab_report import router as ab_report_router
+from .routes_ab_tests import router as ab_tests_router
 from .routes_accounting import router as accounting_router
 from .routes_accounting_exports import router as accounting_exports_router
 from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_menu import router as admin_menu_router
+from .routes_admin_onboarding import router as admin_onboarding_router
 from .routes_admin_ops import router as admin_ops_router
 from .routes_admin_pilot import router as admin_pilot_router
 from .routes_admin_print import router as admin_print_router
@@ -114,7 +115,6 @@ from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
-from .routes_support_console import router as support_console_router
 from .routes_admin_webhooks import router as admin_webhooks_router
 from .routes_alerts import router as alerts_router
 from .routes_analytics_outlets import router as analytics_outlets_router
@@ -184,9 +184,10 @@ from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
 from .routes_slo import router as slo_router
 from .routes_staff import router as staff_router
+from .routes_status_json import router as status_json_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
-from .routes_status_json import router as status_json_router
+from .routes_support_console import router as support_console_router
 from .routes_tables_map import router as tables_map_router
 from .routes_tables_qr_rotate import router as tables_qr_rotate_router
 from .routes_tables_sse import router as tables_sse_router
@@ -901,6 +902,7 @@ app.include_router(kds_expo_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
+app.include_router(admin_onboarding_router)
 app.include_router(slo_router)
 app.include_router(admin_ops_router)
 app.include_router(limits_router)
