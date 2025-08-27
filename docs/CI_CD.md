@@ -10,6 +10,8 @@ A `trivy` workflow builds the API and worker images and fails if any HIGH or CRI
 
 A nightly `pdf-smoke` workflow renders sample invoice and KOT PDFs for the demo tenant, asserting 200 responses within two seconds and uploading the outputs as build artifacts.
 
+A `lighthouse-ci` workflow audits /guest, /admin, and /kds against LCP, INP, transfer size, and script size budgets, uploading HTML reports and failing the build if limits are exceeded.
+
 1. **build-and-push** – builds the API image and pushes it to GitHub Container Registry (GHCR) tagged as `neo-api:latest`.
 2. **deploy-staging** – upgrades the staging environment via Helm, scrubs restored data to purge real PII (fakes names, phones, and emails; clears payment UTRs; rotates table/room/counter QR tokens), audits environment examples, runs `/api/admin/preflight`, smoke and canary probes, `pa11y-ci`, and Playwright smoke tests.
 3. **manual-approval** – requires a human reviewer before production rollout.

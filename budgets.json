@@ -1,0 +1,35 @@
+[
+  {
+    "path": "/guest",
+    "resourceSizes": [
+      { "resourceType": "total", "budget": 300 },
+      { "resourceType": "script", "budget": 150 }
+    ],
+    "timings": [
+      { "metric": "largest-contentful-paint", "budget": 3000 },
+      { "metric": "interaction-to-next-paint", "budget": 200 }
+    ]
+  },
+  {
+    "path": "/admin",
+    "resourceSizes": [
+      { "resourceType": "total", "budget": 300 },
+      { "resourceType": "script", "budget": 150 }
+    ],
+    "timings": [
+      { "metric": "largest-contentful-paint", "budget": 3000 },
+      { "metric": "interaction-to-next-paint", "budget": 200 }
+    ]
+  },
+  {
+    "path": "/kds",
+    "resourceSizes": [
+      { "resourceType": "total", "budget": 300 },
+      { "resourceType": "script", "budget": 150 }
+    ],
+    "timings": [
+      { "metric": "largest-contentful-paint", "budget": 3000 },
+      { "metric": "interaction-to-next-paint", "budget": 200 }
+    ]
+  }
+]
