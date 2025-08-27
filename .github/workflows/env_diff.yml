@@ -1,0 +1,23 @@
+name: env drift
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch staging env
+        env:
+          STAGING_ENV_URL: ${{ secrets.STAGING_ENV_URL }}
+          STAGING_TOKEN: ${{ secrets.STAGING_TOKEN }}
+        run: |
+          curl -sH "Authorization: Bearer $STAGING_TOKEN" "$STAGING_ENV_URL" \
+            | jq -r 'keys[]' | sort > staging.env
+      - name: Compare with sample
+        run: |
+          cut -d '=' -f1 .env.prod.example | sort > prod.env
+          diff -u prod.env staging.env
