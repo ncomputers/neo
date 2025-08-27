@@ -10,42 +10,47 @@ jobs:
     services:
       postgres:
         image: postgres:16
+        ports:
+          - 5432:5432
         env:
           POSTGRES_USER: neo
           POSTGRES_PASSWORD: neo
           POSTGRES_DB: neo
-        ports:
-          - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U neo"
+          --health-cmd="pg_isready -U neo -h localhost"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
+
     env:
-      DATABASE_URL: postgresql+asyncpg://neo:neo@localhost:5432/neo
+      # what the app code reads (async driver)
+      POSTGRES_MASTER_URL: postgresql+asyncpg://neo:neo@localhost:5432/neo
+      # what Alembic uses (sync driver)
       SYNC_DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
-      SQLALCHEMY_DATABASE_URI: postgresql://neo:neo@localhost:5432/neo
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      - name: Install Python dependencies
-        run: pip install -r api/requirements.txt
+
       - name: Wait for Postgres
         run: |
-          until pg_isready -h localhost -U neo; do
+          until pg_isready -h localhost -p 5432 -U neo; do
             echo "Waiting for Postgres..."
-            sleep 1
+            sleep 2
           done
+
+      - name: Install Python deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+
       - name: Run migrations
         run: |
           python -m alembic -c api/alembic.ini upgrade head -x db_url=$SYNC_DATABASE_URL
-      - name: Run Pa11y
+
+      - name: Start API
         run: |
           python start_app.py &
           sleep 5
-          npx pa11y-ci -c pa11y-ci.json
+
+      - name: Run Pa11y
+        run: npx pa11y-ci -c pa11y-ci.json
