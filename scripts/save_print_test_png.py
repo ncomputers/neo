@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import pathlib
+import sys
 
 import fakeredis.aioredis
 import requests
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
+sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent))
 
 from api.app.render_text_image import render_text_image
 from api.app.routes_print_test import router
