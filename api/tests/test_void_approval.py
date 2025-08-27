@@ -92,6 +92,7 @@ async def test_request_approve_void() -> None:
         assert resp1.status_code == 200
         resp2 = await client.post(
             f"/api/outlet/demo/orders/{order_id}/void/approve",
+            params={"confirm": "true"},
         )
         assert resp2.status_code == 200
 

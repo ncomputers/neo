@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -67,8 +67,12 @@ async def approve_void(
     order_id: int,
     user: User = Depends(manager_guard),
     session: AsyncSession = Depends(get_session_from_path),
+    confirm: bool = Query(False),
 ) -> dict:
     """Approve a pending void and adjust invoice totals."""
+
+    if not confirm:
+        raise HTTPException(status_code=400, detail="confirmation required")
 
     reason = _pending.pop(order_id, None)
     if reason is None:
