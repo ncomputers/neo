@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import sys
 from logging.config import fileConfig
 from pathlib import Path
-import sys
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -11,8 +11,9 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR.parent))
 
+from app.db import MasterBase, TenantBase  # type: ignore  # noqa: E402
+
 from config import get_settings  # type: ignore  # noqa: E402
-from app import models  # type: ignore  # noqa: E402
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -23,7 +24,7 @@ DB_URLS = {
     "tenant": settings.postgres_tenant_dsn_template.format(tenant_id="tenant"),
 }
 
-target_metadata = models.Base.metadata
+target_metadata = [MasterBase.metadata, TenantBase.metadata]
 
 
 def _get_url() -> str:
