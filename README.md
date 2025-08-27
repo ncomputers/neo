@@ -207,6 +207,10 @@ alembic upgrade head
 pytest -q
 ```
 
+Dependencies are pinned in `api/requirements.txt`, generated from
+`api/requirements.in` using `pip-compile`. Update the `.in` file and
+rerun `pip-compile` to refresh locked versions.
+
 ## Database performance
 
 Migration `0010_hot_path_indexes` adds indexes on frequently queried columns

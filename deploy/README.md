@@ -9,6 +9,7 @@ A Helm chart for Kubernetes deployments lives in [helm](helm/README.md).
 ## 1. Install dependencies
 - Python 3.12+
 - `uvicorn` and project requirements: `pip install -r requirements.txt`
+  (generated from `api/requirements.in` via `pip-compile`)
 - nginx and systemd (usually preinstalled on most distributions)
 
 ## 2. Set up the application
