@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useOrderStatus } from '../hooks/useOrderStatus'
 import { apiFetch } from '../api'
+import StatusPill from '../components/StatusPill'
 
 export default function GuestOrder() {
   const { logo } = useTheme()
@@ -74,7 +75,8 @@ export default function GuestOrder() {
           </li>
         ))}
       </ul>
-      <footer className="mt-8 text-sm text-gray-600">
+      <footer className="mt-8 text-sm text-gray-600 flex items-center space-x-2">
+        <StatusPill />
         <a
           href="/legal/privacy"
           className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"

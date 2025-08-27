@@ -10,9 +10,11 @@ down:
 	docker-compose down --volumes --remove-orphans
 
 incident-start:
-	python scripts/status_page.py start "$(TITLE)" "$(DETAILS)"
+        STATUS_API_URL=$(STATUS_API_URL) STATUS_API_TOKEN=$(STATUS_API_TOKEN) \
+        python scripts/status_page.py start "$(TITLE)" "$(DETAILS)"
 
 incident-resolve:
+        STATUS_API_URL=$(STATUS_API_URL) STATUS_API_TOKEN=$(STATUS_API_TOKEN) \
         python scripts/status_page.py resolve "$(TITLE)"
 
 # Deploy pilot stack, ramp traffic, and enable telemetry.

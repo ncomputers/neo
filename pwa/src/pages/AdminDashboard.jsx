@@ -6,6 +6,7 @@ import OpsWidget from '../components/OpsWidget'
 import PilotTelemetryWidget from '../components/PilotTelemetryWidget'
 import OwnerSlaWidget from '../components/OwnerSlaWidget'
 import Integrations from '../components/Integrations'
+import StatusPill from '../components/StatusPill'
 
 export default function AdminDashboard() {
   const { logo } = useTheme()
@@ -51,7 +52,8 @@ export default function AdminDashboard() {
           </tbody>
         </table>
       )}
-      <footer className="mt-8 text-sm text-gray-600">
+      <footer className="mt-8 text-sm text-gray-600 flex items-center space-x-2">
+        <StatusPill />
         <a
           href="/legal/subprocessors"
           className="mx-2 hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"

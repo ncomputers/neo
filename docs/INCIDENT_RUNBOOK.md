@@ -36,8 +36,8 @@ Use `scripts/emit_test_alert.py` to trigger a synthetic alert during drills.
 
 ## Status Page Maintenance
 
-The status page is served from `/status.json` and indicates overall platform health.
-Update it during incidents with:
+The status page is served from `/status.json`, which is stored in Redis with a file fallback.
+Use the helper script to update it during incidents:
 
 ```
 python ops/scripts/status_page.py start "<title>" "<details>"
@@ -49,4 +49,4 @@ Resolve an incident when service is restored:
 python ops/scripts/status_page.py resolve "<title>"
 ```
 
-The `state` field should be `operational` when no incidents remain and `degraded` while any are active.
+These commands invoke `POST /admin/status` and keep the fallback file updated. The `state` field should be `ok` when no incidents remain and `degraded` while any are active.
