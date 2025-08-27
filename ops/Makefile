@@ -17,9 +17,11 @@ incident-resolve:
         STATUS_API_URL=$(STATUS_API_URL) STATUS_API_TOKEN=$(STATUS_API_TOKEN) \
         python scripts/status_page.py resolve "$(TITLE)"
 
-# Deploy pilot stack, ramp traffic, and enable telemetry.
-# Requires TELEMETRY_API_URL and TELEMETRY_API_TOKEN.
+# Tag release candidate and exercise pilot rollout on staging.
+# Enable telemetry/NPS flags in a follow-up step.
 pilot:
-	python scripts/deploy_blue_green.py --env=pilot
-	python scripts/weighted_canary_ramp.py --env=pilot
-	curl -X POST "$${TELEMETRY_API_URL}/enable?env=pilot" -H "Authorization: Bearer $${TELEMETRY_API_TOKEN}"
+        python scripts/release_tag.py --rc
+        python scripts/deploy_blue_green.py --env=staging
+        python scripts/weighted_canary_ramp.py --env=staging
+        python scripts/canary_probe.py --env=staging
+        # enable telemetry/NPS flags here
