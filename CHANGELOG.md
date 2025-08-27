@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- chore(print): print-test PNG artifact in CI.
+- chore(print): print-test PNG artifacts in CI for 58/80mm printers.
 - feat(analytics): multi-outlet summary with CSV export and voids percentage.
 - Flagged server-side menu A/B testing with deterministic bucketing and exposure tracking.
 - L1 support console for tenant/table/order lookup with safe actions (resend invoice, reprint KOT, replay webhook, unlock PIN) and audit logging.
