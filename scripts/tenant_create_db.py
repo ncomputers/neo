@@ -9,11 +9,16 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from pathlib import Path
+import sys
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from db.tenant import build_dsn
+# Ensure project root is on the import path so ``api.app`` resolves when
+# invoked as ``python scripts/tenant_create_db.py`` with ``PYTHONPATH=api/app``.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from api.app.db.tenant import build_dsn
 
 
 async def ensure_database(engine, tenant_id: str) -> None:
