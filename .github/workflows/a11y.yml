@@ -11,13 +11,13 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: neo
+          POSTGRES_PASSWORD: neo
           POSTGRES_DB: master
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres"
+          --health-cmd="pg_isready -U neo"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -31,8 +31,8 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      POSTGRES_MASTER_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/master
-      POSTGRES_TENANT_DSN_TEMPLATE: postgresql+asyncpg://postgres:postgres@postgres:5432/tenant_{tenant_id}
+      POSTGRES_MASTER_URL: postgresql+asyncpg://neo:neo@postgres:5432/master
+      POSTGRES_TENANT_DSN_TEMPLATE: postgresql+asyncpg://neo:neo@postgres:5432/tenant_{tenant_id}
       REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +46,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r api/requirements.txt pillow
+      - name: Wait for DB
+        run: |
+          until pg_isready -h postgres -U neo; do
+            echo "Waiting for Postgres..."
+            sleep 1
+          done
       - name: Migrate and seed demo data
         run: |
           PYTHONPATH=. python scripts/tenant_migrate.py --tenant demo
