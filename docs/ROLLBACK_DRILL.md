@@ -16,4 +16,5 @@ A quick exercise to keep rollback muscle memory fresh.
    - Hit critical endpoints or run smoke tests to confirm the old version works.
 
 A GitHub Actions workflow performs a weekly dry-run against staging so the team
-practises these steps regularly.
+practises these steps regularly. It runs every Monday at 09:00 IST and rolls back
+to the previous release tag.
