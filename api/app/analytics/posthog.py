@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import logging
 import os
 from typing import Any, Dict, List
 
@@ -14,6 +15,8 @@ PII_KEYS = {"email", "phone", "name"}
 
 _queue: asyncio.Queue[Dict[str, Any]] = asyncio.Queue()
 _worker_started = False
+
+logger = logging.getLogger(__name__)
 
 
 def _enabled() -> bool:
@@ -43,7 +46,9 @@ def _ensure_worker() -> None:
     _worker_started = True
 
 
-async def track(tenant: str, event: str, properties: Dict[str, Any] | None = None) -> None:
+async def track(
+    tenant: str, event: str, properties: Dict[str, Any] | None = None
+) -> None:
     """Queue ``event`` for ``tenant`` if enabled and consented."""
     if not _enabled():
         return
@@ -97,12 +102,18 @@ async def _send(batch: List[Dict[str, Any]]) -> None:
                             },
                         }
                         data = base64.b64encode(json.dumps(payload).encode()).decode()
-                        await client.post("https://api.mixpanel.com/track", data={"data": data})
+                        await client.post(
+                            "https://api.mixpanel.com/track", data={"data": data}
+                        )
             break
-        except Exception:
+        except httpx.HTTPError as exc:  # network issue
+            logger.warning("Analytics batch send failed: %s", exc)
             if attempt == 2:
-                break
-            await asyncio.sleep(2 ** attempt)
+                raise
+            await asyncio.sleep(2**attempt)
+        except Exception:
+            logger.exception("Unexpected analytics error")
+            raise
 
 
 __all__ = ["track"]

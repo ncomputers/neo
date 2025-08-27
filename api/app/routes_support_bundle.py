@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from io import BytesIO
 from typing import Iterator
@@ -18,6 +19,8 @@ from .models_master import Tenant
 from .routes_ready import ready
 from .routes_version import version
 from .utils.responses import ok
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -50,7 +53,6 @@ async def support_bundle(
                 "enable_hotel": bool(tenant.enable_hotel),
                 "enable_counter": bool(tenant.enable_counter),
                 "enable_gateway": bool(getattr(tenant, "enable_gateway", False)),
-
                 "sla_sound_alert": bool(tenant.sla_sound_alert),
                 "sla_color_alert": bool(tenant.sla_color_alert),
             },
@@ -77,7 +79,8 @@ async def support_bundle(
             with open(log_file, "r", encoding="utf-8") as fh:
                 lines = fh.readlines()[-200:]
             log_content = "".join(lines)
-        except Exception:  # pragma: no cover - best effort
+        except OSError as exc:  # pragma: no cover - best effort
+            logger.warning("Failed to read log file %s: %s", log_file, exc)
             log_content = None
 
     def build_zip() -> Iterator[bytes]:

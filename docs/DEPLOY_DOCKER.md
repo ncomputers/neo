@@ -2,6 +2,8 @@
 
 This repository provides Docker images for the API service and the background worker. The images share the same base but expose different commands.
 
+Worker images pin the Python base image by digest, upgrade ``setuptools`` during build, and run as a non-root ``app`` user.
+
 ## Build images
 
 ```bash
