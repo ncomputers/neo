@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from urllib.parse import urlparse
 
 REQUIRED_ENVS = [
@@ -14,6 +15,22 @@ REQUIRED_ENVS = [
 ]
 
 logger = logging.getLogger("api.config")
+
+
+def _load_flag_config() -> dict[str, bool]:
+    """Read ``config/feature_flags.yaml`` into a mapping."""
+
+    path = Path(__file__).resolve().parents[2] / "config" / "feature_flags.yaml"
+    if not path.exists():
+        return {}
+    data: dict[str, bool] = {}
+    for line in path.read_text().splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        key, _, val = line.partition(":")
+        data[key.strip()] = val.strip().lower() in {"1", "true", "yes", "on"}
+    return data
 
 
 def _mask(value: str) -> str:
@@ -54,3 +71,25 @@ def validate_on_boot() -> None:
         raise RuntimeError(
             "Missing required environment variables: " + ", ".join(sorted(missing))
         )
+
+    env = os.getenv("ENV", "dev")
+    if env == "prod":
+        experimental = [
+            "ab_tests",
+            "wa_enabled",
+            "happy_hour",
+            "marketplace",
+            "analytics",
+        ]
+        defaults = _load_flag_config()
+        for name in experimental:
+            if os.getenv(f"FLAG_{name.upper()}", "0").lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }:
+                raise RuntimeError(f"{name} feature flag must remain OFF in prod")
+            if defaults.get(name):
+                raise RuntimeError(f"{name} feature flag must remain OFF in prod")
+

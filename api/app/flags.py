@@ -10,7 +10,28 @@ Flags support a three-level precedence order:
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any, Dict
+
+
+def _load_defaults() -> Dict[str, bool]:
+    """Load flag defaults from ``config/feature_flags.yaml`` if present."""
+
+    path = Path(__file__).resolve().parents[2] / "config" / "feature_flags.yaml"
+    if not path.exists():
+        return {}
+    text = path.read_text().splitlines()
+    defaults: Dict[str, bool] = {}
+    for line in text:
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        key, _, val = line.partition(":")
+        defaults[key.strip()] = val.strip().lower() in {"1", "true", "yes", "on"}
+    return defaults
+
+
+_CONFIG_DEFAULTS = _load_defaults()
 
 # Metadata about supported feature flags.
 # ``tenant_attr`` indicates the attribute on the Tenant model used for
@@ -22,9 +43,12 @@ REGISTRY: Dict[str, Dict[str, Any]] = {
     "wa_enabled": {"default": False},
     "happy_hour": {"default": False},
     "analytics": {"default": False},
-    "ab_tests": {"default": True},
-
+    "ab_tests": {"default": False},
+    "marketplace": {"default": False},
 }
+
+for name, value in _CONFIG_DEFAULTS.items():
+    REGISTRY.setdefault(name, {})["default"] = bool(value)
 
 
 def _env_override(name: str) -> bool | None:
