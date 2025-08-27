@@ -1,0 +1,92 @@
+groups:
+  - name: error-budget-burn
+    rules:
+      - alert: GuestOrderErrorBudgetBurnRate1h
+        expr: error_budget_burn_rate{route="guest-order",window="1h"} > 0.10
+        for: 5m
+        labels:
+          service: guest-order
+          severity: warning
+        annotations:
+          summary: Guest order error budget burn >10% in 1h
+          description: Guest order consumed over 10% of its error budget within the last hour.
+
+      - alert: GuestOrderErrorBudgetBurnRate6h
+        expr: error_budget_burn_rate{route="guest-order",window="6h"} > 0.20
+        for: 5m
+        labels:
+          service: guest-order
+          severity: page
+        annotations:
+          summary: Guest order error budget burn >20% in 6h
+          description: Guest order consumed over 20% of its error budget within the last 6 hours.
+
+      - alert: GuestOrderErrorBudgetBurnRate24h
+        expr: error_budget_burn_rate{route="guest-order",window="24h"} > 0.40
+        for: 5m
+        labels:
+          service: guest-order
+          severity: sev2
+        annotations:
+          summary: Guest order error budget burn >40% in 24h
+          description: Guest order consumed over 40% of its error budget within the last 24 hours.
+
+      - alert: KDSErrorBudgetBurnRate1h
+        expr: error_budget_burn_rate{route="kds",window="1h"} > 0.10
+        for: 5m
+        labels:
+          service: kds
+          severity: warning
+        annotations:
+          summary: KDS error budget burn >10% in 1h
+          description: KDS consumed over 10% of its error budget within the last hour.
+
+      - alert: KDSErrorBudgetBurnRate6h
+        expr: error_budget_burn_rate{route="kds",window="6h"} > 0.20
+        for: 5m
+        labels:
+          service: kds
+          severity: page
+        annotations:
+          summary: KDS error budget burn >20% in 6h
+          description: KDS consumed over 20% of its error budget within the last 6 hours.
+
+      - alert: KDSErrorBudgetBurnRate24h
+        expr: error_budget_burn_rate{route="kds",window="24h"} > 0.40
+        for: 5m
+        labels:
+          service: kds
+          severity: sev2
+        annotations:
+          summary: KDS error budget burn >40% in 24h
+          description: KDS consumed over 40% of its error budget within the last 24 hours.
+
+      - alert: BillingCheckoutErrorBudgetBurnRate1h
+        expr: error_budget_burn_rate{route="billing-checkout",window="1h"} > 0.10
+        for: 5m
+        labels:
+          service: billing-checkout
+          severity: warning
+        annotations:
+          summary: Billing/checkout error budget burn >10% in 1h
+          description: Billing/checkout consumed over 10% of its error budget within the last hour.
+
+      - alert: BillingCheckoutErrorBudgetBurnRate6h
+        expr: error_budget_burn_rate{route="billing-checkout",window="6h"} > 0.20
+        for: 5m
+        labels:
+          service: billing-checkout
+          severity: page
+        annotations:
+          summary: Billing/checkout error budget burn >20% in 6h
+          description: Billing/checkout consumed over 20% of its error budget within the last 6 hours.
+
+      - alert: BillingCheckoutErrorBudgetBurnRate24h
+        expr: error_budget_burn_rate{route="billing-checkout",window="24h"} > 0.40
+        for: 5m
+        labels:
+          service: billing-checkout
+          severity: sev2
+        annotations:
+          summary: Billing/checkout error budget burn >40% in 24h
+          description: Billing/checkout consumed over 40% of its error budget within the last 24 hours.
