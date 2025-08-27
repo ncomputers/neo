@@ -178,6 +178,7 @@ from .routes_qrpack import router as qrpack_router
 from .routes_ready import router as ready_router
 from .routes_refunds import router as refunds_router
 from .routes_reports import router as reports_router
+from .routes_retention import router as retention_router
 from .routes_rum_vitals import router as rum_router
 from .routes_sandbox_bootstrap import router as sandbox_bootstrap_router
 from .routes_security import router as security_router
@@ -910,6 +911,7 @@ app.include_router(jobs_status_router)
 app.include_router(dlq_router)
 app.include_router(admin_privacy_router)
 app.include_router(privacy_dsar_router)
+app.include_router(retention_router)
 app.include_router(outbox_admin_router)
 app.include_router(webhook_tools_router)
 app.include_router(orders_batch_router)
