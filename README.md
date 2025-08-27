@@ -864,4 +864,4 @@ Run `python scripts/release_tag.py` to generate a changelog entry and tag a new 
 
 ## Deployment
 
-A `deploy` GitHub Actions workflow builds Docker images, verifies staging with preflight, smoke, canary, and accessibility gates, then waits for manual approval before a blue/green production rollout with automatic rollback on failure. See `docs/CI_CD.md` for details. For manual rollouts, `make stage` deploys to staging, `make pilot` runs the staging smoke suite, and `make prod` promotes to production.
+The `deploy` GitHub Actions workflow pushes the current revision to a dedicated `deploy` branch, verifies staging with preflight, smoke, canary, and accessibility gates, then waits for manual approval before a blue/green production rollout with automatic rollback on failure. See `docs/CI_CD.md` for details. For manual rollouts, `make stage` deploys to staging, `make pilot` runs the staging smoke suite, and `make prod` promotes to production.
