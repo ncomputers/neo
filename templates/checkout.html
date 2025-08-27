@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Checkout</title>
+  </head>
+  <body>
+    <p>Total: {{ total }}</p>
+    {% if tip_enabled %}
+    <p>Tip: {{ tip }}</p>
+    {% endif %}
+
+    <div id="payment-methods">
+      {% for method in payment_methods %}
+      <button class="pay" data-method="{{ method }}">{{ method }}</button>
+      {% endfor %}
+    </div>
+
+    <button id="refund-btn" data-payment-id="{{ payment_id }}">Refund</button>
+    <p style="font-size: 10px">
+      <a href="/legal/terms">Terms</a> |
+      <a href="/legal/refund">Refunds</a> |
+      <a href="/legal/contact">Contact</a>
+    </p>
+    <script>
+      const btn = document.getElementById('refund-btn');
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Are you sure?')) return;
+          const key = self.crypto?.randomUUID?.() || Date.now().toString();
+          const id = btn.dataset.paymentId;
+          await fetch(`/payments/${id}/refund`, {
+            method: 'POST',
+            headers: { 'Idempotency-Key': key }
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
