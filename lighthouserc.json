@@ -2,13 +2,14 @@
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:5173/guest",
-        "http://localhost:5173/admin",
-        "http://localhost:5173/kds"
+        "http://localhost:5173/",
+        "http://localhost:5174/",
+        "http://localhost:5175/"
       ],
       "numberOfRuns": 1,
       "output": ["html"],
       "reportFilenamePattern": "%%PATHNAME%%-lighthouse.%%EXTENSION%%",
+      "chromeFlags": "--no-sandbox",
       "settings": {
         "budgetsPath": "budgets.json"
       }
