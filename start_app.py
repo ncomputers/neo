@@ -33,7 +33,6 @@ def main(argv: list[str] | None = None) -> None:
     )
     if skip:
         os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite://")
-    config.get_settings()  # ensure settings are initialized with any override
 
     if not skip:
         try:
@@ -52,23 +51,41 @@ def main(argv: list[str] | None = None) -> None:
                 text=True,
             )
         except subprocess.CalledProcessError as exc:
-            if exc.stdout:
-                sys.stdout.write(exc.stdout)
-            if exc.stderr:
-                sys.stderr.write(exc.stderr)
-            print(
-                f"database migration failed (exit code {exc.returncode})",
-                file=sys.stderr,
+            conn_errors = (
+                "Name or service not known",
+                "could not translate host name",
+                "Connection refused",
             )
-            raise SystemExit(exc.returncode)
+            if any(err in exc.stderr for err in conn_errors):
+                if exc.stdout:
+                    sys.stdout.write(exc.stdout)
+                if exc.stderr:
+                    sys.stderr.write(exc.stderr)
+                print(
+                    "database unavailable; starting without migrations using SQLite",
+                    file=sys.stderr,
+                )
+                os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite://")
+            else:
+                if exc.stdout:
+                    sys.stdout.write(exc.stdout)
+                if exc.stderr:
+                    sys.stderr.write(exc.stderr)
+                print(
+                    f"database migration failed (exit code {exc.returncode})",
+                    file=sys.stderr,
+                )
+                raise SystemExit(exc.returncode)
         except FileNotFoundError:
             print("Install dependencies first: pip install -r requirements.txt")
             return
 
+    config.get_settings()  # ensure settings are initialized with any override
+
     try:
         uvicorn.run(
             "api.app.main:app",
-            host="0.0.0.0",
+            host="0.0.0.0",  # nosec B104: bind for local development
             port=int(os.getenv("PORT", "8000")),
             log_level="info",
         )
