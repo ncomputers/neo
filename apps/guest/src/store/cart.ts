@@ -26,11 +26,18 @@ export const useCartStore = create<CartState>((set, get) => ({
     const existing = get().items.find((i) => i.id === item.id);
     let items;
     if (existing) {
-      items = get().items.map((i) =>
-        i.id === item.id ? { ...i, qty: i.qty + item.qty } : i
-      );
-    } else {
+      const qty = existing.qty + item.qty;
+      if (qty <= 0) {
+        items = get().items.filter((i) => i.id !== item.id);
+      } else {
+        items = get().items.map((i) =>
+          i.id === item.id ? { ...i, qty } : i
+        );
+      }
+    } else if (item.qty > 0) {
       items = [...get().items, item];
+    } else {
+      items = get().items;
     }
     localStorage.setItem(key, JSON.stringify(items));
     set({ items });

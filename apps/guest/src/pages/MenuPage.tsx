@@ -7,6 +7,7 @@ import { useCartStore } from '../store/cart';
 interface Item {
   id: string;
   name_i18n: Record<string, string>;
+  desc_i18n?: Record<string, string>;
 }
 interface Category {
   id: string;
@@ -45,6 +46,7 @@ export function MenuPage() {
             {cat.items.map((item) => (
               <div key={item.id}>
                 <span>{item.name_i18n[lang] || item.name_i18n.en}</span>
+                <p>{item.desc_i18n?.[lang] || item.desc_i18n?.en}</p>
                 <button
                   onClick={() =>
                     add({ id: item.id, name: item.name_i18n.en, qty: 1 })

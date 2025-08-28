@@ -7,7 +7,7 @@ import { useLicense } from '../hooks/useLicense';
 
 export function CartPage() {
   const { t } = useTranslation();
-  const { items, clear } = useCartStore();
+  const { items, clear, add } = useCartStore();
   const { data } = useLicense();
   const [tip, setTip] = useState(0);
 
@@ -31,6 +31,18 @@ export function CartPage() {
             {items.map((it) => (
               <li key={it.id}>
                 {it.name} x {it.qty}
+                <button
+                  aria-label="decrease"
+                  onClick={() => add({ id: it.id, name: it.name, qty: -1 })}
+                >
+                  -
+                </button>
+                <button
+                  aria-label="increase"
+                  onClick={() => add({ id: it.id, name: it.name, qty: 1 })}
+                >
+                  +
+                </button>
               </li>
             ))}
           </ul>
