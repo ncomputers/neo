@@ -24,14 +24,20 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 try:  # optional prometheus pushgateway
-    from prometheus_client import CollectorRegistry, Gauge, push_to_gateway  # type: ignore
+    from prometheus_client import (  # type: ignore
+        CollectorRegistry,
+        Gauge,
+        push_to_gateway,
+    )
 except Exception:  # pragma: no cover - optional dependency
     CollectorRegistry = Gauge = push_to_gateway = None  # type: ignore
 
 ARTIFACT_DIR = Path("synthetics")
 
 
-def _http(method: str, url: str, headers: dict[str, str], payload: Any | None = None) -> tuple[int, Any]:
+def _http(
+    method: str, url: str, headers: dict[str, str], payload: Any | None = None
+) -> tuple[int, Any]:
     if os.environ.get("DRY_RUN"):
         # minimal stubbed responses used in tests
         if url.endswith("/refund"):
@@ -41,7 +47,7 @@ def _http(method: str, url: str, headers: dict[str, str], payload: Any | None = 
             body = {"status": "REFUNDED" if count == 0 else "NOOP"}
         elif url.endswith("/invoice.pdf"):
             status = 200
-            body = b"Outlet Name\nTotal \xe2\x82\xb9" + b"0"*6000
+            body = b"Outlet Name\nTotal \xe2\x82\xb9" + b"0" * 6000
         else:
             status = 200
             body = {"ok": True, "order_id": "o-1", "invoice_id": 1}
@@ -50,7 +56,7 @@ def _http(method: str, url: str, headers: dict[str, str], payload: Any | None = 
     data = json.dumps(payload).encode() if payload is not None else None
     req_headers = {"Content-Type": "application/json", **headers} if data else headers
     req = Request(url, data=data, headers=req_headers, method=method)
-    with urlopen(req, timeout=10) as resp:  # noqa: S310
+    with urlopen(req, timeout=10) as resp:  # noqa: S310  # nosec
         body = resp.read()
         ctype = resp.headers.get("Content-Type", "")
         parsed = json.loads(body) if "application/json" in ctype else body
@@ -67,7 +73,9 @@ def _push_metric(metrics: dict[str, Any]) -> None:
     if not gateway:
         return
     registry = CollectorRegistry()
-    g = Gauge("synthetic_order_success", "1 if synthetic order succeeded", registry=registry)
+    g = Gauge(
+        "synthetic_order_success", "1 if synthetic order succeeded", registry=registry
+    )
     g.set(1 if metrics["success"] else 0)
     try:
         push_to_gateway(gateway, job="synthetic_order_monitor", registry=registry)
@@ -76,7 +84,9 @@ def _push_metric(metrics: dict[str, Any]) -> None:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
 
     required = [
         "SYN_TENANT_ID",
@@ -86,13 +96,24 @@ def main() -> None:
         "AUTH_TOKEN",
     ]
     for key in required:
-        if key not in os.environ:
+        if not os.environ.get(key):
             raise RuntimeError(f"missing env {key}")
 
-    tenant = os.environ["SYN_TENANT_ID"]
-    table = os.environ["SYN_TABLE_CODE"]
-    item_ids = [i.strip() for i in os.environ["SYN_MENU_ITEM_IDS"].split(",") if i.strip()]
-    base = os.environ["API_BASE_URL"].rstrip("/")
+    base = os.environ.get("API_BASE_URL", "").rstrip("/")
+    tenant = os.environ.get("SYN_TENANT_ID", "").strip("/")
+    table = os.environ.get("SYN_TABLE_CODE", "").strip("/")
+
+    for key, val in {
+        "API_BASE_URL": base,
+        "SYN_TENANT_ID": tenant,
+        "SYN_TABLE_CODE": table,
+    }.items():
+        if not val:
+            raise SystemExit(f"missing required env: {key}")
+
+    item_ids = [
+        i.strip() for i in os.environ["SYN_MENU_ITEM_IDS"].split(",") if i.strip()
+    ]
     token = os.environ["AUTH_TOKEN"]
     vpa = os.environ.get("SYN_UPI_VPA")
 
@@ -111,8 +132,8 @@ def main() -> None:
     start = time.perf_counter()
     try:
         # a) start guest session
-        url = f"{base}/g/{tenant}/{table}/session"
-        status, _ = _http("POST", url, headers)
+        session_url = f"{base}/g/{tenant}/{table}/session"
+        status, _ = _http("POST", session_url, headers)
         metrics["http_status_map"]["session"] = status
 
         # b) add items
@@ -173,7 +194,9 @@ def main() -> None:
         outdir = ARTIFACT_DIR / ts
         outdir.mkdir(parents=True, exist_ok=True)
         (outdir / "error.txt").write_text(str(exc))
-        logging.error("synthetic monitor failed step=%s error=%s", metrics["step_failed"], exc)
+        logging.error(
+            "synthetic monitor failed step=%s error=%s", metrics["step_failed"], exc
+        )
         raise
     finally:
         metrics["total_ms"] = int((time.perf_counter() - start) * 1000)
