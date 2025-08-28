@@ -1,25 +1,27 @@
+import asyncio
+import os
 import pathlib
 import sys
-import os
-from uuid import uuid4
+from contextlib import asynccontextmanager
 from datetime import timedelta
-import asyncio
+from uuid import uuid4
 
+import jwt
 import pytest
 from fastapi import FastAPI, HTTPException
 from httpx import ASGITransport, AsyncClient
-from contextlib import asynccontextmanager
-from jose import jwt, JWTError, ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 # ensure app modules importable
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from api.app import models_tenant  # noqa: E402
+from api.app.auth import ALGORITHM, SECRET_KEY, create_access_token  # noqa: E402
 from api.app.db.tenant import get_engine  # noqa: E402
-from api.app.auth import create_access_token, SECRET_KEY, ALGORITHM  # noqa: E402
 
-os.environ.setdefault("POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db")
+os.environ.setdefault(
+    "POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db"
+)
 
 
 @pytest.fixture
@@ -67,7 +69,9 @@ async def test_cross_tenant_id_not_found():
                     return {"id": obj.id}
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 ok_resp = await client.get(f"/api/outlet/{t1}/outbox/{item_id}")
                 assert ok_resp.status_code == 200
                 bad_resp = await client.get(f"/api/outlet/{t2}/outbox/{item_id}")
@@ -90,9 +94,9 @@ async def test_signed_media_rejects_foreign_tenant():
     async def get_media(tenant: str, key: str, token: str):
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        except ExpiredSignatureError:
+        except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=403, detail="expired")
-        except JWTError:
+        except jwt.PyJWTError:
             raise HTTPException(status_code=403, detail="bad token")
         if payload.get("tenant") != tenant or payload.get("key") != key:
             raise HTTPException(status_code=403, detail="tenant mismatch")
@@ -116,15 +120,17 @@ async def test_export_signature_ttl():
     async def export_dummy(tenant: str, token: str):
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        except ExpiredSignatureError:
+        except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=403, detail="expired")
-        except JWTError:
+        except jwt.PyJWTError:
             raise HTTPException(status_code=403, detail="bad token")
         if payload.get("tenant") != tenant:
             raise HTTPException(status_code=403, detail="tenant mismatch")
         return {"ok": True}
 
-    token = create_access_token({"tenant": "t1", "sub": "u"}, expires_delta=timedelta(seconds=1))
+    token = create_access_token(
+        {"tenant": "t1", "sub": "u"}, expires_delta=timedelta(seconds=1)
+    )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         good = await client.get(f"/api/outlet/t1/exports/dummy?token={token}")

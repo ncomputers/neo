@@ -2,16 +2,16 @@
 
 """Simple in-memory authentication demo for FastAPI routes."""
 
-from datetime import datetime, timedelta
 import logging
 import os
+from datetime import datetime, timedelta
 from typing import Optional
 
+import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerificationError, VerifyMismatchError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         if username is None or role is None:
             raise credentials_exception
         token_data = TokenData(username=username, role=role)
-    except JWTError:  # pragma: no cover - library handles detailed errors
+    except jwt.PyJWTError:  # pragma: no cover - library handles detailed errors
         raise credentials_exception
     user = fake_users_db.get(token_data.username)
     if user is None:

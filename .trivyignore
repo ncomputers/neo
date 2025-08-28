@@ -1,0 +1,2 @@
+# Temporarily ignore CVE-2024-23342 until upstream releases a fixed ecdsa
+CVE-2024-23342

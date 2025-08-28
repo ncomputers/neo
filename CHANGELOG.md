@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Security
 
-- Pin ``ecdsa`` dependency to ``==0.19.1`` and regenerate backend requirements to address CVE-2024-23342.
+- Switch from ``python-jose`` to ``PyJWT`` with a ``cryptography`` backend, removing the vulnerable ``ecdsa`` dependency and regenerating backend requirements.
 - Require ``setuptools>=78.1.1`` in developer scripts and worker image.
 - Align API and worker on Python 3.12, pinning digest-based bases and running the API as non-root ``app``.
 
