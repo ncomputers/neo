@@ -2,9 +2,9 @@
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:8000/guest",
-        "http://localhost:8000/admin",
-        "http://localhost:8000/kds"
+        "http://localhost:5173/guest",
+        "http://localhost:5173/admin",
+        "http://localhost:5173/kds"
       ],
       "numberOfRuns": 1,
       "output": ["html"],
