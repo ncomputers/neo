@@ -5,6 +5,16 @@ import { BrowserRouter } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 import i18n, { setLanguage } from '../i18n';
 import { CartPage } from '../pages/CartPage';
+import { useCartStore } from '../store/cart';
+
+jest.mock(
+  '@neo/ui',
+  () => ({
+    EmptyState: () => null,
+    ShoppingCart: () => null,
+  }),
+  { virtual: true }
+);
 
 function renderCart() {
   const qc = new QueryClient();
@@ -26,9 +36,11 @@ describe('guest flows', () => {
       ok: true,
       json: async () => ({ status: 'EXPIRED' }),
     });
+    useCartStore.setState({ items: [] });
   });
 
   test('shows license banner and disables order', async () => {
+    useCartStore.setState({ items: [{ id: '1', name: 'Test', qty: 1 }] });
     renderCart();
     await waitFor(() =>
       expect(screen.getByTestId('license-banner')).toBeInTheDocument()

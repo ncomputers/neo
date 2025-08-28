@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, useWS } from '@neo/api';
-import { SkeletonList } from '@neo/ui';
+import { SkeletonList, EmptyState, Ticket as TicketIcon } from '@neo/ui';
+import { useTranslation } from 'react-i18next';
 import { WS_BASE, TENANT_ID } from '../env';
 import { PinModal } from '../components/PinModal';
 import { Snackbar } from '../components/Snackbar';
@@ -22,6 +23,7 @@ export function ExpoPage() {
   const [pending, setPending] = useState<(() => void) | null>(null);
   const [toast, setToast] = useState<{ msg: string; type?: 'success' | 'error' } | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -186,54 +188,82 @@ export function ExpoPage() {
         <div className="grid grid-cols-4 gap-4">
           <div>
             <h3 className="font-semibold mb-2">New</h3>
-            <ul className="space-y-2">
-              {newTickets.map((t) => (
-                <li key={t.order_id} className="border p-2 rounded">
-                  <div className="flex justify-between">
-                    <span>Table {t.table}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {newTickets.length === 0 ? (
+              <EmptyState
+                message={t('no_tickets')}
+                icon={<TicketIcon className="w-12 h-12 mx-auto" />}
+              />
+            ) : (
+              <ul className="space-y-2">
+                {newTickets.map((t) => (
+                  <li key={t.order_id} className="border p-2 rounded">
+                    <div className="flex justify-between">
+                      <span>Table {t.table}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <h3 className="font-semibold mb-2">Preparing</h3>
-            <ul className="space-y-2">
-              {preparing.map((t) => (
-                <li key={t.order_id} className="border p-2 rounded">
-                  <div className="flex justify-between">
-                    <span>Table {t.table}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {preparing.length === 0 ? (
+              <EmptyState
+                message={t('no_tickets')}
+                icon={<TicketIcon className="w-12 h-12 mx-auto" />}
+              />
+            ) : (
+              <ul className="space-y-2">
+                {preparing.map((t) => (
+                  <li key={t.order_id} className="border p-2 rounded">
+                    <div className="flex justify-between">
+                      <span>Table {t.table}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <h3 className="font-semibold mb-2">Ready</h3>
-            <ul className="space-y-2">
-              {ready.map((t) => (
-                <li key={t.order_id} className="border p-2 rounded">
-                  <div className="flex justify-between">
-                    <span>Table {t.table}</span>
-                    <span className="text-sm text-gray-600" title={`ETA ${formatEta(t.age_s)}`}>
-                      {formatAge(t.age_s)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {ready.length === 0 ? (
+              <EmptyState
+                message={t('no_tickets')}
+                icon={<TicketIcon className="w-12 h-12 mx-auto" />}
+              />
+            ) : (
+              <ul className="space-y-2">
+                {ready.map((t) => (
+                  <li key={t.order_id} className="border p-2 rounded">
+                    <div className="flex justify-between">
+                      <span>Table {t.table}</span>
+                      <span className="text-sm text-gray-600" title={`ETA ${formatEta(t.age_s)}`}>
+                        {formatAge(t.age_s)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <h3 className="font-semibold mb-2">Picked</h3>
-            <ul className="space-y-2">
-              {picked.map((t) => (
-                <li key={t.order_id} className="border p-2 rounded text-gray-500">
-                  <div className="flex justify-between">
-                    <span>Table {t.table}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {picked.length === 0 ? (
+              <EmptyState
+                message={t('no_tickets')}
+                icon={<TicketIcon className="w-12 h-12 mx-auto" />}
+              />
+            ) : (
+              <ul className="space-y-2">
+                {picked.map((t) => (
+                  <li key={t.order_id} className="border p-2 rounded text-gray-500">
+                    <div className="flex justify-between">
+                      <span>Table {t.table}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )}
