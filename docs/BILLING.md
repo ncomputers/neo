@@ -25,3 +25,19 @@ Tenant access is gated based on subscription expiry. The middleware resolves the
 | EXPIRED | Beyond grace period                      | Read-only views; writes return HTTP 402 |
 
 Billing endpoints such as `/admin/billing/*` and `/billing/webhook/*` bypass the gate so owners can always renew.
+
+## Plan changes & proration
+
+Upgrading a plan mid-cycle results in a prorated charge for the remaining
+period. The proration is computed from the price difference, scaled by the
+unused portion of the current period and split into CGST/SGST or IGST as
+appropriate.
+
+Examples:
+
+- ₹3000/mo → ₹5000/mo halfway through the cycle (`factor = 0.5`) results in a
+  prorated amount of ₹1000 plus 18% GST.
+- ₹5000/mo → ₹3000/mo is scheduled for the next renewal. A credit note is
+  issued only if the downgrade policy is set to immediate credits.
+
+![Proration preview](img/billing-proration-preview.png)
