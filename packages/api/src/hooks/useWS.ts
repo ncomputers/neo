@@ -2,9 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 
 export interface WSOptions {
   protocols?: string | string[];
+  /**
+   * Return delay in ms before the next reconnect attempt.
+   * Receives retry count starting at 1.
+   * Defaults to exponential backoff capped at 30s.
+   */
+  retryDelay?: (attempt: number) => number;
 }
 
 export function useWS<T = unknown>(url: string, opts?: WSOptions) {
+  const delayFn = opts?.retryDelay ?? ((n: number) => Math.min(1000 * 2 ** n, 30000));
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<Event | null>(null);
   const wsRef = useRef<WebSocket>();
@@ -20,7 +27,7 @@ export function useWS<T = unknown>(url: string, opts?: WSOptions) {
       ws.onclose = () => {
         if (active) {
           retry++;
-          setTimeout(connect, Math.min(1000 * 2 ** retry, 30000));
+          setTimeout(connect, delayFn(retry));
         }
       };
     };
@@ -29,7 +36,7 @@ export function useWS<T = unknown>(url: string, opts?: WSOptions) {
       active = false;
       wsRef.current?.close();
     };
-  }, [url, opts?.protocols]);
+  }, [url, opts?.protocols, delayFn]);
 
   const send = (msg: unknown) => wsRef.current?.send(JSON.stringify(msg));
   return { data, error, send };
