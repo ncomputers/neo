@@ -26,7 +26,11 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG_STAGING }}" > ~/.kube/config
+          printf '%s' "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 --decode > ~/.kube/config
+          chmod 600 ~/.kube/config
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+      - name: Verify cluster access
+        run: kubectl cluster-info
       - name: Deploy to staging
         run: |
           helm upgrade --install neo deploy/helm/neo \
@@ -68,7 +72,9 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG_PROD }}" > ~/.kube/config
+          printf '%s' "${{ secrets.KUBE_CONFIG_PROD }}" | base64 --decode > ~/.kube/config
+          chmod 600 ~/.kube/config
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
       - name: Blue/green rollout
         run: |
           helm upgrade --install neo deploy/helm/neo \
