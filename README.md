@@ -764,7 +764,9 @@ The script will print `READY` once the database is available.
 
 To apply migrations for an existing tenant database, provide a DSN template via
 ``--dsn-template`` or the ``POSTGRES_TENANT_DSN_TEMPLATE`` environment variable
-(e.g. ``postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id}``) and run:
+(e.g. ``postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id}``). If neither is
+supplied, a template is derived from ``SYNC_DATABASE_URL`` by appending
+``_<tenant_id>`` to its database name. Run:
 
 ```bash
 POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id} \

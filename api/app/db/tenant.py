@@ -5,6 +5,9 @@ variable and is expected to include a ``{tenant_id}`` placeholder. For example::
 
     postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id}
 
+If the template variable is unset, a fallback template is derived from
+``SYNC_DATABASE_URL`` by appending ``_<tenant_id>`` to its database name.
+
 Use :func:`build_dsn` to render a DSN for a tenant and :func:`get_engine` to
 create an :class:`~sqlalchemy.ext.asyncio.AsyncEngine` for it.
 """
@@ -20,12 +23,14 @@ from typing import AsyncGenerator, Final
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from api.app.obs import add_query_logger
 
 TEMPLATE_ENV: Final[str] = "POSTGRES_TENANT_DSN_TEMPLATE"
+SYNC_URL_ENV: Final[str] = "SYNC_DATABASE_URL"
 
 
 def build_dsn(tenant_id: str) -> str:
@@ -39,7 +44,22 @@ def build_dsn(tenant_id: str) -> str:
     """
     template = os.getenv(TEMPLATE_ENV)
     if not template:
-        raise RuntimeError(f"{TEMPLATE_ENV} environment variable is not set")
+        sync_url = os.getenv(SYNC_URL_ENV)
+        if sync_url:
+            url = make_url(sync_url)
+            db = url.database or "tenant"
+            if db.endswith(".db"):
+                base = db[:-3]
+                db_name = f"{base}_{{tenant_id}}.db"
+            else:
+                db_name = f"{db}_{{tenant_id}}"
+            template = url.set(database=db_name).render_as_string(
+                hide_password=False
+            )
+    if not template:
+        raise RuntimeError(
+            f"{TEMPLATE_ENV} environment variable is not set and {SYNC_URL_ENV} is missing"
+        )
     try:
         return template.format(tenant_id=tenant_id)
     except Exception as exc:  # pragma: no cover - invalid format string
