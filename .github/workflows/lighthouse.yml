@@ -45,7 +45,7 @@ jobs:
           python -m alembic -c api/alembic.ini -x db_url=$POSTGRES_MASTER_URL upgrade head
       - name: Run Lighthouse CI
         run: |
-          python start_app.py &
+          SKIP_DB_MIGRATIONS=1 python start_app.py &
           sleep 5
           lhci autorun --config=lighthouserc.json
       - name: Upload Lighthouse reports
