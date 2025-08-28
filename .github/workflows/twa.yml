@@ -1,0 +1,15 @@
+name: TWA build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build TWAs
+        run: ./scripts/twa_build.sh
+      - name: Deploy asset links
+        if: ${{ secrets.ASSETLINKS_HOST != '' }}
+        run: ./scripts/deploy_assetlinks.sh
