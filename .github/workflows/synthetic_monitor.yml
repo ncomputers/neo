@@ -28,10 +28,10 @@ jobs:
         run: |
           set -Eeuo pipefail
           missing=()
-          [[ -z "${API_BASE_URL:-}" ]] && missing+=("API_BASE_URL_STAGING")
-          [[ -z "${SYN_TENANT_ID:-}" ]] && missing+=("SYN_TENANT_ID_STAGING")
-          [[ -z "${SYN_TABLE_CODE:-}" ]] && missing+=("SYN_TABLE_CODE_STAGING")
-          [[ -z "${AUTH_TOKEN:-}"    ]] && missing+=("AUTH_TOKEN_STAGING")
+          [[ -z "${API_BASE_URL:-}" ]] && missing+=("API_BASE_URL")
+          [[ -z "${SYN_TENANT_ID:-}" ]] && missing+=("SYN_TENANT_ID")
+          [[ -z "${SYN_TABLE_CODE:-}" ]] && missing+=("SYN_TABLE_CODE")
+          [[ -z "${AUTH_TOKEN:-}"    ]] && missing+=("AUTH_TOKEN")
           if (( ${#missing[@]} )); then
             echo "Missing required secrets: ${missing[*]}" >&2
             exit 1
@@ -119,10 +119,10 @@ jobs:
         run: |
           set -Eeuo pipefail
           missing=()
-          [[ -z "${API_BASE_URL:-}" ]] && missing+=("API_BASE_URL_PROD")
-          [[ -z "${SYN_TENANT_ID:-}" ]] && missing+=("SYN_TENANT_ID_PROD")
-          [[ -z "${SYN_TABLE_CODE:-}" ]] && missing+=("SYN_TABLE_CODE_PROD")
-          [[ -z "${AUTH_TOKEN:-}"    ]] && missing+=("AUTH_TOKEN_PROD")
+          [[ -z "${API_BASE_URL:-}" ]] && missing+=("API_BASE_URL")
+          [[ -z "${SYN_TENANT_ID:-}" ]] && missing+=("SYN_TENANT_ID")
+          [[ -z "${SYN_TABLE_CODE:-}" ]] && missing+=("SYN_TABLE_CODE")
+          [[ -z "${AUTH_TOKEN:-}"    ]] && missing+=("AUTH_TOKEN")
           if (( ${#missing[@]} )); then
             echo "Missing required secrets: ${missing[*]}" >&2
             exit 1
