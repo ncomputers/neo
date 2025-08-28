@@ -13,3 +13,5 @@ export function formatGST(gst: number) {
 export function moneyToWords(amount: number) {
   return `${amount} rupees`;
 }
+
+export { capturePageView, captureError } from './rum';

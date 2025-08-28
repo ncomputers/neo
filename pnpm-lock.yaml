@@ -314,6 +314,9 @@ importers:
       '@neo/api':
         specifier: workspace:*
         version: link:../api
+      '@neo/utils':
+        specifier: workspace:*
+        version: link:../utils
       clsx:
         specifier: ^2.0.0
         version: 2.1.1
