@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster, GlobalErrorBoundary } from '@neo/ui';
 import './index.css';
 import './i18n';
-import { HealthPage } from './pages/HealthPage';
+import { Health } from './pages/Health';
 import { QrPage } from './pages/QrPage';
 import { MenuPage } from './pages/MenuPage';
 import { CartPage } from './pages/CartPage';
@@ -25,7 +25,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={qc}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<HealthPage />} />
+            <Route path="/health" element={<Health />} />
+            <Route path="/" element={<QrPage />} />
             <Route path="/qr" element={<QrPage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/cart" element={<CartPage />} />

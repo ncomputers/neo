@@ -58,10 +58,16 @@ export function ExpoPage() {
     return () => clearInterval(t);
   }, [fetchTickets]);
 
-  const { data: wsData } = useWS<{ orders: Ticket[] }>(`${WS_BASE}/kds/expo`);
-  useEffect(() => {
-    if (wsData?.orders) setReady(wsData.orders);
-  }, [wsData]);
+  useWS(`${WS_BASE}/kds/expo`, {
+    onMessage: (e) => {
+      try {
+        const msg = JSON.parse(e.data) as { orders?: Ticket[] };
+        if (msg.orders) setReady(msg.orders);
+      } catch {
+        /* ignore */
+      }
+    },
+  });
 
   useEffect(() => {
     const on = () => setOffline(!navigator.onLine);

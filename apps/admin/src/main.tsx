@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
 import './i18n';
-import { HealthPage } from './pages/HealthPage';
+import { Health } from './pages/Health';
 import { Workbox } from 'workbox-window';
 
 const qc = new QueryClient();
@@ -19,7 +19,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={qc}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<HealthPage />} />
+          <Route path="/health" element={<Health />} />
+          <Route path="/" element={<Health />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

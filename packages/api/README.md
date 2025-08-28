@@ -22,8 +22,8 @@ realtime updates.
 ```tsx
 import { useSSE } from '@neo/api';
 
-const { data, error } = useSSE('/api/events', {
-  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000)
+useSSE('/api/events', {
+  onMessage: (e) => console.log(e.data)
 });
 ```
 
@@ -32,8 +32,8 @@ const { data, error } = useSSE('/api/events', {
 ```tsx
 import { useWS } from '@neo/api';
 
-const { data, send } = useWS('wss://example.com/socket', {
-  retryDelay: () => 5000
+const { send } = useWS('wss://example.com/socket', {
+  onMessage: (e) => console.log(e.data)
 });
 
 send({ type: 'ping' });
