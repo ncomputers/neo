@@ -2,6 +2,6 @@
   "extends": "@neo/config/tsconfig",
   "include": ["src"],
   "compilerOptions": {
-    "types": ["vite/client"]
+    "types": ["vite/client", "jest"]
   }
 }

@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
 import './i18n';
 import { HealthPage } from './pages/HealthPage';
+import { QrPage } from './pages/QrPage';
+import { MenuPage } from './pages/MenuPage';
+import { CartPage } from './pages/CartPage';
+import { TrackPage } from './pages/TrackPage';
 import { Workbox } from 'workbox-window';
 
 const qc = new QueryClient();
@@ -20,6 +24,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HealthPage />} />
+          <Route path="/qr" element={<QrPage />} />
+          <Route path="/menu" element={<MenuPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/track/:orderId" element={<TrackPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
