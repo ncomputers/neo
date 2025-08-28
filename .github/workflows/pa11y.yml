@@ -50,7 +50,7 @@ jobs:
       - name: Start API
         run: |
           python start_app.py &
-          sleep 5
+          npx wait-on tcp:localhost:8000
 
       - name: Run Pa11y
         run: npx pa11y-ci -c pa11y-ci.json

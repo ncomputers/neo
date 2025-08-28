@@ -287,8 +287,11 @@ troubleshooting failures.
 ## Accessibility
 
 Buttons across major flows include descriptive ARIA labels, visible focus
-outlines, and high-contrast color tokens. Run `npx pa11y-ci -c pa11y-ci.json`
-to verify key screens remain accessible.
+outlines, and high-contrast color tokens. The Pa11y GitHub Actions workflow
+provisions a Postgres service, applies migrations, launches
+`python start_app.py` in the background, waits for `localhost:8000` with
+`wait-on`, and then runs `npx pa11y-ci -c pa11y-ci.json` to verify key screens
+remain accessible.
 
 ## Localization
 
