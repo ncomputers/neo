@@ -164,6 +164,7 @@ from .routes_menu_i18n import router as menu_i18n_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
+from .routes_referrals import router as referrals_router
 from .routes_order_void import router as order_void_router
 from .routes_orders_batch import router as orders_batch_router
 from .routes_outbox_admin import router as outbox_admin_router
@@ -898,6 +899,7 @@ app.include_router(billing_router)
 app.include_router(admin_billing_router)
 app.include_router(billing_webhook_router)
 app.include_router(onboarding_router)
+app.include_router(referrals_router)
 app.include_router(qrpack_router)
 app.include_router(order_void_router)
 

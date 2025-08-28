@@ -51,6 +51,11 @@ def two_factor_verify() -> Policy:
     return _policy("two_factor_verify", 5, 5)
 
 
+def referral_signup() -> Policy:
+    """Limit referred signups per IP."""
+    return _policy("referral_signup", 5 / 60, 5)
+
+
 __all__ = [
     "Policy",
     "guest_order",
@@ -59,4 +64,5 @@ __all__ = [
     "qrpack",
     "exports",
     "two_factor_verify",
+    "referral_signup",
 ]

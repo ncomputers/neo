@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - 24×7 synthetic order monitor with CI alerts and dashboards.
 - Floor map editor with live table status (SSE/WS).
 - Validate async DB URLs for Alembic migrations and expose `SYNC_DATABASE_URL` in Lighthouse workflow.
+- Referral signup rate limiting and credit caps via `REFERRAL_MAX_CREDITS` with self-referral safeguards.
 
 ### Fixed
 
