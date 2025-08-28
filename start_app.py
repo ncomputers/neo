@@ -66,7 +66,12 @@ def main(argv: list[str] | None = None) -> None:
             return
 
     try:
-        uvicorn.run("api.app.main:app")
+        uvicorn.run(
+            "api.app.main:app",
+            host="0.0.0.0",
+            port=int(os.getenv("PORT", "8000")),
+            log_level="info",
+        )
     except ModuleNotFoundError as exc:
         missing = exc.name or str(exc)
         print(
