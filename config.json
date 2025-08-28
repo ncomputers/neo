@@ -12,5 +12,9 @@
   "hide_out_of_stock_items": true,
   "audit_retention_days": 30,
   "guest_receipts_ttl_days": 30,
-  "happy_hour_windows": []
+  "happy_hour_windows": [],
+  "prep_sla_min": 15,
+  "eta_confidence": "p50",
+  "max_queue_factor": 1.6,
+  "eta_enabled": true
 }
