@@ -8,7 +8,7 @@ on:
 
 jobs:
   staging:
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     env:
       API_BASE_URL: ${{ secrets.API_BASE_URL_STAGING }}
@@ -25,9 +25,13 @@ jobs:
           pip install -r api/requirements.txt
       - name: Debug (length only)
         run: |
+          echo "::add-mask::$API_BASE_URL"
           echo "API_BASE_URL length: ${#API_BASE_URL}"
+          echo "::add-mask::$SYN_TENANT_ID"
           echo "SYN_TENANT_ID length: ${#SYN_TENANT_ID}"
+          echo "::add-mask::$SYN_TABLE_CODE"
           echo "SYN_TABLE_CODE length: ${#SYN_TABLE_CODE}"
+          echo "::add-mask::$AUTH_TOKEN"
           echo "AUTH_TOKEN length: ${#AUTH_TOKEN}"
       - name: Guard
         shell: bash
@@ -94,15 +98,14 @@ jobs:
         run: exit 1
 
   prod:
-    if: >-
-      (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *') &&
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
       github.ref == 'refs/heads/main' &&
       !github.event.pull_request.head.repo.fork &&
-      secrets.API_BASE_URL != '' &&
-      secrets.SYN_TENANT_ID != '' &&
-      secrets.SYN_TABLE_CODE != '' &&
-      secrets.AUTH_TOKEN != '' &&
-      secrets.SYN_ENABLED_PROD == 'true'
+      env.API_BASE_URL != '' &&
+      env.SYN_TENANT_ID != '' &&
+      env.SYN_TABLE_CODE != '' &&
+      env.AUTH_TOKEN != '' &&
+      env.SYN_ENABLED_PROD == 'true' }}
     runs-on: ubuntu-latest
     environment: prod
     env:
@@ -110,6 +113,7 @@ jobs:
       SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID }}
       SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE }}
       AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+      SYN_ENABLED_PROD: ${{ secrets.SYN_ENABLED_PROD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -119,7 +123,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          secrets=(API_BASE_URL SYN_TENANT_ID SYN_TABLE_CODE AUTH_TOKEN)
+          secrets=(API_BASE_URL SYN_TENANT_ID SYN_TABLE_CODE AUTH_TOKEN SYN_ENABLED_PROD)
           missing=()
           for var in "${secrets[@]}"; do
             val="${!var:-}"
