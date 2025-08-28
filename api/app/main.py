@@ -132,6 +132,7 @@ from .routes_dashboard_charts import router as dashboard_charts_router
 from .routes_daybook_pdf import router as daybook_pdf_router
 from .routes_digest import router as digest_router
 from .routes_dlq import router as dlq_router
+from .routes_eta import router as eta_router
 from .routes_export_all import router as export_all_router
 from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
@@ -940,6 +941,7 @@ app.include_router(pwa_version_router)
 app.include_router(status_json_router)
 app.include_router(version_router)
 app.include_router(ready_router)
+app.include_router(eta_router)
 app.include_router(troubleshoot_router)
 app.include_router(help_router)
 app.include_router(support_router)

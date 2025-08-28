@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     vapid_private_key: str | None = None
     max_conn_per_ip: int = 20
     ab_tests_enabled: bool = False
+    prep_sla_min: int = 15
+    eta_confidence: str = "p50"
+    max_queue_factor: float = 1.6
+    eta_enabled: bool = False
 
 
 # Cached singleton to avoid repeated file reads

@@ -48,6 +48,12 @@ class Tenant(Base):
     enable_hotel = Column(Boolean, nullable=False, default=False)
     enable_counter = Column(Boolean, nullable=False, default=False)
     enable_gateway = Column(Boolean, nullable=False, default=False)
+    prep_sla_min = Column(Integer, nullable=False, default=15)
+    eta_confidence = Column(String, nullable=False, default="p50")
+    max_queue_factor = Column(
+        Integer, nullable=False, default=16
+    )  # store *10 to avoid float
+    eta_enabled = Column(Boolean, nullable=False, default=False)
     subscription_expires_at = Column(DateTime, nullable=True)
     grace_period_days = Column(Integer, nullable=False, default=7)
     retention_days_customers = Column(Integer, nullable=True)
@@ -136,6 +142,20 @@ class TwoFactorBackupCode(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class PrepStats(Base):
+    """Per-item prep time percentiles aggregated nightly."""
+
+    __tablename__ = "prep_stats"
+
+    item_id = Column(String, primary_key=True)
+    outlet_id = Column(Integer, primary_key=True)
+    p50_s = Column(Integer, nullable=False)
+    p80_s = Column(Integer, nullable=False)
+    p95_s = Column(Integer, nullable=False)
+    sample_n = Column(Integer, nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
 class SupportTicket(Base):
     """Owner support tickets stored in the master database."""
 
@@ -170,6 +190,7 @@ __all__ = [
     "NotificationDLQ",
     "TwoFactorSecret",
     "TwoFactorBackupCode",
+    "PrepStats",
     "SupportTicket",
     "Device",
 ]
