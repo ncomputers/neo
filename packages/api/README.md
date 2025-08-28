@@ -30,3 +30,18 @@ const { data, send } = useWS('wss://example.com/socket', {
 
 send({ type: 'ping' });
 ```
+
+## Telemetry
+
+### `usePageview`
+
+```tsx
+import { usePageview } from '@neo/api';
+import { useLocation } from 'react-router-dom';
+
+function App() {
+  const { pathname } = useLocation();
+  usePageview(pathname);
+  return null;
+}
+```
