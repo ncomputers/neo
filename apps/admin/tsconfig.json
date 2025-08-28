@@ -1,7 +1,13 @@
 {
   "extends": "@neo/config/tsconfig",
   "include": ["src"],
+  "exclude": ["src/**/*.test.tsx"],
   "compilerOptions": {
-    "types": ["vite/client"]
+    "types": ["vite/client", "@testing-library/jest-dom"],
+    "paths": {
+      "@neo/api": ["../../packages/api/src"],
+      "@neo/ui": ["../../packages/ui/src"],
+      "@neo/utils": ["../../packages/utils/src"]
+    }
   }
 }
