@@ -1,0 +1,52 @@
+import { Component, ReactNode } from 'react';
+import { apiFetch } from '@neo/api';
+import { Button } from './button';
+
+export interface GlobalErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface State {
+  error: Error | null;
+}
+
+export class GlobalErrorBoundary extends Component<
+  GlobalErrorBoundaryProps,
+  State
+> {
+  state: State = { error: null };
+
+  static getDerivedStateFromError(error: Error): State {
+    return { error };
+  }
+
+  componentDidCatch(error: Error) {
+    void apiFetch('/telemetry/error', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        message: error.message,
+        stack: error.stack
+      })
+    }).catch(() => {});
+  }
+
+  private handleRetry = () => {
+    this.setState({ error: null });
+  };
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-4 text-center space-y-4">
+          <p>Something went wrong.</p>
+          <Button onClick={this.handleRetry}>Retry</Button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default GlobalErrorBoundary;
