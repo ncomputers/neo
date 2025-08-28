@@ -11,10 +11,15 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import sys
 import uuid
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Ensure project root is on the import path so ``api.app`` resolves when
+# invoked as ``python scripts/tenant_seed.py``.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api.app.db.tenant import get_tenant_session
 from api.app.models_tenant import Category, MenuItem, Table
 
@@ -58,4 +63,3 @@ if __name__ == "__main__":
     parser.add_argument("--tenant", required=True, help="Tenant identifier")
     args = parser.parse_args()
     asyncio.run(main(args.tenant))
-
