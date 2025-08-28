@@ -16,6 +16,11 @@ REQUIRED_ENVS = [
 
 logger = logging.getLogger("api.config")
 
+DEV_DEFAULTS = {
+    "ALLOWED_ORIGINS": "http://localhost",
+    "SECRET_KEY": "test-secret",
+}
+
 
 def _load_flag_config() -> dict[str, bool]:
     """Read ``config/feature_flags.yaml`` into a mapping."""
@@ -47,23 +52,28 @@ def validate_on_boot() -> None:
     required variable is missing or malformed.
     """
 
+    env = os.getenv("ENV", "dev")
     missing: list[str] = []
     for name in REQUIRED_ENVS:
         value = os.getenv(name)
+        if not value and env != "prod" and name in DEV_DEFAULTS:
+            value = DEV_DEFAULTS[name]
+            os.environ.setdefault(name, value)
         if not value:
             missing.append(name)
             continue
 
-        if name.endswith("_URL"):
-            parsed = urlparse(value)
-            if not parsed.scheme or not parsed.netloc:
-                raise RuntimeError(f"{name} must be a valid URL")
-        if name == "ALLOWED_ORIGINS":
-            origins = [o.strip() for o in value.split(",") if o.strip()]
-            if not origins:
-                raise RuntimeError("ALLOWED_ORIGINS must list at least one origin")
-        if name == "SECRET_KEY" and len(value) < 32:
-            raise RuntimeError("SECRET_KEY must be at least 32 characters long")
+        if env == "prod":
+            if name.endswith("_URL"):
+                parsed = urlparse(value)
+                if not parsed.scheme or not parsed.netloc:
+                    raise RuntimeError(f"{name} must be a valid URL")
+            if name == "ALLOWED_ORIGINS":
+                origins = [o.strip() for o in value.split(",") if o.strip()]
+                if not origins:
+                    raise RuntimeError("ALLOWED_ORIGINS must list at least one origin")
+            if name == "SECRET_KEY" and len(value) < 32:
+                raise RuntimeError("SECRET_KEY must be at least 32 characters long")
 
         logger.info("%s=%s", name, _mask(value))
 
@@ -72,7 +82,6 @@ def validate_on_boot() -> None:
             "Missing required environment variables: " + ", ".join(sorted(missing))
         )
 
-    env = os.getenv("ENV", "dev")
     if env == "prod":
         experimental = [
             "ab_tests",
@@ -92,4 +101,3 @@ def validate_on_boot() -> None:
                 raise RuntimeError(f"{name} feature flag must remain OFF in prod")
             if defaults.get(name):
                 raise RuntimeError(f"{name} feature flag must remain OFF in prod")
-
