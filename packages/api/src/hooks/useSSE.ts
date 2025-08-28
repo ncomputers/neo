@@ -26,7 +26,7 @@ export function useSSE<T = unknown>(url: string, opts?: EventSourceInit) {
       active = false;
       sourceRef.current?.close();
     };
-  }, [url]);
+  }, [url, opts]);
 
   return { data, error };
 }

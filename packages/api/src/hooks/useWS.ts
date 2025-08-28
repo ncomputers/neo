@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-export function useWS<T = unknown>(url: string) {
+export interface WSOptions {
+  protocols?: string | string[];
+}
+
+export function useWS<T = unknown>(url: string, opts?: WSOptions) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<Event | null>(null);
   const wsRef = useRef<WebSocket>();
@@ -9,7 +13,7 @@ export function useWS<T = unknown>(url: string) {
     let retry = 0;
     let active = true;
     const connect = () => {
-      const ws = new WebSocket(url);
+      const ws = new WebSocket(url, opts?.protocols);
       wsRef.current = ws;
       ws.onmessage = (e) => setData(JSON.parse(e.data));
       ws.onerror = (e) => setError(e);
@@ -25,7 +29,7 @@ export function useWS<T = unknown>(url: string) {
       active = false;
       wsRef.current?.close();
     };
-  }, [url]);
+  }, [url, opts?.protocols]);
 
   const send = (msg: unknown) => wsRef.current?.send(JSON.stringify(msg));
   return { data, error, send };
