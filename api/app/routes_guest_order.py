@@ -18,6 +18,7 @@ from .repos_sqlalchemy import orders_repo_sql
 from .routes_metrics import orders_created_total
 from .security import abuse_guard
 from .utils.responses import ok
+from .middlewares.license_gate import license_required
 
 router = APIRouter(prefix="/g")
 
@@ -48,7 +49,7 @@ async def get_tenant_session(
         yield session
 
 
-@router.post("/{table_token}/order")
+@router.post("/{table_token}/order", dependencies=[license_required()])
 async def create_guest_order(
     table_token: str,
     payload: OrderPayload,

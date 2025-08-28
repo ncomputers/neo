@@ -99,6 +99,21 @@ webhook_breaker_state = Gauge(
 )
 webhook_breaker_state.labels(url_hash="sample").set(0)
 
+# License enforcement metrics
+license_status_gauge = Gauge(
+    "license_status",
+    "Tenant license status",  # 1 when tenant in given status
+    ["tenant", "status"],
+)
+license_status_gauge.labels(tenant="sample", status="ACTIVE").set(0)
+
+blocked_actions_total = Counter(
+    "blocked_actions_total",
+    "Total actions blocked due to license expiration",
+    ["route"],
+)
+blocked_actions_total.labels(route="/sample").inc(0)
+
 db_replica_healthy = Gauge(
     "db_replica_healthy", "Replica database health (1 healthy, 0 unhealthy)"
 )

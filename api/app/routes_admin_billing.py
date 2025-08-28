@@ -18,6 +18,7 @@ from .billing import (
     SubscriptionEvent,
 )
 from .utils.responses import ok
+from .middlewares.license_gate import billing_always_allowed
 
 router = APIRouter(prefix="/admin/billing")
 webhook_router = APIRouter()
@@ -25,6 +26,7 @@ _gateway = MockGateway()
 
 
 @router.get("/subscription")
+@billing_always_allowed
 async def get_subscription(x_tenant_id: str = Header(...)) -> dict:
     from .main import TENANTS  # inline import to avoid circular deps
 
@@ -58,6 +60,7 @@ async def get_subscription(x_tenant_id: str = Header(...)) -> dict:
 
 
 @router.post("/checkout")
+@billing_always_allowed
 async def checkout(payload: dict, x_tenant_id: str = Header(...)) -> dict:
     plan_id = payload.get("plan_id")
     plan = PLANS.get(plan_id)
@@ -68,6 +71,7 @@ async def checkout(payload: dict, x_tenant_id: str = Header(...)) -> dict:
 
 
 @router.get("/invoices.csv")
+@billing_always_allowed
 async def invoices_csv(x_tenant_id: str = Header(...)) -> Response:
     rows = [inv for inv in INVOICES if inv.tenant_id == x_tenant_id]
     buf = io.StringIO()
@@ -99,6 +103,7 @@ async def invoices_csv(x_tenant_id: str = Header(...)) -> Response:
 
 
 @webhook_router.post("/billing/webhook/mock")
+@billing_always_allowed
 async def mock_webhook(request: Request, x_mock_signature: str = Header(...)) -> dict:
     body = await request.body()
     if not _gateway.verify_webhook(x_mock_signature, body):

@@ -11,3 +11,6 @@
 - [ ] Run production rollout
     - `make prod`
     - weighted canary ramp 5→25→50→100 with rollback gate
+- [ ] Simulate subscription expiry and renewal
+    - mark a test tenant expired, verify banners and blocked actions
+    - renew via `/admin/billing`
