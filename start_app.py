@@ -28,7 +28,14 @@ def main() -> None:
                 "head",
             ],
             check=True,
+            capture_output=True,
+            text=True,
         )
+    except subprocess.CalledProcessError as exc:
+        if exc.stderr:
+            sys.stderr.write(exc.stderr)
+        print("database connection failed", file=sys.stderr)
+        raise SystemExit(1)
     except FileNotFoundError:
         print("Install dependencies first: pip install -r requirements.txt")
         return
