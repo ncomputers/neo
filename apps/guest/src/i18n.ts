@@ -9,6 +9,8 @@ const resources = {
       place_order: 'Place order',
       license_expired: 'License expired',
       tip: 'Tip',
+      empty_cart: 'Your cart is empty',
+      empty_menu: 'No items available',
     },
   },
   es: {
@@ -18,6 +20,8 @@ const resources = {
       place_order: 'Realizar pedido',
       license_expired: 'Licencia expirada',
       tip: 'Propina',
+      empty_cart: 'Tu carrito está vacío',
+      empty_menu: 'No hay artículos disponibles',
     },
   },
 };
