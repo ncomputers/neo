@@ -101,11 +101,11 @@ jobs:
     if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
       github.ref == 'refs/heads/main' &&
       !github.event.pull_request.head.repo.fork &&
-      env.API_BASE_URL != '' &&
-      env.SYN_TENANT_ID != '' &&
-      env.SYN_TABLE_CODE != '' &&
-      env.AUTH_TOKEN != '' &&
-      env.SYN_ENABLED_PROD == 'true' }}
+      secrets.API_BASE_URL != '' &&
+      secrets.SYN_TENANT_ID != '' &&
+      secrets.SYN_TABLE_CODE != '' &&
+      secrets.AUTH_TOKEN != '' &&
+      secrets.SYN_ENABLED_PROD == 'true' }}
     runs-on: ubuntu-latest
     environment: prod
     env:
