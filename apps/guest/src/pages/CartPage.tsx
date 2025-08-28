@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ShoppingCart } from '@neo/ui';
 import { Header } from '../components/Header';
+import { LicenseBanner } from '../components/LicenseBanner';
 import { useCartStore } from '../store/cart';
 import { useLicense } from '../hooks/useLicense';
 
@@ -16,10 +17,8 @@ export function CartPage() {
   return (
     <div>
       <Header />
+      <LicenseBanner />
       <h1>{t('cart')}</h1>
-      {expired && (
-        <div data-testid="license-banner">{t('license_expired')}</div>
-      )}
       {items.length === 0 ? (
         <EmptyState
           message={t('empty_cart')}

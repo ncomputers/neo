@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
+import { LicenseBanner } from '../components/LicenseBanner';
 import { SkeletonList, EmptyState, Utensils } from '@neo/ui';
 import { useCartStore } from '../store/cart';
+import { useLicense } from '../hooks/useLicense';
 
 interface Item {
   id: string;
@@ -26,10 +28,13 @@ export function MenuPage() {
   const add = useCartStore((s) => s.add);
   const lang = i18n.language;
   const items = data?.categories?.flatMap((c) => c.items) ?? [];
+  const { data: lic } = useLicense();
+  const expired = lic?.status === 'EXPIRED';
 
   return (
     <div>
       <Header />
+      <LicenseBanner />
       <h1>{t('menu')}</h1>
       {isPending ? (
         <SkeletonList />
@@ -46,6 +51,7 @@ export function MenuPage() {
               <div key={item.id}>
                 <span>{item.name_i18n[lang] || item.name_i18n.en}</span>
                 <button
+                  disabled={expired}
                   onClick={() =>
                     add({ id: item.id, name: item.name_i18n.en, qty: 1 })
                   }

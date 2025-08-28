@@ -4,8 +4,10 @@ import { MenuPage } from './pages/MenuPage';
 import { CartPage } from './pages/CartPage';
 import { TrackPage } from './pages/TrackPage';
 import { Health } from './pages/Health';
+import { useLicense } from './hooks/useLicense';
 
 export function AppRoutes() {
+  useLicense();
   return (
     <Routes>
       <Route path="/health" element={<Health />} />
