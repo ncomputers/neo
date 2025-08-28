@@ -1,10 +1,10 @@
-FROM python@sha256:1d6131b5d479888b43200645e03a78443c7157efbdb730e6b48129740727c312
+FROM python@sha256:8f3d1de1b41cd7340a89b024d6f7a10043f7b0d07d97eb36ba76f22fcfa9a235
 
 WORKDIR /app
 
 COPY api/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt \
-    && pip install --no-cache-dir --upgrade setuptools
+    && pip install --no-cache-dir --upgrade 'setuptools>=78.1.1'
 
 COPY api /app/api
 COPY scripts /app/scripts
