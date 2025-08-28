@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
-import { SkeletonList, EmptyState, Utensils } from '@neo/ui';
+import { EmptyState, Utensils, toast } from '@neo/ui';
+import { MenuSkeleton } from '../components/MenuSkeleton';
 import { useCartStore } from '../store/cart';
 
 interface Item {
@@ -22,7 +23,11 @@ const fetchMenu = async (): Promise<{ categories: Category[] }> => {
 
 export function MenuPage() {
   const { t, i18n } = useTranslation();
-  const { data, isPending } = useQuery({ queryKey: ['menu'], queryFn: fetchMenu });
+  const { data, isPending, isError } = useQuery({
+    queryKey: ['menu'],
+    queryFn: fetchMenu,
+    onError: () => toast.error(t('error_menu')),
+  });
   const add = useCartStore((s) => s.add);
   const lang = i18n.language;
   const items = data?.categories?.flatMap((c) => c.items) ?? [];
@@ -32,7 +37,12 @@ export function MenuPage() {
       <Header />
       <h1>{t('menu')}</h1>
       {isPending ? (
-        <SkeletonList />
+        <MenuSkeleton />
+      ) : isError ? (
+        <EmptyState
+          message={t('error_menu')}
+          icon={<Utensils className="w-12 h-12 mx-auto" />}
+        />
       ) : items.length === 0 ? (
         <EmptyState
           message={t('empty_menu')}

@@ -1,17 +1,34 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, ShoppingCart } from '@neo/ui';
+import { useMutation } from '@tanstack/react-query';
+import { EmptyState, ShoppingCart, toast } from '@neo/ui';
 import { Header } from '../components/Header';
 import { useCartStore } from '../store/cart';
 import { useLicense } from '../hooks/useLicense';
+import { CartSkeleton } from '../components/CartSkeleton';
 
 export function CartPage() {
   const { t } = useTranslation();
   const { items, clear } = useCartStore();
-  const { data } = useLicense();
+  const { data, isPending, isError } = useLicense({
+    onError: () => toast.error(t('error_cart')),
+  });
   const [tip, setTip] = useState(0);
 
   const expired = data?.status === 'EXPIRED';
+  const { mutate, isPending: isOrdering } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, tip }),
+      });
+      if (!res.ok) throw new Error('order');
+      return res.json();
+    },
+    onSuccess: () => clear(),
+    onError: () => toast.error(t('error_order')),
+  });
 
   return (
     <div>
@@ -20,7 +37,14 @@ export function CartPage() {
       {expired && (
         <div data-testid="license-banner">{t('license_expired')}</div>
       )}
-      {items.length === 0 ? (
+      {isPending ? (
+        <CartSkeleton />
+      ) : isError ? (
+        <EmptyState
+          message={t('error_cart')}
+          icon={<ShoppingCart className="w-12 h-12 mx-auto" />}
+        />
+      ) : items.length === 0 ? (
         <EmptyState
           message={t('empty_cart')}
           icon={<ShoppingCart className="w-12 h-12 mx-auto" />}
@@ -42,7 +66,10 @@ export function CartPage() {
               onChange={(e) => setTip(Number(e.target.value))}
             />
           </label>
-          <button disabled={expired} onClick={() => clear()}>
+          <button
+            disabled={expired || isOrdering}
+            onClick={() => mutate()}
+          >
             {t('place_order')}
           </button>
         </>
