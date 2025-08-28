@@ -34,6 +34,7 @@ except Exception:  # pragma: no cover - fallback when watchdog unavailable
 from repos_sqlalchemy import orders_repo_sql
 from utils.audit import audit
 from utils.responses import ok
+from .middlewares.license_gate import license_required
 
 from .routes_metrics import kds_oldest_kot_seconds
 
@@ -163,7 +164,10 @@ async def _transition_item(
     return ok({"status": dest.value})
 
 
-@router.post("/api/outlet/{tenant_id}/kds/order/{order_id}/accept")
+@router.post(
+    "/api/outlet/{tenant_id}/kds/order/{order_id}/accept",
+    dependencies=[license_required()],
+)
 @audit("accept_order")
 async def accept_order(tenant_id: str, order_id: int) -> dict:
     """Mark an order as accepted."""
@@ -201,7 +205,10 @@ async def reject_order(tenant_id: str, order_id: int, request: Request) -> dict:
     return result
 
 
-@router.post("/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept")
+@router.post(
+    "/api/outlet/{tenant_id}/kds/item/{order_item_id}/accept",
+    dependencies=[license_required()],
+)
 @audit("accept_item")
 async def accept_item(tenant_id: str, order_item_id: int) -> dict:
     """Mark an order item as accepted."""

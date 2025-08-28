@@ -5,6 +5,11 @@
     <title>{% block title %}Guest{% endblock %}</title>
   </head>
   <body>
+    {% if request.state.license_status == 'GRACE' %}
+    <div class="banner">Subscription ends in {{request.state.license_days_left}} days <a href="/admin/billing">Renew</a></div>
+    {% elif request.state.license_status == 'EXPIRED' %}
+    <div class="banner expired">Subscription expired — renew to resume orders <a href="/admin/billing">Renew</a></div>
+    {% endif %}
     <header>
       <select id="lang-switcher">
         {% for code in request.app.state.enabled_langs %}

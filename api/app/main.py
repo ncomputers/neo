@@ -97,7 +97,7 @@ from .middlewares import (
 )
 from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
-from .middlewares.subscription_guard import SubscriptionGuard
+from .middlewares.license_gate import LicenseGate, license_required
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
@@ -274,7 +274,8 @@ app.add_middleware(PinSecurityMiddleware)
 app.add_middleware(APIKeyAuthMiddleware)
 app.add_middleware(LoggingMiddleware)
 
-subscription_guard = SubscriptionGuard(app)
+license_gate = LicenseGate(app)
+subscription_guard = license_gate  # backward compat
 
 
 # Track active WebSocket connections per client IP
@@ -284,7 +285,7 @@ WS_HEARTBEAT_INTERVAL = 15
 
 @app.middleware("http")
 async def subscription_guard_middleware(request: Request, call_next):
-    return await subscription_guard(request, call_next)
+    return await license_gate.dispatch(request, call_next)
 
 
 app.include_router(menu_router, prefix="/menu")
@@ -484,7 +485,7 @@ async def create_tenant(name: str, licensed_tables: int) -> dict:
     return ok({"tenant_id": tenant_id})
 
 
-@app.post("/orders")
+@app.post("/orders", dependencies=[license_required()])
 async def create_order(request: OrderRequest) -> dict:
     tenant = TENANTS.get(request.tenant_id)
     if tenant is None:

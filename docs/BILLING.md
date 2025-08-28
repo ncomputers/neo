@@ -13,3 +13,15 @@ The mock payment gateway posts events to `/billing/webhook/mock` with an `X-Mock
 ## Swapping Gateways
 
 `BillingGateway` is a small interface with `create_checkout_session`, `verify_webhook` and `list_payments`. A real UPI or payment processor can replace `MockGateway` by implementing the same interface and wiring it into the billing routes.
+
+## License enforcement
+
+Tenant access is gated based on subscription expiry. The middleware resolves the tenant and classifies the license status:
+
+| Status  | Description                              | Allowed routes                          |
+|---------|------------------------------------------|-----------------------------------------|
+| ACTIVE  | Current period valid                     | All routes                              |
+| GRACE   | Expired but within grace window          | Reads and writes, banner shown          |
+| EXPIRED | Beyond grace period                      | Read-only views; writes return HTTP 402 |
+
+Billing endpoints such as `/admin/billing/*` and `/billing/webhook/*` bypass the gate so owners can always renew.

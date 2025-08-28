@@ -30,6 +30,7 @@ from .models_tenant import MenuItem, TenantMeta
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.audit import audit
 from .utils.responses import ok
+from .middlewares.license_gate import license_required
 
 router = APIRouter()
 
@@ -40,7 +41,10 @@ class ItemCreate(BaseModel):
     name: str
 
 
-@router.post("/api/outlet/{tenant_id}/menu/items")
+@router.post(
+    "/api/outlet/{tenant_id}/menu/items",
+    dependencies=[license_required()],
+)
 @audit("create_menu_item")
 async def create_menu_item(
     tenant_id: str,
@@ -90,7 +94,10 @@ async def list_menu_items(
     return ok(items)
 
 
-@router.post("/api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock")
+@router.post(
+    "/api/outlet/{tenant_id}/menu/item/{item_id}/out_of_stock",
+    dependencies=[license_required()],
+)
 @audit("toggle_out_of_stock")
 async def toggle_out_of_stock(
     tenant_id: str,
@@ -128,7 +135,10 @@ async def delete_menu_item(
     return ok({"id": str(item.id), "name": item.name, "deleted_at": item.deleted_at})
 
 
-@router.post("/api/outlet/{tenant_id}/menu/items/{item_id}/restore")
+@router.post(
+    "/api/outlet/{tenant_id}/menu/items/{item_id}/restore",
+    dependencies=[license_required()],
+)
 @audit("item.restore")
 async def restore_menu_item(
     tenant_id: str,
@@ -145,7 +155,10 @@ async def restore_menu_item(
     return ok({"id": str(item.id), "name": item.name, "deleted_at": item.deleted_at})
 
 
-@router.post("/api/outlet/{tenant_id}/menu/i18n/import")
+@router.post(
+    "/api/outlet/{tenant_id}/menu/i18n/import",
+    dependencies=[license_required()],
+)
 @audit("menu_i18n_import")
 async def import_menu_i18n(
     tenant_id: str,

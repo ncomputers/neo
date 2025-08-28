@@ -8,11 +8,13 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Header, HTTPException
 
 from .utils.responses import ok
+from .middlewares.license_gate import billing_always_allowed
 
 router = APIRouter()
 
 
 @router.get("/billing")
+@billing_always_allowed
 async def billing_info(x_tenant_id: str = Header(...)) -> dict:
     """Return subscription details and payment link for the tenant."""
     from .main import TENANTS  # inline import to avoid circular deps
