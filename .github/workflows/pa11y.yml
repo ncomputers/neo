@@ -49,6 +49,9 @@ jobs:
           python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head
 
       - name: Start API
+        env:
+          ALLOWED_ORIGINS: http://localhost
+          SECRET_KEY: ${{ secrets.SECRET_KEY || 'test-secret' }}
         run: |
           python start_app.py &
           npx wait-on tcp:localhost:8000
