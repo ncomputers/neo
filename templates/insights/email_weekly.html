@@ -1,0 +1,13 @@
+<h1>Weekly Owner Insights for {{ tenant }}</h1>
+<ul>
+  <li>Revenue: {{ metrics.gross_sales }}</li>
+  <li>Orders: {{ metrics.orders }}</li>
+  <li>Average Prep Time: {{ metrics.avg_prep_time }}</li>
+  <li>SLA Hit Rate: {{ metrics.sla_hit_rate }}</li>
+</ul>
+<p>Insights:</p>
+<ul>
+{% for insight in insights %}
+  <li>{{ insight }}</li>
+{% endfor %}
+</ul>
