@@ -119,6 +119,66 @@ class NotificationDLQ(Base):
     failed_at = Column(DateTime, server_default=func.now())
 
 
+class Plan(Base):
+    """Available subscription plans."""
+
+    __tablename__ = "plans"
+
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    price_inr = Column(Integer, nullable=False)
+    billing_interval = Column(String, nullable=False)
+    max_tables = Column(Integer, nullable=False)
+    features_json = Column(JSON, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+
+
+class Subscription(Base):
+    """Tenant subscription record."""
+
+    __tablename__ = "subscriptions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), nullable=False)
+    plan_id = Column(String, ForeignKey("plans.id"), nullable=False)
+    status = Column(String, nullable=False, default="active")
+    current_period_start = Column(DateTime, nullable=False)
+    current_period_end = Column(DateTime, nullable=False)
+    trial_end = Column(DateTime, nullable=True)
+    cancel_at_period_end = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class SubscriptionEvent(Base):
+    """Audit trail of subscription events."""
+
+    __tablename__ = "subscription_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    subscription_id = Column(UUID(as_uuid=True), nullable=False)
+    type = Column(String, nullable=False)
+    payload_json = Column(JSON, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class BillingInvoice(Base):
+    """Billing invoice for a tenant."""
+
+    __tablename__ = "billing_invoices"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), nullable=False)
+    number = Column(String, nullable=False)
+    amount_inr = Column(Integer, nullable=False)
+    gst_inr = Column(Integer, nullable=False)
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    status = Column(String, nullable=False)
+    pdf_url = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 class TwoFactorSecret(Base):
     """TOTP secret hashes for owner/admin accounts."""
 
