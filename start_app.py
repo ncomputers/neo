@@ -32,10 +32,15 @@ def main() -> None:
             text=True,
         )
     except subprocess.CalledProcessError as exc:
+        if exc.stdout:
+            sys.stdout.write(exc.stdout)
         if exc.stderr:
             sys.stderr.write(exc.stderr)
-        print("database connection failed", file=sys.stderr)
-        raise SystemExit(1)
+        print(
+            f"database migration failed (exit code {exc.returncode})",
+            file=sys.stderr,
+        )
+        raise SystemExit(exc.returncode)
     except FileNotFoundError:
         print("Install dependencies first: pip install -r requirements.txt")
         return
