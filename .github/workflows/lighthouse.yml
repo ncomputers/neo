@@ -34,6 +34,8 @@ jobs:
       SQLALCHEMY_DATABASE_URI: postgresql://neo:neo@localhost:5432/neo
       SYNC_DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
       REDIS_URL: redis://localhost:6379/0
+      ALLOWED_ORIGINS: http://localhost
+      SECRET_KEY: 0123456789abcdef0123456789abcdef
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -57,8 +59,16 @@ jobs:
       - name: Run migrations
         run: |
           python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head
+      - name: Start API server
+        env:
+          ALLOWED_ORIGINS: ${{ env.ALLOWED_ORIGINS }}
+          SECRET_KEY: ${{ env.SECRET_KEY }}
+          SYNC_DATABASE_URL: ${{ env.SYNC_DATABASE_URL }}
+        run: |
+          set +e
+          uvicorn api.app.main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
       - name: Wait for /ready
-        run: bash scripts/ci_wait_ready.sh
+        run: bash scripts/ci_wait_ready.sh api.log
       - name: Run Lighthouse CI
         run: lhci autorun --config=lighthouserc.json
 
