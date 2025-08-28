@@ -9,7 +9,17 @@ from fastapi.testclient import TestClient
 from jose import JWTError, jwt
 import fakeredis.aioredis
 
-from api.app.auth import ALGORITHM, SECRET_KEY, create_access_token
+import os
+import pytest
+from argon2.exceptions import VerificationError
+
+os.environ.setdefault("DB_URL", "postgresql://localhost/db")
+os.environ.setdefault("REDIS_URL", "redis://localhost/0")
+os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
+os.environ.setdefault("SECRET_KEY", "x" * 32)
+
+from api.app.auth import ALGORITHM, SECRET_KEY, create_access_token, ph, verify_password
+import api.app.auth as auth
 from api.app.main import app
 
 client = TestClient(app)
@@ -83,3 +93,18 @@ def test_role_enforcement_allow_and_deny():
         ).status_code
         == 403
     )
+
+
+def test_verify_password_incorrect():
+    hashed = ph.hash("secret")
+    assert verify_password("wrong", hashed) is False
+
+
+def test_verify_password_unexpected_error(monkeypatch):
+    class Dummy:
+        def verify(self, *args, **kwargs):
+            raise VerificationError("boom")
+
+    monkeypatch.setattr(auth, "ph", Dummy())
+    with pytest.raises(VerificationError):
+        verify_password("a", "b")

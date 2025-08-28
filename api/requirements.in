@@ -9,7 +9,7 @@ setuptools>=78.1.1
 
 argon2-cffi
 python-jose[cryptography]
-ecdsa==0.19.1
+ecdsa>=0.19.2
 pydantic-settings
 python-dotenv
 openpyxl

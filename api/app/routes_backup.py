@@ -8,15 +8,19 @@ import subprocess
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from .utils.responses import ok
+from .auth import role_required
 from .utils.audit import audit
+from .utils.responses import ok
 
 router = APIRouter()
 
 
-@router.post("/api/outlet/{tenant_id}/backup")
+@router.post(
+    "/api/outlet/{tenant_id}/backup",
+    dependencies=[Depends(role_required("super_admin"))],
+)
 @audit("backup_tenant")
 async def backup_tenant(tenant_id: str) -> dict:
     """Create a JSON backup for ``tenant_id`` and return the file path."""
