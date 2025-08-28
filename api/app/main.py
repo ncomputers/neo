@@ -135,6 +135,7 @@ from .routes_dlq import router as dlq_router
 from .routes_export_all import router as export_all_router
 from .routes_exports import router as exports_router
 from .routes_feedback import router as feedback_router
+from .routes_floor import router as floor_router
 from .routes_gst_monthly import router as gst_monthly_router
 from .routes_guest_bill import router as guest_bill_router
 from .routes_guest_consent import router as guest_consent_router
@@ -933,6 +934,7 @@ app.include_router(preflight_router)
 app.include_router(tables_map_router)
 app.include_router(tables_qr_rotate_router)
 app.include_router(tables_sse_router)
+app.include_router(floor_router)
 app.include_router(time_skew_router)
 app.include_router(pwa_version_router)
 app.include_router(status_json_router)
