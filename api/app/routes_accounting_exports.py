@@ -57,109 +57,54 @@ async def sales_register_csv(
     to: str = Query(..., alias="to"),
     composition: bool = False,
 ) -> Response:
-    """Return line-item sales with GST split for the date range."""
+    """Return per-invoice sales with GST split for the date range."""
 
     start, end = _parse_range(from_, to)
 
     async with _session(tenant_id) as session:
         result = await session.execute(
-            select(
-                Invoice.number,
-                Invoice.created_at,
-                Invoice.bill_json,
-                OrderItem.name_snapshot,
-                OrderItem.qty,
-                OrderItem.price_snapshot,
-                MenuItem.hsn_sac,
-                MenuItem.gst_rate,
-            )
-            .join(OrderItem, Invoice.order_group_id == OrderItem.order_id)
-            .join(MenuItem, MenuItem.id == OrderItem.item_id)
+            select(Invoice.number, Invoice.created_at, Invoice.bill_json)
             .where(Invoice.created_at >= start, Invoice.created_at < end)
-            .order_by(Invoice.id, OrderItem.id)
+            .order_by(Invoice.id)
         )
         rows = result.all()
 
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(
-        [
-            "date",
-            "invoice_no",
-            "item",
-            "hsn",
-            "qty",
-            "price",
-            "taxable_value",
-            "cgst",
-            "sgst",
-            "igst",
-            "total",
-        ]
-    )
+    writer.writerow(["date", "invoice_no", "subtotal", "tax", "total"])
 
-    total_taxable = Decimal("0")
-    total_cgst = Decimal("0")
-    total_sgst = Decimal("0")
-    total_igst = Decimal("0")
+    total_subtotal = Decimal("0")
+    total_tax = Decimal("0")
 
-    for number, created_at, bill, name, qty, price, hsn, gst_rate in rows:
-        qty_d = Decimal(str(qty))
-        price_d = Decimal(str(price))
-        taxable = _round(qty_d * price_d)
-        rate = Decimal(str(gst_rate or 0))
+    for number, created_at, bill in rows:
+        subtotal = float(bill.get("subtotal", 0))
+        tax_breakup = bill.get("tax_breakup", {})
+        tax = 0.0 if composition else float(sum(tax_breakup.values()))
+        total = float(bill.get("total", subtotal + tax))
 
-        if composition or rate == 0:
-            cgst = sgst = igst = Decimal("0")
-        else:
-            if bill.get("inter_state"):
-                igst = _round(taxable * rate / Decimal("100"))
-                cgst = sgst = Decimal("0")
-            else:
-                cgst = _round(taxable * rate / Decimal("200"))
-                sgst = cgst
-                igst = Decimal("0")
-
-        line_total = taxable + cgst + sgst + igst
-
-        total_taxable += taxable
-        total_cgst += cgst
-        total_sgst += sgst
-        total_igst += igst
+        total_subtotal += Decimal(str(subtotal))
+        total_tax += Decimal(str(tax))
 
         writer.writerow(
             [
                 created_at.date().isoformat(),
                 number,
-                name,
-                hsn or "",
-                str(qty),
-                f"{price_d:.2f}",
-                f"{taxable:.2f}",
-                f"{cgst:.2f}",
-                f"{sgst:.2f}",
-                f"{igst:.2f}",
-                f"{line_total:.2f}",
+                str(subtotal),
+                str(tax),
+                str(total),
             ]
         )
 
-    grand_total = total_taxable + total_cgst + total_sgst + total_igst
+    grand_total = total_subtotal + total_tax
     writer.writerow(
         [
             "TOTAL",
             "",
-            "",
-            "",
-            "",
-            "",
-            f"{total_taxable:.2f}",
-            f"{total_cgst:.2f}",
-            f"{total_sgst:.2f}",
-            f"{total_igst:.2f}",
-            f"{grand_total:.2f}",
+            str(float(total_subtotal)),
+            str(float(total_tax)),
+            str(float(grand_total)),
         ]
     )
-
 
     resp = Response(content=output.getvalue(), media_type="text/csv")
     resp.headers["Content-Disposition"] = "attachment; filename=sales_register.csv"
@@ -180,7 +125,6 @@ async def gst_summary_csv(
     async with _session(tenant_id) as session:
         result = await session.execute(
             select(
-                MenuItem.hsn_sac,
                 MenuItem.gst_rate,
                 OrderItem.qty,
                 OrderItem.price_snapshot,
@@ -193,7 +137,7 @@ async def gst_summary_csv(
         rows = result.all()
 
     summary: dict[str, dict[str, Decimal]] = {}
-    for hsn, gst_rate, qty, price, bill in rows:
+    for gst_rate, qty, price, bill in rows:
         qty_d = Decimal(str(qty))
         price_d = Decimal(str(price))
         taxable = _round(qty_d * price_d)
@@ -210,7 +154,8 @@ async def gst_summary_csv(
                 sgst = cgst
                 igst = Decimal("0")
 
-        key = hsn or ""
+        rate_key = str(int(rate)) if rate == int(rate) else str(rate)
+        key = rate_key
         entry = summary.setdefault(
             key,
             {"taxable": Decimal("0"), "cgst": Decimal("0"), "sgst": Decimal("0"), "igst": Decimal("0")},
@@ -222,19 +167,19 @@ async def gst_summary_csv(
 
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(["hsn", "taxable_value", "cgst", "sgst", "igst", "total"])
+    writer.writerow(["gst_rate", "taxable_value", "cgst", "sgst", "igst", "total"])
 
-    for hsn in sorted(summary.keys()):
-        vals = summary[hsn]
+    for rate in sorted(summary.keys(), key=lambda r: float(r)):
+        vals = summary[rate]
         total = vals["taxable"] + vals["cgst"] + vals["sgst"] + vals["igst"]
         writer.writerow(
             [
-                hsn,
-                f"{vals['taxable']:.2f}",
-                f"{vals['cgst']:.2f}",
-                f"{vals['sgst']:.2f}",
-                f"{vals['igst']:.2f}",
-                f"{total:.2f}",
+                rate,
+                str(float(vals["taxable"])),
+                str(float(vals["cgst"])),
+                str(float(vals["sgst"])),
+                str(float(vals["igst"])),
+                str(float(total)),
 
             ]
         )

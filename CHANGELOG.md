@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 - Fix YAML indentation in `flags_guard` workflow to resolve CI parsing error.
 - Reference `ASSETLINKS_HOST` secret via env in TWA workflow to fix invalid conditional.
 
+- Correct sales register and GST summary exports to emit expected CSV headers and values.
+
 ## v1.0.0 - 2025-08-26
 
 ### Fixed
