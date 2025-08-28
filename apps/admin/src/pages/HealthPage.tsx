@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../env';
 
-export function Health() {
+export function HealthPage() {
   const [ok, setOk] = useState(false);
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE}/status.json`)
+    fetch(`${API_BASE}/status.json`)
       .then((r) => setOk(r.ok))
       .catch(() => setOk(false));
   }, []);
