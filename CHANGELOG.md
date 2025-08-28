@@ -6,8 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Security
 
-- Pin ``ecdsa`` dependency to ``>=0.19.1`` to address upstream vulnerability.
-- Pin worker image to a digest-based Python base, upgrade ``setuptools`` during build, and run as non-root ``app`` user.
+- Pin ``ecdsa`` dependency to ``==0.19.1`` and regenerate backend requirements to address CVE-2024-23342.
+- Require ``setuptools>=78.1.1`` in developer scripts and worker image.
+- Align API and worker on Python 3.12, pinning digest-based bases and running the API as non-root ``app``.
 
 ### Added
 

@@ -73,7 +73,7 @@ def install_backend():
         print("⚠️ api/requirements.txt not found. Skipping backend install.")
         return
     print("📦 Installing backend dependencies ...")
-    run([pip, "install", "-U", "pip", "wheel", "setuptools"])
+    run([pip, "install", "-U", "pip", "wheel", "setuptools>=78.1.1"])
     run([pip, "install", "-r", str(req)])
     print("✅ Backend deps installed.")
 

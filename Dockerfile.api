@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python@sha256:8f3d1de1b41cd7340a89b024d6f7a10043f7b0d07d97eb36ba76f22fcfa9a235
 
 WORKDIR /app
 
@@ -7,5 +7,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY api /app/api
 COPY scripts /app/scripts
+
+RUN useradd -m app && chown -R app /app
+USER app
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
