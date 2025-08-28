@@ -24,15 +24,18 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
         run: |
-          set -e
-          if [ -z "${{ secrets.KUBE_CONFIG_STAGING }}" ]; then
+          set -euo pipefail
+          if [ -z "${KUBE_CONFIG_STAGING:-}" ]; then
             echo "KUBE_CONFIG_STAGING secret not found" >&2
             exit 1
           fi
           mkdir -p ~/.kube
-          printf '%s' "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 --decode > ~/.kube/config 2>/dev/null \
-            || printf '%s' "${{ secrets.KUBE_CONFIG_STAGING }}" > ~/.kube/config
+          if ! printf '%s' "$KUBE_CONFIG_STAGING" | base64 --decode > ~/.kube/config 2>/dev/null; then
+            printf '%s' "$KUBE_CONFIG_STAGING" > ~/.kube/config
+          fi
           chmod 600 ~/.kube/config
           echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - name: Verify cluster access
