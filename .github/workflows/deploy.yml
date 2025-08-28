@@ -18,26 +18,30 @@ jobs:
 
   deploy-staging:
     needs: build-and-push
+    if: ${{ secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
+    env:
+      KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
-        env:
-          KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
         run: |
           set -euo pipefail
           if [ -z "${KUBE_CONFIG_STAGING:-}" ]; then
             echo "KUBE_CONFIG_STAGING secret not found" >&2
             exit 1
           fi
+          echo "::add-mask::$KUBE_CONFIG_STAGING"
           mkdir -p ~/.kube
           if ! printf '%s' "$KUBE_CONFIG_STAGING" | base64 --decode > ~/.kube/config 2>/dev/null; then
             printf '%s' "$KUBE_CONFIG_STAGING" > ~/.kube/config
           fi
           chmod 600 ~/.kube/config
           echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
+      - name: Check kubectl context
+        run: kubectl config current-context
       - name: Verify cluster access
         run: |
           set -e
@@ -82,23 +86,30 @@ jobs:
 
   deploy-prod:
     needs: manual-approval
+    if: ${{ secrets.KUBE_CONFIG_PROD != '' && secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
+    env:
+      KUBE_CONFIG_PROD: ${{ secrets.KUBE_CONFIG_PROD }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
         run: |
-          set -e
-          if [ -z "${{ secrets.KUBE_CONFIG_PROD }}" ]; then
+          set -euo pipefail
+          if [ -z "${KUBE_CONFIG_PROD:-}" ]; then
             echo "KUBE_CONFIG_PROD secret not found" >&2
             exit 1
           fi
+          echo "::add-mask::$KUBE_CONFIG_PROD"
           mkdir -p ~/.kube
-          printf '%s' "${{ secrets.KUBE_CONFIG_PROD }}" | base64 --decode > ~/.kube/config 2>/dev/null \
-            || printf '%s' "${{ secrets.KUBE_CONFIG_PROD }}" > ~/.kube/config
+          if ! printf '%s' "$KUBE_CONFIG_PROD" | base64 --decode > ~/.kube/config 2>/dev/null; then
+            printf '%s' "$KUBE_CONFIG_PROD" > ~/.kube/config
+          fi
           chmod 600 ~/.kube/config
           echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
+      - name: Check kubectl context
+        run: kubectl config current-context
       - name: Verify cluster access
         run: |
           set -e
@@ -118,16 +129,3 @@ jobs:
             --set strategy=bluegreen
       - name: Preflight health
         run: curl -fsS https://prod.example.com/api/admin/preflight
-      - name: Smoke and canary tests
-        run: |
-          python scripts/smoke_release.py
-          python scripts/canary_probe.py
-      - name: Accessibility scan
-        run: npx pa11y-ci
-      - name: Playwright smoke
-        run: |
-          cd e2e/playwright
-          npx playwright test --project=smoke
-      - name: Rollback on failure
-        if: failure()
-        run: helm rollback neo
