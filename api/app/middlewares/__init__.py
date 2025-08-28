@@ -6,6 +6,7 @@ from .guest_ratelimit import GuestRateLimitMiddleware
 from .http_errors import HttpErrorCounterMiddleware
 from .idempotency import IdempotencyMetricsMiddleware, IdempotencyMiddleware
 from .language import LanguageMiddleware
+from .i18n_mw import I18nMiddleware
 from .licensing import LicensingMiddleware
 from .logging import LoggingMiddleware
 from .maintenance import MaintenanceMiddleware
@@ -21,6 +22,7 @@ __all__ = [
     "GuestRateLimitMiddleware",
     "GuestBlockMiddleware",
     "LanguageMiddleware",
+    "I18nMiddleware",
     "PrometheusMiddleware",
     "TableStateGuardMiddleware",
     "IdempotencyMiddleware",

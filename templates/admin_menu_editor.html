@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Menu i18n</title>
+</head>
+<body>
+  <h1>Menu i18n</h1>
+  <section>
+    <h2>Export i18n CSV</h2>
+    <form id="export-form" method="get" action="/api/outlet/{{ tenant_id }}/menu/i18n/export">
+      <input type="text" name="langs" placeholder="hi,gu" />
+      <button type="submit">Export i18n CSV</button>
+    </form>
+  </section>
+  <section>
+    <h2>Import i18n CSV</h2>
+    <form id="import-form" method="post" enctype="multipart/form-data" action="/api/outlet/{{ tenant_id }}/menu/i18n/import">
+      <input type="file" name="file" />
+      <button type="submit">Import i18n CSV</button>
+    </form>
+  </section>
+  <section>
+    <h2>Settings</h2>
+    <form id="settings-form" method="patch" action="/api/outlet/{{ tenant_id }}/settings/i18n">
+      <label>Enabled Languages</label>
+      <select name="enabled_langs" multiple>
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="gu">Gujarati</option>
+      </select>
+      <label>Default Language</label>
+      <select name="default_lang">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="gu">Gujarati</option>
+      </select>
+      <button type="submit">Save Settings</button>
+    </form>
+  </section>
+  <div id="toaster"></div>
+  <script>
+    function showToast(msg){
+      const t=document.getElementById('toaster');
+      t.textContent=msg;
+    }
+    document.getElementById('export-form').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const params=new URLSearchParams(new FormData(e.target));
+      const resp=await fetch(e.target.action+'?'+params.toString());
+      showToast(await resp.text());
+    });
+    document.getElementById('import-form').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const resp=await fetch(e.target.action,{method:'POST',body:new FormData(e.target)});
+      showToast(JSON.stringify(await resp.json()));
+    });
+    document.getElementById('settings-form').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const formData=new FormData(e.target);
+      const enabled=formData.getAll('enabled_langs');
+      const payload={default_lang:formData.get('default_lang'), enabled_langs:enabled};
+      const resp=await fetch(e.target.action,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      showToast(JSON.stringify(await resp.json()));
+    });
+  </script>
+</body>
+</html>
