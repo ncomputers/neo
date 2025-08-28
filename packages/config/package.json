@@ -7,5 +7,6 @@
     "./prettier": "./prettier.cjs",
     "./tsconfig": "./tsconfig.json",
     "./vite": "./vite.cjs"
+
   }
 }

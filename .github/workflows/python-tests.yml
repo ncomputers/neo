@@ -44,11 +44,16 @@ jobs:
           pip install -r api/requirements.txt
           pip install pytest pytest-cov pillow
           if [ "${{ matrix.db }}" = "postgres" ]; then pip install asyncpg; fi
-      - name: Run tenant migrations
+      - name: Prepare tenant database
         if: matrix.db == 'postgres'
+        env:
+          TENANT_ID: demo
         run: |
-          python scripts/tenant_create_db.py --tenant demo
-          python scripts/tenant_seed.py --tenant demo
+          python scripts/tenant_create_db.py --tenant "$TENANT_ID"
+          python scripts/tenant_migrate.py --tenant "$TENANT_ID"
+          TENANT_DSN=$(python -c "from api.app.db.tenant import build_dsn; import os; print(build_dsn(os.environ['TENANT_ID']).replace('+asyncpg',''))")
+          psql "$TENANT_DSN" -c '\dt'
+          python scripts/tenant_seed.py --tenant "$TENANT_ID"
       - name: Lint
         run: pre-commit run --all-files --show-diff-on-failure
       - name: Audit environment
