@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
 import { API_BASE } from '../env';
-import { useCounterStore } from '../store';
-import { DemoForm } from '../components/DemoForm';
+import { useSSE } from '@neo/api';
 
-export function HealthPage() {
+export function Health() {
   const [ok, setOk] = useState(false);
-  const count = useCounterStore((s) => s.count);
+  const [sse, setSse] = useState<'pending' | 'ok' | 'unsupported'>('pending');
 
   useEffect(() => {
     fetch(`${API_BASE}/status.json`)
       .then((r) => setOk(r.ok))
       .catch(() => setOk(false));
   }, []);
+
+  useSSE(`${API_BASE}/sse/ping`, {
+    onMessage: () => setSse('ok'),
+    onError: () => setSse('unsupported'),
+  });
 
   return (
     <div className="space-y-2">
@@ -22,8 +26,7 @@ export function HealthPage() {
             : 'w-3 h-3 rounded-full bg-red-500'
         }
       />
-      <div>{count}</div>
-      <DemoForm />
+      {sse === 'unsupported' && <div>SSE unsupported</div>}
     </div>
   );
 }
