@@ -1,13 +1,21 @@
 # API Client
 
-Typed API helpers and realtime hooks.
+Typed API helpers and realtime hooks for frontend apps.
 
-## Adding endpoints
+## Overview
 
-Add types and functions in `src/endpoints.ts` and export them from `src/index.ts`.
-Use `apiFetch` for REST calls and `useSSE` / `useWS` for realtime.
+`@neo/api` wraps `fetch` with helpers for base URLs and headers and exposes
+hooks for realtime communication. Consumers typically configure
+`VITE_API_BASE` and `VITE_WS_BASE` environment variables to point to the HTTP
+and WebSocket servers.
 
-## Realtime hooks
+## Adding endpoints and types
+
+Define endpoint functions and `zod` types in `src/endpoints.ts` and export them
+from `src/index.ts`. Use `apiFetch` for REST calls and the hooks below for
+realtime updates.
+
+## Hooks
 
 ### `useSSE`
 
@@ -45,3 +53,6 @@ function App() {
   return null;
 }
 ```
+
+These utilities are PWA‑friendly; serve your app over HTTPS with a registered
+service worker for full functionality.
