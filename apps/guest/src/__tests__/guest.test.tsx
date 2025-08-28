@@ -12,6 +12,8 @@ jest.mock(
   () => ({
     EmptyState: () => null,
     ShoppingCart: () => null,
+    SkeletonList: () => null,
+    toast: { error: jest.fn() },
   }),
   { virtual: true }
 );

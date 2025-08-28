@@ -11,6 +11,9 @@ const resources = {
       tip: 'Tip',
       empty_cart: 'Your cart is empty',
       empty_menu: 'No items available',
+      error_menu: 'Failed to load menu',
+      error_cart: 'Failed to load cart',
+      error_order: 'Failed to place order',
     },
   },
   es: {
@@ -22,6 +25,9 @@ const resources = {
       tip: 'Propina',
       empty_cart: 'Tu carrito está vacío',
       empty_menu: 'No hay artículos disponibles',
+      error_menu: 'Error al cargar el menú',
+      error_cart: 'Error al cargar el carrito',
+      error_order: 'Error al realizar el pedido',
     },
   },
 };
