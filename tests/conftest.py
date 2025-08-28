@@ -20,6 +20,9 @@ sys.modules.setdefault("api.app.services.printer_watchdog", types.SimpleNamespac
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DB_URL", "postgresql://localhost/test")
+os.environ.setdefault(
+    "POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db"
+)
 os.environ.setdefault("REDIS_URL", "redis://redis:6379/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
