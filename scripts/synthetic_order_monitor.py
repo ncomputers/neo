@@ -8,6 +8,11 @@ Env variables:
 - SYN_UPI_VPA (optional)
 - API_BASE_URL
 - AUTH_TOKEN
+- OR use the following *_STAGING variables:
+  - API_BASE_URL_STAGING
+  - SYN_TENANT_ID_STAGING
+  - SYN_TABLE_CODE_STAGING
+  - AUTH_TOKEN_STAGING
 - PUSHGATEWAY (optional)
 - DRY_RUN (optional, bypass HTTP calls for tests)
 """
@@ -87,6 +92,16 @@ def main() -> None:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
+
+    # Map staging variables to defaults if present
+    for src, dest in {
+        "API_BASE_URL_STAGING": "API_BASE_URL",
+        "SYN_TENANT_ID_STAGING": "SYN_TENANT_ID",
+        "SYN_TABLE_CODE_STAGING": "SYN_TABLE_CODE",
+        "AUTH_TOKEN_STAGING": "AUTH_TOKEN",
+    }.items():
+        if src in os.environ and dest not in os.environ:
+            os.environ[dest] = os.environ[src]
 
     required = [
         "SYN_TENANT_ID",
