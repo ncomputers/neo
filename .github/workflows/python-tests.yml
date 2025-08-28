@@ -7,6 +7,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         db: [sqlite, postgres]
@@ -55,7 +56,7 @@ jobs:
       - name: Check i18n keys
         run: pre-commit run --hook-stage manual i18n-lint --all-files
       - name: Test
-        run: pytest --cov --cov-report=term --cov-fail-under=80 -q
+        run: ./.ci/scripts/run_with_timeout.sh pytest --cov --cov-report=term --cov-fail-under=80 -q
       - name: Save print-test PNG
         run: python scripts/save_print_test_png.py
       - name: Upload print-test PNG
