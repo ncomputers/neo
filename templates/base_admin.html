@@ -5,10 +5,16 @@
     <title>{% block title %}Admin{% endblock %}</title>
   </head>
   <body>
-    {% if request.state.license_status == 'GRACE' %}
-    <div class="banner">Subscription ends in {{request.state.license_days_left}} days <a href="/admin/billing">Renew</a></div>
-    {% elif request.state.license_status == 'EXPIRED' %}
-    <div class="banner expired">Subscription expired — renew to resume orders <a href="/admin/billing">Renew</a></div>
+    {% if request.state.license_status in ['GRACE','EXPIRED'] and not request.cookies.get('dunning_snooze') %}
+    <div class="banner {{ 'expired' if request.state.license_status=='EXPIRED' else 'grace' }}">
+      {% if request.state.license_status == 'GRACE' %}
+      Subscription ends in {{request.state.license_days_left}} days
+      {% else %}
+      Subscription expired — renew to resume orders
+      {% endif %}
+      <a href="/admin/billing">Renew now</a>
+      <a href="#" class="snooze" onclick="document.cookie='dunning_snooze=1;path=/;expires='+new Date(new Date().setHours(24,0,0,0)).toUTCString(); this.parentElement.remove(); return false;">Snooze for today</a>
+    </div>
     {% endif %}
     {% block content %}{% endblock %}
   </body>

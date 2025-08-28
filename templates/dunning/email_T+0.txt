@@ -1,0 +1,5 @@
+Hi {name},
+
+Expired - your {plan} plan for {outlet} has {days_left} days left.
+
+Renew now: {renew_url}
