@@ -1,0 +1,1 @@
+Last day! {plan} for {outlet} has {days_left} days left. {renew_url}

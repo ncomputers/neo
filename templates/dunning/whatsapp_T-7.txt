@@ -1,0 +1,1 @@
+Heads up! {plan} for {outlet} has {days_left} days left. {renew_url}
