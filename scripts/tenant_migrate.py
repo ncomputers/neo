@@ -4,38 +4,34 @@
 This CLI generates a DSN for the provided tenant ID using either the
 ``--dsn-template`` option or the ``POSTGRES_TENANT_DSN_TEMPLATE`` environment
 variable and executes ``alembic upgrade head`` against the tenant migration
-environment. The template must contain a ``{tenant_id}`` placeholder, for
-example::
+environment. If neither is provided, the DSN template is derived from
+``SYNC_DATABASE_URL`` by appending ``_<tenant_id>`` to its database name. The
+template must contain a ``{tenant_id}`` placeholder, for example::
 
     postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id}
-
-Either the flag or environment variable must be set before running migrations.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-import os
 
 from alembic import command
 from alembic.config import Config
 from sqlalchemy.ext.asyncio import create_async_engine
 
-TEMPLATE_ENV = "POSTGRES_TENANT_DSN_TEMPLATE"
+from api.app.db.tenant import build_dsn, TEMPLATE_ENV
 
 
 def migrate(tenant_id: str, dsn_template: str | None = None) -> None:
     """Run Alembic migrations for ``tenant_id``."""
-    template = dsn_template or os.getenv(TEMPLATE_ENV)
-    if not template:
-        raise RuntimeError(
-            f"--dsn-template or {TEMPLATE_ENV} environment variable must be set"
-        )
-    try:
-        dsn = template.format(tenant_id=tenant_id)
-    except Exception as exc:  # pragma: no cover - invalid format string
-        raise ValueError("Invalid DSN template") from exc
+    if dsn_template:
+        try:
+            dsn = dsn_template.format(tenant_id=tenant_id)
+        except Exception as exc:  # pragma: no cover - invalid format string
+            raise ValueError("Invalid DSN template") from exc
+    else:
+        dsn = build_dsn(tenant_id)
     engine = create_async_engine(dsn)
     cfg = Config()
     cfg.set_main_option("script_location", "api/alembic_tenant")
