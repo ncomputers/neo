@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, useWS } from '@neo/api';
+import { SkeletonList } from '@neo/ui';
 import { WS_BASE, TENANT_ID } from '../env';
 import { PinModal } from '../components/PinModal';
 import { Snackbar } from '../components/Snackbar';
@@ -20,6 +21,7 @@ export function ExpoPage() {
   const [showPin, setShowPin] = useState(false);
   const [pending, setPending] = useState<(() => void) | null>(null);
   const [toast, setToast] = useState<{ msg: string; type?: 'success' | 'error' } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -41,6 +43,8 @@ export function ExpoPage() {
       setReady(expo.orders || []);
     } catch (err) {
       setToast({ msg: (err as Error).message, type: 'error' });
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -176,59 +180,63 @@ export function ExpoPage() {
     <div className="p-4 space-y-4">
       {offline && <div className="bg-red-600 text-white p-2 text-center">Offline</div>}
       <h2 className="text-xl font-bold">Expo</h2>
-      <div className="grid grid-cols-4 gap-4">
-        <div>
-          <h3 className="font-semibold mb-2">New</h3>
-          <ul className="space-y-2">
-            {newTickets.map((t) => (
-              <li key={t.order_id} className="border p-2 rounded">
-                <div className="flex justify-between">
-                  <span>Table {t.table}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+      {loading ? (
+        <SkeletonList count={4} />
+      ) : (
+        <div className="grid grid-cols-4 gap-4">
+          <div>
+            <h3 className="font-semibold mb-2">New</h3>
+            <ul className="space-y-2">
+              {newTickets.map((t) => (
+                <li key={t.order_id} className="border p-2 rounded">
+                  <div className="flex justify-between">
+                    <span>Table {t.table}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">Preparing</h3>
+            <ul className="space-y-2">
+              {preparing.map((t) => (
+                <li key={t.order_id} className="border p-2 rounded">
+                  <div className="flex justify-between">
+                    <span>Table {t.table}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">Ready</h3>
+            <ul className="space-y-2">
+              {ready.map((t) => (
+                <li key={t.order_id} className="border p-2 rounded">
+                  <div className="flex justify-between">
+                    <span>Table {t.table}</span>
+                    <span className="text-sm text-gray-600" title={`ETA ${formatEta(t.age_s)}`}>
+                      {formatAge(t.age_s)}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">Picked</h3>
+            <ul className="space-y-2">
+              {picked.map((t) => (
+                <li key={t.order_id} className="border p-2 rounded text-gray-500">
+                  <div className="flex justify-between">
+                    <span>Table {t.table}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <div>
-          <h3 className="font-semibold mb-2">Preparing</h3>
-          <ul className="space-y-2">
-            {preparing.map((t) => (
-              <li key={t.order_id} className="border p-2 rounded">
-                <div className="flex justify-between">
-                  <span>Table {t.table}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold mb-2">Ready</h3>
-          <ul className="space-y-2">
-            {ready.map((t) => (
-              <li key={t.order_id} className="border p-2 rounded">
-                <div className="flex justify-between">
-                  <span>Table {t.table}</span>
-                  <span className="text-sm text-gray-600" title={`ETA ${formatEta(t.age_s)}`}>
-                    {formatAge(t.age_s)}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold mb-2">Picked</h3>
-          <ul className="space-y-2">
-            {picked.map((t) => (
-              <li key={t.order_id} className="border p-2 rounded text-gray-500">
-                <div className="flex justify-between">
-                  <span>Table {t.table}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      )}
       {showPin && <PinModal open={showPin} onClose={() => setShowPin(false)} onSuccess={afterLogin} />}
       {toast && <Snackbar message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>
