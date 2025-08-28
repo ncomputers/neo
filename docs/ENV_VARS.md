@@ -4,6 +4,7 @@ The application relies on the following environment variables:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
+| `DB_URL` | Primary database DSN. | `postgresql+asyncpg://postgres:postgres@localhost:5432/master` |
 | `POSTGRES_MASTER_URL` | Async connection string for the master database. | `postgresql+asyncpg://postgres:postgres@localhost:5432/master` |
 | `POSTGRES_TENANT_DSN_TEMPLATE` | Template DSN for tenant databases, with `{tenant_id}` placeholder. | `postgresql+asyncpg://tenant:tenant@localhost:5432/tenant_{tenant_id}` |
 | `POSTGRES_SUPER_URL` (optional) | Superuser connection URL used when creating databases. Not required for SQLite. |  |
@@ -11,7 +12,7 @@ The application relies on the following environment variables:
 | `DB_SLOW_QUERY_MS` (optional) | Emit a warning when a DB query exceeds this many milliseconds. Defaults to `200`. | `250` |
 | `ONBOARDING_DB` | Path to onboarding session SQLite DB. Defaults to the system temp directory. | `/var/lib/neo/onboarding.db` |
 | `DEFAULT_TZ` | Default timezone for application processes. | `UTC` |
-| `JWT_SECRET` | Secret key used to sign JWT tokens. | `your_jwt_secret_key` |
+| `SECRET_KEY` | Secret key used to sign JWT tokens (≥32 chars). | `0123456789abcdef0123456789abcdef`, `fedcba9876543210fedcba9876543210` |
 | `JWKS_URL` (optional) | JWKS endpoint for verifying JWT signatures. | `https://auth.example.com/jwks.json` |
 | `REDIS_URL` | URL for Redis instance. | `redis://localhost:6379/0` |
 | `ALLOWED_ORIGINS` | Comma-separated list of origins allowed for CORS. Exact matches only; wildcards are not supported. Must be set. | `https://example.com,https://app.com` |
@@ -55,8 +56,9 @@ They must remain disabled in production; `validate_on_boot` enforces this when
 
 ## Database URLs
 
-Three environment variables control how the application talks to Postgres:
+Four environment variables control how the application talks to Postgres:
 
+- `DB_URL` – primary database DSN.
 - `POSTGRES_MASTER_URL` – async DSN for the shared "master" database.
 - `POSTGRES_TENANT_DSN_TEMPLATE` – async DSN template for per‑tenant databases; must include `{tenant_id}`.
 - `SYNC_DATABASE_URL` – sync DSN used by Alembic migrations and other scripts.
@@ -64,6 +66,7 @@ Three environment variables control how the application talks to Postgres:
 Sample local values assume Postgres on `localhost:5432`:
 
 ```bash
+DB_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master
 POSTGRES_MASTER_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master
 POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://tenant:tenant@localhost:5432/tenant_{tenant_id}
 SYNC_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/master
@@ -84,7 +87,7 @@ Use the connection strings above in your `.env` file, adjusting credentials as n
 
 - Tokens are signed using the `HS256` algorithm.
 - Access tokens expire after 60 minutes.
- - The signing key is provided via `JWT_SECRET` or `JWKS_URL`.
+- The signing key is provided via `SECRET_KEY` (32+ chars) or `JWKS_URL`.
 
 ## Redis Channels
 
@@ -106,7 +109,7 @@ Use `scripts/rotate_secrets.py` to rotate secrets without downtime. The script m
 
 Supported kinds:
 
-- `jwt` for `JWT_SECRET`
+- `jwt` for `SECRET_KEY`
 - `webhook` for `WEBHOOK_SIGNING_SECRET`
 - `vapid` for `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`
 
