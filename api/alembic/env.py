@@ -7,6 +7,8 @@ from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import NoSuchModuleError
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -50,6 +52,26 @@ def _coerce_sync_url(url: str) -> str:
     return url
 
 
+def _is_async_url(url: str) -> bool:
+    """Return True if URL requests an async driver and it's available."""
+
+    parsed = make_url(url)
+    driver = parsed.drivername
+    if driver.endswith("+asyncpg") or driver.endswith("+aiosqlite"):
+        try:
+            dialect = parsed.get_dialect()
+        except NoSuchModuleError as exc:
+            raise RuntimeError(
+                "Async database driver not installed. Use SYNC_DATABASE_URL or install the async driver."
+            ) from exc
+        if not getattr(dialect, "is_async", False):
+            raise RuntimeError(
+                "Async URL resolved to a synchronous dialect. Use SYNC_DATABASE_URL or install the async driver."
+            )
+        return True
+    return False
+
+
 def run_migrations_offline() -> None:
     url = _coerce_sync_url(_get_url())
     context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
@@ -61,8 +83,8 @@ async def run_migrations_online() -> None:
     """Run migrations in 'online' mode supporting async and sync URLs."""
 
     url = _get_url()
-    if url.startswith("postgresql+asyncpg") or "+aiosqlite" in url:
-        configuration = {"sqlalchemy.url": url}
+    configuration = {"sqlalchemy.url": url}
+    if _is_async_url(url):
         connectable = async_engine_from_config(
             configuration, prefix="sqlalchemy.", poolclass=pool.NullPool
         )
@@ -74,7 +96,6 @@ async def run_migrations_online() -> None:
             )
             await connection.run_sync(lambda conn: context.run_migrations())
     else:
-        configuration = {"sqlalchemy.url": url}
         connectable = engine_from_config(
             configuration, prefix="sqlalchemy.", poolclass=pool.NullPool
         )
