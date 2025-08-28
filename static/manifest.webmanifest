@@ -1,8 +1,8 @@
 {
   "name": "Neo QR",
   "short_name": "Neo QR",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/pwa/",
+  "scope": "/pwa/",
   "display": "standalone",
   "theme_color": "#ffffff",
   "background_color": "#ffffff",

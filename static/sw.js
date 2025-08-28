@@ -1,5 +1,5 @@
-const STATIC_CACHE = 'static-v1';
-const STATIC_ASSETS = ['/static/manifest.json'];
+const STATIC_CACHE = 'static-v2';
+const STATIC_ASSETS = ['/pwa/', '/static/offline.html', '/static/manifest.json'];
 const INVOICE_CACHE_PREFIX = 'invoice-';
 const MAX_INVOICE_CACHE = 50;
 const QUEUE_DB = 'request-queue';
@@ -60,6 +60,23 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(STATIC_CACHE).then(cache => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request).then(
+            cached => cached || caches.match('/static/offline.html')
+          )
+        )
+    );
+    return;
+  }
+
   if (
     event.request.method === 'POST' &&
     (url.pathname.startsWith('/api/guest/') || url.pathname.startsWith('/api/counter/'))
@@ -84,6 +101,19 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/invoice/') && url.pathname.endsWith('/pdf')) {
     const outlet = event.request.headers.get('X-Tenant-ID') || 'default';
     event.respondWith(handleInvoiceRequest(event.request, outlet));
+    return;
+  }
+
+  if (url.origin === location.origin && url.pathname.startsWith('/pwa/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(STATIC_CACHE).then(cache => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 
