@@ -17,10 +17,7 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 # Global secrets purely for demonstration purposes
-SECRET_KEY = os.getenv("SECRET_KEY")
-if not SECRET_KEY:
-    logger.warning("SECRET_KEY not configured; falling back to insecure default")
-    SECRET_KEY = "supersecret"
+SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
