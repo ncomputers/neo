@@ -20,6 +20,7 @@ from .models_tenant import (
     RoomOrder,
     RoomOrderItem,
 )
+from .utils.i18n import get_text
 from .utils.responses import ok
 
 router = APIRouter(prefix="/h")
@@ -82,7 +83,13 @@ def fetch_menu(
             ]
         data = {"categories": categories, "items": items}
         asyncio.run(redis.set(cache_key, json.dumps(data), ex=60))
-    lang = resolve_lang(accept_language)
+    lang = getattr(request.state, "lang", resolve_lang(accept_language))
+    for item in data["items"]:
+        item["name"] = get_text(item.get("name"), lang, item.get("name_i18n"))
+        if item.get("description") or item.get("desc_i18n"):
+            item["description"] = get_text(
+                item.get("description"), lang, item.get("desc_i18n")
+            )
     data["labels"] = {
         name: get_msg(lang, f"labels.{name}")
         for name in ("menu", "order", "pay", "get_bill")

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="{{ request.state.lang }}">
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block title %}Guest{% endblock %}</title>
+  </head>
+  <body>
+    <header>
+      <select id="lang-switcher">
+        {% for code in request.app.state.enabled_langs %}
+          <option value="{{ code }}" {% if code == request.state.lang %}selected{% endif %}>
+            {{ {'en': 'English', 'hi': 'हिन्दी', 'gu': 'ગુજરાતી'}.get(code, code) }}
+          </option>
+        {% endfor %}
+      </select>
+    </header>
+    {% block content %}{% endblock %}
+    <script>
+      const sel = document.getElementById('lang-switcher');
+      sel.addEventListener('change', () => {
+        const code = sel.value;
+        const maxAge = 60*60*24*180; // six months
+        document.cookie = `glang=${code};path=/;max-age=${maxAge}`;
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', code);
+        window.location.href = url.toString();
+      });
+    </script>
+  </body>
+</html>

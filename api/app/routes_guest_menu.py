@@ -4,20 +4,21 @@
 
 from __future__ import annotations
 
-import json
-
 import hashlib
+import json
 
 import httpx
 from fastapi import APIRouter, Depends, Header, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config import get_settings
+
 from .db.replica import read_only
 from .i18n import get_msg, resolve_lang
 from .menu.dietary import filter_items
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
+from .utils.i18n import get_text
 from .utils.responses import ok
-from config import get_settings
 
 router = APIRouter()
 
@@ -68,9 +69,15 @@ async def fetch_menu(
     filter_str = request.query_params.get("filter")
     if filter_str:
         items = filter_items(items, filter_str)
+    lang = getattr(request.state, "lang", resolve_lang(accept_language))
+    for item in items:
+        item["name"] = get_text(item.get("name"), lang, item.get("name_i18n"))
+        if item.get("description") or item.get("desc_i18n"):
+            item["description"] = get_text(
+                item.get("description"), lang, item.get("desc_i18n")
+            )
     data["items"] = items
 
-    lang = resolve_lang(accept_language)
     resp_data = {**data, "items": items}
     resp_data["labels"] = {
         name: get_msg(lang, f"labels.{name}")
@@ -80,9 +87,15 @@ async def fetch_menu(
     if settings.ab_tests_enabled:
         variant = request.cookies.get("ab_menu")
         if variant not in {"A", "B"}:
-            bucket = int(
-                hashlib.md5(table_token.encode(), usedforsecurity=False).hexdigest(), 16
-            ) % 2
+            bucket = (
+                int(
+                    hashlib.md5(
+                        table_token.encode(), usedforsecurity=False
+                    ).hexdigest(),
+                    16,
+                )
+                % 2
+            )
             variant = "B" if bucket else "A"
             response.set_cookie("ab_menu", variant, path="/")
         resp_data["ab_variant"] = variant
@@ -90,7 +103,12 @@ async def fetch_menu(
             async with httpx.AsyncClient(timeout=2) as client:
                 await client.post(
                     f"{settings.proxy_url}/analytics/ab",
-                    json={"tenant": tenant_id, "test": "menu", "variant": variant, "event": "exposure"},
+                    json={
+                        "tenant": tenant_id,
+                        "test": "menu",
+                        "variant": variant,
+                        "event": "exposure",
+                    },
                 )
         except Exception:
             pass
