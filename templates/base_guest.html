@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ request.state.lang or 'en' }}">
   <head>
     <meta charset="utf-8" />
     <title>{% block title %}Guest{% endblock %}</title>
