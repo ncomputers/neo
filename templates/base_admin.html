@@ -5,10 +5,13 @@
     <title>{% block title %}Admin{% endblock %}</title>
   </head>
   <body>
+    {% if request.state.license_status in ['GRACE','EXPIRED'] and not request.cookies.get('dunning_snooze') %}
+    {% set renew_url = '/admin/billing?plan=' + (request.state.license_plan or '') + '&return_to=' + request.url.path + '&utm_source=dunning&utm_campaign=banner' %}
     {% if request.state.license_status == 'GRACE' %}
-    <div class="banner">Subscription ends in {{request.state.license_days_left}} days <a href="/admin/billing">Renew</a></div>
-    {% elif request.state.license_status == 'EXPIRED' %}
-    <div class="banner expired">Subscription expired — renew to resume orders <a href="/admin/billing">Renew</a></div>
+    <div class="banner">Subscription ends in {{request.state.license_days_left}} days <a href="{{ renew_url }}">Renew now</a> | <a href="/admin/billing/dunning/snooze">Snooze for today</a></div>
+    {% else %}
+    <div class="banner expired">Subscription expired — renew to resume orders <a href="{{ renew_url }}">Renew now</a> | <a href="/admin/billing/dunning/snooze">Snooze for today</a></div>
+    {% endif %}
     {% endif %}
     {% block content %}{% endblock %}
   </body>

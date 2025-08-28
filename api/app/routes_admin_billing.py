@@ -9,8 +9,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-from fastapi import APIRouter, Header, HTTPException, Request, Response, Query
+from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 
 from .billing import (
     PLANS,
@@ -19,11 +20,10 @@ from .billing import (
     MockGateway,
     SubscriptionEvent,
 )
-from .billing.invoice_service import create_invoice, create_credit_note
-from .utils.responses import ok
-from .middlewares.license_gate import billing_always_allowed
+from .billing.invoice_service import create_invoice
 from .db import SessionLocal
-from sqlalchemy import text
+from .middlewares.license_gate import billing_always_allowed
+from .utils.responses import ok
 
 router = APIRouter(prefix="/admin/billing")
 webhook_router = APIRouter()
@@ -134,6 +134,19 @@ async def invoices_csv(
     for r in rows:
         writer.writerow([r[0], r[1], r[2], r[3], r[4], r[5]])
     return Response(buf.getvalue(), media_type="text/csv")
+
+
+@router.post("/dunning/snooze")
+@billing_always_allowed
+async def dunning_snooze(response: Response) -> dict:
+    """Set a cookie to suppress renewal banners for the day."""
+    from datetime import timezone
+
+    expires = datetime.now(timezone.utc).replace(
+        hour=23, minute=59, second=59, microsecond=0
+    )
+    response.set_cookie("dunning_snooze", "1", expires=expires)
+    return ok({"snoozed_until": expires.isoformat()})
 
 
 @webhook_router.post("/billing/webhook/mock")

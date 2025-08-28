@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     eta_confidence: str = "p50"
     max_queue_factor: float = 1.6
     eta_enabled: bool = False
+    dunning_send_hour_ist: int = 10
+    dunning_email_enabled: bool = True
+    dunning_wa_enabled: bool = False
+    dunning_max_per_day_per_tenant: int = 2
 
 
 # Cached singleton to avoid repeated file reads

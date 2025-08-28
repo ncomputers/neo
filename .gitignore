@@ -220,3 +220,4 @@ static/fonts/*.ttf
 static/icons/neo-qr-192.png
 static/icons/neo-qr-512.png
 print-test.png
+dunning_events.json

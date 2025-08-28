@@ -16,5 +16,9 @@
   "prep_sla_min": 15,
   "eta_confidence": "p50",
   "max_queue_factor": 1.6,
-  "eta_enabled": true
+  "eta_enabled": true,
+  "dunning_send_hour_ist": 10,
+  "dunning_email_enabled": true,
+  "dunning_wa_enabled": false,
+  "dunning_max_per_day_per_tenant": 2
 }

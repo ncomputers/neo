@@ -7,8 +7,9 @@
   <body>
     {% if request.state.license_status == 'EXPIRED' %}
     <div class="overlay">LICENSE EXPIRED</div>
-    {% elif request.state.license_status == 'GRACE' %}
-    <div class="banner">Subscription ends in {{request.state.license_days_left}} days <a href="/admin/billing">Renew</a></div>
+    {% elif request.state.license_status == 'GRACE' and not request.cookies.get('dunning_snooze') %}
+    {% set renew_url = '/admin/billing?plan=' + (request.state.license_plan or '') + '&return_to=' + request.url.path + '&utm_source=dunning&utm_campaign=banner' %}
+    <div class="banner">Subscription ends in {{request.state.license_days_left}} days <a href="{{ renew_url }}">Renew now</a> | <a href="/admin/billing/dunning/snooze">Snooze for today</a></div>
     {% endif %}
     {% block content %}{% endblock %}
   </body>
