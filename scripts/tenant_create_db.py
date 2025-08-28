@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from sqlalchemy import text
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import create_async_engine
 
 # Ensure project root is on the import path so ``api.app`` resolves when
@@ -21,16 +22,45 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api.app.db.tenant import build_dsn
 
 
-async def ensure_database(engine, tenant_id: str) -> None:
-    """Ensure the tenant database or schema exists.
-
-    For now we simply attempt to create a schema matching the tenant ID. This
-    will succeed if the database exists and the user has appropriate
-    privileges. The logic can be extended later to create databases as needed.
-    """
+async def ensure_schema(engine, tenant_id: str) -> None:
+    """Ensure the tenant schema exists."""
 
     async with engine.begin() as conn:
         await conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{tenant_id}"'))
+
+
+async def ensure_database_exists(dsn: str) -> None:
+    """Create the tenant database if it is missing.
+
+    The DSN is parsed to derive a server-level connection (``postgres``) that
+    is used to issue ``CREATE DATABASE`` with ``AUTOCOMMIT``.
+    """
+
+    url = make_url(dsn)
+    tenant_db = url.database
+    admin_url = url.set(database="postgres")
+    engine = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
+    try:
+        async with engine.begin() as conn:
+            res = await conn.execute(
+                text("SELECT 1 FROM pg_database WHERE datname=:name"),
+                {"name": tenant_db},
+            )
+            if not res.scalar():
+                await conn.execute(text(f'CREATE DATABASE "{tenant_db}"'))
+    except Exception:
+        await engine.dispose()
+        admin_url = url.set(database="template1")
+        engine = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
+        async with engine.begin() as conn:
+            res = await conn.execute(
+                text("SELECT 1 FROM pg_database WHERE datname=:name"),
+                {"name": tenant_db},
+            )
+            if not res.scalar():
+                await conn.execute(text(f'CREATE DATABASE "{tenant_db}"'))
+    finally:
+        await engine.dispose()
 
 
 async def run_tenant_migrations(engine) -> None:  # pragma: no cover - placeholder
@@ -41,9 +71,10 @@ async def run_tenant_migrations(engine) -> None:  # pragma: no cover - placehold
 
 async def main(tenant_id: str) -> None:
     dsn = build_dsn(tenant_id)
+    await ensure_database_exists(dsn)
     engine = create_async_engine(dsn, isolation_level="AUTOCOMMIT")
     try:
-        await ensure_database(engine, tenant_id)
+        await ensure_schema(engine, tenant_id)
         await run_tenant_migrations(engine)
     finally:
         await engine.dispose()
