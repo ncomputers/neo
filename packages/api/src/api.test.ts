@@ -4,6 +4,7 @@ import { apiFetch, idempotency } from './api';
 
 test('apiFetch injects auth, tenant and idempotency headers', async () => {
   const calls: RequestInit[] = [];
+  globalThis.sessionStorage = { getItem: () => 'secret-token' } as any;
   globalThis.localStorage = { getItem: () => 'secret-token' } as any;
   globalThis.fetch = async (_: RequestInfo | URL, init?: RequestInit) => {
     calls.push(init!);
@@ -25,6 +26,7 @@ test('apiFetch injects auth, tenant and idempotency headers', async () => {
 });
 
 test('apiFetch parses error json message', async () => {
+  globalThis.sessionStorage = { getItem: () => null } as any;
   globalThis.localStorage = { getItem: () => null } as any;
   globalThis.fetch = async () =>
     new Response(JSON.stringify({ message: 'fail' }), {
