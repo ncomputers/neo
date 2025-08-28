@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Invoice</title></head>
+<body>
+<h1>Tax Invoice</h1>
+<p>Supplier GSTIN: {{ invoice.supplier_gstin }}</p>
+<p>Buyer GSTIN: {{ invoice.buyer_gstin or '-' }}</p>
+<p>Invoice No: {{ invoice.number }}</p>
+<p>Period: {{ invoice.period_start }} to {{ invoice.period_end }}</p>
+<table border="1" cellspacing="0" cellpadding="4">
+<tr><th>Description</th><th>SAC</th><th>Amount</th></tr>
+<tr><td>Subscription</td><td>{{ invoice.sac_code }}</td><td>{{ invoice.amount }}</td></tr>
+<tr><td colspan="2">CGST</td><td>{{ invoice.cgst }}</td></tr>
+<tr><td colspan="2">SGST</td><td>{{ invoice.sgst }}</td></tr>
+<tr><td colspan="2">IGST</td><td>{{ invoice.igst }}</td></tr>
+<tr><td colspan="2"><strong>Total</strong></td><td><strong>{{ invoice.total }}</strong></td></tr>
+</table>
+<p>Amount in words: {{ invoice.words }}</p>
+</body>
+</html>

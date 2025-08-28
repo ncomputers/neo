@@ -6,19 +6,24 @@ import csv
 import io
 import json
 from datetime import datetime, timedelta
+from decimal import Decimal
+from pathlib import Path
 
-from fastapi import APIRouter, Header, HTTPException, Request, Response
+from fastapi import APIRouter, Header, HTTPException, Request, Response, Query
+from fastapi.responses import FileResponse
 
 from .billing import (
-    INVOICES,
     PLANS,
     PROCESSED_EVENTS,
     SUBSCRIPTION_EVENTS,
     MockGateway,
     SubscriptionEvent,
 )
+from .billing.invoice_service import create_invoice, create_credit_note
 from .utils.responses import ok
 from .middlewares.license_gate import billing_always_allowed
+from .db import SessionLocal
+from sqlalchemy import text
 
 router = APIRouter(prefix="/admin/billing")
 webhook_router = APIRouter()
@@ -70,35 +75,64 @@ async def checkout(payload: dict, x_tenant_id: str = Header(...)) -> dict:
     return ok(session)
 
 
+@router.get("/invoice/{invoice_id}.pdf")
+@billing_always_allowed
+async def invoice_pdf(invoice_id: int):
+    with SessionLocal() as db:
+        row = db.execute(
+            text("SELECT pdf_path FROM billing_invoices WHERE id=:id"),
+            {"id": invoice_id},
+        ).fetchone()
+    if not row or not row[0] or not Path(row[0]).exists():
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(row[0], media_type="application/pdf")
+
+
+@router.get("/credit-note/{credit_note_id}.pdf")
+@billing_always_allowed
+async def credit_note_pdf(credit_note_id: int):
+    with SessionLocal() as db:
+        row = db.execute(
+            text("SELECT pdf_path FROM billing_credit_notes WHERE id=:id"),
+            {"id": credit_note_id},
+        ).fetchone()
+    if not row or not row[0] or not Path(row[0]).exists():
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(row[0], media_type="application/pdf")
+
+
+@router.post("/invoice/test-generate")
+@billing_always_allowed
+async def test_generate(payload: dict) -> dict:
+    invoice_id = create_invoice(
+        payload["tenant_id"],
+        payload["plan_id"],
+        datetime.fromisoformat(payload["period_start"]),
+        datetime.fromisoformat(payload["period_end"]),
+        Decimal(str(payload["amount_inr"])),
+        payload.get("buyer_gstin"),
+    )
+    return ok({"invoice_id": invoice_id})
+
+
 @router.get("/invoices.csv")
 @billing_always_allowed
-async def invoices_csv(x_tenant_id: str = Header(...)) -> Response:
-    rows = [inv for inv in INVOICES if inv.tenant_id == x_tenant_id]
+async def invoices_csv(
+    from_: str | None = Query(None, alias="from"),
+    to: str | None = Query(None, alias="to"),
+) -> Response:
+    with SessionLocal() as db:
+        query = "SELECT id, number, amount_inr, cgst_inr, sgst_inr, igst_inr FROM billing_invoices"
+        params = {}
+        if from_ and to:
+            query += " WHERE created_at BETWEEN :f AND :t"
+            params = {"f": from_, "t": to}
+        rows = db.execute(text(query), params).fetchall()
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(
-        [
-            "number",
-            "amount_inr",
-            "gst_inr",
-            "period_start",
-            "period_end",
-            "status",
-            "pdf_url",
-        ]
-    )
-    for inv in rows:
-        writer.writerow(
-            [
-                inv.number,
-                inv.amount_inr,
-                inv.gst_inr,
-                inv.period_start.isoformat(),
-                inv.period_end.isoformat(),
-                inv.status,
-                inv.pdf_url,
-            ]
-        )
+    writer.writerow(["id", "number", "amount_inr", "cgst_inr", "sgst_inr", "igst_inr"])
+    for r in rows:
+        writer.writerow([r[0], r[1], r[2], r[3], r[4], r[5]])
     return Response(buf.getvalue(), media_type="text/csv")
 
 

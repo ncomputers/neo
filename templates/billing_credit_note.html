@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Credit Note</title></head>
+<body>
+<h1>CREDIT NOTE</h1>
+<p>Supplier GSTIN: {{ note.supplier_gstin }}</p>
+<p>Buyer GSTIN: {{ note.buyer_gstin or '-' }}</p>
+<p>Credit Note No: {{ note.number }}</p>
+<p>Against Invoice: {{ note.invoice_number }}</p>
+<table border="1" cellspacing="0" cellpadding="4">
+<tr><th>Description</th><th>SAC</th><th>Amount</th></tr>
+<tr><td>Subscription refund</td><td>{{ note.sac_code }}</td><td>{{ note.amount }}</td></tr>
+</table>
+<p>Reason: {{ note.reason }}</p>
+<p>Amount in words: {{ note.words }}</p>
+</body>
+</html>
