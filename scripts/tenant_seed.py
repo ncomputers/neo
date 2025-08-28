@@ -15,6 +15,8 @@ import sys
 import uuid
 from pathlib import Path
 
+from alembic.script import ScriptDirectory
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Ensure project root is on the import path so ``api.app`` resolves when
@@ -52,8 +54,26 @@ async def seed_minimal(session: AsyncSession) -> dict[str, int | str]:
     }
 
 
+async def ensure_latest_revision(session: AsyncSession) -> None:
+    """Exit if the database is not migrated to the latest revision."""
+
+    script = ScriptDirectory("api/alembic_tenant")
+    head = script.get_current_head()
+    res = await session.execute(text("SELECT version_num FROM alembic_version"))
+    current = res.scalar_one_or_none()
+    if current != head:
+        missing = [rev.revision for rev in script.iterate_revisions(head, current)]
+        missing.reverse()
+        print(
+            f"Missing migrations: {', '.join(missing) if missing else head}",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
+
 async def main(tenant_id: str) -> None:
     async with get_tenant_session(tenant_id) as session:
+        await ensure_latest_revision(session)
         ids = await seed_minimal(session)
     print(json.dumps(ids))
 
