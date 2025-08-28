@@ -1,0 +1,11 @@
+{
+  "name": "@neo/config",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    "./eslint": "./eslint.cjs",
+    "./prettier": "./prettier.cjs",
+    "./tsconfig": "./tsconfig.json",
+    "./vite": "./vite.cjs"
+  }
+}
