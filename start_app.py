@@ -65,7 +65,15 @@ def main(argv: list[str] | None = None) -> None:
             print("Install dependencies first: pip install -r requirements.txt")
             return
 
-    uvicorn.run("api.app.main:app")
+    try:
+        uvicorn.run("api.app.main:app")
+    except ModuleNotFoundError as exc:
+        missing = exc.name or str(exc)
+        print(
+            f"Missing dependency: {missing}. Install it with 'pip install {missing}'",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
