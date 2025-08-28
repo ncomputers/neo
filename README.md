@@ -530,6 +530,7 @@ python start_app.py
 ```
 
 The script loads environment variables from `.env`, runs `python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r requirements.txt`.
+Failed migrations now surface Alembic's stdout and stderr and exit with the same code for easier troubleshooting.
 
 ### Notification Worker
 
