@@ -13,6 +13,8 @@ A Lighthouse CI workflow enforces performance budgets for the guest, admin, and 
 The workflow requires a PostgreSQL DSN for migrations. Set `POSTGRES_MASTER_URL`
 or `DATABASE_URL` to the same DSN and provide `SQLALCHEMY_DATABASE_URI` for
 tools needing a synchronous connection string.
+Migrations run once before the server starts and the workflow launches
+`start_app.py` with `SKIP_DB_MIGRATIONS=1` to avoid redundant upgrades.
 Monitoring tools such as UptimeRobot should poll the `/status.json` endpoint for platform health. A synthetic monitor (`scripts/synthetic_order_monitor.py`) exercises a full guest order path end-to-end and reports metrics. Status is persisted in Redis with `status.json` on disk as a fallback. Administrators can override it via `POST /admin/status` or the helper script in `ops/scripts/status_page.py` during incidents.
 Invoices support optional FSSAI license details when provided.
 QR pack generation events are audited and can be exported via admin APIs. See
@@ -531,6 +533,8 @@ python start_app.py
 
 The script loads environment variables from `.env`, runs `python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head`, and starts the application via `uvicorn api.app.main:app`. If Alembic is missing, it will prompt you to install dependencies with `pip install -r requirements.txt`.
 Failed migrations now surface Alembic's stdout and stderr and exit with the same code for easier troubleshooting.
+
+Use the ``--skip-db-migrations`` flag or set ``SKIP_DB_MIGRATIONS=1`` to bypass Alembic. When skipped, the script falls back to an in-memory SQLite database unless ``DATABASE_URL`` is already configured.
 
 ### Notification Worker
 

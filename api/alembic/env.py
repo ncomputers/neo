@@ -6,7 +6,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -42,27 +42,46 @@ def _get_url() -> str:
     return DB_URLS[x_args.get("db", "master")]
 
 
+def _coerce_sync_url(url: str) -> str:
+    """Return a synchronous variant of an asyncpg DSN."""
+
+    if url.startswith("postgresql+asyncpg"):
+        return url.replace("postgresql+asyncpg", "postgresql+psycopg")
+    return url
+
+
 def run_migrations_offline() -> None:
-    url = _get_url()
+    url = _coerce_sync_url(_get_url())
     context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
     with context.begin_transaction():
         context.run_migrations()
 
 
 async def run_migrations_online() -> None:
-    """Run migrations in 'online' mode using an async engine."""
+    """Run migrations in 'online' mode supporting async and sync URLs."""
 
-    configuration = {"sqlalchemy.url": _get_url()}
-    connectable = async_engine_from_config(
-        configuration, prefix="sqlalchemy.", poolclass=pool.NullPool
-    )
-    async with connectable.connect() as connection:
-        await connection.run_sync(
-            lambda sync_conn: context.configure(
-                connection=sync_conn, target_metadata=target_metadata
-            )
+    url = _get_url()
+    if url.startswith("postgresql+asyncpg") or "+aiosqlite" in url:
+        configuration = {"sqlalchemy.url": url}
+        connectable = async_engine_from_config(
+            configuration, prefix="sqlalchemy.", poolclass=pool.NullPool
         )
-        await connection.run_sync(context.run_migrations)
+        async with connectable.connect() as connection:
+            await connection.run_sync(
+                lambda sync_conn: context.configure(
+                    connection=sync_conn, target_metadata=target_metadata
+                )
+            )
+            await connection.run_sync(lambda conn: context.run_migrations())
+    else:
+        configuration = {"sqlalchemy.url": url}
+        connectable = engine_from_config(
+            configuration, prefix="sqlalchemy.", poolclass=pool.NullPool
+        )
+        with connectable.connect() as connection:
+            context.configure(connection=connection, target_metadata=target_metadata)
+            with context.begin_transaction():
+                context.run_migrations()
 
 
 if context.is_offline_mode():
