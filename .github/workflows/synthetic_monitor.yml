@@ -94,46 +94,47 @@ jobs:
         run: exit 1
 
   prod:
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *'
+    if: >-
+      (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *') &&
+      github.ref == 'refs/heads/main' &&
+      !github.event.pull_request.head.repo.fork &&
+      secrets.API_BASE_URL != '' &&
+      secrets.SYN_TENANT_ID != '' &&
+      secrets.SYN_TABLE_CODE != '' &&
+      secrets.AUTH_TOKEN != '' &&
+      secrets.SYN_ENABLED_PROD == 'true'
     runs-on: ubuntu-latest
+    environment: prod
     env:
-      SYN_ENABLED_PROD: ${{ vars.SYN_ENABLED_PROD }}
-      API_BASE_URL: ${{ secrets.API_BASE_URL_PROD }}
-      SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_PROD }}
-      SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_PROD }}
-      AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_PROD }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID }}
+      SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE }}
+      AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check prod enabled
-        if: env.SYN_ENABLED_PROD != 'true'
-        run: |
-          echo "Prod synthetic monitor disabled via vars.SYN_ENABLED_PROD != 'true'. Exiting."
-          exit 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: |
-          python -m pip install --upgrade pip
-          pip install -r api/requirements.txt
-      - name: Debug (length only)
-        run: |
-          echo "API_BASE_URL length: ${#API_BASE_URL}"
-          echo "SYN_TENANT_ID length: ${#SYN_TENANT_ID}"
-          echo "SYN_TABLE_CODE length: ${#SYN_TABLE_CODE}"
-          echo "AUTH_TOKEN length: ${#AUTH_TOKEN}"
       - name: Guard
         shell: bash
         run: |
           set -Eeuo pipefail
+          secrets=(API_BASE_URL SYN_TENANT_ID SYN_TABLE_CODE AUTH_TOKEN)
           missing=()
-          [[ -z "${API_BASE_URL:-}" ]] && missing+=("API_BASE_URL")
-          [[ -z "${SYN_TENANT_ID:-}" ]] && missing+=("SYN_TENANT_ID")
-          [[ -z "${SYN_TABLE_CODE:-}" ]] && missing+=("SYN_TABLE_CODE")
-          [[ -z "${AUTH_TOKEN:-}"    ]] && missing+=("AUTH_TOKEN")
+          for var in "${secrets[@]}"; do
+            val="${!var:-}"
+            echo "::add-mask::$val"
+            [[ -z "$val" ]] && missing+=("$var")
+          done
           if (( ${#missing[@]} )); then
             echo "Missing required secrets: ${missing[*]}" >&2
             exit 1
           fi
+      - name: Sanity check
+        run: curl -fsS "$API_BASE_URL" >/dev/null
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt
       - name: Run synthetic monitor
         id: monitor
         continue-on-error: true
