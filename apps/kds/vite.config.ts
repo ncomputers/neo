@@ -1,2 +1,18 @@
-import config from '@neo/config/vite';
-export default config;
+import base from '@neo/config/vite';
+import { defineConfig, mergeConfig } from 'vite';
+import { fileURLToPath, URL } from 'node:url';
+
+export default mergeConfig(
+  base,
+  defineConfig({
+    resolve: {
+      alias: {
+        '@neo/api': fileURLToPath(new URL('../../packages/api/src/index.ts', import.meta.url))
+      }
+    },
+    test: {
+      environment: 'jsdom',
+      setupFiles: './vitest.setup.ts'
+    }
+  })
+);

@@ -17,7 +17,7 @@ export function PinModal({ open, onClose, onSuccess }: PinModalProps) {
     e.preventDefault();
     try {
       const res = await loginPin({ phone, pin });
-      localStorage.setItem('token', res.token);
+      sessionStorage.setItem('token', res.token);
       onSuccess();
       onClose();
     } catch (err) {
