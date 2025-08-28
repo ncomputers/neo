@@ -25,6 +25,7 @@ jobs:
     env:
       POSTGRES_MASTER_URL: postgresql+asyncpg://neo:neo@localhost:5432/neo
       SYNC_DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
+      POSTGRES_TENANT_DSN_TEMPLATE: ${{ secrets.POSTGRES_TENANT_DSN_TEMPLATE }}
 
     steps:
       - uses: actions/checkout@v4
