@@ -25,12 +25,27 @@ jobs:
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
         run: |
+          set -e
+          if [ -z "${{ secrets.KUBE_CONFIG_STAGING }}" ]; then
+            echo "KUBE_CONFIG_STAGING secret not found" >&2
+            exit 1
+          fi
           mkdir -p ~/.kube
-          printf '%s' "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 --decode > ~/.kube/config
+          printf '%s' "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 --decode > ~/.kube/config 2>/dev/null \
+            || printf '%s' "${{ secrets.KUBE_CONFIG_STAGING }}" > ~/.kube/config
           chmod 600 ~/.kube/config
-          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+          echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - name: Verify cluster access
-        run: kubectl cluster-info
+        run: |
+          set -e
+          if [ -z "$KUBECONFIG" ] || [ ! -s "$KUBECONFIG" ]; then
+            echo "kubeconfig missing or empty at $KUBECONFIG" >&2
+            exit 1
+          fi
+          trap 'echo "--- kubectl config view ---"; kubectl config view; echo "--- kubectl config get-contexts ---"; kubectl config get-contexts' ERR
+          kubectl config use-context "${{ secrets.KUBE_CTX_STAGING }}"
+          kubectl version --short
+          kubectl get ns
       - name: Deploy to staging
         run: |
           helm upgrade --install neo deploy/helm/neo \
@@ -71,10 +86,27 @@ jobs:
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
         run: |
+          set -e
+          if [ -z "${{ secrets.KUBE_CONFIG_PROD }}" ]; then
+            echo "KUBE_CONFIG_PROD secret not found" >&2
+            exit 1
+          fi
           mkdir -p ~/.kube
-          printf '%s' "${{ secrets.KUBE_CONFIG_PROD }}" | base64 --decode > ~/.kube/config
+          printf '%s' "${{ secrets.KUBE_CONFIG_PROD }}" | base64 --decode > ~/.kube/config 2>/dev/null \
+            || printf '%s' "${{ secrets.KUBE_CONFIG_PROD }}" > ~/.kube/config
           chmod 600 ~/.kube/config
-          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+          echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
+      - name: Verify cluster access
+        run: |
+          set -e
+          if [ -z "$KUBECONFIG" ] || [ ! -s "$KUBECONFIG" ]; then
+            echo "kubeconfig missing or empty at $KUBECONFIG" >&2
+            exit 1
+          fi
+          trap 'echo "--- kubectl config view ---"; kubectl config view; echo "--- kubectl config get-contexts ---"; kubectl config get-contexts' ERR
+          kubectl config use-context "${{ secrets.KUBE_CTX_PROD }}"
+          kubectl version --short
+          kubectl get ns
       - name: Blue/green rollout
         run: |
           helm upgrade --install neo deploy/helm/neo \
