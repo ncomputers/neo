@@ -1,0 +1,15 @@
+{
+  "packageId": "com.neo.kds.twa",
+  "host": "<prod-domain>",
+  "launcherName": "Neo KDS",
+  "name": "Neo KDS",
+  "startUrl": "/kds/expo",
+  "scope": "/kds/expo",
+  "display": "standalone",
+  "orientation": "landscape",
+  "splashScreenFadeOutDuration": 300,
+  "features": {
+    "keepScreenOn": true,
+    "immersiveMode": true
+  }
+}

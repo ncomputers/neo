@@ -1,0 +1,1 @@
+Neo Admin provides a streamlined interface for managing venues, menus and orders. This wrapper packages the existing PWA using a Trusted Web Activity for easy distribution via the Play Store.

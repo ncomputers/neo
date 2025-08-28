@@ -1,0 +1,12 @@
+{
+  "packageId": "com.neo.admin.twa",
+  "host": "<prod-domain>",
+  "launcherName": "Neo Admin",
+  "name": "Neo Admin",
+  "startUrl": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "orientation": "portrait",
+  "splashScreenFadeOutDuration": 300,
+  "secureMode": true
+}

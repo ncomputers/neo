@@ -1,0 +1,1 @@
+Neo KDS keeps kitchen staff on top of incoming orders. The TWA wrapper enables kiosk mode with a persistent wake lock and optional immersive mode.

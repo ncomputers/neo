@@ -1,0 +1,18 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.neo.admin.twa",
+      "sha256_cert_fingerprints": ["CHANGE_ME_ADMIN"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.neo.kds.twa",
+      "sha256_cert_fingerprints": ["CHANGE_ME_KDS"]
+    }
+  }
+]
