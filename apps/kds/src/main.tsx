@@ -6,6 +6,7 @@ import './index.css';
 import './i18n';
 import { HealthPage } from './pages/HealthPage';
 import { Workbox } from 'workbox-window';
+import { ExpoPage } from './pages/ExpoPage';
 
 const qc = new QueryClient();
 
@@ -16,12 +17,13 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={qc}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HealthPage />} />
-        </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+      <QueryClientProvider client={qc}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HealthPage />} />
+            <Route path="/kds/expo" element={<ExpoPage />} />
+          </Routes>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
