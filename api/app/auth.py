@@ -3,16 +3,24 @@
 """Simple in-memory authentication demo for FastAPI routes."""
 
 from datetime import datetime, timedelta
+import logging
+import os
 from typing import Optional
 
 from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError, VerifyMismatchError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
+logger = logging.getLogger(__name__)
+
 # Global secrets purely for demonstration purposes
-SECRET_KEY = "supersecret"
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    logger.warning("SECRET_KEY not configured; falling back to insecure default")
+    SECRET_KEY = "supersecret"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -88,8 +96,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
     try:
         return ph.verify(hashed_password, plain_password)
-    except Exception:  # pragma: no cover - defensive
+    except VerifyMismatchError:
         return False
+    except VerificationError as exc:  # pragma: no cover - unexpected
+        logger.error("argon2 verification error: %s", exc)
+        raise
 
 
 def authenticate_user(username: str, password: str) -> Optional[UserInDB]:
