@@ -5,8 +5,8 @@ Revises: 0002_table_state
 Create Date: 2024-10-07
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision: str = "0003_tables_map_fields"
 down_revision: str | None = "0002_table_state"
@@ -17,17 +17,18 @@ depends_on: tuple[str, ...] | None = None
 def upgrade() -> None:
     conn = op.get_bind()
     insp = sa.inspect(conn)
-    if not insp.has_column("tables", "pos_x"):
+    cols = {c["name"] for c in insp.get_columns("tables")}
+    if "pos_x" not in cols:
         op.add_column(
             "tables",
-            sa.Column("pos_x", sa.Integer(), nullable=False, server_default="0"),
+            sa.Column("pos_x", sa.Integer(), nullable=True, server_default="0"),
         )
-    if not insp.has_column("tables", "pos_y"):
+    if "pos_y" not in cols:
         op.add_column(
             "tables",
-            sa.Column("pos_y", sa.Integer(), nullable=False, server_default="0"),
+            sa.Column("pos_y", sa.Integer(), nullable=True, server_default="0"),
         )
-    if not insp.has_column("tables", "label"):
+    if "label" not in cols:
         op.add_column(
             "tables",
             sa.Column("label", sa.Text(), nullable=True),
@@ -37,9 +38,10 @@ def upgrade() -> None:
 def downgrade() -> None:
     conn = op.get_bind()
     insp = sa.inspect(conn)
-    if insp.has_column("tables", "label"):
+    cols = {c["name"] for c in insp.get_columns("tables")}
+    if "label" in cols:
         op.drop_column("tables", "label")
-    if insp.has_column("tables", "pos_y"):
+    if "pos_y" in cols:
         op.drop_column("tables", "pos_y")
-    if insp.has_column("tables", "pos_x"):
+    if "pos_x" in cols:
         op.drop_column("tables", "pos_x")
