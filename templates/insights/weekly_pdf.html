@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Weekly Owner Insights</title>
+</head>
+<body>
+  <h1>Weekly Owner Insights for {{ tenant }}</h1>
+  <p>Revenue: {{ metrics.gross_sales }}</p>
+  <p>Orders: {{ metrics.orders }}</p>
+  <p>Average Prep Time: {{ metrics.avg_prep_time }}</p>
+  <p>SLA Hit Rate: {{ metrics.sla_hit_rate }}</p>
+  <h2>Insights</h2>
+  <ul>
+  {% for insight in insights %}
+    <li>{{ insight }}</li>
+  {% endfor %}
+  </ul>
+</body>
+</html>

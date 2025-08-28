@@ -1,0 +1,11 @@
+Weekly Owner Insights for {{ tenant }}
+
+Revenue: {{ metrics.gross_sales }}
+Orders: {{ metrics.orders }}
+Average Prep Time: {{ metrics.avg_prep_time }}
+SLA Hit Rate: {{ metrics.sla_hit_rate }}
+
+Insights:
+{% for insight in insights %}
+- {{ insight }}
+{% endfor %}
