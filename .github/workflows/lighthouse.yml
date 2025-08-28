@@ -19,8 +19,8 @@ jobs:
         options: >-
           --health-cmd="pg_isready -U neo" --health-interval=10s --health-timeout=5s --health-retries=5
     env:
-      DATABASE_URL: postgresql+asyncpg://neo:neo@localhost:5432/neo
-      SYNC_DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
+      POSTGRES_MASTER_URL: postgresql://neo:neo@localhost:5432/neo
+      DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
       SQLALCHEMY_DATABASE_URI: postgresql://neo:neo@localhost:5432/neo
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
           done
       - name: Run migrations
         run: |
-          python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head
+          python -m alembic -c api/alembic.ini -x db_url=$POSTGRES_MASTER_URL upgrade head
       - name: Run Lighthouse CI
         run: |
           python start_app.py &

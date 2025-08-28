@@ -71,13 +71,16 @@ def backup(tenant: str, out_path: Path) -> None:
         else:
             _export_sqlite(db_path, out_path)
     else:
-        if out_path.suffix == ".json":
-            out_path.write_text(json.dumps({"todo": "implement postgres export"}))
-        else:
-            pg_dump = shutil.which("pg_dump")
-            if not pg_dump:
-                raise RuntimeError("pg_dump not available – TODO: invoke pg_dump for backups")
-            subprocess.run([pg_dump, dsn, "-f", str(out_path)], check=True)
+        pg_dump = shutil.which("pg_dump")
+        if not pg_dump:
+            raise FileNotFoundError(
+                "pg_dump not found; install PostgreSQL client tools"
+            )
+        cmd = [pg_dump]
+        if out_path.suffix != ".sql":
+            cmd.append("-Fc")
+        cmd.extend(["-f", str(out_path), dsn])
+        subprocess.run(cmd, check=True)
 
 
 def main() -> None:

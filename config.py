@@ -74,5 +74,8 @@ def get_settings() -> Settings:
         if k.lower() in Settings.model_fields
     }
     merged = {**data, **env_override}
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url and "postgres_master_url" not in env_override:
+        merged["postgres_master_url"] = db_url
     # Environment variables override values from the JSON file.
     return Settings(**merged)

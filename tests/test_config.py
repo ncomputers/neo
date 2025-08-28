@@ -39,3 +39,10 @@ def test_missing_key_uses_default(monkeypatch):
     )
     settings = _settings()
     assert settings.acceptance_mode == AcceptanceMode.ITEM
+
+
+def test_database_url_populates_master(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example")
+    settings = _settings()
+    assert settings.postgres_master_url == "postgresql://example"
+    monkeypatch.delenv("DATABASE_URL")

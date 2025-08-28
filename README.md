@@ -7,6 +7,12 @@ This repository contains three main services:
  - `ops/` – Docker Compose for local development.
 
 A Lighthouse CI workflow enforces performance budgets for the guest, admin, and KDS routes.
+
+### Lighthouse workflow
+
+The workflow requires a PostgreSQL DSN for migrations. Set `POSTGRES_MASTER_URL`
+or `DATABASE_URL` to the same DSN and provide `SQLALCHEMY_DATABASE_URI` for
+tools needing a synchronous connection string.
 Monitoring tools such as UptimeRobot should poll the `/status.json` endpoint for platform health. A synthetic monitor (`scripts/synthetic_order_monitor.py`) exercises a full guest order path end-to-end and reports metrics. Status is persisted in Redis with `status.json` on disk as a fallback. Administrators can override it via `POST /admin/status` or the helper script in `ops/scripts/status_page.py` during incidents.
 Invoices support optional FSSAI license details when provided.
 QR pack generation events are audited and can be exported via admin APIs. See
