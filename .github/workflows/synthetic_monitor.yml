@@ -10,6 +10,11 @@ jobs:
   staging:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *'
     runs-on: ubuntu-latest
+    env:
+      API_BASE_URL: ${{ secrets.API_BASE_URL_STAGING }}
+      SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_STAGING }}
+      SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_STAGING }}
+      AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_STAGING }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,13 +23,14 @@ jobs:
       - run: |
           python -m pip install --upgrade pip
           pip install -r api/requirements.txt
-      - name: Validate required env
+      - name: Debug (length only)
+        run: |
+          echo "API_BASE_URL length: ${#API_BASE_URL}"
+          echo "SYN_TENANT_ID length: ${#SYN_TENANT_ID}"
+          echo "SYN_TABLE_CODE length: ${#SYN_TABLE_CODE}"
+          echo "AUTH_TOKEN length: ${#AUTH_TOKEN}"
+      - name: Guard
         shell: bash
-        env:
-          API_BASE_URL: ${{ secrets.API_BASE_URL_STAGING }}
-          SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_STAGING }}
-          SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_STAGING }}
-          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_STAGING }}
         run: |
           set -Eeuo pipefail
           missing=()
@@ -40,12 +46,8 @@ jobs:
         id: monitor
         continue-on-error: true
         env:
-          SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_STAGING }}
-          SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_STAGING }}
           SYN_MENU_ITEM_IDS: ${{ secrets.SYN_MENU_ITEM_IDS_STAGING }}
           SYN_UPI_VPA: ${{ secrets.SYN_UPI_VPA_STAGING }}
-          API_BASE_URL: ${{ secrets.API_BASE_URL_STAGING }}
-          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_STAGING }}
           PUSHGATEWAY: ${{ secrets.PUSHGATEWAY_STAGING }}
         run: |
           set -o pipefail
@@ -96,6 +98,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SYN_ENABLED_PROD: ${{ vars.SYN_ENABLED_PROD }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL_PROD }}
+      SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_PROD }}
+      SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_PROD }}
+      AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_PROD }}
     steps:
       - uses: actions/checkout@v4
       - name: Check prod enabled
@@ -109,13 +115,14 @@ jobs:
       - run: |
           python -m pip install --upgrade pip
           pip install -r api/requirements.txt
-      - name: Validate required env
+      - name: Debug (length only)
+        run: |
+          echo "API_BASE_URL length: ${#API_BASE_URL}"
+          echo "SYN_TENANT_ID length: ${#SYN_TENANT_ID}"
+          echo "SYN_TABLE_CODE length: ${#SYN_TABLE_CODE}"
+          echo "AUTH_TOKEN length: ${#AUTH_TOKEN}"
+      - name: Guard
         shell: bash
-        env:
-          API_BASE_URL: ${{ secrets.API_BASE_URL_PROD }}
-          SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_PROD }}
-          SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_PROD }}
-          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_PROD }}
         run: |
           set -Eeuo pipefail
           missing=()
@@ -131,12 +138,8 @@ jobs:
         id: monitor
         continue-on-error: true
         env:
-          SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_PROD }}
-          SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_PROD }}
           SYN_MENU_ITEM_IDS: ${{ secrets.SYN_MENU_ITEM_IDS_PROD }}
           SYN_UPI_VPA: ${{ secrets.SYN_UPI_VPA_PROD }}
-          API_BASE_URL: ${{ secrets.API_BASE_URL_PROD }}
-          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_PROD }}
           PUSHGATEWAY: ${{ secrets.PUSHGATEWAY_PROD }}
         run: |
           set -o pipefail
