@@ -6,10 +6,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ASSETLINKS_HOST: ${{ secrets.ASSETLINKS_HOST }}
     steps:
       - uses: actions/checkout@v4
       - name: Build TWAs
         run: ./scripts/twa_build.sh
       - name: Deploy asset links
-        if: ${{ secrets.ASSETLINKS_HOST != '' }}
+        if: ${{ env.ASSETLINKS_HOST != '' }}
         run: ./scripts/deploy_assetlinks.sh
