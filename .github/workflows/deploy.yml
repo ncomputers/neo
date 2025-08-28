@@ -14,7 +14,20 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          
           git push origin HEAD:deploy --force
+
+      - name: Upload assetlinks.json
+        if: secrets.ASSETLINKS_URL != ''
+        run: |
+          curl -X PUT -H "Authorization: Bearer $ASSETLINKS_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary @static/.well-known/assetlinks.json \
+            "$ASSETLINKS_URL"
+        env:
+          ASSETLINKS_URL: ${{ secrets.ASSETLINKS_URL }}
+          ASSETLINKS_TOKEN: ${{ secrets.ASSETLINKS_TOKEN }}
+
 
   deploy-staging:
     needs: build-and-push

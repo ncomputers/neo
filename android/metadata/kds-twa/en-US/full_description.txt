@@ -1,0 +1,1 @@
+Display and manage live orders in the kitchen with offline support and kiosk-friendly features.
