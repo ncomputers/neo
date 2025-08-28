@@ -12,7 +12,8 @@ docker compose build
 
 ## Apply database migrations
 
-Run migrations once the database is ready. This uses the Alembic configuration bundled with the API image.
+Run migrations once the database is ready. This uses the Alembic configuration
+bundled with the API image and executes them through an async SQLAlchemy engine.
 
 ```bash
 docker compose run --rm api bash -c "cd api && python -m alembic -c alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head"
