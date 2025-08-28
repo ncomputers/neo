@@ -7,6 +7,7 @@ on:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16
@@ -45,10 +46,7 @@ jobs:
         run: |
           python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head
       - name: Run Lighthouse CI
-        run: |
-          SKIP_DB_MIGRATIONS=1 python start_app.py &
-          sleep 5
-          lhci autorun --config=lighthouserc.json
+        run: ./.ci/scripts/run_with_timeout.sh bash -c "SKIP_DB_MIGRATIONS=1 python start_app.py & sleep 5 && lhci autorun --config=lighthouserc.json"
       - name: Upload Lighthouse reports
         uses: actions/upload-artifact@v4
         with:

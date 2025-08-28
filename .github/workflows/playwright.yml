@@ -8,6 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: e2e/playwright
@@ -23,4 +24,4 @@ jobs:
       - name: Run tests
         env:
           BASE_URL: https://staging.example.com
-        run: npx playwright test
+        run: ../../.ci/scripts/run_with_timeout.sh npx playwright test
