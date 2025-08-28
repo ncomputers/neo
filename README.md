@@ -295,7 +295,9 @@ outlines, and high-contrast color tokens. The Pa11y GitHub Actions workflow
 provisions a Postgres service, applies migrations, launches
 `python start_app.py` in the background, waits for `localhost:8000` with
 `wait-on`, and then runs `npx pa11y-ci -c pa11y-ci.json` to verify key screens
-remain accessible.
+remain accessible. Pa11y stores screenshots in the `pa11y-screenshots/`
+directory, which GitHub Actions uploads as a `pa11y-screenshots` artifact for
+later review.
 
 ## Localization
 
