@@ -1,5 +1,5 @@
 import { Component, ReactNode } from 'react';
-import { apiFetch } from '@neo/api';
+import { captureError } from '@neo/utils';
 import { Button } from './button';
 
 export interface GlobalErrorBoundaryProps {
@@ -21,14 +21,7 @@ export class GlobalErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error) {
-    void apiFetch('/telemetry/error', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        message: error.message,
-        stack: error.stack
-      })
-    }).catch(() => {});
+    captureError(error);
   }
 
   private handleRetry = () => {

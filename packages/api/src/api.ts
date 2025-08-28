@@ -6,7 +6,9 @@ export interface FetchOptions extends RequestInit {
 export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promise<T> {
   const { idempotencyKey, tenant, headers, ...rest } = opts;
   const h = new Headers(headers);
-  const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+  const token =
+    (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('token')) ||
+    (typeof localStorage !== 'undefined' && localStorage.getItem('token'));
   if (token) h.set('Authorization', `Bearer ${token}`);
   if (tenant) h.set('X-Tenant', tenant);
   if (idempotencyKey) h.set('Idempotency-Key', idempotencyKey);
