@@ -98,3 +98,10 @@ Postgres database, and running a basic tenant count query. It reports the
 encrypted size, timings, and row count. The `backup-smoke` GitHub workflow runs
 this weekly against the staging cluster and posts a summary to the workflow
 run.
+
+To run the script manually, set `POSTGRES_URL`, `BACKUP_PUBLIC_KEY`, and
+`BACKUP_PRIVATE_KEY` in the environment and invoke:
+
+```
+bash scripts/backup_smoke.sh
+```

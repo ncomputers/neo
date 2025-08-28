@@ -13,7 +13,7 @@ pilot: release-rc stage
 	pytest -q
 	npx playwright test
 	python scripts/pdf_smoke.py --env=staging
-	bash scripts/backup_smoke.sh --env=staging
+	bash scripts/backup_smoke.sh
 
 release-ga:
 	python scripts/release_tag.py --ga
