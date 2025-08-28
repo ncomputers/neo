@@ -18,6 +18,24 @@ jobs:
       - run: |
           python -m pip install --upgrade pip
           pip install -r api/requirements.txt
+      - name: Validate required env
+        shell: bash
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL_STAGING }}
+          SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_STAGING }}
+          SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_STAGING }}
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_STAGING }}
+        run: |
+          set -Eeuo pipefail
+          missing=()
+          [[ -z "${API_BASE_URL:-}" ]] && missing+=("API_BASE_URL_STAGING")
+          [[ -z "${SYN_TENANT_ID:-}" ]] && missing+=("SYN_TENANT_ID_STAGING")
+          [[ -z "${SYN_TABLE_CODE:-}" ]] && missing+=("SYN_TABLE_CODE_STAGING")
+          [[ -z "${AUTH_TOKEN:-}"    ]] && missing+=("AUTH_TOKEN_STAGING")
+          if (( ${#missing[@]} )); then
+            echo "Missing required secrets: ${missing[*]}" >&2
+            exit 1
+          fi
       - name: Run synthetic monitor
         id: monitor
         continue-on-error: true
@@ -34,22 +52,35 @@ jobs:
           python scripts/synthetic_order_monitor.py | tee metrics.json
       - name: Parse metrics
         id: metrics
-        run: echo "step_failed=$(jq -r '.step_failed' metrics.json)" >> "$GITHUB_OUTPUT"
-      - name: Previous run
+        run: |
+          set -Eeuo pipefail
+          if [[ -s metrics.json ]]; then
+            step_failed="$(jq -r '.step_failed // "unknown"' metrics.json)"
+          else
+            step_failed="unknown"
+          fi
+          echo "step_failed=$step_failed" >> "$GITHUB_OUTPUT"
+      - name: Previous run conclusion
         id: prev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          prev=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/synthetic_monitor.yml/runs?per_page=2" \
-            | jq -r '.workflow_runs[1].conclusion')
+          set -Eeuo pipefail
+          prev="$(curl -fsSL -H \"Authorization: Bearer $GITHUB_TOKEN\" \
+            \"$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/${{ github.workflow }}.yml/runs?per_page=2\" \
+            | jq -r '.workflow_runs[1].conclusion // \"unknown\"')"
           echo "prev=$prev" >> "$GITHUB_OUTPUT"
-      - name: Alert
+      - name: Alert on two consecutive failures
         if: steps.monitor.outcome == 'failure' && steps.prev.outputs.prev == 'failure'
         env:
           WEBHOOK: ${{ secrets.SYN_ALERT_WEBHOOK }}
         run: |
-          curl -X POST -H 'Content-Type: application/json' -d "{\"text\":\"synthetic monitor staging failed step=${{ steps.metrics.outputs.step_failed }}\"}" "$WEBHOOK"
+          set -Eeuo pipefail
+          if [[ -z "${WEBHOOK:-}" ]]; then
+            echo "SYN_ALERT_WEBHOOK not set; skipping alert." >&2
+            exit 0
+          fi
+          bash scripts/notify.sh "staging" "${{ steps.metrics.outputs.step_failed }}"
       - name: Upload artifacts
         if: steps.monitor.outcome == 'failure'
         uses: actions/upload-artifact@v4
@@ -66,16 +97,36 @@ jobs:
     env:
       SYN_ENABLED_PROD: ${{ vars.SYN_ENABLED_PROD }}
     steps:
+      - uses: actions/checkout@v4
       - name: Check prod enabled
         if: env.SYN_ENABLED_PROD != 'true'
-        run: echo 'prod disabled'; exit 0
-      - uses: actions/checkout@v4
+        run: |
+          echo "Prod synthetic monitor disabled via vars.SYN_ENABLED_PROD != 'true'. Exiting."
+          exit 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: |
           python -m pip install --upgrade pip
           pip install -r api/requirements.txt
+      - name: Validate required env
+        shell: bash
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL_PROD }}
+          SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_PROD }}
+          SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_PROD }}
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_PROD }}
+        run: |
+          set -Eeuo pipefail
+          missing=()
+          [[ -z "${API_BASE_URL:-}" ]] && missing+=("API_BASE_URL_PROD")
+          [[ -z "${SYN_TENANT_ID:-}" ]] && missing+=("SYN_TENANT_ID_PROD")
+          [[ -z "${SYN_TABLE_CODE:-}" ]] && missing+=("SYN_TABLE_CODE_PROD")
+          [[ -z "${AUTH_TOKEN:-}"    ]] && missing+=("AUTH_TOKEN_PROD")
+          if (( ${#missing[@]} )); then
+            echo "Missing required secrets: ${missing[*]}" >&2
+            exit 1
+          fi
       - name: Run synthetic monitor
         id: monitor
         continue-on-error: true
@@ -92,22 +143,35 @@ jobs:
           python scripts/synthetic_order_monitor.py | tee metrics.json
       - name: Parse metrics
         id: metrics
-        run: echo "step_failed=$(jq -r '.step_failed' metrics.json)" >> "$GITHUB_OUTPUT"
-      - name: Previous run
+        run: |
+          set -Eeuo pipefail
+          if [[ -s metrics.json ]]; then
+            step_failed="$(jq -r '.step_failed // "unknown"' metrics.json)"
+          else
+            step_failed="unknown"
+          fi
+          echo "step_failed=$step_failed" >> "$GITHUB_OUTPUT"
+      - name: Previous run conclusion
         id: prev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          prev=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/synthetic_monitor.yml/runs?per_page=2" \
-            | jq -r '.workflow_runs[1].conclusion')
+          set -Eeuo pipefail
+          prev="$(curl -fsSL -H \"Authorization: Bearer $GITHUB_TOKEN\" \
+            \"$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/${{ github.workflow }}.yml/runs?per_page=2\" \
+            | jq -r '.workflow_runs[1].conclusion // \"unknown\"')"
           echo "prev=$prev" >> "$GITHUB_OUTPUT"
-      - name: Alert
+      - name: Alert on two consecutive failures
         if: steps.monitor.outcome == 'failure' && steps.prev.outputs.prev == 'failure'
         env:
           WEBHOOK: ${{ secrets.SYN_ALERT_WEBHOOK }}
         run: |
-          curl -X POST -H 'Content-Type: application/json' -d "{\"text\":\"synthetic monitor prod failed step=${{ steps.metrics.outputs.step_failed }}\"}" "$WEBHOOK"
+          set -Eeuo pipefail
+          if [[ -z "${WEBHOOK:-}" ]]; then
+            echo "SYN_ALERT_WEBHOOK not set; skipping alert." >&2
+            exit 0
+          fi
+          bash scripts/notify.sh "prod" "${{ steps.metrics.outputs.step_failed }}"
       - name: Upload artifacts
         if: steps.monitor.outcome == 'failure'
         uses: actions/upload-artifact@v4
