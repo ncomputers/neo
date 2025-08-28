@@ -1,0 +1,85 @@
+import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, within, act, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Expo } from './Expo';
+import { apiFetch } from '@neo/api';
+
+const sockets: any[] = [];
+class MockWebSocket {
+  static autoOpen = true;
+  onopen: ((ev: any) => void) | null = null;
+  onmessage: ((ev: any) => void) | null = null;
+  onclose: ((ev: any) => void) | null = null;
+  constructor(public url: string) {
+    sockets.push(this);
+    if (MockWebSocket.autoOpen) {
+      setTimeout(() => this.onopen?.({}), 0);
+    }
+  }
+  send() {}
+  close() {
+    this.onclose?.({});
+  }
+}
+
+vi.mock('@neo/api', async () => {
+  const { useWS } = await vi.importActual<any>('../../../../packages/api/src/hooks/ws.ts');
+  return {
+    apiFetch: vi.fn(),
+    useWS
+  };
+});
+
+beforeEach(() => {
+  (global as any).WebSocket = MockWebSocket as any;
+  sockets.length = 0;
+  MockWebSocket.autoOpen = true;
+});
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
+describe('Expo', () => {
+  test('WS message updates a ticket', async () => {
+    apiFetch.mockResolvedValueOnce({ tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }] });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    // initially in New column
+    const newCol = screen.getByText('New').parentElement!.querySelector('ul')!;
+    expect(within(newCol).getByTestId('ticket-1')).toBeInTheDocument();
+    const ws = sockets[0];
+    ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: 'T1', items: [], status: 'READY', age_s: 0, promise_s: 300 } }) });
+    await act(async () => {});
+    const readyCol = screen.getByText('Ready').parentElement!.querySelector('ul')!;
+    expect(within(readyCol).getByTestId('ticket-1')).toBeInTheDocument();
+  });
+
+  test('Keyboard Accept moves ticket to next column', async () => {
+    apiFetch.mockResolvedValueOnce({ tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }] });
+    apiFetch.mockResolvedValue({});
+    sessionStorage.setItem('token', 't');
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    const ticket = screen.getByTestId('ticket-1');
+    await userEvent.click(ticket);
+    fireEvent.keyDown(window, { key: 'a' });
+    await act(async () => {});
+    const prepCol = screen.getByText('Preparing').parentElement!.querySelector('ul')!;
+    expect(within(prepCol).getByTestId('ticket-1')).toBeInTheDocument();
+  });
+
+  test('Offline banner appears when WS closed', async () => {
+    apiFetch.mockResolvedValueOnce({ tickets: [] });
+    apiFetch.mockResolvedValue({ tickets: [] });
+    render(<Expo offlineMs={0} />);
+    await act(async () => {});
+    MockWebSocket.autoOpen = false;
+    const ws = sockets[0];
+    await act(async () => {
+      ws.close();
+    });
+    await screen.findByTestId('offline');
+  });
+});
