@@ -7,6 +7,11 @@ Run each command from the project root:
    ```bash
    python scripts/tenant_create_db.py --tenant demo
    ```
+   The command builds a DSN from ``POSTGRES_TENANT_DSN_TEMPLATE``. If the tenant
+   database is missing, the script connects to the server-level ``postgres``
+   database (falling back to ``template1``) and issues ``CREATE DATABASE`` before
+   creating the tenant schema.
+
 2. Apply database migrations
    ```bash
    POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://u:p@host:5432/tenant_{tenant_id} \
