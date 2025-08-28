@@ -20,7 +20,6 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
-    Text,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -111,9 +110,14 @@ class Table(Base):
     qr_token = Column(String, unique=True, nullable=True)
     status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
     state = Column(String, nullable=False, default="AVAILABLE")
-    pos_x = Column(Integer, nullable=False, server_default="0", default=0)
-    pos_y = Column(Integer, nullable=False, server_default="0", default=0)
-    label = Column(Text, nullable=True)
+    pos_x = Column(Integer, nullable=True)
+    pos_y = Column(Integer, nullable=True)
+    width = Column(Integer, nullable=True, server_default="80", default=80)
+    height = Column(Integer, nullable=True, server_default="80", default=80)
+    shape = Column(String(12), nullable=True, server_default="rect", default="rect")
+    zone = Column(String(64), nullable=True)
+    capacity = Column(Integer, nullable=True)
+    label = Column(String(32), nullable=True)
     last_cleaned_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -121,6 +125,19 @@ class Table(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class FloorMap(Base):
+    """Floor map metadata for a tenant."""
+
+    __tablename__ = "floor_maps"
+
+    id = Column(Integer, primary_key=True)
+    tenant_id = Column(UUID(as_uuid=True), nullable=False)
+    name = Column(String, nullable=False)
+    viewport_w = Column(Integer, nullable=True)
+    viewport_h = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class Room(Base):

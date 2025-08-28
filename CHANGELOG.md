@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - 24×7 synthetic order monitor with CI alerts and dashboards.
+- Floor map editor with live table status (SSE/WS).
 
 ### Fixed
 
