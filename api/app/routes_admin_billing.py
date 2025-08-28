@@ -19,7 +19,7 @@ from .billing import (
     MockGateway,
     SubscriptionEvent,
 )
-from .billing.invoice_service import create_invoice, create_credit_note
+from .billing.invoice_service import create_invoice
 from .utils.responses import ok
 from .middlewares.license_gate import billing_always_allowed
 from .db import SessionLocal
