@@ -287,6 +287,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@neo/api':
+        specifier: workspace:*
+        version: link:../api
       clsx:
         specifier: ^2.0.0
         version: 2.1.1
