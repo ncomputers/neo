@@ -12,7 +12,7 @@
       {% else %}
       Subscription expired — renew to resume orders
       {% endif %}
-      <a href="/admin/billing">Renew now</a>
+      <a href="{{ build_renew_url(request.state.plan, request.url.path, 'T+0') }}">Renew now</a>
       <a href="#" class="snooze" onclick="document.cookie='dunning_snooze=1;path=/;expires='+new Date(new Date().setHours(24,0,0,0)).toUTCString(); this.parentElement.remove(); return false;">Snooze for today</a>
     </div>
     {% endif %}

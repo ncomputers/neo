@@ -9,6 +9,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from fastapi.templating import Jinja2Templates
 
+from .main import template_globals
+
 from .auth import User, get_current_user, role_required
 from .db import SessionLocal
 from .models_master import Tenant
@@ -19,6 +21,7 @@ from .utils.responses import err, ok
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+templates.env.globals.update(template_globals)
 
 
 _MACRO_FILE = pathlib.Path(__file__).resolve().parents[2] / "docs" / "SUPPORT_MACROS.md"
