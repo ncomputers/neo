@@ -21,7 +21,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm build --filter apps/*
+      - run: pnpm -r --filter "./apps/*" build
       - uses: actions/upload-artifact@v4
         with:
           name: apps-dist
