@@ -7,12 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import get_settings
 
+from .exp.ab_allocator import get_variant
 from .repos_sqlalchemy import invoices_repo_sql
+from .routes_metrics import record_ab_conversion
 from .services import billing_service, notifications
 from .services.receipt_vault import ReceiptVault
 from .utils.responses import ok
-from .exp.ab_allocator import get_variant
-from .routes_metrics import record_ab_conversion
 
 
 async def get_tenant_id() -> str:  # pragma: no cover - placeholder dependency
@@ -68,6 +68,7 @@ async def generate_bill(
         coupons=coupons,
         guest_id=guest_id,
         outlet_id=outlet_id,
+        bill_lang=getattr(request.state, "lang", None),
     )
     settings = get_settings()
     invoice_payload = billing_service.compute_bill(

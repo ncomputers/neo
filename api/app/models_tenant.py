@@ -49,6 +49,7 @@ class MenuItem(Base):
     id = Column(Integer, primary_key=True)
     category_id = Column(Integer, ForeignKey("menu_categories.id"), nullable=False)
     name = Column(String, nullable=False)
+    name_i18n = Column(JSON, nullable=True)
     price = Column(Numeric(10, 2), nullable=False)
     is_veg = Column(Boolean, nullable=False, default=False)
     gst_rate = Column(Numeric(5, 2), nullable=True)
@@ -59,6 +60,7 @@ class MenuItem(Base):
     combos = Column(JSON, nullable=False, server_default="[]")
     dietary = Column(JSON, nullable=False, server_default="[]", default=list)
     allergens = Column(JSON, nullable=False, server_default="[]", default=list)
+    desc_i18n = Column(JSON, nullable=True)
 
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -73,6 +75,8 @@ class TenantMeta(Base):
 
     id = Column(Integer, primary_key=True, default=1)
     menu_version = Column(Integer, nullable=False, default=0)
+    default_lang = Column(String, nullable=False, server_default="en")
+    enabled_langs = Column(JSON, nullable=False, server_default='["en"]')
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -216,6 +220,7 @@ class Invoice(Base):
     id = Column(Integer, primary_key=True)
     order_group_id = Column(Integer, nullable=False)
     number = Column(String, unique=True, nullable=False)
+    bill_lang = Column(String, nullable=True)
     bill_json = Column(JSON, nullable=False)
     gst_breakup = Column(JSON, nullable=True)
     tip = Column(Numeric(10, 2), nullable=False, default=0, server_default="0")
