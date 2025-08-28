@@ -85,7 +85,7 @@ from .middlewares import (
     HttpErrorCounterMiddleware,
     IdempotencyMetricsMiddleware,
     IdempotencyMiddleware,
-    LanguageMiddleware,
+    I18nMiddleware,
     LicensingMiddleware,
     LoggingMiddleware,
     MaintenanceMiddleware,
@@ -158,6 +158,7 @@ from .routes_limits_usage import router as limits_router
 from .routes_maintenance import router as maintenance_router
 from .routes_media import router as media_router
 from .routes_menu_import import router as menu_import_router
+from .routes_menu_i18n import router as menu_i18n_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
@@ -260,7 +261,7 @@ app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
-app.add_middleware(LanguageMiddleware)
+app.add_middleware(I18nMiddleware)
 app.add_middleware(LicensingMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
@@ -906,6 +907,7 @@ app.include_router(kds_expo_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
+app.include_router(menu_i18n_router)
 app.include_router(admin_onboarding_router)
 app.include_router(slo_router)
 app.include_router(admin_ops_router)
