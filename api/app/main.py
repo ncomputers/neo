@@ -106,6 +106,8 @@ from .routes_ab_report import router as ab_report_router
 from .routes_ab_tests import router as ab_tests_router
 from .routes_accounting import router as accounting_router
 from .routes_accounting_exports import router as accounting_exports_router
+from .routes_admin_billing import router as admin_billing_router
+from .routes_admin_billing import webhook_router as billing_webhook_router
 from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_onboarding import router as admin_onboarding_router
@@ -892,6 +894,8 @@ app.include_router(counter_guest_router)
 app.include_router(hotel_guest_router)
 app.include_router(invoice_pdf_router)
 app.include_router(billing_router)
+app.include_router(admin_billing_router)
+app.include_router(billing_webhook_router)
 app.include_router(onboarding_router)
 app.include_router(qrpack_router)
 app.include_router(order_void_router)
