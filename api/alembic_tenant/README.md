@@ -10,12 +10,12 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy.ext.asyncio import create_async_engine
 
-DB_URL = "postgresql+asyncpg://user:pass@host/db"
+POSTGRES_MASTER_URL = "postgresql+asyncpg://user:pass@host/db"
 
-engine = create_async_engine(DB_URL)
+engine = create_async_engine(POSTGRES_MASTER_URL)
 cfg = Config()
 cfg.set_main_option("script_location", "api/alembic_tenant")
-cfg.set_main_option("sqlalchemy.url", DB_URL)
+cfg.set_main_option("sqlalchemy.url", POSTGRES_MASTER_URL)
 cfg.attributes["engine"] = engine
 
 command.upgrade(cfg, "head")

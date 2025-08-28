@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 REQUIRED_ENVS = [
-    "DB_URL",
+    "POSTGRES_MASTER_URL",
     "REDIS_URL",
     "SECRET_KEY",
     "ALLOWED_ORIGINS",
