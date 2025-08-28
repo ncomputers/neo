@@ -5,7 +5,8 @@
     "screenCapture": "pa11y-screenshots/${TIMESTAMP}.png",
     "chromeLaunchConfig": {
       "args": ["--no-sandbox", "--disable-setuid-sandbox"]
-    }
+    },
+    "beforeScript": "pa11y-start.js"
   },
   "urls": [
     "http://localhost:8000/guest",
