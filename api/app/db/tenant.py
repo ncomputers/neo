@@ -47,15 +47,18 @@ def build_dsn(tenant_id: str) -> str:
         sync_url = os.getenv(SYNC_URL_ENV)
         if sync_url:
             url = make_url(sync_url)
+            if (
+                url.drivername.startswith("postgresql")
+                and "+asyncpg" not in url.drivername
+            ):
+                url = url.set(drivername="postgresql+asyncpg")
             db = url.database or "tenant"
             if db.endswith(".db"):
                 base = db[:-3]
                 db_name = f"{base}_{{tenant_id}}.db"
             else:
                 db_name = f"{db}_{{tenant_id}}"
-            template = url.set(database=db_name).render_as_string(
-                hide_password=False
-            )
+            template = url.set(database=db_name).render_as_string(hide_password=False)
     if not template:
         raise RuntimeError(
             f"{TEMPLATE_ENV} environment variable is not set and {SYNC_URL_ENV} is missing"
