@@ -5,11 +5,12 @@ Revises: 0001_initial_tenant
 Create Date: 2024-09-07
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision: str = "0002_table_state"
-down_revision: str | None = "0001_initial_tenant"
+# Depends on alerts/outbox to keep chain ordered
+down_revision: str | None = "0002_alerts_and_outbox"
 branch_labels: tuple[str, ...] | None = None
 depends_on: tuple[str, ...] | None = None
 
@@ -17,12 +18,13 @@ depends_on: tuple[str, ...] | None = None
 def upgrade() -> None:
     conn = op.get_bind()
     insp = sa.inspect(conn)
-    if not insp.has_column("tables", "state"):
+    cols = {c["name"] for c in insp.get_columns("tables")}
+    if "state" not in cols:
         op.add_column(
             "tables",
             sa.Column("state", sa.Text(), nullable=False, server_default="AVAILABLE"),
         )
-    if not insp.has_column("tables", "last_cleaned_at"):
+    if "last_cleaned_at" not in cols:
         op.add_column(
             "tables",
             sa.Column("last_cleaned_at", sa.DateTime(timezone=True), nullable=True),
@@ -32,7 +34,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     conn = op.get_bind()
     insp = sa.inspect(conn)
-    if insp.has_column("tables", "last_cleaned_at"):
+    cols = {c["name"] for c in insp.get_columns("tables")}
+    if "last_cleaned_at" in cols:
         op.drop_column("tables", "last_cleaned_at")
-    if insp.has_column("tables", "state"):
+    if "state" in cols:
         op.drop_column("tables", "state")

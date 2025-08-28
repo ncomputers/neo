@@ -5,12 +5,12 @@ Revises: 0001_initial_tenant
 Create Date: 2024-08-18
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision: str = "0002_alerts_and_outbox"
-down_revision: str | None = "0001_initial_tenant"
+# Chain after invoice settlement to maintain a single linear history
+down_revision: str | None = "0002_invoice_settlement"
 branch_labels: tuple[str, ...] | None = None
 depends_on: tuple[str, ...] | None = None
 
@@ -32,7 +32,9 @@ def upgrade() -> None:
         sa.Column("channel", sa.String(), nullable=False),
         sa.Column("target", sa.String(), nullable=False),
         sa.Column("status", sa.String(), nullable=False, server_default="queued"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")
+        ),
         sa.Column("delivered_at", sa.DateTime(timezone=True), nullable=True),
     )
 
