@@ -10,9 +10,22 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   if (token) h.set('Authorization', `Bearer ${token}`);
   if (tenant) h.set('X-Tenant', tenant);
   if (idempotencyKey) h.set('Idempotency-Key', idempotencyKey);
+
   const res = await fetch(path, { ...rest, headers: h });
-  if (!res.ok) throw new Error(res.statusText);
-  return res.json() as Promise<T>;
+  const ct = res.headers.get('content-type');
+  let data: unknown = null;
+  if (ct && ct.includes('application/json')) {
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+  }
+  if (!res.ok) {
+    const message = (data as any)?.message || res.statusText;
+    throw new Error(message);
+  }
+  return data as T;
 }
 
 export function idempotency() {
