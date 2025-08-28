@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster, GlobalErrorBoundary } from '@neo/ui';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { Toaster, GlobalErrorBoundary, ThemeProvider, tokensFromOutlet } from '@neo/ui';
 import './index.css';
 import './i18n';
 import { Workbox } from 'workbox-window';
 import { AppRoutes } from './routes';
+import { API_BASE } from './env';
 
 const qc = new QueryClient();
 
@@ -15,15 +16,27 @@ if ('serviceWorker' in navigator) {
   wb.register();
 }
 
+function App() {
+  const { data: outlet } = useQuery({
+    queryKey: ['outlet'],
+    queryFn: () => fetch(`${API_BASE}/outlet`).then((r) => r.json())
+  });
+  return (
+    <ThemeProvider theme={tokensFromOutlet(outlet)}>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <GlobalErrorBoundary>
       <QueryClientProvider client={qc}>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <App />
       </QueryClientProvider>
       <Toaster />
     </GlobalErrorBoundary>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

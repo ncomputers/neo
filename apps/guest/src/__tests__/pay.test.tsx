@@ -9,6 +9,11 @@ import {
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PayPage } from '../pages/Pay';
+jest.mock(
+  '@neo/ui',
+  () => ({ useTheme: () => ({ logoURL: '' }), ThemeProvider: ({ children }: any) => children }),
+  { virtual: true }
+);
 
 function renderPay() {
   const qc = new QueryClient();

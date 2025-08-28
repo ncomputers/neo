@@ -14,6 +14,8 @@ jest.mock(
     ShoppingCart: () => null,
     SkeletonList: () => null,
     toast: { error: jest.fn() },
+    useTheme: () => ({ logoURL: '' }),
+    ThemeProvider: ({ children }: any) => children,
   }),
   { virtual: true }
 );
