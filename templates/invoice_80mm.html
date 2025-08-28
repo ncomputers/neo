@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ invoice.get('bill_lang', 'en') }}">
   <head>
     <meta charset="utf-8" />
     <style{% if csp_nonce %} nonce="{{ csp_nonce }}"{% endif %}>
@@ -42,7 +42,14 @@
     </style>
   </head>
   <body>
-    <h1>Invoice #{{ invoice['number'] }}</h1>
+    {% set _labels = {
+      'en': {'invoice':'Invoice','subtotal':'Subtotal','total':'Total','qty':'Qty','rate':'Rate'},
+      'hi': {'invoice':'चालान','subtotal':'उप-योग','total':'कुल','qty':'मात्रा','rate':'दर'},
+      'gu': {'invoice':'ચલણ','subtotal':'ઉપકુલ','total':'કુલ','qty':'જથ્થો','rate':'દર'}
+    } %}
+    {% set _lang = invoice.get('bill_lang', 'en') %}
+    {% set L = _labels.get(_lang, _labels['en']) %}
+    <h1>{{ L.invoice }} #{{ invoice['number'] }}</h1>
     {% if invoice['gst_mode'] != 'unreg' and invoice.get('gstin') %}
       <p>GSTIN: {{ invoice['gstin'] }}{% if invoice['gst_mode'] == 'comp' %} (Composition Scheme){% endif %}</p>
     {% endif %}
@@ -57,8 +64,8 @@
     <table aria-label="Invoice items">
       <tr>
         <th>Item</th>
-        <th>Qty</th>
-        <th>Price</th>
+        <th>{{ L.qty }}</th>
+        <th>{{ L.rate }}</th>
         {% if invoice['gst_mode'] == 'reg' %}<th>GST%</th><th>HSN</th>{% endif %}
       </tr>
       {% for item in invoice['items'] %}
@@ -70,7 +77,7 @@
       </tr>
       {% endfor %}
     </table>
-    <p>Subtotal: {{ invoice['subtotal'] }}</p>
+    <p>{{ L.subtotal }}: {{ invoice['subtotal'] }}</p>
     {% if invoice['gst_mode'] == 'reg' %}
       {% for line in invoice['tax_lines'] %}
       <p>{{ line.label }}: {{ line.amount }}</p>
@@ -79,7 +86,7 @@
     {% if invoice.get('rounding_adjustment') %}
       <p>Rounding Adj.: {{ invoice['rounding_adjustment'] }}</p>
     {% endif %}
-    <p>Total: {{ invoice['grand_total'] }}</p>
+    <p>{{ L.total }}: {{ invoice['grand_total'] }}</p>
     {% if invoice['gst_mode'] == 'comp' %}
       <p>Composition tax included</p>
     {% elif invoice['gst_mode'] == 'unreg' %}
