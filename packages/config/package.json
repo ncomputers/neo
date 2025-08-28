@@ -1,0 +1,20 @@
+{
+  "name": "@neo/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig": "./tsconfig.base.json",
+    "./eslint": "./eslint.config.js",
+    "./prettier": "./prettier.config.js",
+    "./vite": "./vite.config.ts"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "@eslint/js": "^8.57.0",
+    "typescript-eslint": "^7.18.0",
+    "eslint-plugin-react": "^7.33.2",
+    "vite": "^5.1.4",
+    "@vitejs/plugin-react": "^4.0.0"
+  }
+}

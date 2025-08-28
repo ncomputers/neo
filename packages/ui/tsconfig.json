@@ -1,0 +1,7 @@
+{
+  "extends": "@neo/config/tsconfig",
+  "include": ["src"],
+  "compilerOptions": {
+    "outDir": "dist"
+  }
+}
