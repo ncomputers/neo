@@ -75,6 +75,10 @@ from .events import alerts_sender, ema_updater, event_bus, report_aggregator
 from .hooks import order_rejection
 from .hooks.table_map import publish_table_state
 from .i18n import get_msg, resolve_lang
+from .dunning import build_renew_url
+
+template_globals = {"build_renew_url": build_renew_url}
+
 from .menu import router as menu_router
 from .middleware import RateLimitMiddleware
 from .middlewares import (

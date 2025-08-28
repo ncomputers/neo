@@ -10,6 +10,8 @@ from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
+from .main import template_globals
+
 from .auth import User, role_required
 from .db import SessionLocal
 from .models_tenant import Table
@@ -18,6 +20,7 @@ from .utils.responses import ok
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+templates.env.globals.update(template_globals)
 
 
 class TableGeom(BaseModel):
