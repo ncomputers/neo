@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Nightly export of BI-friendly tables to Parquet or CSV."""
+"""Nightly export of BI-friendly tables to Parquet or CSV.
+
+This script auto-configures ``PYTHONPATH`` to include the repository root so
+imports work when executed directly.
+"""
 
 from __future__ import annotations
 
@@ -8,8 +12,8 @@ import csv
 import gzip
 import json
 import os
+import sys
 from datetime import date, datetime, time, timedelta, timezone
-from pathlib import Path
 
 import boto3
 from sqlalchemy import create_engine, text
@@ -19,6 +23,12 @@ try:  # optional dependency
     import pyarrow.parquet as pq
 except Exception:  # pragma: no cover - runtime optional
     pa = None  # type: ignore[assignment]
+
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from api.app.bi_dump import build_manifest
 
@@ -68,7 +78,7 @@ def main(day: date) -> dict:
         prefix = f"{prefix}/"
 
     start, end = _daterange(day)
-    tmp_dir = Path(os.getenv("DWH_TMP_DIR", "/tmp")) / day.isoformat()
+    tmp_dir = Path(os.getenv("DWH_TMP_DIR", "/tmp")) / day.isoformat()  # nosec B108
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
     datasets = {

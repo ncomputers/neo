@@ -6,6 +6,9 @@ The `scripts/dwh_parquet_dump.py` helper exports `orders`, `order_items` and
 partitioned by date and uploaded to an S3-compatible bucket along with a daily
 manifest.
 
+The script automatically adds the repository root to ``PYTHONPATH`` so it can
+be executed directly without additional environment configuration.
+
 ## Configuration
 
 Set the following environment variables:
