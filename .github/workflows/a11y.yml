@@ -45,6 +45,7 @@ jobs:
       - name: Migrate and seed demo data
         run: |
           python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head
+          PYTHONPATH=. python scripts/tenant_create_db.py --tenant demo
           PYTHONPATH=. python scripts/tenant_migrate.py --tenant demo
           PYTHONPATH=. python scripts/demo_seed.py --tenant demo --reset
 

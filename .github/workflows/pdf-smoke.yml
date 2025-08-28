@@ -46,6 +46,7 @@ jobs:
           pip install -r api/requirements.txt pillow
       - name: Migrate and seed demo data
         run: |
+          PYTHONPATH=. python scripts/tenant_create_db.py --tenant demo
           PYTHONPATH=. python scripts/tenant_migrate.py --tenant demo
           PYTHONPATH=. python scripts/demo_seed.py --tenant demo --reset
       - name: Start API
