@@ -22,6 +22,7 @@ jobs:
       POSTGRES_MASTER_URL: postgresql://neo:neo@localhost:5432/neo
       DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
       SQLALCHEMY_DATABASE_URI: postgresql://neo:neo@localhost:5432/neo
+      SYNC_DATABASE_URL: postgresql://neo:neo@localhost:5432/neo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,7 +43,7 @@ jobs:
           done
       - name: Run migrations
         run: |
-          python -m alembic -c api/alembic.ini -x db_url=$POSTGRES_MASTER_URL upgrade head
+          python -m alembic -c api/alembic.ini -x db_url=$SYNC_DATABASE_URL upgrade head
       - name: Run Lighthouse CI
         run: |
           SKIP_DB_MIGRATIONS=1 python start_app.py &
