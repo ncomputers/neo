@@ -5,9 +5,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
+  KUBE_CONFIG_PROD: ${{ secrets.KUBE_CONFIG_PROD }}
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    env:
+      KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
+      KUBE_CONFIG_PROD: ${{ secrets.KUBE_CONFIG_PROD }}
     steps:
       - uses: actions/checkout@v3
       - name: Push to deploy branch
@@ -18,22 +25,27 @@ jobs:
 
   deploy-staging:
     needs: build-and-push
-    if: ${{ secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+    if: ${{ env.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
+    environment: staging
     env:
       KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
+      KUBE_CONFIG_PROD: ${{ secrets.KUBE_CONFIG_PROD }}
     steps:
       - uses: actions/checkout@v3
+      - name: Guard envs
+        run: |
+          if [ -z "${KUBE_CONFIG_STAGING}" ]; then
+            echo "KUBE_CONFIG_STAGING is required" >&2
+            exit 1
+          fi
+          echo "::add-mask::${KUBE_CONFIG_STAGING}"
+          echo "::add-mask::${KUBE_CONFIG_PROD}"
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
         run: |
           set -euo pipefail
-          if [ -z "${KUBE_CONFIG_STAGING:-}" ]; then
-            echo "KUBE_CONFIG_STAGING secret not found" >&2
-            exit 1
-          fi
-          echo "::add-mask::$KUBE_CONFIG_STAGING"
           mkdir -p ~/.kube
           if ! printf '%s' "$KUBE_CONFIG_STAGING" | base64 --decode > ~/.kube/config 2>/dev/null; then
             printf '%s' "$KUBE_CONFIG_STAGING" > ~/.kube/config
@@ -78,6 +90,9 @@ jobs:
   manual-approval:
     needs: deploy-staging
     runs-on: ubuntu-latest
+    env:
+      KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
+      KUBE_CONFIG_PROD: ${{ secrets.KUBE_CONFIG_PROD }}
     environment:
       name: production
     steps:
@@ -86,22 +101,27 @@ jobs:
 
   deploy-prod:
     needs: manual-approval
-    if: ${{ secrets.KUBE_CONFIG_PROD != '' && secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+    if: ${{ env.KUBE_CONFIG_PROD != '' && env.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
+    environment: prod
     env:
+      KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
       KUBE_CONFIG_PROD: ${{ secrets.KUBE_CONFIG_PROD }}
     steps:
       - uses: actions/checkout@v3
+      - name: Guard envs
+        run: |
+          if [ -z "${KUBE_CONFIG_STAGING}" ] || [ -z "${KUBE_CONFIG_PROD}" ]; then
+            echo "KUBE_CONFIG_STAGING and KUBE_CONFIG_PROD are required" >&2
+            exit 1
+          fi
+          echo "::add-mask::${KUBE_CONFIG_STAGING}"
+          echo "::add-mask::${KUBE_CONFIG_PROD}"
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
       - name: Configure kubeconfig
         run: |
           set -euo pipefail
-          if [ -z "${KUBE_CONFIG_PROD:-}" ]; then
-            echo "KUBE_CONFIG_PROD secret not found" >&2
-            exit 1
-          fi
-          echo "::add-mask::$KUBE_CONFIG_PROD"
           mkdir -p ~/.kube
           if ! printf '%s' "$KUBE_CONFIG_PROD" | base64 --decode > ~/.kube/config 2>/dev/null; then
             printf '%s' "$KUBE_CONFIG_PROD" > ~/.kube/config
