@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
-
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from zoneinfo import ZoneInfo
 from typing import Mapping, Sequence
+from zoneinfo import ZoneInfo
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.master import get_session as get_master_session
+from ..hooks.table_map import publish_table_state
 from ..models_master import Tenant
 from ..models_tenant import (
     Coupon,
@@ -22,7 +23,6 @@ from ..models_tenant import (
     Payment,
     Table,
 )
-from ..hooks.table_map import publish_table_state
 from ..services import billing_service
 from ..utils import invoice_counter
 
@@ -38,6 +38,7 @@ async def generate_invoice(
     *,
     guest_id: int | None = None,
     outlet_id: int | None = None,
+    bill_lang: str | None = None,
 ) -> int:
     """Generate an immutable invoice and return its primary key.
 
@@ -90,6 +91,7 @@ async def generate_invoice(
     invoice = Invoice(
         order_group_id=order_group_id,
         number=number,
+        bill_lang=bill_lang,
         bill_json=bill,
         gst_breakup=bill.get("tax_breakup"),
         tip=Decimal(str(bill.get("tip", 0))),
@@ -174,9 +176,7 @@ async def _enforce_coupon_caps(
                 )
 
         session.add(
-            CouponUsage(
-                coupon_id=coupon.id, guest_id=guest_id, outlet_id=outlet_id
-            )
+            CouponUsage(coupon_id=coupon.id, guest_id=guest_id, outlet_id=outlet_id)
         )
 
 

@@ -85,6 +85,7 @@ from .middlewares import (
     HttpErrorCounterMiddleware,
     IdempotencyMetricsMiddleware,
     IdempotencyMiddleware,
+    LanguageMiddleware,
     LicensingMiddleware,
     LoggingMiddleware,
     MaintenanceMiddleware,
@@ -259,6 +260,7 @@ app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
 app.add_middleware(GuestRateLimitMiddleware)
+app.add_middleware(LanguageMiddleware)
 app.add_middleware(LicensingMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
