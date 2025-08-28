@@ -5,21 +5,21 @@ from datetime import timedelta
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
-from fastapi.testclient import TestClient
-from jose import JWTError, jwt
-import fakeredis.aioredis
-
 import os
+
+import fakeredis.aioredis
+import jwt
 import pytest
 from argon2.exceptions import VerificationError
+from fastapi.testclient import TestClient
 
 os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost/0")
 os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 
-from api.app.auth import ALGORITHM, SECRET_KEY, create_access_token, ph, verify_password
 import api.app.auth as auth
+from api.app.auth import ALGORITHM, SECRET_KEY, create_access_token, ph, verify_password
 from api.app.main import app
 
 client = TestClient(app)
@@ -65,11 +65,8 @@ def test_jwt_claims_and_expiry():
     expired = create_access_token(
         {"sub": "u", "role": "r"}, expires_delta=timedelta(seconds=-1)
     )
-    try:
+    with pytest.raises(jwt.PyJWTError):
         jwt.decode(expired, SECRET_KEY, algorithms=[ALGORITHM])
-        assert False
-    except JWTError:
-        pass
 
 
 def test_role_enforcement_allow_and_deny():

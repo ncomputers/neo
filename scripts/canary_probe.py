@@ -18,10 +18,14 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from jose import jwt
+import jwt
 
 try:  # optional Prometheus pushgateway support
-    from prometheus_client import CollectorRegistry, Gauge, push_to_gateway  # type: ignore
+    from prometheus_client import (  # type: ignore
+        CollectorRegistry,
+        Gauge,
+        push_to_gateway,
+    )
 except Exception:  # pragma: no cover - dependency optional
     CollectorRegistry = Gauge = push_to_gateway = None  # type: ignore
 
@@ -35,10 +39,12 @@ def _request(
     data = json.dumps(payload).encode() if payload is not None else None
     req_headers = {"Content-Type": "application/json", **headers} if data else headers
     req = Request(url, data=data, headers=req_headers, method=method)
-    with urlopen(req, timeout=10) as resp:  # noqa: S310 - controlled URL
+    with urlopen(req, timeout=10) as resp:  # noqa: S310 # nosec - controlled URL
         body = resp.read()
         if resp.status >= 400:
-            raise RuntimeError(f"{method} {url} -> {resp.status} {body.decode(errors='ignore')}")
+            raise RuntimeError(
+                f"{method} {url} -> {resp.status} {body.decode(errors='ignore')}"
+            )
         ctype = resp.headers.get("Content-Type", "")
         return json.loads(body) if "application/json" in ctype else body
 
@@ -50,7 +56,9 @@ def _emit_metric(ok: bool) -> None:
     if not gateway:
         return
     registry = CollectorRegistry()
-    g = Gauge("canary_probe_ok", "1 if canary probe succeeded else 0", registry=registry)
+    g = Gauge(
+        "canary_probe_ok", "1 if canary probe succeeded else 0", registry=registry
+    )
     g.set(1 if ok else 0)
     try:
         push_to_gateway(gateway, job="neo_canary_probe", registry=registry)
@@ -70,7 +78,9 @@ def main() -> None:
     idem = f"canary-{uuid.uuid4()}"
     headers = {"X-Tenant-ID": args.tenant, "Idempotency-Key": idem}
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     ok = False
     try:
         order = _request(
@@ -132,12 +142,18 @@ def main() -> None:
         )
 
         logging.info(
-            "canary probe ok tenant=%s table=%s order=%s", args.tenant, args.table, order_id
+            "canary probe ok tenant=%s table=%s order=%s",
+            args.tenant,
+            args.table,
+            order_id,
         )
         ok = True
     except (HTTPError, URLError, RuntimeError, KeyError) as exc:
         logging.error(
-            "canary probe failed tenant=%s table=%s error=%s", args.tenant, args.table, exc
+            "canary probe failed tenant=%s table=%s error=%s",
+            args.tenant,
+            args.table,
+            exc,
         )
         raise
     finally:

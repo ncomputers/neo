@@ -8,16 +8,16 @@ import uuid
 from datetime import timedelta
 from hashlib import sha256
 
+import jwt
 from fastapi import APIRouter, HTTPException, Request
-from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
 
 from .auth import ALGORITHM, SECRET_KEY, Token, create_access_token
 from .providers import email_stub
 from .security import ratelimit
 from .utils import ratelimits
-from .utils.responses import ok
 from .utils.rate_limit import rate_limited
+from .utils.responses import ok
 
 router = APIRouter()
 
@@ -48,7 +48,11 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
 
     policy_ip = ratelimits.magic_link_ip()
     allowed_ip = await ratelimit.allow(
-        redis, ip, "magic-start", rate_per_min=policy_ip.rate_per_min, burst=policy_ip.burst
+        redis,
+        ip,
+        "magic-start",
+        rate_per_min=policy_ip.rate_per_min,
+        burst=policy_ip.burst,
     )
     if not allowed_ip and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{ip}:magic-start")
@@ -56,7 +60,11 @@ async def magic_start(payload: StartPayload, request: Request) -> dict:
 
     policy_email = ratelimits.magic_link_email()
     allowed_email = await ratelimit.allow(
-        redis, email, "magic-email", rate_per_min=policy_email.rate_per_min, burst=policy_email.burst
+        redis,
+        email,
+        "magic-email",
+        rate_per_min=policy_email.rate_per_min,
+        burst=policy_email.burst,
     )
     if not allowed_email and not _captcha_ok():
         retry_after = await redis.ttl(f"ratelimit:{email}:magic-email")
@@ -79,7 +87,7 @@ async def magic_consume(token: str, request: Request) -> dict:
     redis = request.app.state.redis
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError as exc:
+    except jwt.PyJWTError as exc:
         raise HTTPException(status_code=400, detail="Invalid token") from exc
 
     if payload.get("scope") != "magic":
