@@ -2,7 +2,10 @@
   "defaults": {
     "standard": "WCAG2AA",
     "timeout": 60000,
-    "screenCapture": "pa11y-screenshots/${TIMESTAMP}.png"
+    "screenCapture": "pa11y-screenshots/${TIMESTAMP}.png",
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+    }
   },
   "urls": [
     "http://localhost:8000/guest",
