@@ -211,6 +211,8 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
+See [Database URLs](docs/ENV_VARS.md#database-urls) for connection settings and a local Postgres quickstart.
+
 At startup the API validates that critical variables like `DB_URL` and
 `REDIS_URL` are present. CI runs `scripts/env_audit.py` during linting to
 keep `.env.example` in sync, and you can run the script locally to compare
