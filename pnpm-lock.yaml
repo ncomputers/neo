@@ -90,6 +90,9 @@ importers:
       workbox-precaching:
         specifier: ^7.0.0
         version: 7.3.0
+      workbox-routing:
+        specifier: ^7.0.0
+        version: 7.3.0
 
   apps/guest:
     dependencies:
@@ -160,6 +163,9 @@ importers:
       workbox-precaching:
         specifier: ^7.0.0
         version: 7.3.0
+      workbox-routing:
+        specifier: ^7.0.0
+        version: 7.3.0
 
   apps/kds:
     dependencies:
@@ -228,6 +234,9 @@ importers:
         specifier: ^5.1.4
         version: 5.4.19
       workbox-precaching:
+        specifier: ^7.0.0
+        version: 7.3.0
+      workbox-routing:
         specifier: ^7.0.0
         version: 7.3.0
 

@@ -1,0 +1,14 @@
+{
+  "admin": {
+    "/icon-192.png": "https://via.placeholder.com/192.png",
+    "/icon-512.png": "https://via.placeholder.com/512.png"
+  },
+  "guest": {
+    "/icon-192.png": "https://via.placeholder.com/192.png",
+    "/icon-512.png": "https://via.placeholder.com/512.png"
+  },
+  "kds": {
+    "/icon-192.png": "https://via.placeholder.com/192.png",
+    "/icon-512.png": "https://via.placeholder.com/512.png"
+  }
+}
