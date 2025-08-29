@@ -31,7 +31,8 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [zone, setZone] = useState<string | undefined>();
   const [order, setOrder] = useState<string[]>([]);
 
-  const { soundNew, soundReady, desktopNotify, darkMode, fontScale } = useKdsPrefs();
+  const { soundNew, soundReady, desktopNotify, darkMode, fontScale, printer, layout } =
+    useKdsPrefs();
   const [showSettings, setShowSettings] = useState(false);
   const [fullscreen, setFullscreen] = useState(() => localStorage.getItem('kdsFullscreen') === '1');
 
@@ -185,6 +186,19 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
       await apiFetch(endpoint, { method: 'POST' });
     } catch {
       move(id, prev.status);
+    }
+  };
+
+  const print = (id: string) => {
+    apiFetch('/print/notify', {
+      method: 'POST',
+      body: JSON.stringify({ order_id: id, layout }),
+      headers: { 'Content-Type': 'application/json' },
+    }).catch(() => {
+      /* ignore */
+    });
+    if (import.meta.env.MODE !== 'production') {
+      console.log('stub print', { id, layout });
     }
   };
 
@@ -355,6 +369,14 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
                         </li>
                       ))}
                     </ul>
+                    {printer && (
+                      <button
+                        onClick={() => print(t.id)}
+                        className="mt-2 border px-1 py-0.5 rounded text-sm"
+                      >
+                        Print KOT
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

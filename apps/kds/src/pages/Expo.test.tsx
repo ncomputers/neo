@@ -57,6 +57,8 @@ afterEach(() => {
     desktopNotify: false,
     darkMode: false,
     fontScale: 100,
+    printer: false,
+    layout: 'compact',
   });
 });
 
@@ -240,6 +242,34 @@ describe('Expo', () => {
     render(<Expo />);
     await userEvent.click(screen.getByTestId('settings-btn'));
     expect((screen.getByLabelText('New ticket sound') as HTMLInputElement).checked).toBe(false);
+  });
+
+  test('Print KOT button triggers notify', async () => {
+    apiFetch.mockResolvedValueOnce({
+      tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }],
+    });
+    apiFetch.mockResolvedValue({});
+    useKdsPrefs.getState().set({ printer: true, layout: 'compact' });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    await userEvent.click(screen.getByRole('button', { name: 'Print KOT' }));
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/print/notify',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ order_id: '1', layout: 'compact' }),
+      })
+    );
+  });
+
+  test('Test Print hits endpoint in dev', async () => {
+    apiFetch.mockResolvedValueOnce({ tickets: [] });
+    render(<Expo />);
+    await userEvent.click(screen.getByTestId('settings-btn'));
+    await userEvent.click(screen.getByLabelText('Print KOT'));
+    apiFetch.mockResolvedValue({});
+    await userEvent.click(screen.getByRole('button', { name: 'Test Print' }));
+    expect(apiFetch).toHaveBeenCalledWith('/print/test');
   });
 
   test('new ticket plays sound and notifies when enabled', async () => {
