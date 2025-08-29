@@ -4,6 +4,7 @@ import { useAuth } from '../auth';
 
 export function Login() {
   const [pin, setPin] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const login = useAuth((s) => s.login);
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,8 +13,13 @@ export function Login() {
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        await login(pin);
-        navigate(from, { replace: true });
+        setError(null);
+        try {
+          await login(pin);
+          navigate(from, { replace: true });
+        } catch (err: any) {
+          setError(err.message || 'Login failed');
+        }
       }}
       className="p-4 space-y-2"
     >
@@ -26,6 +32,11 @@ export function Login() {
       <button type="submit" className="block bg-blue-500 text-white p-2">
         Login
       </button>
+      {error && (
+        <div role="alert" className="text-red-500">
+          {error}
+        </div>
+      )}
     </form>
   );
 }
