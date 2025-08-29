@@ -25,7 +25,11 @@ export default function OwnerSlaWidget() {
 
   // Webhook success thresholds: >=99% green, >=95% yellow, otherwise red
   const webhookColor = (v) =>
-    v >= 0.99 ? 'text-green-600' : v >= 0.95 ? 'text-yellow-600' : 'text-red-600'
+    v >= 0.99
+      ? 'text-green-600'
+      : v >= 0.95
+        ? 'text-yellow-600'
+        : 'text-red-600'
 
   // Median prep time thresholds: <10min green, <15min yellow, else red
   const prepColor = (v) =>

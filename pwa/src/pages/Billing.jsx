@@ -13,11 +13,7 @@ export default function Billing() {
   }, [])
 
   if (error) {
-    return (
-      <div className="p-4 text-red-500">
-        {error}
-      </div>
-    )
+    return <div className="p-4 text-red-500">{error}</div>
   }
   if (!info) {
     return <div className="p-4">Loading...</div>
@@ -33,9 +29,7 @@ export default function Billing() {
       <h2 className="mb-4 text-xl font-bold">Billing</h2>
       <p>Plan: {info.plan || 'unknown'}</p>
       {info.next_renewal && (
-        <p>
-          Next renewal: {new Date(info.next_renewal).toLocaleDateString()}
-        </p>
+        <p>Next renewal: {new Date(info.next_renewal).toLocaleDateString()}</p>
       )}
       {info.pay_url && (
         <a
@@ -50,4 +44,3 @@ export default function Billing() {
     </div>
   )
 }
-
