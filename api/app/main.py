@@ -257,9 +257,21 @@ root_dir = Path(__file__).resolve().parent.parent.parent / "apps"
 guest_spa = root_dir / "guest" / "dist"
 admin_spa = root_dir / "admin" / "dist"
 kds_spa = root_dir / "kds" / "dist"
-app.mount("/guest", StaticFiles(directory=guest_spa, html=True), name="guest")
-app.mount("/admin", StaticFiles(directory=admin_spa, html=True), name="admin")
-app.mount("/kds", StaticFiles(directory=kds_spa, html=True), name="kds")
+
+if guest_spa.exists():
+    app.mount("/guest", StaticFiles(directory=guest_spa, html=True), name="guest")
+else:
+    logging.warning("Guest SPA not found at %s; skipping mount", guest_spa)
+
+if admin_spa.exists():
+    app.mount("/admin", StaticFiles(directory=admin_spa, html=True), name="admin")
+else:
+    logging.warning("Admin SPA not found at %s; skipping mount", admin_spa)
+
+if kds_spa.exists():
+    app.mount("/kds", StaticFiles(directory=kds_spa, html=True), name="kds")
+else:
+    logging.warning("KDS SPA not found at %s; skipping mount", kds_spa)
 
 
 init_tracing(app)
