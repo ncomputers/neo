@@ -1,10 +1,10 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
+import { clearToken } from '@neo/api';
 
 export function Layout() {
-  const { tenants, tenantId, setTenant, logout, roles } = useAuth();
+  const roles = useAuth();
   const navigate = useNavigate();
-  const current = tenants.find((t) => t.id === tenantId);
   return (
     <div className="flex h-screen">
       <aside className="w-48 bg-gray-100 p-4 space-y-2">
@@ -22,24 +22,10 @@ export function Layout() {
               className="h-8 w-24 bg-contain bg-no-repeat"
               style={{ backgroundImage: 'var(--logo-url)' }}
             />
-            {tenants.length > 1 ? (
-              <select
-                value={tenantId ?? undefined}
-                onChange={(e) => setTenant(e.target.value)}
-              >
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span>{current?.name}</span>
-            )}
           </div>
           <button
             onClick={() => {
-              logout();
+              clearToken();
               navigate('/login');
             }}
           >

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useSSE } from '@neo/api';
 import { SkeletonList } from '@neo/ui';
-import { useAuth } from '../auth';
 
 interface KPI {
   orders_today: number;
@@ -12,13 +11,8 @@ interface KPI {
 }
 
 export function Dashboard() {
-  const { token, tenantId } = useAuth();
   const [kpi, setKpi] = useState<KPI | null>(null);
   useSSE('/admin/kpis', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(tenantId ? { 'X-Tenant': tenantId } : {})
-    },
     onMessage: (ev) => {
       setKpi(JSON.parse(ev.data));
     }

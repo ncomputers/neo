@@ -2,14 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { GlobalErrorBoundary, ThemeProvider, tokensFromOutlet } from '@neo/ui';
+import { GlobalErrorBoundary, ThemeProvider, tokensFromOutlet, Toaster, toast } from '@neo/ui';
 import { capturePageView } from '@neo/utils';
 import './index.css';
 import './i18n';
 import { router } from './routes';
 import { Workbox } from 'workbox-window';
+import { AuthProvider } from './auth';
+import { addFetchInterceptors } from '@neo/api';
 
 const qc = new QueryClient();
+
+const fetcher = addFetchInterceptors(window.fetch.bind(window));
+(window as any).fetch = fetcher;
+window.addEventListener('unauthorized', () => toast.error('Session expired'));
 
 capturePageView(window.location.pathname);
 router.subscribe((state) => {
@@ -29,8 +35,11 @@ async function init() {
       <ThemeProvider theme={tokens}>
         <GlobalErrorBoundary>
           <QueryClientProvider client={qc}>
-            <RouterProvider router={router} />
+            <AuthProvider>
+              <RouterProvider router={router} />
+            </AuthProvider>
           </QueryClientProvider>
+          <Toaster />
         </GlobalErrorBoundary>
       </ThemeProvider>
     </React.StrictMode>,

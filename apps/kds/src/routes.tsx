@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { capturePageView } from '@neo/utils';
 import { Expo } from './pages/Expo';
 import { Health } from './pages/Health';
+import { Login } from './pages/Login';
+import { Protected } from './components/Protected';
 
 export function AppRoutes() {
   const loc = useLocation();
@@ -12,7 +14,8 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/health" element={<Health />} />
-      <Route path="/kds/expo" element={<Expo />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/kds/expo" element={<Protected><Expo /></Protected>} />
       <Route path="/" element={<Navigate to="/kds/expo" replace />} />
     </Routes>
   );
