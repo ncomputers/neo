@@ -2,8 +2,9 @@
   --color-primary: #2563eb;
   --color-accent: #64748b;
   --color-secondary: #64748b;
-  --color-success: #16a34a;
-  --color-warn: #f59e0b;
-  --color-error: #dc2626;
+  --color-success: #15803d;
+  --color-warn: #b45309;
+  --color-danger: #b91c1c;
+  --color-error: #b91c1c;
   --logo-url: url('');
 }

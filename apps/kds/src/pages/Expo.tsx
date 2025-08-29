@@ -255,75 +255,85 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   };
 
   return (
-    <div
-      className="p-4 space-y-4 dark:bg-gray-900 dark:text-white"
-      style={{ fontSize: `${fontScale}%` }}
-    >
-      <div className="flex justify-end space-x-2">
-        <button
-          aria-label="Fullscreen"
-          onClick={() => setFullscreen(!fullscreen)}
-          className="border px-2 py-1 rounded"
-        >
-          {fullscreen ? '🡼' : '⛶'}
-        </button>
-        <button
-          data-testid="settings-btn"
-          aria-label="Settings"
-          onClick={() => setShowSettings((s) => !s)}
-          className="border px-2 py-1 rounded"
-        >
-          ⚙️
-        </button>
-      </div>
-      {offline && (
-        <div
-          data-testid="offline"
-          className="fixed top-2 right-2 bg-red-600 text-white px-2 py-1 rounded"
-        >
-          Offline
-        </div>
-      )}
-      <SettingsDrawer open={showSettings} onClose={() => setShowSettings(false)} />
-      <div className="flex space-x-2">
-        {(['ALL', ...allStatuses] as const).map((s) => (
+    <>
+      <a href="#main" className="sr-only focus:not-sr-only">
+        Skip to content
+      </a>
+      <header
+        className="p-4 dark:bg-gray-900 dark:text-white"
+        style={{ fontSize: `${fontScale}%` }}
+      >
+        <div className="flex justify-end space-x-2">
           <button
-            key={s}
-            className={`px-2 py-1 border rounded ${statusFilter === s ? 'bg-blue-500 text-white' : ''}`}
-            onClick={() => setStatusFilter(s)}
+            aria-label="Fullscreen"
+            onClick={() => setFullscreen(!fullscreen)}
+            className="border px-2 py-1 rounded"
           >
-            {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+            {fullscreen ? '🡼' : '⛶'}
           </button>
-        ))}
-      </div>
-      <div className="flex space-x-2">
-        <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search"
-          className="border p-1 rounded"
-        />
-        {zones.length > 0 && (
-          <select
-            value={zone ?? ''}
-            onChange={(e) => setZone(e.target.value || undefined)}
-            className="border p-1 rounded"
+          <button
+            data-testid="settings-btn"
+            aria-label="Settings"
+            onClick={() => setShowSettings((s) => !s)}
+            className="border px-2 py-1 rounded"
           >
-            <option value="">All Zones</option>
-            {zones.map((z) => (
-              <option key={z} value={z}>
-                {z}
-              </option>
-            ))}
-          </select>
+            ⚙️
+          </button>
+        </div>
+        {offline && (
+          <div
+            data-testid="offline"
+            className="fixed top-2 right-2 bg-red-600 text-white px-2 py-1 rounded"
+          >
+            Offline
+          </div>
         )}
-      </div>
-      <div className="grid grid-cols-4 gap-4">
-        {columns.map((col) => (
-          <div key={col}>
-            <h3 className="font-semibold mb-2">{col.charAt(0) + col.slice(1).toLowerCase()}</h3>
-            <ul className="space-y-2">
-              {columnTickets[col].map((t) => (
+      </header>
+      <SettingsDrawer open={showSettings} onClose={() => setShowSettings(false)} />
+      <main
+        id="main"
+        className="p-4 space-y-4 dark:bg-gray-900 dark:text-white"
+        style={{ fontSize: `${fontScale}%` }}
+      >
+        <nav className="flex space-x-2" aria-label="Ticket status">
+          {(['ALL', ...allStatuses] as const).map((s) => (
+            <button
+              key={s}
+              className={`px-2 py-1 border rounded ${statusFilter === s ? 'bg-blue-500 text-white' : ''}`}
+              onClick={() => setStatusFilter(s)}
+            >
+              {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </nav>
+        <div className="flex space-x-2">
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search"
+            className="border p-1 rounded"
+          />
+          {zones.length > 0 && (
+            <select
+              value={zone ?? ''}
+              onChange={(e) => setZone(e.target.value || undefined)}
+              className="border p-1 rounded"
+            >
+              <option value="">All Zones</option>
+              {zones.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          {columns.map((col) => (
+            <div key={col}>
+              <h3 className="font-semibold mb-2">{col.charAt(0) + col.slice(1).toLowerCase()}</h3>
+              <ul className="space-y-2">
+                {columnTickets[col].map((t) => (
                   <li
                     key={t.id}
                     data-testid={`ticket-${t.id}`}
@@ -347,11 +357,12 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
                     </ul>
                   </li>
                 ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </div>
+              </ul>
+            </div>
+          ))}
+        </div>
+      </main>
+    </>
   );
 }
 

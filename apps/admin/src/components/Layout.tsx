@@ -10,8 +10,11 @@ export function Layout() {
   const status = data?.status;
   return (
     <div className="flex h-screen">
+      <a href="#main" className="sr-only focus:not-sr-only">
+        Skip to content
+      </a>
       <aside className="w-48 bg-gray-100 p-4 space-y-2">
-        <nav className="flex flex-col space-y-2">
+        <nav className="flex flex-col space-y-2" aria-label="Primary">
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/floor">Floor</Link>
           {roles.includes('owner') && <Link to="/billing">Billing</Link>}
@@ -38,7 +41,7 @@ export function Layout() {
             Logout
           </button>
         </header>
-        <main className="flex-1 overflow-auto p-4">
+        <main id="main" className="flex-1 overflow-auto p-4">
           <Outlet />
         </main>
       </div>

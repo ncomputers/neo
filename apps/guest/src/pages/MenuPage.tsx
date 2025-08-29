@@ -56,6 +56,7 @@ export function MenuPage() {
               <div key={item.id}>
                 <span>{item.name_i18n[lang] || item.name_i18n.en}</span>
                 <button
+                  aria-label={`add ${item.name_i18n[lang] || item.name_i18n.en} to cart`}
                   onClick={() =>
                     add({ id: item.id, name: item.name_i18n.en, qty: 1 })
                   }
