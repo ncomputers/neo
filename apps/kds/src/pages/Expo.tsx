@@ -30,6 +30,26 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [zone, setZone] = useState<string | undefined>();
   const [order, setOrder] = useState<string[]>([]);
 
+  const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
+  const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
+  const zones = useMemo(
+    () => Array.from(new Set(tickets.map((t) => t.zone).filter(Boolean))) as string[],
+    [tickets]
+  );
+  const filteredTickets = useMemo(
+    () =>
+      tickets.filter((t) => {
+        const matchStatus = statusFilter === 'ALL' ? true : t.status === statusFilter;
+        const q = searchQuery.toLowerCase();
+        const matchSearch = q
+          ? t.table.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q))
+          : true;
+        const matchZone = zone ? t.zone === zone : true;
+        return matchStatus && matchSearch && matchZone;
+      }),
+    [tickets, statusFilter, searchQuery, zone]
+  );
+
   const fetchTickets = useCallback(async () => {
     try {
       const res = await apiFetch<{ tickets: Ticket[] }>('/kds/tickets');
@@ -70,12 +90,16 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
     if (!connected) {
-      timer = setTimeout(() => setOffline(true), offlineMs);
+      if (offlineMs === 0) {
+        setOffline(true);
+      } else {
+        timer = setTimeout(() => setOffline(true), offlineMs);
+      }
     } else {
       setOffline(false);
     }
     return () => timer && clearTimeout(timer);
-  }, [connected]);
+  }, [connected, offlineMs]);
 
   const move = (id: string, status: Status) => {
     setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -97,47 +121,38 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     }
   };
 
-  const formatAge = (age_s: number) => {
-    const m = Math.floor(age_s / 60);
-    return `${m}m`;
-  };
-  const formatEta = (age_s: number, promise_s: number) => {
-    const remaining = Math.max(0, promise_s - age_s);
-    const m = Math.ceil(remaining / 60);
-    return `${m}m`;
-  };
-  const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
-  const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
-  const zones = useMemo(
-    () => Array.from(new Set(tickets.map((t) => t.zone).filter(Boolean))) as string[],
-    [tickets]
-  );
-  const orderedTickets = useMemo(
-    () => [...tickets].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)),
-    [tickets, order]
-  );
-  const filteredTickets = useMemo(
-    () =>
-      orderedTickets.filter((t) => {
-        const matchStatus = statusFilter === 'ALL' ? true : t.status === statusFilter;
-        const q = searchQuery.toLowerCase();
-        const matchSearch = q
-          ? t.table.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q))
-          : true;
-        const matchZone = zone ? t.zone === zone : true;
-        return matchStatus && matchSearch && matchZone;
-      }),
-    [orderedTickets, statusFilter, searchQuery, zone]
-  );
-  const columnTickets = useMemo(() => {
-    const map: Record<Status, Ticket[]> = { NEW: [], PREPARING: [], READY: [], PICKED: [] };
-    filteredTickets.forEach((t) => {
-      map[t.status].push(t);
-    });
-    return map;
-  }, [filteredTickets]);
   const onKey = useCallback(
     (e: KeyboardEvent) => {
+      const groups = columns.map((col) => filteredTickets.filter((t) => t.status === col));
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (!focused) {
+          const first = groups[0]?.[0];
+          if (first) setFocused(first.id);
+          return;
+        }
+        const colIdx = groups.findIndex((g) => g.some((t) => t.id === focused));
+        if (colIdx === -1) return;
+        const rowIdx = groups[colIdx].findIndex((t) => t.id === focused);
+        if (e.key === 'ArrowDown') {
+          const nextRow = Math.min(rowIdx + 1, groups[colIdx].length - 1);
+          setFocused(groups[colIdx][nextRow].id);
+        } else if (e.key === 'ArrowUp') {
+          const prevRow = Math.max(rowIdx - 1, 0);
+          setFocused(groups[colIdx][prevRow].id);
+        } else if (e.key === 'ArrowRight') {
+          const nextCol = Math.min(colIdx + 1, groups.length - 1);
+          const row = Math.min(rowIdx, groups[nextCol].length - 1);
+          const target = groups[nextCol][row];
+          if (target) setFocused(target.id);
+        } else if (e.key === 'ArrowLeft') {
+          const prevCol = Math.max(colIdx - 1, 0);
+          const row = Math.min(rowIdx, groups[prevCol].length - 1);
+          const target = groups[prevCol][row];
+          if (target) setFocused(target.id);
+        }
+        e.preventDefault();
+        return;
+      }
       if (!focused) return;
       const t = tickets.find((x) => x.id === focused);
       if (!t) return;
@@ -149,41 +164,29 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
         if (t.status === 'READY') action(t.id, 'PICKED', `/kds/tickets/${t.id}/picked`);
       } else if (e.key === 'z' || e.key === 'Z') {
         if (t.status === 'PICKED') action(t.id, 'READY', `/kds/tickets/${t.id}/undo`);
-      } else if (e.key === 'ArrowDown') {
-        const list = columnTickets[t.status];
-        const idx = list.findIndex((x) => x.id === t.id);
-        if (idx < list.length - 1) setFocused(list[idx + 1].id);
-      } else if (e.key === 'ArrowUp') {
-        const list = columnTickets[t.status];
-        const idx = list.findIndex((x) => x.id === t.id);
-        if (idx > 0) setFocused(list[idx - 1].id);
-      } else if (e.key === 'ArrowRight') {
-        const colIdx = columns.indexOf(t.status);
-        if (colIdx >= 0 && colIdx < columns.length - 1) {
-          const nextCol = columns[colIdx + 1];
-          const idx = columnTickets[t.status].findIndex((x) => x.id === t.id);
-          const dest = columnTickets[nextCol];
-          if (dest.length) setFocused(dest[Math.min(idx, dest.length - 1)].id);
-        }
-      } else if (e.key === 'ArrowLeft') {
-        const colIdx = columns.indexOf(t.status);
-        if (colIdx > 0) {
-          const prevCol = columns[colIdx - 1];
-          const idx = columnTickets[t.status].findIndex((x) => x.id === t.id);
-          const dest = columnTickets[prevCol];
-          if (dest.length) setFocused(dest[Math.min(idx, dest.length - 1)].id);
-        }
       } else if (e.key === 'Enter') {
-        window.location.assign(`/kds/tickets/${t.id}`);
+        window.alert(`Table ${t.table}`);
       }
     },
-    [focused, tickets, columns, columnTickets]
+    [columns, filteredTickets, focused, tickets]
   );
 
   useEffect(() => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onKey]);
+
+
+  const formatAge = (age_s: number) => {
+    const m = Math.floor(age_s / 60);
+    return `${m}m`;
+  };
+  const formatEta = (age_s: number, promise_s: number) => {
+    const remaining = Math.max(0, promise_s - age_s);
+    const m = Math.ceil(remaining / 60);
+    return `${m}m`;
+  };
+
   return (
     <div className="p-4 space-y-4">
       {offline && (
