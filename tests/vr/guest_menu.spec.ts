@@ -6,7 +6,7 @@ const guestBaseURL = process.env.GUEST_BASE_URL || process.env.BASE_URL || 'http
 // Masks dynamic timestamps and counters
 
 test('guest menu snapshot', async ({ page }) => {
-  await page.goto(`${guestBaseURL}/guest/menu`);
+  await page.goto(`${guestBaseURL}/guest/menu`, { waitUntil: 'networkidle' });
   const mask = [
     page.locator('[data-testid="timestamp"]'),
     page.locator('[data-testid="counter"]'),

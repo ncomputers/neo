@@ -12,7 +12,7 @@ test('kds expo snapshot', async ({ page }) => {
       body: JSON.stringify({ tickets: [{ id: 1, item: 'Mock item' }] }),
     });
   });
-  await page.goto(`${kdsBaseURL}/kds/expo`);
+  await page.goto(`${kdsBaseURL}/kds/expo`, { waitUntil: 'networkidle' });
   const columns = page.locator('[data-testid="kds-columns"]');
   const mask = [
     page.locator('[data-testid="timestamp"]'),

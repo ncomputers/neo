@@ -9,6 +9,7 @@ export default defineConfig({
     baseURL,
     headless: true,
     trace: 'retain-on-failure',
+    video: 'retain-on-failure',
   },
   projects: [
     { name: 'Desktop Chrome', use: { ...devices['Desktop Chrome'] } },
