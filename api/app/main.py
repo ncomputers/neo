@@ -276,7 +276,15 @@ else:
 
 init_tracing(app)
 asyncio.set_event_loop(asyncio.new_event_loop())
-app.state.redis = from_url(settings.redis_url, decode_responses=True)
+try:
+    redis_client = from_url(settings.redis_url, decode_responses=True)
+    asyncio.get_event_loop().run_until_complete(redis_client.ping())
+    app.state.redis = redis_client
+except Exception:  # pragma: no cover - fallback when Redis is unreachable
+    import fakeredis.aioredis
+
+    logging.warning("Redis unavailable; using fakeredis")
+    app.state.redis = fakeredis.aioredis.FakeRedis()
 app.state.export_progress = {}
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
