@@ -131,13 +131,13 @@ export function uploadImage(itemId: string, file: File, tenant?: string) {
   });
 }
 
-export function exportMenuI18n(langs: string[], tenant?: string) {
-  return apiFetch(`/menu/i18n/export`, {
-    method: 'POST',
-    body: JSON.stringify({ langs }),
-    headers: { 'Content-Type': 'application/json' },
-    tenant
-  });
+export async function exportMenuI18n(langs: string[], tenant?: string) {
+  const qs = langs.map((l) => `lang=${encodeURIComponent(l)}`).join('&');
+  const headers: Record<string, string> = {};
+  if (tenant) headers['X-Tenant'] = tenant;
+  const res = await fetch(`/menu/i18n/export?${qs}`, { headers });
+  if (!res.ok) throw new Error(res.statusText);
+  return res.text();
 }
 
 export function importMenuI18n(file: File, tenant?: string) {
