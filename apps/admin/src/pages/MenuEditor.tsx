@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Toaster, toast, Button } from '@neo/ui';
 import { updateItem as updateItemApi, uploadImage, useLicense } from '@neo/api';
+import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 import { MenuI18nImport } from '../components/MenuI18nImport';
 import { MenuI18nExport } from '../components/MenuI18nExport';
 import { TENANT_ID } from '../env';
@@ -25,6 +26,17 @@ interface Item {
 
 const LANGS = ['en', 'hi'];
 
+function useNavigationGuard(when: boolean) {
+  const blocker = useBlocker(when);
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const proceed = window.confirm('You have unsaved changes. Leave anyway?');
+      if (proceed) blocker.proceed();
+      else blocker.reset();
+    }
+  }, [blocker]);
+}
+
 export function MenuEditor() {
   const [categories, setCategories] = useState<Category[]>([
     { id: 'cat-1', name: 'Category 1' }
@@ -43,7 +55,7 @@ export function MenuEditor() {
   const saveTimers = useRef<Record<string, number>>({});
 
   const items = itemsMap[selectedCat] || [];
-
+  useNavigationGuard(dirty);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
