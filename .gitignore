@@ -226,3 +226,5 @@ node_modules
 *.tsbuildinfo
 dist
 build
+
+tests/vr/__snapshots__/

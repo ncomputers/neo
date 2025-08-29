@@ -95,3 +95,30 @@ jobs:
           KDS_BASE_URL: ${{ secrets.STAGING_KDS_URL }}
           ADMIN_BASE_URL: ${{ secrets.STAGING_ADMIN_URL }}
         run: npx playwright test tests/a11y/a11y.spec.ts
+
+  vr:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: npx playwright install --with-deps
+      - name: Run visual regression tests
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          GUEST_BASE_URL: ${{ secrets.STAGING_GUEST_URL }}
+          KDS_BASE_URL: ${{ secrets.STAGING_KDS_URL }}
+          ADMIN_BASE_URL: ${{ secrets.STAGING_ADMIN_URL }}
+        run: npx playwright test -c playwright.vr.config.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-vr-report
+          path: playwright-report
