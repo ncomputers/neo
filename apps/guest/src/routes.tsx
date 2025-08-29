@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, useRef, lazy, Suspense } from 'react';
 import { capturePageView } from '@neo/utils';
 import { Layout } from './components/Layout';
+import { hasAnalyticsConsent } from './analytics';
 
 const QrPage = lazy(() => import('./pages/QrPage').then(m => ({ default: m.QrPage })));
 const MenuPage = lazy(() => import('./pages/MenuPage').then(m => ({ default: m.MenuPage })));
@@ -10,6 +11,8 @@ const TrackPage = lazy(() => import('./pages/TrackPage').then(m => ({ default: m
 const PayPage = lazy(() => import('./pages/Pay').then(m => ({ default: m.PayPage })));
 const Health = lazy(() => import('./pages/Health').then(m => ({ default: m.Health })));
 const Offline = lazy(() => import('./pages/Offline').then(m => ({ default: m.Offline })));
+const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
+const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms })));
 
 export function AppRoutes() {
   const loc = useLocation();
@@ -19,7 +22,9 @@ export function AppRoutes() {
       first.current = false;
       return;
     }
-    capturePageView(loc.pathname);
+    if (hasAnalyticsConsent()) {
+      capturePageView(loc.pathname);
+    }
   }, [loc.pathname]);
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -33,6 +38,8 @@ export function AppRoutes() {
           <Route path="/track/:orderId" element={<TrackPage />} />
           <Route path="/pay/:orderId" element={<PayPage />} />
           <Route path="/offline" element={<Offline />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
         </Route>
       </Routes>
     </Suspense>
