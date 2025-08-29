@@ -3,6 +3,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Floor } from './pages/Floor';
 import { Billing } from './pages/Billing';
+import { Audit } from './pages/Audit';
 import { Onboarding } from './pages/Onboarding';
 import { Support } from './pages/Support';
 import { Layout } from './components/Layout';
@@ -24,12 +25,20 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
-      { path: 'floor', element: <Floor /> },
+        { path: 'floor', element: <Floor /> },
         {
           path: 'billing',
           element: (
             <ProtectedRoute roles={['owner']}>
               <Billing />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'audit',
+          element: (
+            <ProtectedRoute roles={['owner']}>
+              <Audit />
             </ProtectedRoute>
           )
         },

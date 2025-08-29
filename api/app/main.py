@@ -115,10 +115,12 @@ from .routes_ab_report import router as ab_report_router
 from .routes_ab_tests import router as ab_tests_router
 from .routes_accounting import router as accounting_router
 from .routes_accounting_exports import router as accounting_exports_router
+from .routes_admin_audit import router as admin_audit_router
 from .routes_admin_billing import router as admin_billing_router
 from .routes_admin_billing import webhook_router as billing_webhook_router
 from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_export import router as admin_export_router
+from .routes_admin_flags import router as admin_flags_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_onboarding import router as admin_onboarding_router
 from .routes_admin_ops import router as admin_ops_router
@@ -128,7 +130,6 @@ from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
-from .routes_admin_flags import router as admin_flags_router
 from .routes_admin_webhooks import router as admin_webhooks_router
 from .routes_alerts import router as alerts_router
 from .routes_analytics_outlets import router as analytics_outlets_router
@@ -1007,6 +1008,7 @@ app.include_router(help_router)
 app.include_router(support_router)
 app.include_router(admin_support_router)
 app.include_router(admin_flags_router)
+app.include_router(admin_audit_router)
 app.include_router(staff_support_router)
 app.include_router(support_console_router)
 app.include_router(admin_webhooks_router)

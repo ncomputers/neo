@@ -35,6 +35,7 @@ export function Layout() {
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/floor">Floor</Link>
           {roles.includes('owner') && <Link to="/billing">Billing</Link>}
+          {roles.includes('owner') && <Link to="/audit">Audit</Link>}
           <Link to="/onboarding">Onboarding</Link>
         </nav>
       </aside>
