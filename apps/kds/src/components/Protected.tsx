@@ -22,8 +22,8 @@ export function Protected({ roles, children }: Props) {
   }
   return (
     <>
-      {status && status !== 'ACTIVE' && (
-        <LicenseBanner status={status as 'GRACE' | 'EXPIRED'} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
+      {status && (
+        <LicenseBanner status={status} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
       )}
       {children}
     </>

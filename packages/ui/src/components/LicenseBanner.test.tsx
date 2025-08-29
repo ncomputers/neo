@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { LicenseBanner } from './license-banner';
+import { LicenseBanner } from './LicenseBanner';
 
 describe('LicenseBanner', () => {
   test('shows grace message', () => {

@@ -7,8 +7,8 @@ export function Layout() {
   const status = data?.status;
   return (
     <div>
-      {status && status !== 'ACTIVE' && (
-        <LicenseBanner status={status as 'GRACE' | 'EXPIRED'} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
+      {status && (
+        <LicenseBanner status={status} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
       )}
       <Outlet />
     </div>
