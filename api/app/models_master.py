@@ -226,8 +226,27 @@ class SupportTicket(Base):
     subject = Column(String, nullable=False)
     body = Column(String, nullable=False)
     screenshots = Column(JSON, nullable=True)
+    diagnostics = Column(JSON, nullable=True)
+    channel = Column(String, nullable=True)
     status = Column(String, nullable=False, default="open")
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class SupportMessage(Base):
+    """Individual messages in a support ticket thread."""
+
+    __tablename__ = "support_messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ticket_id = Column(UUID(as_uuid=True), ForeignKey("support_tickets.id"), nullable=False)
+    author = Column(String, nullable=False)
+    body = Column(String, nullable=False)
+    attachments = Column(JSON, nullable=True)
+    internal = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    ticket = relationship("SupportTicket", backref="messages")
 
 
 class FeedbackNPS(Base):
@@ -266,6 +285,7 @@ __all__ = [
     "TwoFactorBackupCode",
     "PrepStats",
     "SupportTicket",
+    "SupportMessage",
     "FeedbackNPS",
     "Device",
 ]
