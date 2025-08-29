@@ -7,16 +7,25 @@ import './index.css';
 import './i18n';
 import { AppRoutes } from './routes';
 import { Workbox } from 'workbox-window';
+import { retryQueuedOrders } from './queue';
 
 const qc = new QueryClient();
 
 if ('serviceWorker' in navigator) {
   const wb = new Workbox('/sw.js');
+  wb.addEventListener('message', (event) => {
+    if (event.data?.type === 'ORDER_SYNCED') {
+      window.location.href = `/track/${event.data.orderId}`;
+    }
+  });
   wb.register();
 }
 
 async function init() {
-  const outlet = await fetch('/api/outlet/theme').then(r => r.json()).catch(() => ({}));
+  const outlet = await fetch('/api/outlet/theme')
+    .then(r => r.json())
+    .catch(() => ({}));
+  localStorage.setItem('outletInfo', JSON.stringify(outlet));
   const tokens = tokensFromOutlet(outlet);
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
@@ -35,3 +44,6 @@ async function init() {
 }
 
 init();
+
+retryQueuedOrders((id) => (window.location.href = `/track/${id}`));
+window.addEventListener('online', () => retryQueuedOrders((id) => (window.location.href = `/track/${id}`)));
