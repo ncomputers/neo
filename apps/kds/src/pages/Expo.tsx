@@ -28,6 +28,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [statusFilter, setStatusFilter] = useState<Status | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [zone, setZone] = useState<string | undefined>();
+  const [order, setOrder] = useState<string[]>([]);
 
   const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
   const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
@@ -77,6 +78,14 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
       }
     },
   });
+
+  useEffect(() => {
+    setOrder((prev) => {
+      const existing = prev.filter((id) => tickets.some((t) => t.id === id));
+      const newIds = tickets.map((t) => t.id).filter((id) => !existing.includes(id));
+      return [...existing, ...newIds];
+    });
+  }, [tickets]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
@@ -167,6 +176,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onKey]);
 
+
   const formatAge = (age_s: number) => {
     const m = Math.floor(age_s / 60);
     return `${m}m`;
@@ -176,6 +186,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     const m = Math.ceil(remaining / 60);
     return `${m}m`;
   };
+
   return (
     <div className="p-4 space-y-4">
       {offline && (
@@ -221,9 +232,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
           <div key={col}>
             <h3 className="font-semibold mb-2">{col.charAt(0) + col.slice(1).toLowerCase()}</h3>
             <ul className="space-y-2">
-              {filteredTickets
-                .filter((t) => t.status === col)
-                .map((t) => (
+              {columnTickets[col].map((t) => (
                   <li
                     key={t.id}
                     data-testid={`ticket-${t.id}`}
