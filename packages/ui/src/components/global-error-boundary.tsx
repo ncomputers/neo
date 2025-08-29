@@ -22,7 +22,7 @@ export class GlobalErrorBoundary extends Component<
 
   componentDidCatch(error: Error) {
     if (typeof window !== 'undefined') {
-      captureError(error);
+      captureError(error, { route: window.location.pathname });
     }
   }
 
