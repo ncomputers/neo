@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster, GlobalErrorBoundary, ThemeProvider, tokensFromOutlet, toast } from '@neo/ui';
+import { capturePageView } from '@neo/utils';
 import './index.css';
 import './i18n';
 import { Workbox } from 'workbox-window';
@@ -14,6 +15,8 @@ const qc = new QueryClient();
 
 globalThis.fetch = withInterceptors(globalThis.fetch.bind(globalThis));
 window.addEventListener('unauthorized', () => toast.error('Session expired'));
+
+capturePageView(window.location.pathname);
 
 if ('serviceWorker' in navigator) {
   const wb = new Workbox('/sw.js');

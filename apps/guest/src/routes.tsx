@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { capturePageView } from '@neo/utils';
 import { QrPage } from './pages/QrPage';
 import { MenuPage } from './pages/MenuPage';
@@ -12,7 +12,12 @@ import { Layout } from './components/Layout';
 
 export function AppRoutes() {
   const loc = useLocation();
+  const first = useRef(true);
   useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
     capturePageView(loc.pathname);
   }, [loc.pathname]);
   return (

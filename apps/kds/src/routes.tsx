@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { capturePageView } from '@neo/utils';
 import { Expo } from './pages/Expo';
 import { Health } from './pages/Health';
@@ -8,7 +8,12 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 
 export function AppRoutes() {
   const loc = useLocation();
+  const first = useRef(true);
   useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
     capturePageView(loc.pathname);
   }, [loc.pathname]);
   return (
