@@ -136,5 +136,21 @@ describe('Billing page', () => {
     await screen.findByText(/Subscription expired/);
     expect(screen.getByText('Renew now')).toBeInTheDocument();
   });
+
+  test('Credits tooltip shows referral breakdown', async () => {
+    (getCredits as any).mockResolvedValueOnce({
+      balance: 200,
+      referrals: 150,
+      adjustments: 50
+    });
+    render(
+      <MemoryRouter>
+        <Billing />
+      </MemoryRouter>
+    );
+    await userEvent.click(screen.getByText('Plan & Usage'));
+    const info = await screen.findByTitle(/Referrals ₹150; Adjustments ₹50/);
+    expect(info.parentElement).toHaveTextContent('Credits ₹200');
+  });
 });
 

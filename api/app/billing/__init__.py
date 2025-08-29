@@ -33,6 +33,7 @@ class Subscription:
     cancel_at_period_end: bool = False
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
+    credit_balance_inr: int = 0
 
 
 @dataclass
@@ -58,11 +59,36 @@ class BillingInvoice:
     created_at: datetime = field(default_factory=datetime.utcnow)
 
 
+@dataclass
+class Referral:
+    id: str
+    referrer_tenant_id: str
+    code: str
+    landing_url: str
+    clicks: int = 0
+    signups: int = 0
+    converted: int = 0
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    referred_tenant_id: str | None = None
+
+
+@dataclass
+class ReferralCredit:
+    id: str
+    tenant_id: str
+    amount_inr: int
+    reason: str
+    applied_invoice_id: str | None = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
+
+
 PLANS: Dict[str, Plan] = {}
 SUBSCRIPTIONS: Dict[str, Subscription] = {}
 SUBSCRIPTION_EVENTS: List[SubscriptionEvent] = []
 INVOICES: List[BillingInvoice] = []
 PROCESSED_EVENTS: set[str] = set()
+REFERRALS: Dict[str, Referral] = {}
+REFERRAL_CREDITS: List[ReferralCredit] = []
 
 
 def seed_default_plans() -> None:
@@ -97,6 +123,66 @@ def seed_default_plans() -> None:
 seed_default_plans()
 
 
+def create_referral(referrer_tenant_id: str) -> Referral:
+    """Create and return a new referral for ``referrer_tenant_id``."""
+    code = uuid.uuid4().hex[:6]
+    ref = Referral(
+        id=str(uuid.uuid4()),
+        referrer_tenant_id=referrer_tenant_id,
+        code=code,
+        landing_url=f"/signup?ref={code}",
+    )
+    REFERRALS[code] = ref
+    return ref
+
+
+def record_referral_signup(code: str, referred_tenant_id: str) -> None:
+    """Record that ``referred_tenant_id`` signed up via ``code``."""
+    ref = REFERRALS.get(code)
+    if ref is None:
+        return
+    if ref.referrer_tenant_id == referred_tenant_id:
+        raise ValueError("self-referral")
+    ref.signups += 1
+    ref.referred_tenant_id = referred_tenant_id
+
+
+def handle_referral_payment(
+    referred_tenant_id: str, invoice_amount: int, plan_price: int
+) -> None:
+    """Grant credit when the referred tenant pays their first invoice."""
+    ref = next(
+        (r for r in REFERRALS.values() if r.referred_tenant_id == referred_tenant_id),
+        None,
+    )
+    if ref is None or ref.converted:
+        return
+    if invoice_amount < plan_price:
+        return
+    ref.converted += 1
+    amount = min(invoice_amount, plan_price)
+    credit = ReferralCredit(
+        id=str(uuid.uuid4()),
+        tenant_id=ref.referrer_tenant_id,
+        amount_inr=amount,
+        reason="referral",
+    )
+    REFERRAL_CREDITS.append(credit)
+    sub = SUBSCRIPTIONS.get(ref.referrer_tenant_id)
+    if sub:
+        sub.credit_balance_inr += amount
+
+
+def apply_credit_to_invoice(tenant_id: str, amount_inr: int) -> int:
+    """Apply available credits to ``amount_inr`` and return the net amount."""
+    sub = SUBSCRIPTIONS.get(tenant_id)
+    if not sub or sub.credit_balance_inr <= 0:
+        return amount_inr
+    applied = min(sub.credit_balance_inr, amount_inr)
+    sub.credit_balance_inr -= applied
+    return amount_inr - applied
+
+
 class BillingGateway(Protocol):
     def create_checkout_session(self, tenant_id: str, plan: Plan) -> Dict[str, Any]:
         """Create a checkout session for ``tenant_id`` and ``plan``."""
@@ -118,23 +204,31 @@ class MockGateway:
 
         now = datetime.utcnow()
         period_end = now + timedelta(days=30)
-        sub = Subscription(
-            id=str(uuid.uuid4()),
-            tenant_id=tenant_id,
-            plan_id=plan.id,
-            status="active",
-            current_period_start=now,
-            current_period_end=period_end,
-        )
-        SUBSCRIPTIONS[tenant_id] = sub
+        sub = SUBSCRIPTIONS.get(tenant_id)
+        if sub:
+            sub.plan_id = plan.id
+            sub.status = "active"
+            sub.current_period_start = now
+            sub.current_period_end = period_end
+        else:
+            sub = Subscription(
+                id=str(uuid.uuid4()),
+                tenant_id=tenant_id,
+                plan_id=plan.id,
+                status="active",
+                current_period_start=now,
+                current_period_end=period_end,
+            )
+            SUBSCRIPTIONS[tenant_id] = sub
         TENANTS[tenant_id]["plan"] = plan.id
         TENANTS[tenant_id]["subscription_expires_at"] = period_end
+        amount = apply_credit_to_invoice(tenant_id, plan.price_inr)
         inv = BillingInvoice(
             id=str(uuid.uuid4()),
             tenant_id=tenant_id,
             number=f"INV-{len(INVOICES)+1:03d}",
-            amount_inr=plan.price_inr,
-            gst_inr=int(plan.price_inr * 0.18),
+            amount_inr=amount,
+            gst_inr=int(amount * 0.18),
             period_start=now,
             period_end=period_end,
             status="paid",
