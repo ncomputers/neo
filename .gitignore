@@ -226,3 +226,6 @@ node_modules
 *.tsbuildinfo
 dist
 build
+
+# Playwright VR snapshots
+tests/vr/__snapshots__/

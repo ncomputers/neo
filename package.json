@@ -8,7 +8,8 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "vr": "playwright test -c playwright.vr.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
