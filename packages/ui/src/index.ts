@@ -3,3 +3,4 @@ export * from './icons';
 export * from './toast';
 export * from './tokens';
 export { SkeletonList } from './components/Skeleton';
+export { ThemeProvider, tokensFromOutlet } from './theme';
