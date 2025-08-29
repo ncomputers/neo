@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import uuid
 
 from fastapi import APIRouter, Depends
@@ -19,6 +20,7 @@ router = APIRouter()
 async def staff_list_tickets(
     status: str | None = None,
     tenant: str | None = None,
+    date: str | None = None,
     user: User = Depends(role_required("super_admin", "support")),
 ) -> dict:
     with SessionLocal() as session:
@@ -27,6 +29,12 @@ async def staff_list_tickets(
             query = query.where(SupportTicket.status == status)
         if tenant:
             query = query.where(SupportTicket.tenant == tenant)
+        if date:
+            try:
+                d = datetime.date.fromisoformat(date)
+                query = query.where(func.date(SupportTicket.created_at) == d)
+            except ValueError:
+                pass
         rows = session.execute(query).scalars().all()
         tickets = [
             {

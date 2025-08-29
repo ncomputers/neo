@@ -11,8 +11,12 @@ import { StaffSupport } from './pages/StaffSupport';
 import { Changelog } from './pages/Changelog';
 import { Flags } from './pages/Flags';
 import { FeatureFlag } from '@neo/ui';
+import { Flag } from '@neo/ui';
+import { QRPack } from './pages/QRPack';
+import { Status } from './pages/Status';
 
 export const routes: RouteObject[] = [
+  { path: '/status', element: <Status /> },
   { path: '/login', element: <Login /> },
   {
     path: '/',
@@ -25,6 +29,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'floor', element: <Floor /> },
+      { path: 'qr', element: <QRPack /> },
       {
         path: 'billing',
         element: (
@@ -43,6 +48,7 @@ export const routes: RouteObject[] = [
           </FeatureFlag>
         ),
       },
+
     ],
   },
   {

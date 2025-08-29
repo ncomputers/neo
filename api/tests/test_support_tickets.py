@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import pathlib
 import sys
 import uuid
@@ -24,6 +25,11 @@ app.include_router(staff_router)
 def owner_headers(tenant: str = "demo") -> dict:
     token = create_access_token({"sub": "owner@example.com", "role": "owner"})
     return {"Authorization": f"Bearer {token}", "X-Tenant-ID": tenant}
+
+
+def staff_headers() -> dict:
+    token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
+    return {"Authorization": f"Bearer {token}"}
 
 
 def _clear() -> None:
@@ -99,3 +105,27 @@ def test_rbac_owner_and_staff() -> None:
     assert len(resp_other.json()["data"]) == 1
     resp_forbidden = client.get("/staff/support", headers=owner_headers())
     assert resp_forbidden.status_code == 403
+
+
+def test_staff_filters() -> None:
+    _clear()
+    client = TestClient(app)
+    client.post(
+        "/support/tickets",
+        headers=owner_headers("demo"),
+        json={"subject": "A", "message": "A"},
+    )
+    client.post(
+        "/support/tickets",
+        headers=owner_headers("other"),
+        json={"subject": "B", "message": "B"},
+    )
+    today = datetime.date.today().isoformat()
+    resp_all = client.get("/staff/support", headers=staff_headers())
+    assert len(resp_all.json()["data"]) == 2
+    resp_tenant = client.get("/staff/support?tenant=demo", headers=staff_headers())
+    assert len(resp_tenant.json()["data"]) == 1
+    resp_date = client.get("/staff/support?date=2099-01-01", headers=staff_headers())
+    assert len(resp_date.json()["data"]) == 0
+    resp_today = client.get(f"/staff/support?date={today}", headers=staff_headers())
+    assert len(resp_today.json()["data"]) == 2
