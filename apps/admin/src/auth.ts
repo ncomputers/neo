@@ -14,7 +14,13 @@ interface AuthState {
 
 function decodeToken(token: string) {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const base64 = token.split('.')[1];
+    const normalized = base64.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      '='
+    );
+    const payload = JSON.parse(atob(padded));
     return payload;
   } catch {
     return {};
@@ -32,7 +38,11 @@ export const useAuth = create<AuthState>((set) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin })
     });
-    const { token } = await res.json();
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+    const { token } = data;
     sessionStorage.setItem('token', token);
     const payload = decodeToken(token);
     const roles: string[] = payload.roles || [];
@@ -43,6 +53,7 @@ export const useAuth = create<AuthState>((set) => ({
   },
   logout() {
     sessionStorage.removeItem('token');
+    localStorage.removeItem('tenantId');
     set({ token: null, roles: [], tenants: [], tenantId: null });
   },
   setTenant(id: string) {

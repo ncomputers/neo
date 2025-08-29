@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 
 export function Layout() {
-  const { tenants, tenantId, setTenant, logout } = useAuth();
+  const { tenants, tenantId, setTenant, logout, roles } = useAuth();
   const navigate = useNavigate();
   const current = tenants.find((t) => t.id === tenantId);
   return (
@@ -11,7 +11,7 @@ export function Layout() {
         <nav className="flex flex-col space-y-2">
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/floor">Floor</Link>
-          <Link to="/billing">Billing</Link>
+          {roles.includes('owner') && <Link to="/billing">Billing</Link>}
           <Link to="/onboarding">Onboarding</Link>
         </nav>
       </aside>
