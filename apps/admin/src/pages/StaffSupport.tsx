@@ -52,12 +52,12 @@ export function StaffSupport() {
   };
 
   useEffect(() => {
-    import('../../../docs/faq/meta.json').then((m) => setCanned(m.default));
+    import('../../../../docs/faq/meta.json').then((m) => setCanned(m.default));
   }, []);
 
   const insert = async (id: string) => {
-    const files = import.meta.glob('../../../docs/faq/*.md', { as: 'raw' });
-    const loader = files[`../../../docs/faq/${id}.md`];
+    const files = import.meta.glob('../../../../docs/faq/*.md', { as: 'raw' });
+    const loader = files[`../../../../docs/faq/${id}.md`];
     if (loader) {
       const content = await (loader as () => Promise<string>)();
       setMsg((m) => m + '\n' + content);

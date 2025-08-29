@@ -3,4 +3,4 @@ export * from './global-error-boundary';
 export * from './Skeleton';
 export * from './empty-state';
 export * from './LicenseBanner';
-export * from './Flag';
+export * from './FeatureFlag';
