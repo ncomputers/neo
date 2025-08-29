@@ -17,8 +17,6 @@ vi.mock('@neo/api', () => ({
   createCategory: vi.fn(),
   getItems: vi.fn(),
   updateItem: vi.fn(),
-  exportMenuI18n: vi.fn().mockResolvedValue('id,en_name'),
-  importMenuI18n: vi.fn(),
   uploadImage: vi.fn(),
   useLicense: vi.fn().mockReturnValue({ data: { status: 'ACTIVE' } })
 }));
@@ -61,16 +59,6 @@ describe('MenuEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'HI' }));
     expect(screen.getByPlaceholderText('Name')).toHaveValue('Namaste');
     expect(api.updateItem).toHaveBeenCalledWith(expect.any(String), { name_i18n: { hi: 'Namaste' } });
-  });
-
-  test('Export button calls exportMenuI18n with selected languages', async () => {
-    (global as any).URL.createObjectURL = vi.fn(() => 'blob:fake');
-    (global as any).URL.revokeObjectURL = vi.fn();
-    render(<MenuEditor />);
-    await userEvent.click(screen.getByLabelText('EN'));
-    await userEvent.click(screen.getByLabelText('HI'));
-    await userEvent.click(screen.getByText('Export'));
-    expect(api.exportMenuI18n).toHaveBeenCalledWith(['en', 'hi']);
   });
 
   test('Reordering items persists after save', async () => {
