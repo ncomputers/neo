@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import sqlite3
 import time
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -13,6 +15,9 @@ URLS = {
     "api": "/status.json",
     "deps": "/status/deps",
 }
+
+FEED_FILE = Path(__file__).resolve().parent.parent / "incidents.json"
+INTERVAL_SECS = 60  # expected probe frequency
 
 
 def main() -> None:
@@ -38,6 +43,31 @@ def main() -> None:
                 (service, time.time()),
             )
             conn.commit()
+
+    now = time.time()
+    summary = {}
+    for days, key in [(7, "7d"), (30, "30d")]:
+        since = now - days * 86400
+        rows = conn.execute(
+            "SELECT service, ts FROM incidents WHERE ts >= ? ORDER BY ts DESC",
+            (since,),
+        ).fetchall()
+        summary[f"incidents_{key}"] = [
+            {
+                "service": service,
+                "ts": datetime.fromtimestamp(ts, timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z"),
+            }
+            for service, ts in rows
+        ]
+        total_checks = days * 86400 / INTERVAL_SECS * len(URLS)
+        uptime = 1 - len(rows) / total_checks
+        summary[f"uptime_{key}"] = round(uptime * 100, 2)
+
+    with FEED_FILE.open("w") as f:
+        json.dump(summary, f, indent=2)
+        f.write("\n")
     conn.close()
 
 

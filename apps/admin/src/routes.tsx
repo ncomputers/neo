@@ -11,8 +11,10 @@ import { StaffSupport } from './pages/StaffSupport';
 import { Changelog } from './pages/Changelog';
 import { Flags } from './pages/Flags';
 import { Flag } from '@neo/ui';
+import { Status } from './pages/Status';
 
 export const routes: RouteObject[] = [
+  { path: '/status', element: <Status /> },
   { path: '/login', element: <Login /> },
   {
     path: '/',
