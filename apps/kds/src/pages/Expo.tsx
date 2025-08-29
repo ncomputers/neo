@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch, useWS, useLicense } from '@neo/api';
 import { WS_BASE } from '../env';
+import { SettingsDrawer } from '../components/SettingsDrawer';
+import { useKdsPrefs } from '../state/kdsPrefs';
+import sounds from '../sounds.json';
 
 interface Item {
   qty: number;
@@ -28,10 +31,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [zone, setZone] = useState<string | undefined>();
   const [order, setOrder] = useState<string[]>([]);
 
-  const [playSound, setPlaySound] = useState(() => localStorage.getItem('kdsSound') === '1');
-  const [notify, setNotify] = useState(() => localStorage.getItem('kdsNotify') === '1');
-  const [dark, setDark] = useState(() => localStorage.getItem('kdsDark') === '1');
-  const [font, setFont] = useState(() => parseInt(localStorage.getItem('kdsFont') || '100'));
+  const { soundNew, soundReady, desktopNotify, darkMode, fontScale } = useKdsPrefs();
   const [showSettings, setShowSettings] = useState(false);
   const [fullscreen, setFullscreen] = useState(() => localStorage.getItem('kdsFullscreen') === '1');
 
@@ -73,24 +73,12 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   }, [filteredTickets]);
 
   useEffect(() => {
-    localStorage.setItem('kdsSound', playSound ? '1' : '0');
-  }, [playSound]);
+    document.body.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
-    localStorage.setItem('kdsNotify', notify ? '1' : '0');
-    if (notify && typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, [notify]);
-
-  useEffect(() => {
-    localStorage.setItem('kdsDark', dark ? '1' : '0');
-    document.documentElement.classList.toggle('dark', dark);
-  }, [dark]);
-
-  useEffect(() => {
-    localStorage.setItem('kdsFont', String(font));
-  }, [font]);
+    document.body.style.fontSize = `${fontScale}%`;
+  }, [fontScale]);
 
   useEffect(() => {
     if (fullscreen && !document.fullscreenElement) {
@@ -148,16 +136,27 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     for (const t of tickets) {
       const prev = prevTickets.current.find((p) => p.id === t.id);
       if (!prev && t.status === 'NEW') {
-        if (playSound) new Audio('/static/sounds/new.mp3').play();
-        if (notify && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          new Notification(`New order ${t.table}`);
+        if (soundNew) new Audio(sounds.new).play();
+        if (
+          desktopNotify &&
+          typeof Notification !== 'undefined' &&
+          Notification.permission === 'granted'
+        ) {
+          new Notification(`New order T-${t.table}`);
         }
       } else if (prev && prev.status !== 'READY' && t.status === 'READY') {
-        if (playSound) new Audio('/static/sounds/ready.mp3').play();
+        if (soundReady) new Audio(sounds.ready).play();
+        if (
+          desktopNotify &&
+          typeof Notification !== 'undefined' &&
+          Notification.permission === 'granted'
+        ) {
+          new Notification(`Order ready T-${t.table}`);
+        }
       }
     }
     prevTickets.current = tickets;
-  }, [tickets, playSound, notify]);
+  }, [tickets, soundNew, soundReady, desktopNotify]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
@@ -258,7 +257,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   return (
     <div
       className="p-4 space-y-4 dark:bg-gray-900 dark:text-white"
-      style={{ fontSize: `${font}%` }}
+      style={{ fontSize: `${fontScale}%` }}
     >
       <div className="flex justify-end space-x-2">
         <button
@@ -285,48 +284,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
           Offline
         </div>
       )}
-      {showSettings && (
-        <div
-          data-testid="settings"
-          className="absolute top-12 right-2 bg-white dark:bg-gray-700 border p-4 space-y-2 z-10"
-        >
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={playSound}
-              onChange={(e) => setPlaySound(e.target.checked)}
-            />
-            <span>Sound</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={notify}
-              onChange={(e) => setNotify(e.target.checked)}
-            />
-            <span>Notifications</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={dark}
-              onChange={(e) => setDark(e.target.checked)}
-            />
-            <span>Dark mode</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <span>Font</span>
-            <input
-              type="range"
-              min={90}
-              max={130}
-              value={font}
-              onChange={(e) => setFont(parseInt(e.target.value))}
-            />
-            <span>{font}%</span>
-          </label>
-        </div>
-      )}
+      <SettingsDrawer open={showSettings} onClose={() => setShowSettings(false)} />
       <div className="flex space-x-2">
         {(['ALL', ...allStatuses] as const).map((s) => (
           <button
