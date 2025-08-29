@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { getToken } from '@neo/api';
 import { useAuth } from '../auth';
 
 interface Props {
@@ -7,14 +8,14 @@ interface Props {
   children: ReactElement;
 }
 
-export function ProtectedRoute({ roles, children }: Props) {
-  const { token, roles: userRoles } = useAuth();
+export function Protected({ roles, children }: Props) {
+  const userRoles = useAuth();
   const location = useLocation();
-  if (!token) {
+  if (!getToken()) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   if (roles && !roles.some((r) => userRoles.includes(r))) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
   return children;
 }

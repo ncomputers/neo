@@ -5,16 +5,16 @@ import { Floor } from './pages/Floor';
 import { Billing } from './pages/Billing';
 import { Onboarding } from './pages/Onboarding';
 import { Layout } from './components/Layout';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { Protected } from './components/Protected';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <Login /> },
   {
     path: '/',
     element: (
-      <ProtectedRoute>
+      <Protected>
         <Layout />
-      </ProtectedRoute>
+      </Protected>
     ),
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
@@ -23,9 +23,9 @@ export const routes: RouteObject[] = [
       {
         path: 'billing',
         element: (
-          <ProtectedRoute roles={['owner']}>
+          <Protected roles={['owner']}>
             <Billing />
-          </ProtectedRoute>
+          </Protected>
         )
       },
       { path: 'onboarding', element: <Onboarding /> }

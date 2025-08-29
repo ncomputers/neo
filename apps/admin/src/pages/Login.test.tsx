@@ -3,19 +3,17 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Login } from './Login';
-import { useAuth } from '../auth';
+import { loginPin } from '@neo/api';
+
+vi.mock('@neo/api', () => ({ loginPin: vi.fn() }));
 
 describe('Login page', () => {
   beforeEach(() => {
-    useAuth.setState({ token: null, roles: [], tenants: [], tenantId: null });
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   test('shows error when login request fails', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Invalid PIN' })
-    }) as any);
+    (loginPin as any).mockRejectedValue(new Error('Invalid PIN'));
     render(
       <MemoryRouter>
         <Login />

@@ -1,21 +1,5 @@
 import { apiFetch, idempotency } from './api';
 
-export interface LoginPinRequest {
-  phone: string;
-  pin: string;
-}
-export interface LoginPinResponse {
-  token: string;
-}
-export function loginPin(body: LoginPinRequest) {
-  return apiFetch<LoginPinResponse>('/login/pin', {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
-    idempotencyKey: idempotency()
-  });
-}
-
 export interface MenuItem {
   id: string;
   name: string;

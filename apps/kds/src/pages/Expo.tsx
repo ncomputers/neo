@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiFetch, useWS } from '@neo/api';
 import { WS_BASE } from '../env';
-import { PinModal } from '../components/PinModal';
 
 interface Item {
   qty: number;
@@ -24,7 +23,6 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [focused, setFocused] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
-  const [showPin, setShowPin] = useState(false);
   const [statusFilter, setStatusFilter] = useState<Status | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [zone, setZone] = useState<string | undefined>();
@@ -49,6 +47,19 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
       }),
     [tickets, statusFilter, searchQuery, zone]
   );
+
+  const columnTickets = useMemo(() => {
+    const map: Record<Status, Ticket[]> = {
+      NEW: [],
+      PREPARING: [],
+      READY: [],
+      PICKED: []
+    };
+    for (const t of filteredTickets) {
+      map[t.status].push(t);
+    }
+    return map;
+  }, [filteredTickets]);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -107,10 +118,6 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
 
   const action = async (id: string, next: Status, endpoint: string) => {
     if (offline) return;
-    if (!sessionStorage.getItem('token')) {
-      setShowPin(true);
-      return;
-    }
     const prev = tickets.find((t) => t.id === id);
     if (!prev) return;
     move(id, next);
@@ -165,7 +172,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
       } else if (e.key === 'z' || e.key === 'Z') {
         if (t.status === 'PICKED') action(t.id, 'READY', `/kds/tickets/${t.id}/undo`);
       } else if (e.key === 'Enter') {
-        window.alert(`Table ${t.table}`);
+        window.location.assign(`/kds/tickets/${t.id}`);
       }
     },
     [columns, filteredTickets, focused, tickets]
@@ -260,7 +267,6 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
           </div>
         ))}
       </div>
-      {showPin && <PinModal open={showPin} onClose={() => setShowPin(false)} onSuccess={() => setShowPin(false)} />}
     </div>
   );
 }

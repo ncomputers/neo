@@ -9,7 +9,7 @@
     "dev": "tsc -w -p tsconfig.json",
     "lint": "echo lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "zod": "^3.22.2"
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@neo/config": "workspace:*",
-    "tsx": "^4.7.0"
+    "tsx": "^4.7.0",
+    "vitest": "^1.3.0"
   }
 }
