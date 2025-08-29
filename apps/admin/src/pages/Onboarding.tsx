@@ -1,7 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const steps = ['Branding', 'Tables', 'Billing', 'Payments', 'Alerts'] as const;
+const steps = [
+  'Basics',
+  'Branding',
+  'Tables',
+  'Billing',
+  'Taxes',
+  'Payments',
+  'Alerts',
+  'Review'
+] as const;
+
+interface BasicsData {
+  name: string;
+}
 
 interface BrandingData {
   color: string;
@@ -16,6 +29,10 @@ interface BillingData {
   plan: string;
 }
 
+interface TaxesData {
+  mode: string;
+}
+
 interface PaymentsData {
   mode: 'central' | 'outlet';
   vpa: string;
@@ -27,17 +44,21 @@ interface AlertsData {
 }
 
 interface OnboardingData {
+  basics: BasicsData;
   branding: BrandingData;
   tables: TablesData;
   billing: BillingData;
+  taxes: TaxesData;
   payments: PaymentsData;
   alerts: AlertsData;
 }
 
 const defaultData: OnboardingData = {
+  basics: { name: '' },
   branding: { color: '#2563eb', logo: '' },
   tables: { count: 0 },
   billing: { plan: 'starter' },
+  taxes: { mode: 'none' },
   payments: { mode: 'central', vpa: '' },
   alerts: { email: false, whatsapp: false }
 };
@@ -96,7 +117,39 @@ export function Onboarding() {
     setData((d) => ({ ...d, branding: { ...d.branding, logo: url } }));
   };
 
+  const downloadQR = async () => {
+    try {
+      const res = await fetch('/api/admin/outlets/demo/qrposters.zip');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'qrposters.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const content = [
+    (
+      <div key="basics">
+        <label htmlFor="name" className="block mb-1">
+          Name
+        </label>
+        <input
+          id="name"
+          value={data.basics.name}
+          onChange={(e) =>
+            setData((d) => ({
+              ...d,
+              basics: { name: e.target.value }
+            }))
+          }
+        />
+      </div>
+    ),
     (
       <div className="space-y-4" key="branding">
         <div>
@@ -121,21 +174,26 @@ export function Onboarding() {
       </div>
     ),
     (
-      <div key="tables">
-        <label htmlFor="table-count" className="block mb-1">
-          Table Count
-        </label>
-        <input
-          id="table-count"
-          type="number"
-          value={data.tables.count}
-          onChange={(e) =>
-            setData((d) => ({
-              ...d,
-              tables: { count: Number(e.target.value) }
-            }))
-          }
-        />
+      <div key="tables" className="space-y-4">
+        <div>
+          <label htmlFor="table-count" className="block mb-1">
+            Table Count
+          </label>
+          <input
+            id="table-count"
+            type="number"
+            value={data.tables.count}
+            onChange={(e) =>
+              setData((d) => ({
+                ...d,
+                tables: { count: Number(e.target.value) }
+              }))
+            }
+          />
+        </div>
+        <button onClick={downloadQR} className="border px-2 py-1">
+          Download QR ZIP
+        </button>
       </div>
     ),
     (
@@ -156,6 +214,26 @@ export function Onboarding() {
           <option value="starter">Starter</option>
           <option value="standard">Standard</option>
           <option value="pro">Pro</option>
+        </select>
+      </div>
+    ),
+    (
+      <div key="taxes">
+        <label htmlFor="tax-mode" className="block mb-1">
+          Tax Mode
+        </label>
+        <select
+          id="tax-mode"
+          value={data.taxes.mode}
+          onChange={(e) =>
+            setData((d) => ({
+              ...d,
+              taxes: { mode: e.target.value }
+            }))
+          }
+        >
+          <option value="none">None</option>
+          <option value="gst">GST</option>
         </select>
       </div>
     ),
@@ -231,6 +309,14 @@ export function Onboarding() {
           />{' '}
           WhatsApp
         </label>
+      </div>
+    ),
+    (
+      <div key="review" className="space-y-2">
+        <div>Name: {data.basics.name || '-'}</div>
+        <div>Tables: {data.tables.count}</div>
+        <div>Plan: {data.billing.plan}</div>
+        <div>Tax: {data.taxes.mode}</div>
       </div>
     )
   ];
