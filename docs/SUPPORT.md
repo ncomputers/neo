@@ -13,4 +13,7 @@ Support aims to acknowledge requests within one business day and resolve critica
 Add Markdown files under `docs/faq/` to surface them in the admin support center.
 
 ## Diagnostics
-When owners opt in, requests include basic context such as tenant, user and environment. Sensitive values like secrets or tokens are removed before storage.
+When owners opt in, requests include basic context such as tenant, user and environment. The client bundles the last twenty console logs and ten failed API calls, redacting sensitive fields like `bearer`, `token`, `authorization`, `utr`, `upi` and `card` before sending them to the server.
+
+## Screenshots
+Attaching a screenshot of the issue often speeds up resolution. Capture only the relevant window and double-check that no sensitive data is visible before uploading.

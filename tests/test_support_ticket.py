@@ -14,14 +14,14 @@ def test_support_ticket_flow():
     }
 
     resp = client.post(
-        "/support/ticket",
-        json={"subject": "Printer issue", "body": "It is jammed", "screenshots": []},
+        "/support/tickets",
+        json={"subject": "Printer issue", "message": "It is jammed", "channel": "email", "attachments": []},
         headers=owner_headers,
     )
     assert resp.status_code == 200
     ticket_id = resp.json()["data"]["id"]
 
-    resp = client.get("/support/ticket", headers=owner_headers)
+    resp = client.get("/support/tickets", headers=owner_headers)
     assert resp.status_code == 200
     tickets = resp.json()["data"]
     assert any(t["id"] == ticket_id for t in tickets)
