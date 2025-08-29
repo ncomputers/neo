@@ -32,11 +32,14 @@ def test_guest_page_headers(monkeypatch):
 
     client = TestClient(app)
     resp = client.get("/g/test", headers={"Origin": "https://allowed.com"})
-    assert resp.headers.get("X-Frame-Options") == "DENY"
-    assert resp.headers.get("Referrer-Policy") == "same-origin"
+    assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
+    assert (
+        resp.headers.get("Referrer-Policy")
+        == "strict-origin-when-cross-origin"
+    )
     assert resp.headers.get("X-Content-Type-Options") == "nosniff"
     assert resp.headers.get("access-control-allow-origin") == "https://allowed.com"
     assert (
         resp.headers.get("Strict-Transport-Security")
-        == "max-age=31536000; includeSubDomains"
+        == "max-age=31536000; includeSubDomains; preload"
     )

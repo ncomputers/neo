@@ -65,15 +65,22 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if origin and origin in self.allowed_origins:
             response.headers.setdefault("access-control-allow-origin", origin)
             response.headers.setdefault("vary", "Origin")
-        response.headers.setdefault("Referrer-Policy", "same-origin")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
-        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "geolocation=(), microphone=(), camera=(), notifications=(self)",
+        )
         csp = (
             "default-src 'self'; "
-            "img-src 'self' data: https:; "
-            f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com; "
-            "font-src https://fonts.gstatic.com; "
-            f"script-src 'self' 'nonce-{nonce}'"
+            f"script-src 'self' 'nonce-{nonce}'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'self'"
         )
         response.headers.setdefault("Content-Security-Policy", csp)
         if response.headers.get("content-type", "").startswith("text/html"):
@@ -95,7 +102,10 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 raw_headers.append((name, value))
         if self.hsts_enabled:
             raw_headers.append(
-                (b"strict-transport-security", b"max-age=31536000; includeSubDomains")
+                (
+                    b"strict-transport-security",
+                    b"max-age=31536000; includeSubDomains; preload",
+                )
             )
         response.raw_headers = raw_headers
         return response

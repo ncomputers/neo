@@ -1,0 +1,2 @@
+Contact: security@example.com
+Policy: https://example.com/security
