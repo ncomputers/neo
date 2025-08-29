@@ -43,7 +43,7 @@ export function PayPage() {
     : '';
 
   useEffect(() => {
-    let int: NodeJS.Timer | undefined;
+    let int: ReturnType<typeof setInterval> | undefined;
     if (showQr && status !== 'success') {
       int = setInterval(async () => {
         const res = await fetch(`/api/orders/${orderId}/payment-status`);
@@ -54,7 +54,9 @@ export function PayPage() {
         }
       }, 1000);
     }
-    return () => clearInterval(int);
+    return () => {
+      if (int) clearInterval(int);
+    };
   }, [showQr, orderId, status]);
 
   if (error)
