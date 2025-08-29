@@ -4,7 +4,7 @@ import { capturePageView } from '@neo/utils';
 import { Expo } from './pages/Expo';
 import { Health } from './pages/Health';
 import { Login } from './pages/Login';
-import { Protected } from './components/Protected';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 export function AppRoutes() {
   const loc = useLocation();
@@ -15,7 +15,7 @@ export function AppRoutes() {
     <Routes>
       <Route path="/health" element={<Health />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/kds/expo" element={<Protected><Expo /></Protected>} />
+        <Route path="/kds/expo" element={<ProtectedRoute roles={['kitchen', 'manager']}><Expo /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/kds/expo" replace />} />
     </Routes>
   );

@@ -5,6 +5,7 @@ export * from './hooks/useLicense';
 export * from './license';
 export { usePageview } from './hooks/usePageview';
 export * from './auth/pin';
+export * from './interceptor';
 export {
   getMenu,
   placeOrder,
