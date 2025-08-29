@@ -3,8 +3,28 @@
 <head>
     <meta charset="utf-8" />
     <title>Floor Live View</title>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        #floor-live {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #zone-filter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+    </style>
 </head>
 <body>
+<select id="zone-filter"><option value="">All Zones</option></select>
 <canvas id="floor-live" tabindex="0" aria-label="Live Floor Map"></canvas>
+<script src="/static/js/floor_live.js"></script>
 </body>
 </html>

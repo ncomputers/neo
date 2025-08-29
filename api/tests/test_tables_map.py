@@ -77,6 +77,10 @@ def test_table_positions_map():
         "x": 10,
         "y": 20,
         "state": "AVAILABLE",
+        "zone": None,
+        "width": 80,
+        "height": 80,
+        "shape": "rect",
     }
 
     m2 = next(item for item in data if item["id"] == str(tid2))
@@ -87,6 +91,10 @@ def test_table_positions_map():
         "x": 30,
         "y": 40,
         "state": "LOCKED",
+        "zone": None,
+        "width": 80,
+        "height": 80,
+        "shape": "rect",
     }
 
 
