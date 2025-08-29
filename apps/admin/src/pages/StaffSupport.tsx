@@ -5,6 +5,7 @@ export function StaffSupport() {
   const [current, setCurrent] = useState<any | null>(null);
   const [status, setStatus] = useState('');
   const [tenant, setTenant] = useState('');
+  const [date, setDate] = useState('');
   const [msg, setMsg] = useState('');
   const [internal, setInternal] = useState(false);
   const [canned, setCanned] = useState<any[]>([]);
@@ -13,12 +14,13 @@ export function StaffSupport() {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
     if (tenant) params.set('tenant', tenant);
+    if (date) params.set('date', date);
     fetch('/staff/support?' + params.toString())
       .then((r) => r.json())
       .then((r) => setTickets(r.data || []));
   };
 
-  useEffect(() => { load(); }, [status, tenant]);
+  useEffect(() => { load(); }, [status, tenant, date]);
 
   const open = async (id: string) => {
     const r = await fetch(`/staff/support/${id}`);
@@ -50,12 +52,12 @@ export function StaffSupport() {
   };
 
   useEffect(() => {
-    import('../../../docs/faq/meta.json').then((m) => setCanned(m.default));
+    import('../../../../docs/faq/meta.json').then((m) => setCanned(m.default));
   }, []);
 
   const insert = async (id: string) => {
-    const files = import.meta.glob('../../../docs/faq/*.md', { as: 'raw' });
-    const loader = files[`../../../docs/faq/${id}.md`];
+    const files = import.meta.glob('../../../../docs/faq/*.md', { as: 'raw' });
+    const loader = files[`../../../../docs/faq/${id}.md`];
     if (loader) {
       const content = await (loader as () => Promise<string>)();
       setMsg((m) => m + '\n' + content);
@@ -67,6 +69,7 @@ export function StaffSupport() {
       <div className="w-1/3">
         <input placeholder="status" value={status} onChange={(e) => setStatus(e.target.value)} />
         <input placeholder="tenant" value={tenant} onChange={(e) => setTenant(e.target.value)} />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <button onClick={load}>Filter</button>
         <ul>
           {tickets.map((t) => (

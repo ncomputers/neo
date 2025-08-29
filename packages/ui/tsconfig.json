@@ -5,7 +5,8 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@neo/utils": ["../utils/src"]
+      "@neo/utils": ["../utils/src"],
+      "@neo/api": ["../api/src"]
     }
   }
 }

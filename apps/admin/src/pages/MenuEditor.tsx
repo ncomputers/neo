@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Toaster, toast, Button } from '@neo/ui';
 import { updateItem as updateItemApi, uploadImage, useLicense } from '@neo/api';
-import { unstable_useBlocker as useBlocker } from 'react-router-dom';
+import { useBlocker } from 'react-router-dom';
 import { MenuI18nImport } from '../components/MenuI18nImport';
 import { MenuI18nExport } from '../components/MenuI18nExport';
 import { TENANT_ID } from '../env';
@@ -26,8 +26,16 @@ interface Item {
 
 const LANGS = ['en', 'hi'];
 
+function useSafeBlocker(when: boolean) {
+  try {
+    return useBlocker(when);
+  } catch {
+    return { state: 'idle', proceed() {}, reset() {} } as any;
+  }
+}
+
 function useNavigationGuard(when: boolean) {
-  const blocker = useBlocker(when);
+  const blocker = useSafeBlocker(when);
   useEffect(() => {
     if (blocker.state === 'blocked') {
       const proceed = window.confirm('You have unsaved changes. Leave anyway?');

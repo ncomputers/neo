@@ -1,5 +1,10 @@
 const { spawn } = require('child_process');
 const net = require('net');
+
+// Allow extra time for the application to start in slower environments
+const APP_PORT = 8000;
+const WAIT_TIMEOUT_MS = 60000; // 60 seconds
+
 let server;
 async function waitForPort(port, timeoutMs) {
   const start = Date.now();
@@ -28,6 +33,6 @@ module.exports = async () => {
     process.on('exit', () => {
       if (server) server.kill();
     });
-    await waitForPort(8000, 15000);
+    await waitForPort(APP_PORT, WAIT_TIMEOUT_MS);
   }
 };

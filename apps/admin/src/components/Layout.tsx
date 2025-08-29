@@ -71,7 +71,10 @@ export function Layout() {
         </main>
         <footer className="p-2 border-t text-xs flex justify-between">
           <span>UI v{uiVersion}</span>
-          <span>API {api?.sha?.slice(0,7) ?? 'unknown'}</span>
+          <span className="space-x-2">
+            <Link to="/status">Status</Link>
+            <span>API {api?.sha?.slice(0,7) ?? 'unknown'}</span>
+          </span>
         </footer>
       </div>
     </div>
