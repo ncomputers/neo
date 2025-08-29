@@ -1,5 +1,5 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { getLicenseStatus, LicenseStatus } from '../endpoints';
+import { getLicenseStatus, LicenseStatus } from '../license';
 
 export function useLicense(options?: UseQueryOptions<LicenseStatus>) {
   return useQuery<LicenseStatus>({

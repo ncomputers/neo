@@ -19,8 +19,8 @@ export function Layout() {
         </nav>
       </aside>
       <div className="flex-1 flex flex-col">
-        {status && status !== 'ACTIVE' && (
-          <LicenseBanner status={status as 'GRACE' | 'EXPIRED'} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
+        {status && (
+          <LicenseBanner status={status} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
         )}
         <header className="flex justify-between items-center p-2 border-b">
           <div className="flex items-center space-x-2">
