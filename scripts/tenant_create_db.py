@@ -26,9 +26,7 @@ async def ensure_schema(engine, tenant_id: str) -> None:
     """Ensure the tenant schema exists."""
 
     async with engine.connect() as conn:
-        await conn.execution_options(isolation_level="AUTOCOMMIT").execute(
-            text(f'CREATE SCHEMA IF NOT EXISTS "{tenant_id}"')
-        )
+        await conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{tenant_id}"'))
 
 
 async def ensure_database_exists(dsn: str) -> None:
@@ -49,9 +47,7 @@ async def ensure_database_exists(dsn: str) -> None:
                 {"name": tenant_db},
             )
             if not res.scalar():
-                await conn.execution_options(isolation_level="AUTOCOMMIT").execute(
-                    text(f'CREATE DATABASE "{tenant_db}"')
-                )
+                await conn.execute(text(f'CREATE DATABASE "{tenant_db}"'))
     except Exception:
         await engine.dispose()
         admin_url = url.set(database="template1")
@@ -62,9 +58,7 @@ async def ensure_database_exists(dsn: str) -> None:
                 {"name": tenant_db},
             )
             if not res.scalar():
-                await conn.execution_options(isolation_level="AUTOCOMMIT").execute(
-                    text(f'CREATE DATABASE "{tenant_db}"')
-                )
+                await conn.execute(text(f'CREATE DATABASE "{tenant_db}"'))
     finally:
         await engine.dispose()
 
