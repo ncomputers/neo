@@ -118,6 +118,7 @@ from .routes_accounting_exports import router as accounting_exports_router
 from .routes_admin_billing import router as admin_billing_router
 from .routes_admin_billing import webhook_router as billing_webhook_router
 from .routes_admin_devices import router as admin_devices_router
+from .routes_admin_export import router as admin_export_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_onboarding import router as admin_onboarding_router
 from .routes_admin_ops import router as admin_ops_router
@@ -1034,6 +1035,7 @@ app.include_router(postman_router)
 app.include_router(admin_qrpack_router)
 app.include_router(admin_qrposter_router)
 app.include_router(admin_devices_router)
+app.include_router(admin_export_router)
 
 # Reports domain
 app.include_router(daybook_pdf_router)
