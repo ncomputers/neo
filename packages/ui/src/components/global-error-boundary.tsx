@@ -21,7 +21,9 @@ export class GlobalErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error) {
-    captureError(error);
+    if (typeof window !== 'undefined') {
+      captureError(error);
+    }
   }
 
   private handleRetry = () => {
