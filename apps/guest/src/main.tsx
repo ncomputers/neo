@@ -8,16 +8,13 @@ import './i18n';
 import { AppRoutes } from './routes';
 import { Workbox } from 'workbox-window';
 import { retryQueuedOrders } from './queue';
+import { handleSwMessage } from './sw-client';
 
 const qc = new QueryClient();
 
 if ('serviceWorker' in navigator) {
   const wb = new Workbox('/sw.js');
-  wb.addEventListener('message', (event) => {
-    if (event.data?.type === 'ORDER_SYNCED') {
-      window.location.href = `/track/${event.data.orderId}`;
-    }
-  });
+  navigator.serviceWorker.addEventListener('message', handleSwMessage);
   wb.register();
 }
 

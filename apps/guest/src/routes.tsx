@@ -7,7 +7,7 @@ import { CartPage } from './pages/CartPage';
 import { TrackPage } from './pages/TrackPage';
 import { PayPage } from './pages/Pay';
 import { Health } from './pages/Health';
-import { OfflinePage } from './pages/OfflinePage';
+import { Offline } from './pages/Offline';
 import { Layout } from './components/Layout';
 
 export function AppRoutes() {
@@ -25,7 +25,7 @@ export function AppRoutes() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/track/:orderId" element={<TrackPage />} />
         <Route path="/pay/:orderId" element={<PayPage />} />
-        <Route path="/offline" element={<OfflinePage />} />
+        <Route path="/offline" element={<Offline />} />
       </Route>
     </Routes>
   );

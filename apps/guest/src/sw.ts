@@ -1,14 +1,22 @@
-import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
-import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { BackgroundSyncPlugin } from 'workbox-background-sync';
 import { ExpirationPlugin } from 'workbox-expiration';
 
 // @ts-ignore self is defined in service worker
-precacheAndRoute(self.__WB_MANIFEST);
+precacheAndRoute([...self.__WB_MANIFEST, { url: '/offline', revision: null }]);
 
-const navigationRoute = new NavigationRoute(createHandlerBoundToURL('/index.html'));
-registerRoute(navigationRoute);
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  async ({ event }) => {
+    try {
+      return await fetch(event.request);
+    } catch {
+      return caches.match('/offline');
+    }
+  }
+);
 
 registerRoute(
   '/api/menu',
