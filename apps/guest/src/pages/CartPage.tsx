@@ -6,6 +6,8 @@ import { Header } from '../components/Header';
 import { useCartStore } from '../store/cart';
 import { useLicense } from '@neo/api';
 import { CartSkeleton } from '../components/CartSkeleton';
+import { useNavigate } from 'react-router-dom';
+import { addQueuedOrder } from '../queue';
 
 export function CartPage() {
   const { t } = useTranslation();
@@ -14,6 +16,8 @@ export function CartPage() {
     onError: () => toast.error(t('error_cart')),
   });
   const [tip, setTip] = useState(0);
+  const [queued, setQueued] = useState(false);
+  const navigate = useNavigate();
 
   const expired = data?.status === 'EXPIRED';
   const { mutate, isPending: isOrdering } = useMutation({
@@ -26,8 +30,18 @@ export function CartPage() {
       if (!res.ok) throw new Error('order');
       return res.json();
     },
-    onSuccess: () => clear(),
-    onError: () => toast.error(t('error_order')),
+    onSuccess: (data: any) => {
+      clear();
+      navigate(`/track/${data.id}`);
+    },
+    onError: () => {
+      if (!navigator.onLine) {
+        addQueuedOrder({ items, tip });
+        setQueued(true);
+      } else {
+        toast.error(t('error_order'));
+      }
+    },
   });
 
   return (
@@ -63,15 +77,15 @@ export function CartPage() {
               onChange={(e) => setTip(Number(e.target.value))}
             />
           </label>
-          <button
-            disabled={expired || isOrdering}
-            onClick={() => mutate()}
-            title={expired ? t('license_expired') : undefined}
-          >
-            {t('place_order')}
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
+            <button
+              disabled={expired || isOrdering}
+              onClick={() => mutate()}
+              title={expired ? t('license_expired') : undefined}
+            >
+              {queued ? t('queued') : t('place_order')}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
