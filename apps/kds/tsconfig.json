@@ -8,6 +8,7 @@
       "@neo/api": ["../../packages/api/src"],
       "@neo/ui": ["../../packages/ui/src"],
       "@neo/utils": ["../../packages/utils/src"]
-    }
+    },
+    "resolveJsonModule": true
   }
 }

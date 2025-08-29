@@ -32,6 +32,7 @@ vi.mock('@neo/api', async () => {
 
 import { Expo } from './Expo';
 import { apiFetch } from '@neo/api';
+import { useKdsPrefs } from '../state/kdsPrefs';
 
 beforeEach(async () => {
   (global as any).WebSocket = MockWebSocket as any;
@@ -39,12 +40,24 @@ beforeEach(async () => {
   MockWebSocket.autoOpen = true;
   const api: any = await import('@neo/api');
   api.useLicense.mockReturnValue({ data: { status: 'ACTIVE' } });
+  (global as any).Audio = vi.fn().mockImplementation(() => ({ play: vi.fn() }));
+  (global as any).Notification = Object.assign(vi.fn(), {
+    permission: 'granted',
+    requestPermission: vi.fn().mockResolvedValue('granted'),
+  });
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   localStorage.clear();
+  useKdsPrefs.getState().set({
+    soundNew: true,
+    soundReady: true,
+    desktopNotify: false,
+    darkMode: false,
+    fontScale: 100,
+  });
 });
 
 describe('Expo', () => {
@@ -219,33 +232,52 @@ describe('Expo', () => {
     apiFetch.mockResolvedValueOnce({ tickets: [] });
     render(<Expo />);
     await userEvent.click(screen.getByTestId('settings-btn'));
-    const soundToggle = screen.getByLabelText('Sound') as HTMLInputElement;
+    const soundToggle = screen.getByLabelText('New ticket sound') as HTMLInputElement;
     await userEvent.click(soundToggle);
-    expect(soundToggle.checked).toBe(true);
+    expect(soundToggle.checked).toBe(false);
     cleanup();
     apiFetch.mockResolvedValueOnce({ tickets: [] });
     render(<Expo />);
     await userEvent.click(screen.getByTestId('settings-btn'));
-    expect((screen.getByLabelText('Sound') as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText('New ticket sound') as HTMLInputElement).checked).toBe(false);
   });
 
-  test('plays sound and notifies when enabled', async () => {
+  test('new ticket plays sound and notifies when enabled', async () => {
     apiFetch.mockResolvedValueOnce({ tickets: [] });
-    render(<Expo />);
-    await userEvent.click(screen.getByTestId('settings-btn'));
-    await userEvent.click(screen.getByLabelText('Sound'));
-    await userEvent.click(screen.getByLabelText('Notifications'));
+    useKdsPrefs.getState().set({ soundNew: true, desktopNotify: true });
     const play = vi.fn();
     (window as any).Audio = vi.fn().mockImplementation(() => ({ play }));
     const notify = vi.fn();
-    (window as any).Notification = vi.fn((msg: string) => { notify(msg); });
-    (Notification as any).permission = 'granted';
+    function FakeNotification(msg: string) {
+      notify(msg);
+    }
+    (FakeNotification as any).permission = 'granted';
+    (window as any).Notification = FakeNotification as any;
+    render(<Expo />);
     const ws = sockets[0];
-    ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: 'T-12', items: [], status: 'NEW', age_s: 0, promise_s: 300 } }) });
-    await act(async () => {});
-    ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: 'T-12', items: [], status: 'READY', age_s: 0, promise_s: 300 } }) });
-    await act(async () => {});
-    expect(play).toHaveBeenCalledTimes(2);
+    ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: '12', items: [], status: 'NEW', age_s: 0, promise_s: 300 } }) });
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(play).toHaveBeenCalledTimes(1);
     expect(notify).toHaveBeenCalledWith('New order T-12');
+  });
+
+  test('ready ticket plays sound and notifies when enabled', async () => {
+    apiFetch.mockResolvedValueOnce({ tickets: [{ id: '1', table: '5', items: [], status: 'PREPARING', age_s: 0, promise_s: 300 }] });
+    useKdsPrefs.getState().set({ soundReady: true, desktopNotify: true });
+    const play = vi.fn();
+    (window as any).Audio = vi.fn().mockImplementation(() => ({ play }));
+    const notify = vi.fn();
+    function FakeNotification(msg: string) {
+      notify(msg);
+    }
+    (FakeNotification as any).permission = 'granted';
+    (window as any).Notification = FakeNotification as any;
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    const ws = sockets[0];
+    ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: '5', items: [], status: 'READY', age_s: 0, promise_s: 300 } }) });
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(notify).toHaveBeenCalledWith('Order ready T-5');
   });
 });
