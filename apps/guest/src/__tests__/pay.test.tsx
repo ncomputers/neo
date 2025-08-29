@@ -67,6 +67,29 @@ describe('pay page', () => {
     expect(href).toContain('am=55');
   });
 
+  test('skip UTR still shows QR', async () => {
+    const fetchMock = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        items: [],
+        tax: 0,
+        total: 55,
+        upi: { pa: 't@upi', pn: 'T' },
+        onlineUpi: true,
+      }),
+    });
+    // @ts-ignore
+    global.fetch = fetchMock;
+
+    renderPay();
+    await screen.findByText(/total/i);
+    fireEvent.click(screen.getByRole('button', { name: /i've paid/i }));
+    fireEvent.click(screen.getByRole('button', { name: /skip/i }));
+
+    expect(screen.getByTestId('cashier-qr')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   test('posts utr and orderId', async () => {
     jest.useFakeTimers();
     const fetchMock = jest
