@@ -8,12 +8,14 @@ Features:
 - --test     : run backend tests with pytest
 - --docker   : (optional) bring up docker services from ops/docker-compose.yml
 - --env      : copy .env.example to .env if missing
+- --all      : setup env, install deps, start Docker, run tests, and launch services
 
 Examples:
   python run_all.py --install --env
   python run_all.py --run
   python run_all.py --test
   python run_all.py --docker --run
+  python run_all.py --all
 """
 
 import argparse
@@ -135,7 +137,7 @@ def start_processes():
         "api.app.main:app",
         "--reload",
         "--host",
-        "0.0.0.0",
+        "0.0.0.0",  # nosec B104
         "--port",
         "8000",
     ]
@@ -204,7 +206,20 @@ def main():
     parser.add_argument(
         "--env", action="store_true", help="Copy .env.example to .env if missing"
     )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run env setup, install deps, start Docker, run tests, and launch services",
+    )
     args = parser.parse_args()
+    if args.all:
+        copy_env_if_needed()
+        install_backend()
+        install_frontend()
+        run_docker_compose()
+        run_tests()
+        start_processes()
+        return
 
     if args.env:
         copy_env_if_needed()
@@ -218,7 +233,7 @@ def main():
     if args.run:
         start_processes()
 
-    if not any([args.install, args.run, args.test, args.docker, args.env]):
+    if not any([args.install, args.run, args.test, args.docker, args.env, args.all]):
         parser.print_help()
 
 
