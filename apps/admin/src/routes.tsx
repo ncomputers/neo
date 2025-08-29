@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Floor } from './pages/Floor';
 import { Billing } from './pages/Billing';
 import { Onboarding } from './pages/Onboarding';
+import { Support } from './pages/Support';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -28,9 +29,10 @@ export const routes: RouteObject[] = [
             </ProtectedRoute>
           )
         },
-      { path: 'onboarding', element: <Onboarding /> }
-    ]
-  }
-];
+        { path: 'onboarding', element: <Onboarding /> },
+        { path: 'support', element: <Support /> }
+      ]
+    }
+  ];
 
 export const router = createBrowserRouter(routes);

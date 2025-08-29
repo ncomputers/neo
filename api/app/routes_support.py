@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import re
+import uuid
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from .auth import User, role_required
 from .db import SessionLocal
-from .models_master import FeedbackNPS, SupportTicket
+from .models_master import FeedbackNPS, SupportMessage, SupportTicket
 from .providers import email_stub
 from .utils.audit import audit
 from .utils.responses import ok
@@ -31,8 +33,16 @@ async def support_contact() -> dict:
 
 class TicketIn(BaseModel):
     subject: str = Field(..., description="Short summary")
-    body: str = Field(..., description="Detailed description")
-    screenshots: list[str] = Field(default_factory=list)
+    message: str = Field(..., description="Detailed description")
+    channel: str | None = None
+    attachments: list[str] = Field(default_factory=list)
+    includeDiagnostics: bool = False
+    diagnostics: dict | None = None
+
+
+class ReplyIn(BaseModel):
+    message: str
+    attachments: list[str] = Field(default_factory=list)
 
 
 class FeedbackIn(BaseModel):
@@ -41,7 +51,23 @@ class FeedbackIn(BaseModel):
     feature_request: bool = Field(default=False)
 
 
-@router.post("/support/ticket")
+token_re = re.compile(r"bearer\s+[A-Za-z0-9\._-]+", re.I)
+utr_re = re.compile(r"\b\d{10}\b")
+
+
+def _redact(data):  # pragma: no cover - simple recursion
+    if isinstance(data, str):
+        data = token_re.sub("[REDACTED]", data)
+        data = utr_re.sub("[REDACTED]", data)
+        return data
+    if isinstance(data, list):
+        return [_redact(v) for v in data]
+    if isinstance(data, dict):
+        return {k: _redact(v) for k, v in data.items()}
+    return data
+
+
+@router.post("/support/tickets")
 @audit("support.ticket")
 async def create_ticket(
     payload: TicketIn,
@@ -49,11 +75,14 @@ async def create_ticket(
     user: User = Depends(role_required("owner", "super_admin")),
 ) -> dict:
     tenant = request.headers.get("X-Tenant-ID", "unknown")
+    diagnostics = _redact(payload.diagnostics) if payload.includeDiagnostics else None
     ticket = SupportTicket(
         tenant=tenant,
         subject=payload.subject,
-        body=payload.body,
-        screenshots=payload.screenshots,
+        body=_redact(payload.message),
+        screenshots=payload.attachments,
+        diagnostics=diagnostics,
+        channel=payload.channel,
     )
     with SessionLocal() as session:
         session.add(ticket)
@@ -64,7 +93,7 @@ async def create_ticket(
         "support_ticket",
         {
             "subject": f"[{tenant}] {payload.subject}",
-            "body": payload.body,
+            "body": payload.message,
             "errors": errors,
         },
         "ops@",
@@ -72,7 +101,7 @@ async def create_ticket(
     return ok({"id": ticket_id})
 
 
-@router.get("/support/ticket")
+@router.get("/support/tickets")
 async def list_my_tickets(
     request: Request,
     user: User = Depends(role_required("owner", "super_admin")),
@@ -90,10 +119,35 @@ async def list_my_tickets(
                 "subject": r.subject,
                 "status": r.status,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
+                "updated_at": r.updated_at.isoformat() if r.updated_at else None,
             }
             for r in rows
         ]
     return ok(tickets)
+
+
+@router.post("/support/tickets/{ticket_id}/reply")
+@audit("support.reply")
+async def reply_ticket(
+    ticket_id: str,
+    payload: ReplyIn,
+    request: Request,
+    user: User = Depends(role_required("owner", "super_admin")),
+) -> dict:
+    with SessionLocal() as session:
+        ticket = session.get(SupportTicket, uuid.UUID(ticket_id))
+        if not ticket:
+            return ok({"status": "not_found"})
+        msg = SupportMessage(
+            ticket_id=ticket.id,
+            author=user.role,
+            body=_redact(payload.message),
+            attachments=payload.attachments,
+        )
+        session.add(msg)
+        ticket.updated_at = func.now()
+        session.commit()
+    return ok({"status": "sent"})
 
 
 @router.post("/support/feedback")

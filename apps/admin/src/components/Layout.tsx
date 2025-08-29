@@ -25,22 +25,25 @@ export function Layout() {
         {status && (
           <LicenseBanner status={status} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
         )}
-        <header className="flex justify-between items-center p-2 border-b">
-          <div className="flex items-center space-x-2">
-            <div
-              className="h-8 w-24 bg-contain bg-no-repeat"
-              style={{ backgroundImage: 'var(--logo-url)' }}
-            />
-          </div>
-          <button
-            onClick={() => {
-              clearToken();
-              navigate('/login');
-            }}
-          >
-            Logout
-          </button>
-        </header>
+          <header className="flex justify-between items-center p-2 border-b">
+            <div className="flex items-center space-x-2">
+              <div
+                className="h-8 w-24 bg-contain bg-no-repeat"
+                style={{ backgroundImage: 'var(--logo-url)' }}
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link to="/support">Help</Link>
+              <button
+                onClick={() => {
+                  clearToken();
+                  navigate('/login');
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </header>
         <main id="main" className="flex-1 overflow-auto p-4">
           <Outlet />
         </main>
