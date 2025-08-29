@@ -44,6 +44,7 @@ beforeEach(async () => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  localStorage.clear();
 });
 
 describe('Expo', () => {
@@ -212,5 +213,39 @@ describe('Expo', () => {
     await act(async () => {});
     const prepCol = screen.getByRole('heading', { name: 'Preparing' }).parentElement!.querySelector('ul')!;
     expect(within(prepCol).getByTestId('ticket-1')).toBeInTheDocument();
+  });
+
+  test('settings persist', async () => {
+    apiFetch.mockResolvedValueOnce({ tickets: [] });
+    render(<Expo />);
+    await userEvent.click(screen.getByTestId('settings-btn'));
+    const soundToggle = screen.getByLabelText('Sound') as HTMLInputElement;
+    await userEvent.click(soundToggle);
+    expect(soundToggle.checked).toBe(true);
+    cleanup();
+    apiFetch.mockResolvedValueOnce({ tickets: [] });
+    render(<Expo />);
+    await userEvent.click(screen.getByTestId('settings-btn'));
+    expect((screen.getByLabelText('Sound') as HTMLInputElement).checked).toBe(true);
+  });
+
+  test('plays sound and notifies when enabled', async () => {
+    apiFetch.mockResolvedValueOnce({ tickets: [] });
+    render(<Expo />);
+    await userEvent.click(screen.getByTestId('settings-btn'));
+    await userEvent.click(screen.getByLabelText('Sound'));
+    await userEvent.click(screen.getByLabelText('Notifications'));
+    const play = vi.fn();
+    (window as any).Audio = vi.fn().mockImplementation(() => ({ play }));
+    const notify = vi.fn();
+    (window as any).Notification = vi.fn((msg: string) => { notify(msg); });
+    (Notification as any).permission = 'granted';
+    const ws = sockets[0];
+    ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: 'T-12', items: [], status: 'NEW', age_s: 0, promise_s: 300 } }) });
+    await act(async () => {});
+    ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: 'T-12', items: [], status: 'READY', age_s: 0, promise_s: 300 } }) });
+    await act(async () => {});
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(notify).toHaveBeenCalledWith('New order T-12');
   });
 });
