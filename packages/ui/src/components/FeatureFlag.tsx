@@ -1,12 +1,12 @@
 import React, { PropsWithChildren } from 'react';
 import { getFlag } from '@neo/api';
 
-interface FlagProps extends PropsWithChildren {
+interface FeatureFlagProps extends PropsWithChildren {
   name: string;
   fallback?: React.ReactNode;
 }
 
-export function Flag({ name, children, fallback = null }: FlagProps) {
+export function FeatureFlag({ name, children, fallback = null }: FeatureFlagProps) {
   return getFlag(name) ? <>{children}</> : <>{fallback}</>;
 }
 
