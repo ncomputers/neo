@@ -12,6 +12,7 @@ import uvicorn
 from dotenv import load_dotenv
 
 import config
+from api.app.utils.video_stream import get_backend
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -81,6 +82,8 @@ def main(argv: list[str] | None = None) -> None:
             return
 
     config.get_settings()  # ensure settings are initialized with any override
+    backend = get_backend()
+    print(f"Using {backend} for video streaming")
 
     try:
         uvicorn.run(
