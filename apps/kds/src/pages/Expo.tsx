@@ -29,6 +29,26 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [zone, setZone] = useState<string | undefined>();
 
+  const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
+  const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
+  const zones = useMemo(
+    () => Array.from(new Set(tickets.map((t) => t.zone).filter(Boolean))) as string[],
+    [tickets]
+  );
+  const filteredTickets = useMemo(
+    () =>
+      tickets.filter((t) => {
+        const matchStatus = statusFilter === 'ALL' ? true : t.status === statusFilter;
+        const q = searchQuery.toLowerCase();
+        const matchSearch = q
+          ? t.table.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q))
+          : true;
+        const matchZone = zone ? t.zone === zone : true;
+        return matchStatus && matchSearch && matchZone;
+      }),
+    [tickets, statusFilter, searchQuery, zone]
+  );
+
   const fetchTickets = useCallback(async () => {
     try {
       const res = await apiFetch<{ tickets: Ticket[] }>('/kds/tickets');
@@ -61,12 +81,16 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
     if (!connected) {
-      timer = setTimeout(() => setOffline(true), offlineMs);
+      if (offlineMs === 0) {
+        setOffline(true);
+      } else {
+        timer = setTimeout(() => setOffline(true), offlineMs);
+      }
     } else {
       setOffline(false);
     }
     return () => timer && clearTimeout(timer);
-  }, [connected]);
+  }, [connected, offlineMs]);
 
   const move = (id: string, status: Status) => {
     setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -90,6 +114,36 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
 
   const onKey = useCallback(
     (e: KeyboardEvent) => {
+      const groups = columns.map((col) => filteredTickets.filter((t) => t.status === col));
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (!focused) {
+          const first = groups[0]?.[0];
+          if (first) setFocused(first.id);
+          return;
+        }
+        const colIdx = groups.findIndex((g) => g.some((t) => t.id === focused));
+        if (colIdx === -1) return;
+        const rowIdx = groups[colIdx].findIndex((t) => t.id === focused);
+        if (e.key === 'ArrowDown') {
+          const nextRow = Math.min(rowIdx + 1, groups[colIdx].length - 1);
+          setFocused(groups[colIdx][nextRow].id);
+        } else if (e.key === 'ArrowUp') {
+          const prevRow = Math.max(rowIdx - 1, 0);
+          setFocused(groups[colIdx][prevRow].id);
+        } else if (e.key === 'ArrowRight') {
+          const nextCol = Math.min(colIdx + 1, groups.length - 1);
+          const row = Math.min(rowIdx, groups[nextCol].length - 1);
+          const target = groups[nextCol][row];
+          if (target) setFocused(target.id);
+        } else if (e.key === 'ArrowLeft') {
+          const prevCol = Math.max(colIdx - 1, 0);
+          const row = Math.min(rowIdx, groups[prevCol].length - 1);
+          const target = groups[prevCol][row];
+          if (target) setFocused(target.id);
+        }
+        e.preventDefault();
+        return;
+      }
       if (!focused) return;
       const t = tickets.find((x) => x.id === focused);
       if (!t) return;
@@ -101,9 +155,11 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
         if (t.status === 'READY') action(t.id, 'PICKED', `/kds/tickets/${t.id}/picked`);
       } else if (e.key === 'z' || e.key === 'Z') {
         if (t.status === 'PICKED') action(t.id, 'READY', `/kds/tickets/${t.id}/undo`);
+      } else if (e.key === 'Enter') {
+        window.alert(`Table ${t.table}`);
       }
     },
-    [focused, tickets]
+    [columns, filteredTickets, focused, tickets]
   );
 
   useEffect(() => {
@@ -120,25 +176,6 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     const m = Math.ceil(remaining / 60);
     return `${m}m`;
   };
-  const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
-  const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
-  const zones = useMemo(
-    () => Array.from(new Set(tickets.map((t) => t.zone).filter(Boolean))) as string[],
-    [tickets]
-  );
-  const filteredTickets = useMemo(
-    () =>
-      tickets.filter((t) => {
-        const matchStatus = statusFilter === 'ALL' ? true : t.status === statusFilter;
-        const q = searchQuery.toLowerCase();
-        const matchSearch = q
-          ? t.table.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q))
-          : true;
-        const matchZone = zone ? t.zone === zone : true;
-        return matchStatus && matchSearch && matchZone;
-      }),
-    [tickets, statusFilter, searchQuery, zone]
-  );
   return (
     <div className="p-4 space-y-4">
       {offline && (
