@@ -9,12 +9,11 @@ import './i18n';
 import { router } from './routes';
 import { Workbox } from 'workbox-window';
 import { AuthProvider } from './auth';
-import { addFetchInterceptors } from '@neo/api';
+import { withInterceptors } from '@neo/api';
 
 const qc = new QueryClient();
 
-const fetcher = addFetchInterceptors(window.fetch.bind(window));
-(window as any).fetch = fetcher;
+globalThis.fetch = withInterceptors(globalThis.fetch.bind(globalThis));
 window.addEventListener('unauthorized', () => toast.error('Session expired'));
 
 capturePageView(window.location.pathname);
