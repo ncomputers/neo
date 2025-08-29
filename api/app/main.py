@@ -71,7 +71,6 @@ from .auth import (
     role_required,
     rotate_refresh_token,
 )
-from .config.cors import ALLOWED_ORIGINS
 from .config.validate import validate_on_boot
 from .db import SessionLocal, replica
 from .dunning import build_renew_url
@@ -83,6 +82,9 @@ from .i18n import get_msg, resolve_lang
 template_globals = {"build_renew_url": build_renew_url}
 
 from .menu import router as menu_router
+from .middleware.cors import CORSMiddleware
+from .middleware.csp import CSPMiddleware
+from .middleware.rate_limit import SlidingWindowRateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
     GuestBlockMiddleware,
@@ -101,10 +103,7 @@ from .middlewares import (
     TableStateGuardMiddleware,
     realtime_guard,
 )
-from .middlewares.cors import CORSMiddleware
-from .middlewares.csp import CSPMiddleware
 from .middlewares.license_gate import LicenseGate, license_required
-from .middlewares.rate_limit import SlidingWindowRateLimitMiddleware
 from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
 from .models_tenant import Table
@@ -119,6 +118,7 @@ from .routes_admin_billing import router as admin_billing_router
 from .routes_admin_billing import webhook_router as billing_webhook_router
 from .routes_admin_devices import router as admin_devices_router
 from .routes_admin_export import router as admin_export_router
+from .routes_admin_flags import router as admin_flags_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_onboarding import router as admin_onboarding_router
 from .routes_admin_ops import router as admin_ops_router
@@ -128,7 +128,6 @@ from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
 from .routes_admin_support import router as admin_support_router
-from .routes_admin_flags import router as admin_flags_router
 from .routes_admin_webhooks import router as admin_webhooks_router
 from .routes_alerts import router as alerts_router
 from .routes_analytics_outlets import router as analytics_outlets_router
@@ -294,7 +293,7 @@ app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)
 app.add_middleware(HTMLErrorPagesMiddleware, static_dir=static_dir)
 app.add_middleware(RequestIdMiddleware)
-app.add_middleware(SlidingWindowRateLimitMiddleware, limit=3)
+app.add_middleware(SlidingWindowRateLimitMiddleware)
 app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
@@ -304,7 +303,8 @@ app.add_middleware(LicensingMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(MaintenanceMiddleware)
-app.add_middleware(CORSMiddleware, allowed_origins=ALLOWED_ORIGINS)
+allowed_origins = [o.strip() for o in os.getenv("ORIGINS", "").split(",") if o.strip()]
+app.add_middleware(CORSMiddleware, allowed_origins=allowed_origins)
 app.add_middleware(CSPMiddleware)
 app.add_middleware(SecurityMiddleware)
 app.add_middleware(PinSecurityMiddleware)
