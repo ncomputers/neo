@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Toaster, toast, Button } from '@neo/ui';
 import { unstable_useBlocker as useBlocker } from 'react-router-dom';
+import { exportMenuI18n } from '@neo/api';
 
 interface Category {
   id: string;
@@ -46,6 +47,7 @@ export function MenuEditor() {
   const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
+  const [exportLangs, setExportLangs] = useState<string[]>([]);
 
   const items = itemsMap[selectedCat] || [];
 
@@ -60,6 +62,12 @@ export function MenuEditor() {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
+
+  const toggleExportLang = (l: string) => {
+    setExportLangs((prev) =>
+      prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
+    );
+  };
 
   const addCategory = () => {
     const id = `cat-${Date.now()}`;
@@ -259,8 +267,23 @@ export function MenuEditor() {
             ))}
           </tbody>
         </table>
-        <div className="mt-4">
+        <div className="mt-4 flex items-center space-x-4">
           <Button onClick={save} disabled={!dirty}>Save</Button>
+          <div className="flex items-center space-x-2">
+            {LANGS.map((l) => (
+              <label key={l} className="flex items-center space-x-1">
+                <input
+                  type="checkbox"
+                  checked={exportLangs.includes(l)}
+                  onChange={() => toggleExportLang(l)}
+                />
+                <span>{l.toUpperCase()}</span>
+              </label>
+            ))}
+            <Button onClick={() => exportMenuI18n(exportLangs)} disabled={!exportLangs.length}>
+              Export
+            </Button>
+          </div>
         </div>
       </div>
     </div>
