@@ -5,7 +5,7 @@ The application relies on the following environment variables:
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `DB_URL` | Primary database DSN. | `postgresql+asyncpg://postgres:postgres@localhost:5432/master` |
-| `POSTGRES_MASTER_URL` | Async connection string for the master database. | `postgresql+asyncpg://postgres:postgres@localhost:5432/master` |
+| `POSTGRES_MASTER_URL` | Async connection string for the master database. | `postgresql+asyncpg://user:password@postgres:5432/app` |
 | `POSTGRES_TENANT_DSN_TEMPLATE` | Template DSN for tenant databases, with `{tenant_id}` placeholder. | `postgresql+asyncpg://tenant:tenant@localhost:5432/tenant_{tenant_id}` |
 | `POSTGRES_SUPER_URL` (optional) | Superuser connection URL used when creating databases. Not required for SQLite. |  |
 | `SYNC_DATABASE_URL` | Sync DSN used by Alembic migrations and scripts. | `postgresql://postgres:postgres@localhost:5432/master` |
@@ -67,7 +67,7 @@ Sample local values assume Postgres on `localhost:5432`:
 
 ```bash
 DB_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master
-POSTGRES_MASTER_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master
+POSTGRES_MASTER_URL=postgresql+asyncpg://user:password@postgres:5432/app
 POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://tenant:tenant@localhost:5432/tenant_{tenant_id}
 SYNC_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/master
 ```
