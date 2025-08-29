@@ -17,6 +17,7 @@ interface Ticket {
   status: Status;
   age_s: number;
   promise_s: number;
+  zone?: string;
 }
 
 export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
@@ -24,6 +25,9 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [focused, setFocused] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [showPin, setShowPin] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<Status | 'ALL'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [zone, setZone] = useState<string | undefined>();
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -116,8 +120,18 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     const m = Math.ceil(remaining / 60);
     return `${m}m`;
   };
-
-  const columns: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
+  const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
+  const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
+  const zones = Array.from(new Set(tickets.map((t) => t.zone).filter(Boolean))) as string[];
+  const filteredTickets = tickets.filter((t) => {
+    const matchStatus = statusFilter === 'ALL' ? true : t.status === statusFilter;
+    const q = searchQuery.toLowerCase();
+    const matchSearch = q
+      ? t.table.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q))
+      : true;
+    const matchZone = zone ? t.zone === zone : true;
+    return matchStatus && matchSearch && matchZone;
+  });
   return (
     <div className="p-4 space-y-4">
       {offline && (
@@ -125,12 +139,45 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
           Offline
         </div>
       )}
+      <div className="flex space-x-2">
+        {(['ALL', ...allStatuses] as const).map((s) => (
+          <button
+            key={s}
+            className={`px-2 py-1 border rounded ${statusFilter === s ? 'bg-blue-500 text-white' : ''}`}
+            onClick={() => setStatusFilter(s)}
+          >
+            {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+          </button>
+        ))}
+      </div>
+      <div className="flex space-x-2">
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search"
+          className="border p-1 rounded"
+        />
+        {zones.length > 0 && (
+          <select
+            value={zone ?? ''}
+            onChange={(e) => setZone(e.target.value || undefined)}
+            className="border p-1 rounded"
+          >
+            <option value="">All Zones</option>
+            {zones.map((z) => (
+              <option key={z} value={z}>
+                {z}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
       <div className="grid grid-cols-4 gap-4">
         {columns.map((col) => (
           <div key={col}>
             <h3 className="font-semibold mb-2">{col.charAt(0) + col.slice(1).toLowerCase()}</h3>
             <ul className="space-y-2">
-              {tickets
+              {filteredTickets
                 .filter((t) => t.status === col)
                 .map((t) => (
                   <li
