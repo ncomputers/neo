@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Toaster, toast, Button } from '@neo/ui';
 import { unstable_useBlocker as useBlocker } from 'react-router-dom';
-import { exportMenuI18n, importMenuI18n, updateItem as updateItemApi, uploadImage } from '@neo/api';
+import { exportMenuI18n, importMenuI18n, updateItem as updateItemApi, uploadImage, useLicense } from '@neo/api';
 
 interface Category {
   id: string;
@@ -47,6 +47,8 @@ export function MenuEditor() {
   const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
+  const { data: license } = useLicense();
+  const expired = license?.status === 'EXPIRED';
   const [exportLangs, setExportLangs] = useState<string[]>([]);
   const saveTimers = useRef<Record<string, number>>({});
   const importRef = useRef<HTMLInputElement>(null);
@@ -317,7 +319,7 @@ export function MenuEditor() {
           </tbody>
         </table>
         <div className="mt-4 flex items-center space-x-4">
-          <Button onClick={save} disabled={!dirty}>Save</Button>
+          <Button onClick={save} disabled={!dirty || expired} title={expired ? 'License expired' : undefined}>Save</Button>
           <div className="flex items-center space-x-2">
             {LANGS.map((l) => (
               <label key={l} className="flex items-center space-x-1">

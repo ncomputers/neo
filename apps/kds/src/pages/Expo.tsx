@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiFetch, useWS } from '@neo/api';
+import { apiFetch, useWS, useLicense } from '@neo/api';
 import { WS_BASE } from '../env';
 
 interface Item {
@@ -27,6 +27,8 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [zone, setZone] = useState<string | undefined>();
   const [order, setOrder] = useState<string[]>([]);
+  const { data: license } = useLicense();
+  const expired = license?.status === 'EXPIRED';
 
   const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
   const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
@@ -117,7 +119,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   };
 
   const action = async (id: string, next: Status, endpoint: string) => {
-    if (offline) return;
+    if (offline || expired) return;
     const prev = tickets.find((t) => t.id === id);
     if (!prev) return;
     move(id, next);

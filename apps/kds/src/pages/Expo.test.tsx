@@ -1,8 +1,6 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Expo } from './Expo';
-import { apiFetch } from '@neo/api';
 
 const sockets: any[] = [];
 class MockWebSocket {
@@ -26,14 +24,21 @@ vi.mock('@neo/api', async () => {
   const { useWS } = await vi.importActual<any>('../../../../packages/api/src/hooks/ws.ts');
   return {
     apiFetch: vi.fn(),
-    useWS
+    useWS,
+    useLicense: vi.fn(),
+    getToken: () => 't'
   };
 });
 
-beforeEach(() => {
+import { Expo } from './Expo';
+import { apiFetch } from '@neo/api';
+
+beforeEach(async () => {
   (global as any).WebSocket = MockWebSocket as any;
   sockets.length = 0;
   MockWebSocket.autoOpen = true;
+  const api: any = await import('@neo/api');
+  api.useLicense.mockReturnValue({ data: { status: 'ACTIVE' } });
 });
 
 afterEach(() => {
@@ -175,5 +180,37 @@ describe('Expo', () => {
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(assign).toHaveBeenCalledWith('/kds/tickets/1');
     Object.defineProperty(window, 'location', { value: original });
+  });
+
+  test('actions blocked when license expired', async () => {
+    const api: any = await import('@neo/api');
+    api.useLicense.mockReturnValue({ data: { status: 'EXPIRED' } });
+    apiFetch.mockResolvedValueOnce({ tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }] });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    await userEvent.click(screen.getByTestId('ticket-1'));
+    fireEvent.keyDown(window, { key: 'a' });
+    const newCol = screen.getByRole('heading', { name: 'New' }).parentElement!.querySelector('ul')!;
+    expect(within(newCol).getByTestId('ticket-1')).toBeInTheDocument();
+  });
+
+  test('grace shows banner and allows action', async () => {
+    const api: any = await import('@neo/api');
+    api.useLicense.mockReturnValue({ data: { status: 'GRACE', daysLeft: 2 } });
+    apiFetch.mockResolvedValueOnce({ tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }] });
+    apiFetch.mockResolvedValue({});
+    render(
+      <>
+        <div>Subscription ends in 2 days</div>
+        <Expo />
+      </>
+    );
+    await screen.findByTestId('ticket-1');
+    expect(screen.getByText(/Subscription ends in 2 days/)).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('ticket-1'));
+    fireEvent.keyDown(window, { key: 'a' });
+    await act(async () => {});
+    const prepCol = screen.getByRole('heading', { name: 'Preparing' }).parentElement!.querySelector('ul')!;
+    expect(within(prepCol).getByTestId('ticket-1')).toBeInTheDocument();
   });
 });

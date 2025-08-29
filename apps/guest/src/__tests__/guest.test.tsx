@@ -1,11 +1,12 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 import i18n, { setLanguage } from '../i18n';
 import { CartPage } from '../pages/CartPage';
 import { useCartStore } from '../store/cart';
+import { Layout } from '../components/Layout';
 
 jest.mock(
   '@neo/ui',
@@ -13,7 +14,18 @@ jest.mock(
     EmptyState: () => null,
     ShoppingCart: () => null,
     SkeletonList: () => null,
+    LicenseBanner: ({ status, daysLeft }: any) => (
+      <div>{status === 'EXPIRED' ? 'License expired' : `Subscription ends in ${daysLeft} days`}</div>
+    ),
     toast: { error: jest.fn() },
+  }),
+  { virtual: true }
+);
+
+jest.mock(
+  '@neo/api',
+  () => ({
+    useLicense: jest.fn(),
   }),
   { virtual: true }
 );
@@ -23,9 +35,13 @@ function renderCart() {
   return render(
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={qc}>
-        <BrowserRouter>
-          <CartPage />
-        </BrowserRouter>
+        <MemoryRouter initialEntries={['/']}> 
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<CartPage />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>
   );
@@ -33,23 +49,31 @@ function renderCart() {
 
 describe('guest flows', () => {
   beforeEach(() => {
-    // @ts-ignore
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ status: 'EXPIRED' }),
-    });
+    const api: any = require('@neo/api');
+    api.useLicense.mockReturnValue({ data: { status: 'EXPIRED' } });
     useCartStore.setState({ items: [] });
   });
 
-  test('shows license banner and disables order', async () => {
+  test('EXPIRED disables order', async () => {
     useCartStore.setState({ items: [{ id: '1', name: 'Test', qty: 1 }] });
     renderCart();
     await waitFor(() =>
-      expect(screen.getByTestId('license-banner')).toBeInTheDocument()
+      expect(screen.getByText('License expired')).toBeInTheDocument()
     );
-    expect(
-      screen.getByRole('button', { name: /place order/i })
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: /place order/i })).toBeDisabled();
+  });
+
+  test('GRACE shows banner but allows order', async () => {
+    const api: any = require('@neo/api');
+    api.useLicense.mockReturnValue({ data: { status: 'GRACE', daysLeft: 3 } });
+    useCartStore.setState({ items: [{ id: '1', name: 'Test', qty: 1 }] });
+    renderCart();
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Subscription ends in 3 days/)
+      ).toBeInTheDocument()
+    );
+    expect(screen.getByRole('button', { name: /place order/i })).not.toBeDisabled();
   });
 
   test('i18n fallback and cookie', async () => {

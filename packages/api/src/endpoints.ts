@@ -149,3 +149,13 @@ export function importMenuI18n(file: File, tenant?: string) {
     tenant
   });
 }
+
+export interface LicenseStatus {
+  status: 'ACTIVE' | 'GRACE' | 'EXPIRED';
+  daysLeft?: number;
+  renewUrl?: string;
+}
+
+export function getLicenseStatus() {
+  return apiFetch<LicenseStatus>('/license');
+}

@@ -20,6 +20,7 @@ vi.mock('@neo/api', () => ({
   exportMenuI18n: vi.fn().mockResolvedValue('id,en_name'),
   importMenuI18n: vi.fn(),
   uploadImage: vi.fn(),
+  useLicense: vi.fn().mockReturnValue({ data: { status: 'ACTIVE' } })
 }));
 
 afterEach(() => {
@@ -92,5 +93,15 @@ describe('MenuEditor', () => {
     rows = screen.getAllByRole('row');
     const names = rows.slice(1,3).map((r) => within(r).getAllByRole('cell')[1].textContent);
     expect(names).toEqual(['Two', 'One']);
+  });
+
+  test('Save disabled when license expired', async () => {
+    const api: any = await import('@neo/api');
+    api.useLicense.mockReturnValue({ data: { status: 'EXPIRED' } });
+    render(<MenuEditor />);
+    await userEvent.click(screen.getByText('Add Item'));
+    const saveBtn = screen.getByText('Save');
+    expect(saveBtn).toBeDisabled();
+    expect(saveBtn).toHaveAttribute('title', 'License expired');
   });
 });
