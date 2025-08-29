@@ -8,6 +8,21 @@ import { CartPage } from '../pages/CartPage';
 import { useCartStore } from '../store/cart';
 import { Layout } from '../components/Layout';
 
+jest.mock('../analytics', () => ({
+  enableAnalytics: jest.fn(),
+  disableAnalytics: jest.fn(),
+  hasAnalyticsConsent: jest.fn(() => false),
+  initAnalytics: jest.fn(),
+}));
+
+jest.mock(
+  '@neo/utils',
+  () => ({
+    capturePageView: jest.fn(),
+  }),
+  { virtual: true },
+);
+
 jest.mock(
   '@neo/ui',
   () => ({
