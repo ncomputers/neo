@@ -9,6 +9,8 @@ import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { StaffSupport } from './pages/StaffSupport';
 import { Changelog } from './pages/Changelog';
+import { Flags } from './pages/Flags';
+import { Flag } from '@neo/ui';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <Login /> },
@@ -33,7 +35,7 @@ export const routes: RouteObject[] = [
         },
         { path: 'onboarding', element: <Onboarding /> },
         { path: 'support', element: <Support /> },
-        { path: 'changelog', element: <Changelog /> }
+        { path: 'changelog', element: <Flag name="changelog"><Changelog /></Flag> }
       ]
     }
   },
@@ -44,7 +46,10 @@ export const routes: RouteObject[] = [
         <Layout />
       </ProtectedRoute>
     ),
-    children: [{ path: 'support', element: <StaffSupport /> }],
+    children: [
+      { path: 'support', element: <StaffSupport /> },
+      { path: 'flags', element: <Flags /> },
+    ],
   }
 ];
 

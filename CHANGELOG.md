@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Floor map editor with live table status (SSE/WS).
 - Validate async DB URLs for Alembic migrations and expose `SYNC_DATABASE_URL` in Lighthouse workflow.
 - `usePageview` hook posts navigations to `/telemetry/pageview` with debounce.
+- Runtime feature flag service with `<Flag>` wrapper and admin toggles page.
 
 ### Fixed
 

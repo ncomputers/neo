@@ -3,3 +3,4 @@ wa_enabled: false
 happy_hour: false
 marketplace: false
 analytics: false
+changelog: false
