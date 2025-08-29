@@ -50,6 +50,9 @@ test('offline menu and queued order retry', async () => {
   Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
   localStorage.clear();
   (global.fetch as any) = jest.fn((url: string) => {
+    if (url.startsWith('/status.json')) {
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    }
     if (url === '/api/menu') {
       return Promise.resolve(
         new Response(
@@ -69,7 +72,9 @@ test('offline menu and queued order retry', async () => {
   });
 
   wrapper('/menu', <Route path="/menu" element={<MenuPage />} />);
-  await waitFor(() => expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe('/api/menu'));
+  await waitFor(() =>
+    expect((global.fetch as jest.Mock).mock.calls.some((c) => c[0] === '/api/menu')).toBe(true)
+  );
 
   useCartStore.setState({ items: [{ id: '1', name: 'Tea', qty: 1 }] });
   wrapper('/cart', <Route path="/cart" element={<CartPage />} />);
@@ -80,6 +85,9 @@ test('offline menu and queued order retry', async () => {
   expect(JSON.parse(localStorage.getItem('queuedOrders')!).length).toBe(1);
 
   (global.fetch as jest.Mock).mockImplementation((url: string) => {
+    if (url.startsWith('/status.json')) {
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    }
     if (url === '/api/orders') {
       return Promise.resolve(
         new Response(JSON.stringify({ id: '42' }), { status: 200 })

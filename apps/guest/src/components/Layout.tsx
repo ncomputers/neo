@@ -1,14 +1,14 @@
 import { Outlet } from 'react-router-dom';
 import { useLicense } from '@neo/api';
 import { LicenseBanner } from '@neo/ui';
-import { ConnectionBanner } from './ConnectionBanner';
+import { PoorConnectionBanner } from './PoorConnectionBanner';
 
 export function Layout() {
   const { data } = useLicense();
   const status = data?.status;
   return (
     <div>
-      <ConnectionBanner />
+      <PoorConnectionBanner />
       {status && (
         <LicenseBanner status={status} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
       )}
