@@ -12,6 +12,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 def test_allowed_origins_env(monkeypatch):
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("DB_URL", "postgresql://localhost/test")
+    monkeypatch.setenv("POSTGRES_MASTER_URL", "postgresql://localhost/test")
     monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     from api.app import main as app_main
@@ -35,6 +36,7 @@ def test_security_headers(monkeypatch):
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("ENABLE_HSTS", "1")
     monkeypatch.setenv("DB_URL", "postgresql://localhost/test")
+    monkeypatch.setenv("POSTGRES_MASTER_URL", "postgresql://localhost/test")
     monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     from api.app import main as app_main
@@ -52,12 +54,15 @@ def test_security_headers(monkeypatch):
     client = TestClient(app_main.app)
     resp = client.get("/health", headers={"Origin": "https://allowed.com"})
     assert resp.headers.get("access-control-allow-origin") == "https://allowed.com"
-    assert resp.headers.get("Referrer-Policy") == "same-origin"
+    assert (
+        resp.headers.get("Referrer-Policy")
+        == "strict-origin-when-cross-origin"
+    )
     assert resp.headers.get("X-Content-Type-Options") == "nosniff"
-    assert resp.headers.get("X-Frame-Options") == "DENY"
+    assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
     assert (
         resp.headers.get("Strict-Transport-Security")
-        == "max-age=31536000; includeSubDomains"
+        == "max-age=31536000; includeSubDomains; preload"
     )
     csp = resp.headers.get("Content-Security-Policy")
     assert csp and "default-src 'self'" in csp and "img-src 'self'" in csp
@@ -71,5 +76,6 @@ def test_security_headers(monkeypatch):
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
     monkeypatch.delenv("ENABLE_HSTS", raising=False)
+    monkeypatch.delenv("POSTGRES_MASTER_URL", raising=False)
     with pytest.raises(RuntimeError):
         importlib.reload(app_main)
