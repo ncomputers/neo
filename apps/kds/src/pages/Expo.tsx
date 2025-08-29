@@ -3,6 +3,7 @@ import { apiFetch, useWS, useLicense } from '@neo/api';
 import { WS_BASE } from '../env';
 import { SettingsDrawer } from '../components/SettingsDrawer';
 import { useKdsPrefs } from '../state/kdsPrefs';
+import { PrintKOTButton } from '../components/PrintKOTButton';
 import sounds from '../sounds.json';
 
 interface Item {
@@ -31,8 +32,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [zone, setZone] = useState<string | undefined>();
   const [order, setOrder] = useState<string[]>([]);
 
-  const { soundNew, soundReady, desktopNotify, darkMode, fontScale, printer, layout } =
-    useKdsPrefs();
+  const { soundNew, soundReady, desktopNotify, darkMode, fontScale } = useKdsPrefs();
   const [showSettings, setShowSettings] = useState(false);
   const [fullscreen, setFullscreen] = useState(() => localStorage.getItem('kdsFullscreen') === '1');
 
@@ -189,18 +189,6 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     }
   };
 
-  const print = (id: string) => {
-    apiFetch('/print/notify', {
-      method: 'POST',
-      body: JSON.stringify({ order_id: id, layout }),
-      headers: { 'Content-Type': 'application/json' },
-    }).catch(() => {
-      /* ignore */
-    });
-    if (import.meta.env.MODE !== 'production') {
-      console.log('stub print', { id, layout });
-    }
-  };
 
   const onKey = useCallback(
     (e: KeyboardEvent) => {
@@ -369,14 +357,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
                         </li>
                       ))}
                     </ul>
-                    {printer && (
-                      <button
-                        onClick={() => print(t.id)}
-                        className="mt-2 border px-1 py-0.5 rounded text-sm"
-                      >
-                        Print KOT
-                      </button>
-                    )}
+                    <PrintKOTButton ticket={t} />
                   </li>
                 ))}
               </ul>
