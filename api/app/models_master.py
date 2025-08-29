@@ -230,6 +230,20 @@ class SupportTicket(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class FeedbackNPS(Base):
+    """Net Promoter Score feedback from owners."""
+
+    __tablename__ = "feedback_nps"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant = Column(String, nullable=True)
+    user = Column(String, nullable=True)
+    score = Column(Integer, nullable=False)
+    comment = Column(String, nullable=True)
+    feature_request = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 class Device(Base):
     """Registered staff devices."""
 
@@ -252,5 +266,6 @@ __all__ = [
     "TwoFactorBackupCode",
     "PrepStats",
     "SupportTicket",
+    "FeedbackNPS",
     "Device",
 ]
