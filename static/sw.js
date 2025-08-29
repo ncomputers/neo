@@ -61,11 +61,17 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
   if (event.request.mode === 'navigate') {
+    if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/kds')) {
+      event.respondWith(fetch(event.request));
+      return;
+    }
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then(response => {
-          const copy = response.clone();
-          caches.open(STATIC_CACHE).then(cache => cache.put(event.request, copy));
+          if (!url.pathname.endsWith('/index.html')) {
+            const copy = response.clone();
+            caches.open(STATIC_CACHE).then(cache => cache.put(event.request, copy));
+          }
           return response;
         })
         .catch(() =>

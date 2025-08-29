@@ -4,6 +4,7 @@
 
 import logging
 import os
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -19,7 +20,9 @@ logger = logging.getLogger(__name__)
 # Global secrets purely for demonstration purposes
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+valid_refresh_tokens: set[str] = set()
 
 ph = PasswordHasher()
 
@@ -129,6 +132,38 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_refresh_token(sub: str) -> str:
+    """Create a refresh token with rotation support."""
+
+    jti = str(uuid.uuid4())
+    expire = datetime.utcnow() + timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
+    payload = {"sub": sub, "jti": jti, "type": "refresh", "exp": expire}
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    valid_refresh_tokens.add(jti)
+    return token
+
+
+def rotate_refresh_token(token: str) -> tuple[str, str]:
+    """Validate ``token`` and issue new access and refresh tokens."""
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise ValueError("wrong type")
+        jti = payload.get("jti")
+        sub = payload.get("sub")
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+    if jti not in valid_refresh_tokens:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="token reuse"
+        )
+    valid_refresh_tokens.remove(jti)
+    access = create_access_token({"sub": sub, "role": fake_users_db[sub].role})
+    refresh = create_refresh_token(sub)
+    return access, refresh
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> User:

@@ -13,11 +13,14 @@ CSP reports are sent to `/csp/report` when `Content-Type` is HTML.
 ### Adding Origins
 Allowed origins are configured via the `ALLOWED_ORIGINS` environment variable (comma separated).
 
+CORS preflight responses are cached for 3600 seconds.
+
 Our security contact is published at `/.well-known/security.txt`.
 
 ## Token Rotation
 - Access tokens expire after 15 minutes.
 - Rotate signing keys and expose JWKS at `/auth/jwks.json`.
+- PIN login and refresh endpoints are rate limited with `429` responses and `Retry-After` headers.
 
 ## Incident Response
 1. Rotate credentials.

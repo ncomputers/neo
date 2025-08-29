@@ -67,8 +67,11 @@ from .auth import (
     authenticate_pin,
     authenticate_user,
     create_access_token,
+    create_refresh_token,
     role_required,
+    rotate_refresh_token,
 )
+from .config.cors import ALLOWED_ORIGINS
 from .config.validate import validate_on_boot
 from .db import SessionLocal, replica
 from .dunning import build_renew_url
@@ -80,7 +83,6 @@ from .i18n import get_msg, resolve_lang
 template_globals = {"build_renew_url": build_renew_url}
 
 from .menu import router as menu_router
-from .middleware import RateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
     GuestBlockMiddleware,
@@ -99,7 +101,10 @@ from .middlewares import (
     TableStateGuardMiddleware,
     realtime_guard,
 )
+from .middlewares.cors import CORSMiddleware
+from .middlewares.csp import CSPMiddleware
 from .middlewares.license_gate import LicenseGate, license_required
+from .middlewares.rate_limit import SlidingWindowRateLimitMiddleware
 from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
 from .models_tenant import Table
@@ -127,6 +132,7 @@ from .routes_alerts import router as alerts_router
 from .routes_analytics_outlets import router as analytics_outlets_router
 from .routes_api_keys import router as api_keys_router
 from .routes_auth_2fa import router as auth_2fa_router
+from .routes_auth_jwks import router as auth_jwks_router
 from .routes_auth_magic import router as auth_magic_router
 from .routes_backup import router as backup_router
 from .routes_billing import router as billing_router
@@ -232,14 +238,7 @@ class SWStaticFiles(StaticFiles):
     async def get_response(self, path, scope):
         response = await super().get_response(path, scope)
         if path == "sw.js":
-            response.headers["Service-Worker-Allowed"] = "/"
-        return response
-
-
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+            response.headers["Service-Worker-Allowed"] = "/guest"
         return response
 
 
@@ -293,7 +292,7 @@ app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)
 app.add_middleware(HTMLErrorPagesMiddleware, static_dir=static_dir)
 app.add_middleware(RequestIdMiddleware)
-app.add_middleware(RateLimitMiddleware, limit=3)
+app.add_middleware(SlidingWindowRateLimitMiddleware, limit=3)
 app.add_middleware(GuestBlockMiddleware)
 app.add_middleware(TableStateGuardMiddleware)
 app.add_middleware(RoomStateGuard)
@@ -303,7 +302,8 @@ app.add_middleware(LicensingMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(MaintenanceMiddleware)
-app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CORSMiddleware, allowed_origins=ALLOWED_ORIGINS)
+app.add_middleware(CSPMiddleware)
 app.add_middleware(SecurityMiddleware)
 app.add_middleware(PinSecurityMiddleware)
 app.add_middleware(APIKeyAuthMiddleware)
@@ -409,8 +409,19 @@ async def email_login(credentials: EmailLogin) -> dict:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    refresh = create_refresh_token(user.username)
     log_event(user.username, "login", "user", master=True)
-    return ok(Token(access_token=token, role=user.role))
+    return ok({"access_token": token, "refresh_token": refresh, "role": user.role})
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@app.post("/auth/refresh", tags=["Auth"], summary="Rotate refresh token")
+async def refresh_endpoint(payload: RefreshRequest) -> dict:
+    access, refresh = rotate_refresh_token(payload.refresh_token)
+    return ok({"access_token": access, "refresh_token": refresh})
 
 
 @app.post("/login/pin", tags=["Auth"], summary="Login with PIN")
@@ -423,8 +434,9 @@ async def pin_login(credentials: PinLogin) -> dict:
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
     token = create_access_token({"sub": user.username, "role": user.role})
+    refresh = create_refresh_token(user.username)
     log_event(user.username, "login", "user", master=True)
-    return ok(Token(access_token=token, role=user.role))
+    return ok({"access_token": token, "refresh_token": refresh, "role": user.role})
 
 
 @app.get(
@@ -919,6 +931,7 @@ async def mark_clean(table_id: str) -> dict:
 # Auth domain
 app.include_router(auth_magic_router)
 app.include_router(auth_2fa_router)
+app.include_router(auth_jwks_router)
 
 # Guest domain
 app.include_router(guest_menu_router)

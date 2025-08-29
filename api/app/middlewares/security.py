@@ -1,41 +1,24 @@
 from __future__ import annotations
 
-import os
-import secrets
 import uuid
-from typing import List
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_403_FORBIDDEN,
-    HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-)
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_413_REQUEST_ENTITY_TOO_LARGE
 
-from ..config.cors import ALLOWED_ORIGINS
 from ..utils.responses import err
 from .guest_utils import _is_guest_post
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
-    """Basic hardening for guest endpoints and CORS."""
+    """Basic hardening for guest endpoints."""
 
     def __init__(self, app) -> None:
         super().__init__(app)
-        self.allowed_origins: List[str] = list(ALLOWED_ORIGINS)
         self.max_bytes = 256 * 1024
-        self.hsts_enabled = os.getenv("ENABLE_HSTS") == "1"
 
     async def dispatch(self, request: Request, call_next):
-        origin = request.headers.get("origin")
-        if self.allowed_origins and origin and origin not in self.allowed_origins:
-            return JSONResponse(
-                err("FORBIDDEN_ORIGIN", "ForbiddenOrigin"),
-                status_code=HTTP_403_FORBIDDEN,
-            )
-
         if _is_guest_post(request.url.path, request.method):
             body = await request.body()
             if len(body) > self.max_bytes:
@@ -59,53 +42,4 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
             request._receive = receive
 
-        nonce = secrets.token_urlsafe(16)
-        request.state.csp_nonce = nonce
-        response = await call_next(request)
-        if origin and origin in self.allowed_origins:
-            response.headers.setdefault("access-control-allow-origin", origin)
-            response.headers.setdefault("vary", "Origin")
-        response.headers.setdefault(
-            "Referrer-Policy", "strict-origin-when-cross-origin"
-        )
-        response.headers.setdefault("X-Content-Type-Options", "nosniff")
-        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
-        response.headers.setdefault(
-            "Permissions-Policy",
-            "geolocation=(), microphone=(), camera=(), notifications=(self)",
-        )
-        csp = (
-            "default-src 'self'; "
-            f"script-src 'self' 'nonce-{nonce}'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: blob:; "
-            "connect-src 'self'; "
-            "frame-ancestors 'self'"
-        )
-        response.headers.setdefault("Content-Security-Policy", csp)
-        if response.headers.get("content-type", "").startswith("text/html"):
-            ro = f"{csp}; report-uri /csp/report"
-            response.headers.setdefault("Content-Security-Policy-Report-Only", ro)
-        raw_headers: list[tuple[bytes, bytes]] = []
-        for name, value in response.raw_headers:
-            if name.lower() == b"set-cookie":
-                cookie = value.decode("latin1")
-                lower = cookie.lower()
-                if "httponly" not in lower:
-                    cookie += "; HttpOnly"
-                if "secure" not in lower:
-                    cookie += "; Secure"
-                if "samesite" not in lower:
-                    cookie += "; SameSite=Lax"
-                raw_headers.append((name, cookie.encode("latin1")))
-            else:
-                raw_headers.append((name, value))
-        if self.hsts_enabled:
-            raw_headers.append(
-                (
-                    b"strict-transport-security",
-                    b"max-age=31536000; includeSubDomains; preload",
-                )
-            )
-        response.raw_headers = raw_headers
-        return response
+        return await call_next(request)
