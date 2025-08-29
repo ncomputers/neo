@@ -5,7 +5,8 @@ import { Layout } from './Layout';
 
 vi.mock('@neo/api', () => ({
   clearToken: vi.fn(),
-  useLicense: () => ({ data: { status: 'GRACE', daysLeft: 2, renewUrl: '/billing' } })
+  useLicense: () => ({ data: { status: 'GRACE', daysLeft: 2, renewUrl: '/billing' } }),
+  useVersion: () => ({ data: { sha: 'abc1234' } })
 }));
 
 vi.mock('../auth', () => ({ useAuth: () => [] }));
