@@ -106,6 +106,14 @@ python scripts/deploy_blue_green.py --new neo-green --old neo-blue --tenant TENA
 
 For manual steps and more background, see the [blue/green guide](bluegreen/README.md).
 
+For container rollouts managed by Kubernetes, use the lightweight helper:
+
+```bash
+python scripts/rollout_blue_green.py --env prod --to TAG
+```
+
+To revert to a previous tag, run `rollback_blue_green.py` with the same options.
+
 To slowly shift traffic, run the weighted ramp helper which adjusts Nginx
 weights to 5%, 25% and 50%, gating on `/ready` between each bump:
 
