@@ -98,6 +98,21 @@ describe('Expo', () => {
     expect(screen.getByTestId('ticket-2')).toBeInTheDocument();
   });
 
+  test('Zone filter narrows tickets', async () => {
+    apiFetch.mockResolvedValueOnce({
+      tickets: [
+        { id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300, zone: 'A' },
+        { id: '2', table: 'T2', items: [], status: 'NEW', age_s: 0, promise_s: 300, zone: 'B' }
+      ]
+    });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    await screen.findByTestId('ticket-2');
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'A');
+    expect(screen.getByTestId('ticket-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('ticket-2')).not.toBeInTheDocument();
+  });
+
   test('Search query filters tickets', async () => {
     apiFetch.mockResolvedValueOnce({
       tickets: [
