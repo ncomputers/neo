@@ -13,7 +13,7 @@ test('admin dashboard snapshot', async ({ page }) => {
       body: 'data: {"kpi": 42}\n\n',
     });
   });
-  await page.goto(`${adminBaseURL}/admin/dashboard`);
+  await page.goto(`${adminBaseURL}/admin/dashboard`, { waitUntil: 'networkidle' });
   const kpis = page.locator('[data-testid="kpi-cards"]');
   const mask = [
     page.locator('[data-testid="timestamp"]'),
