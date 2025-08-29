@@ -10,6 +10,14 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PayPage } from '../pages/Pay';
 
+jest.mock('react-router-dom', () => {
+  const actual = jest.requireActual('react-router-dom');
+  return {
+    ...actual,
+    useParams: () => ({ orderId: '1' }),
+  };
+});
+
 function renderPay() {
   const qc = new QueryClient();
   return render(
@@ -49,9 +57,10 @@ describe('pay page', () => {
     expect(href).toContain('am=55');
   });
 
-  test('status poll switches to success', async () => {
+  test('posts utr and orderId', async () => {
     jest.useFakeTimers();
-    const fetchMock = jest.fn()
+    const fetchMock = jest
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -62,6 +71,41 @@ describe('pay page', () => {
           onlineUpi: true,
         }),
       })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+    // @ts-ignore
+    global.fetch = fetchMock;
+
+    renderPay();
+    await screen.findByText(/total/i);
+    fireEvent.click(screen.getByRole('button', { name: /i've paid/i }));
+    fireEvent.change(screen.getByLabelText(/utr/i), {
+      target: { value: '123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/orders/1/utr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: '1', utr: '123' }),
+    });
+  });
+
+  test('status poll switches to success', async () => {
+    jest.useFakeTimers();
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [],
+          tax: 0,
+          total: 55,
+          upi: { pa: 't@upi', pn: 'T' },
+          onlineUpi: true,
+        }),
+      })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ status: 'pending' }),

@@ -127,9 +127,16 @@ export function PayPage() {
             />
           </label>
           <button
-            onClick={() => {
-              setShowUtr(false);
-              setShowQr(true);
+            onClick={async () => {
+              const res = await fetch(`/api/orders/${orderId}/utr`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, utr }),
+              });
+              if (res.ok) {
+                setShowUtr(false);
+                setShowQr(true);
+              }
             }}
           >
             Submit
