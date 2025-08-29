@@ -1,15 +1,18 @@
+import React, { Suspense } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
-import GuestOrder from './pages/GuestOrder'
-import AdminDashboard from './pages/AdminDashboard'
-import CashierDashboard from './pages/CashierDashboard'
-import KitchenDashboard from './pages/KitchenDashboard'
-import CleanerDashboard from './pages/CleanerDashboard'
-import Billing from './pages/Billing'
-import ExpoDashboard from './pages/ExpoDashboard'
-import OwnerOnboardingWizard from './pages/OwnerOnboardingWizard'
 import RequireRole from './components/RequireRole'
 import ConsentBanner from './components/ConsentBanner'
 import { useAuth } from './contexts/AuthContext'
+import Loading from './components/Loading'
+
+const GuestOrder = React.lazy(() => import('./pages/GuestOrder'))
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'))
+const CashierDashboard = React.lazy(() => import('./pages/CashierDashboard'))
+const KitchenDashboard = React.lazy(() => import('./pages/KitchenDashboard'))
+const CleanerDashboard = React.lazy(() => import('./pages/CleanerDashboard'))
+const Billing = React.lazy(() => import('./pages/Billing'))
+const ExpoDashboard = React.lazy(() => import('./pages/ExpoDashboard'))
+const OwnerOnboardingWizard = React.lazy(() => import('./pages/OwnerOnboardingWizard'))
 
 function Home() {
   return (
@@ -26,7 +29,7 @@ export default function App() {
   return (
     <div className="p-4">
       <ConsentBanner />
-      <nav className="mb-4 space-x-2">
+      <nav aria-label="Primary" className="mb-4 space-x-2">
         <Link to="/">Home</Link>
         <Link to="/guest">Guest</Link>
         <Link to="/admin">Admin</Link>
@@ -40,7 +43,11 @@ export default function App() {
         <Link to="/expo">Expo</Link>
         <Link to="/kitchen">Kitchen</Link>
         <Link to="/cleaner">Cleaner</Link>
+        <label htmlFor="role-select" className="sr-only">
+          Role
+        </label>
         <select
+          id="role-select"
           className="ml-4 border"
           value={user.role}
           onChange={(e) => loginAs(e.target.value)}
@@ -52,66 +59,70 @@ export default function App() {
           <option value="cleaner">cleaner</option>
         </select>
       </nav>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/guest" element={<GuestOrder />} />
-        <Route
-          path="/admin"
-          element={
-            <RequireRole roles={['admin']}>
-              <AdminDashboard />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/admin/onboarding"
-          element={
-            <RequireRole roles={['admin']}>
-              <OwnerOnboardingWizard />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/billing"
-          element={
-            <RequireRole roles={['admin']}>
-              <Billing />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/cashier"
-          element={
-            <RequireRole roles={['cashier']}>
-              <CashierDashboard />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/expo"
-          element={
-            <RequireRole roles={['cashier']}>
-              <ExpoDashboard />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/kitchen"
-          element={
-            <RequireRole roles={['kitchen']}>
-              <KitchenDashboard />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/cleaner"
-          element={
-            <RequireRole roles={['cleaner']}>
-              <CleanerDashboard />
-            </RequireRole>
-          }
-        />
-      </Routes>
+      <main id="main">
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/guest" element={<GuestOrder />} />
+            <Route
+              path="/admin"
+              element={
+                <RequireRole roles={['admin']}>
+                  <AdminDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin/onboarding"
+              element={
+                <RequireRole roles={['admin']}>
+                  <OwnerOnboardingWizard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/billing"
+              element={
+                <RequireRole roles={['admin']}>
+                  <Billing />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/cashier"
+              element={
+                <RequireRole roles={['cashier']}>
+                  <CashierDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/expo"
+              element={
+                <RequireRole roles={['cashier']}>
+                  <ExpoDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/kitchen"
+              element={
+                <RequireRole roles={['kitchen']}>
+                  <KitchenDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/cleaner"
+              element={
+                <RequireRole roles={['cleaner']}>
+                  <CleanerDashboard />
+                </RequireRole>
+              }
+            />
+          </Routes>
+        </Suspense>
+      </main>
     </div>
   )
 }
