@@ -64,10 +64,12 @@ export function adminBilling() {
 export interface Category {
   id: string;
   name: string;
+  name_i18n?: Record<string, string>;
 }
 
 export interface CategoryRequest {
   name: string;
+  name_i18n?: Record<string, string>;
 }
 
 export function getCategories(tenant?: string) {
@@ -96,6 +98,13 @@ export interface Item {
   name: string;
   price: number;
   categoryId: string;
+  active?: boolean;
+  sort_order?: number;
+  name_i18n?: Record<string, string>;
+  desc_i18n?: Record<string, string>;
+  dietary?: string;
+  allergens?: string;
+  tags?: string;
   imageUrl?: string;
 }
 
@@ -103,6 +112,13 @@ export interface ItemRequest {
   name: string;
   price: number;
   categoryId: string;
+  active?: boolean;
+  sort_order?: number;
+  name_i18n?: Record<string, string>;
+  desc_i18n?: Record<string, string>;
+  dietary?: string;
+  allergens?: string;
+  tags?: string;
 }
 
 export type ItemUpdate = Partial<ItemRequest>;

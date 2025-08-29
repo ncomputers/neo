@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Floor } from './pages/Floor';
 import { Billing } from './pages/Billing';
 import { Onboarding } from './pages/Onboarding';
+import { MenuEditor } from './pages/MenuEditor';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -20,6 +21,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'floor', element: <Floor /> },
+      { path: 'menu', element: <MenuEditor /> },
       {
         path: 'billing',
         element: (
