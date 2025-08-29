@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Toaster, toast, Button } from '@neo/ui';
 import { unstable_useBlocker as useBlocker } from 'react-router-dom';
-import { exportMenuI18n, importMenuI18n, updateItem as updateItemApi, uploadImage, useLicense } from '@neo/api';
+import { updateItem as updateItemApi, uploadImage, useLicense } from '@neo/api';
+import { MenuI18nImport } from '../components/MenuI18nImport';
+import { MenuI18nExport } from '../components/MenuI18nExport';
+import { TENANT_ID } from '../env';
 
 interface Category {
   id: string;
@@ -49,9 +52,7 @@ export function MenuEditor() {
   const [dirty, setDirty] = useState(false);
   const { data: license } = useLicense();
   const expired = license?.status === 'EXPIRED';
-  const [exportLangs, setExportLangs] = useState<string[]>([]);
   const saveTimers = useRef<Record<string, number>>({});
-  const importRef = useRef<HTMLInputElement>(null);
 
   const items = itemsMap[selectedCat] || [];
 
@@ -66,35 +67,6 @@ export function MenuEditor() {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
-
-  const toggleExportLang = (l: string) => {
-    setExportLangs((prev) =>
-      prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
-    );
-  };
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      await importMenuI18n(file);
-      toast.success('Imported');
-    } catch {
-      toast.error('Import failed');
-    }
-    e.target.value = '';
-  };
-
-  const doExport = async () => {
-    const csv = await exportMenuI18n(exportLangs);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'menu-i18n.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const addCategory = () => {
     const id = `cat-${Date.now()}`;
@@ -320,20 +292,9 @@ export function MenuEditor() {
         </table>
         <div className="mt-4 flex items-center space-x-4">
           <Button onClick={save} disabled={!dirty || expired} title={expired ? 'License expired' : undefined}>Save</Button>
-          <div className="flex items-center space-x-2">
-            {LANGS.map((l) => (
-              <label key={l} className="flex items-center space-x-1">
-                <input
-                  type="checkbox"
-                  checked={exportLangs.includes(l)}
-                  onChange={() => toggleExportLang(l)}
-                />
-                <span>{l.toUpperCase()}</span>
-              </label>
-            ))}
-            <input type="file" ref={importRef} className="hidden" accept=".csv" onChange={handleImport} />
-            <Button onClick={() => importRef.current?.click()}>Import CSV</Button>
-            <Button onClick={doExport} disabled={!exportLangs.length}>Export</Button>
+          <div className="flex items-center space-x-4">
+            <MenuI18nImport tenant={TENANT_ID || ''} />
+            <MenuI18nExport tenant={TENANT_ID || ''} />
           </div>
         </div>
       </div>
