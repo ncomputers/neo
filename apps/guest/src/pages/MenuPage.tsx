@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
 import { EmptyState, Utensils, toast } from '@neo/ui';
@@ -23,11 +24,13 @@ const fetchMenu = async (): Promise<{ categories: Category[] }> => {
 
 export function MenuPage() {
   const { t, i18n } = useTranslation();
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError } = useQuery<{ categories: Category[] }>({
     queryKey: ['menu'],
     queryFn: fetchMenu,
-    onError: () => toast.error(t('error_menu')),
   });
+  useEffect(() => {
+    if (isError) toast.error(t('error_menu'));
+  }, [isError, t]);
   const add = useCartStore((s) => s.add);
   const lang = i18n.language;
   const items = data?.categories?.flatMap((c) => c.items) ?? [];

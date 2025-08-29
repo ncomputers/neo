@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { EmptyState, ShoppingCart, toast } from '@neo/ui';
@@ -12,9 +12,10 @@ import { addQueuedOrder } from '../queue';
 export function CartPage() {
   const { t } = useTranslation();
   const { items, clear } = useCartStore();
-  const { data, isPending, isError } = useLicense({
-    onError: () => toast.error(t('error_cart')),
-  });
+  const { data, isPending, isError } = useLicense();
+  useEffect(() => {
+    if (isError) toast.error(t('error_cart'));
+  }, [isError, t]);
   const [tip, setTip] = useState(0);
   const [queued, setQueued] = useState(false);
   const navigate = useNavigate();

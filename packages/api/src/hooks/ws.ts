@@ -20,7 +20,7 @@ export function useWS(url: string, opts?: WSOptions) {
 
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const hbRef = useRef<NodeJS.Timeout>();
+  const hbRef = useRef<ReturnType<typeof setInterval>>();
 
   const send = (msg: string | unknown) => {
     const ws = wsRef.current;

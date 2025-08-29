@@ -29,7 +29,7 @@ export function withInterceptors(fetchImpl = fetch) {
         retryHeaders.set('X-Tenant-Id', tenantId);
       }
       retryHeaders.set('X-Request-Id', crypto.randomUUID());
-      return fetchImpl(input, { ...rest, headers: retryHeaders, _retry: true });
+      return fetchImpl(input, { ...rest, headers: retryHeaders, _retry: true } as any);
     }
     clearToken();
     if (typeof window !== 'undefined') {

@@ -98,7 +98,7 @@ export function addFetchInterceptors(fetchLike: FetchLike): FetchLike {
       const t = getToken();
       if (t?.accessToken) retryHeaders.set('Authorization', `Bearer ${t.accessToken}`);
       if (tenant) retryHeaders.set('X-Tenant', tenant);
-      return fetchLike(input, { ...rest, headers: retryHeaders, _retry: true });
+      return fetchLike(input, { ...rest, headers: retryHeaders, _retry: true } as any);
     }
     clearToken();
     if (typeof window !== 'undefined') {
