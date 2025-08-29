@@ -32,6 +32,7 @@ jest.mock(
     LicenseBanner: ({ status, daysLeft }: any) => (
       <div>{status === 'EXPIRED' ? 'License expired' : `Subscription ends in ${daysLeft} days`}</div>
     ),
+    CookieBanner: () => null,
     toast: { error: jest.fn() },
   }),
   { virtual: true }

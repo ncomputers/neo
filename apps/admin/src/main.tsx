@@ -16,9 +16,14 @@ const qc = new QueryClient();
 globalThis.fetch = withInterceptors(globalThis.fetch.bind(globalThis));
 window.addEventListener('unauthorized', () => toast.error('Session expired'));
 
-capturePageView(window.location.pathname);
+const hasConsent = () => localStorage.getItem('consent') === 'accepted';
+if (hasConsent()) {
+  capturePageView(window.location.pathname);
+}
 router.subscribe((state) => {
-  capturePageView(state.location.pathname);
+  if (hasConsent()) {
+    capturePageView(state.location.pathname);
+  }
 });
 
 if ('serviceWorker' in navigator) {

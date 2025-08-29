@@ -33,6 +33,7 @@ jest.mock(
     Utensils: () => null,
     ShoppingCart: () => null,
     SkeletonList: () => null,
+    CookieBanner: () => null,
     toast: { error: jest.fn(), success: jest.fn() },
   }),
   { virtual: true }

@@ -1,10 +1,10 @@
 import posthog from 'posthog-js';
 
-const CONSENT_KEY = 'analytics-consent';
+const CONSENT_KEY = 'consent';
 let initialized = false;
 
 export function hasAnalyticsConsent() {
-  return localStorage.getItem(CONSENT_KEY) === 'true';
+  return localStorage.getItem(CONSENT_KEY) === 'accepted';
 }
 
 export function initAnalytics() {
@@ -16,12 +16,12 @@ export function initAnalytics() {
 }
 
 export function enableAnalytics() {
-  localStorage.setItem(CONSENT_KEY, 'true');
+  localStorage.setItem(CONSENT_KEY, 'accepted');
   initAnalytics();
   posthog.opt_in_capturing();
 }
 
 export function disableAnalytics() {
-  localStorage.setItem(CONSENT_KEY, 'false');
+  localStorage.setItem(CONSENT_KEY, 'declined');
   posthog.opt_out_capturing();
 }

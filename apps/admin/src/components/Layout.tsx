@@ -2,7 +2,8 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '../auth';
 import { clearToken, useLicense, useVersion } from '@neo/api';
-import { LicenseBanner, toast } from '@neo/ui';
+import { LicenseBanner, toast, CookieBanner } from '@neo/ui';
+import { capturePageView } from '@neo/utils';
 import pkg from '../../package.json';
 
 export function Layout() {
@@ -65,9 +66,14 @@ export function Layout() {
           <Outlet />
         </main>
         <footer className="p-2 border-t text-xs flex justify-between">
-          <span>UI v{uiVersion}</span>
+          <div className="flex gap-2">
+            <span>UI v{uiVersion}</span>
+            <a href="/privacy" className="underline">Privacy</a>
+            <a href="/terms" className="underline">Terms</a>
+          </div>
           <span>API {api?.sha?.slice(0,7) ?? 'unknown'}</span>
         </footer>
+        <CookieBanner onAccept={() => capturePageView(window.location.pathname)} />
       </div>
     </div>
   );
