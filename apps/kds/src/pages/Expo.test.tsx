@@ -47,12 +47,12 @@ describe('Expo', () => {
     render(<Expo />);
     await screen.findByTestId('ticket-1');
     // initially in New column
-    const newCol = screen.getByText('New').parentElement!.querySelector('ul')!;
+    const newCol = screen.getByRole('heading', { name: 'New' }).parentElement!.querySelector('ul')!;
     expect(within(newCol).getByTestId('ticket-1')).toBeInTheDocument();
     const ws = sockets[0];
     ws.onmessage({ data: JSON.stringify({ ticket: { id: '1', table: 'T1', items: [], status: 'READY', age_s: 0, promise_s: 300 } }) });
     await act(async () => {});
-    const readyCol = screen.getByText('Ready').parentElement!.querySelector('ul')!;
+    const readyCol = screen.getByRole('heading', { name: 'Ready' }).parentElement!.querySelector('ul')!;
     expect(within(readyCol).getByTestId('ticket-1')).toBeInTheDocument();
   });
 
@@ -66,7 +66,7 @@ describe('Expo', () => {
     await userEvent.click(ticket);
     fireEvent.keyDown(window, { key: 'a' });
     await act(async () => {});
-    const prepCol = screen.getByText('Preparing').parentElement!.querySelector('ul')!;
+    const prepCol = screen.getByRole('heading', { name: 'Preparing' }).parentElement!.querySelector('ul')!;
     expect(within(prepCol).getByTestId('ticket-1')).toBeInTheDocument();
   });
 
@@ -81,5 +81,35 @@ describe('Expo', () => {
       ws.close();
     });
     await screen.findByTestId('offline');
+  });
+
+  test('Status filter shows only selected tickets', async () => {
+    apiFetch.mockResolvedValueOnce({
+      tickets: [
+        { id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 },
+        { id: '2', table: 'T2', items: [], status: 'READY', age_s: 0, promise_s: 300 }
+      ]
+    });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    await screen.findByTestId('ticket-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Ready' }));
+    expect(screen.queryByTestId('ticket-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('ticket-2')).toBeInTheDocument();
+  });
+
+  test('Search query filters tickets', async () => {
+    apiFetch.mockResolvedValueOnce({
+      tickets: [
+        { id: '1', table: 'T1', items: [{ qty: 1, name: 'Burger' }], status: 'NEW', age_s: 0, promise_s: 300 },
+        { id: '2', table: 'T2', items: [{ qty: 1, name: 'Fries' }], status: 'NEW', age_s: 0, promise_s: 300 }
+      ]
+    });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    await screen.findByTestId('ticket-2');
+    await userEvent.type(screen.getByPlaceholderText('Search'), 'Fries');
+    expect(screen.queryByTestId('ticket-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('ticket-2')).toBeInTheDocument();
   });
 });
