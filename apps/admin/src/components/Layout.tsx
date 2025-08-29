@@ -38,6 +38,7 @@ export function Layout() {
             <>
               <Link to="/billing">Billing</Link>
               <Link to="/referrals">Referrals</Link>
+              <Link to="/audit">Audit</Link>
             </>
           )}
           <Link to="/onboarding">Onboarding</Link>
