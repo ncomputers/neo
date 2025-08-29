@@ -1,9 +1,11 @@
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { render, waitFor, cleanup } from '@testing-library/react';
 import { routes } from './routes';
 import { useAuth } from './auth';
 import { afterEach } from 'vitest';
+
+vi.mock('@neo/api', () => ({ useLicenseStatus: () => ({}) }), { virtual: true });
 
 const ES = global.EventSource;
 

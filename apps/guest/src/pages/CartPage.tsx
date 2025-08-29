@@ -4,13 +4,13 @@ import { useMutation } from '@tanstack/react-query';
 import { EmptyState, ShoppingCart, toast } from '@neo/ui';
 import { Header } from '../components/Header';
 import { useCartStore } from '../store/cart';
-import { useLicense } from '../hooks/useLicense';
+import { useLicenseStatus } from '@neo/api';
 import { CartSkeleton } from '../components/CartSkeleton';
 
 export function CartPage() {
   const { t } = useTranslation();
   const { items, clear } = useCartStore();
-  const { data, isPending, isError } = useLicense({
+  const { data, isPending, isError } = useLicenseStatus({
     onError: () => toast.error(t('error_cart')),
   });
   const [tip, setTip] = useState(0);
@@ -34,9 +34,6 @@ export function CartPage() {
     <div>
       <Header />
       <h1>{t('cart')}</h1>
-      {expired && (
-        <div data-testid="license-banner">{t('license_expired')}</div>
-      )}
       {isPending ? (
         <CartSkeleton />
       ) : isError ? (

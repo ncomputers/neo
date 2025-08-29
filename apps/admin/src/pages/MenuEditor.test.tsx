@@ -1,4 +1,4 @@
-import { describe, test, expect, afterEach, vi } from 'vitest';
+import { describe, test, expect, afterEach, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MenuEditor } from './MenuEditor';
@@ -18,6 +18,7 @@ vi.mock('@neo/api', () => ({
   getItems: vi.fn(),
   updateItem: vi.fn(),
   exportMenuI18n: vi.fn(),
+  useLicenseStatus: vi.fn(),
 }));
 
 afterEach(() => {
@@ -26,6 +27,10 @@ afterEach(() => {
 });
 
 describe('MenuEditor', () => {
+  beforeEach(() => {
+    (api.useLicenseStatus as any).mockReturnValue({ data: { status: 'ACTIVE' } });
+  });
+
   test('Creating a category renders it in the category list', async () => {
     render(<MenuEditor />);
     await userEvent.click(screen.getByText('Add Category'));
@@ -40,6 +45,13 @@ describe('MenuEditor', () => {
     await userEvent.type(priceInput, '99');
     await userEvent.click(screen.getByText('Save'));
     expect(priceInput).toHaveValue(99);
+    expect(screen.getByText('Save')).toBeDisabled();
+  });
+
+  test('disables save when license expired', async () => {
+    (api.useLicenseStatus as any).mockReturnValue({ data: { status: 'EXPIRED' } });
+    render(<MenuEditor />);
+    await userEvent.click(screen.getByText('Add Item'));
     expect(screen.getByText('Save')).toBeDisabled();
   });
 

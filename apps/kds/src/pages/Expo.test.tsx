@@ -2,7 +2,7 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Expo } from './Expo';
-import { apiFetch } from '@neo/api';
+import { apiFetch, useLicenseStatus } from '@neo/api';
 
 const sockets: any[] = [];
 class MockWebSocket {
@@ -23,17 +23,23 @@ class MockWebSocket {
 }
 
 vi.mock('@neo/api', async () => {
-  const { useWS } = await vi.importActual<any>('../../../../packages/api/src/hooks/ws.ts');
+  const { useWS } = await vi.importActual<any>(
+    '../../../../packages/api/src/hooks/ws.ts'
+  );
   return {
     apiFetch: vi.fn(),
-    useWS
+    useWS,
+    useLicenseStatus: vi.fn(),
   };
 });
+
 
 beforeEach(() => {
   (global as any).WebSocket = MockWebSocket as any;
   sockets.length = 0;
   MockWebSocket.autoOpen = true;
+  (useLicenseStatus as any).mockReturnValue({ data: { status: 'ACTIVE' } });
+  (window as any).alert = vi.fn();
 });
 
 afterEach(() => {
@@ -57,6 +63,7 @@ describe('Expo', () => {
   });
 
   test('Keyboard Accept moves ticket to next column', async () => {
+    (useLicenseStatus as any).mockReturnValue({ data: { status: 'GRACE' } });
     apiFetch.mockResolvedValueOnce({ tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }] });
     apiFetch.mockResolvedValue({});
     sessionStorage.setItem('token', 't');
@@ -68,6 +75,19 @@ describe('Expo', () => {
     await act(async () => {});
     const prepCol = screen.getByRole('heading', { name: 'Preparing' }).parentElement!.querySelector('ul')!;
     expect(within(prepCol).getByTestId('ticket-1')).toBeInTheDocument();
+  });
+
+  test('actions blocked when license expired', async () => {
+    (useLicenseStatus as any).mockReturnValue({ data: { status: 'EXPIRED' } });
+    apiFetch.mockResolvedValueOnce({ tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }] });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    const ticket = screen.getByTestId('ticket-1');
+    await userEvent.click(ticket);
+    fireEvent.keyDown(window, { key: 'a' });
+    await act(async () => {});
+    const newCol = screen.getByRole('heading', { name: 'New' }).parentElement!.querySelector('ul')!;
+    expect(within(newCol).getByTestId('ticket-1')).toBeInTheDocument();
   });
 
   test('Offline banner appears when WS closed', async () => {

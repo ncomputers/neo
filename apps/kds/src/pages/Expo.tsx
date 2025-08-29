@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiFetch, useWS } from '@neo/api';
+import { apiFetch, useWS, useLicenseStatus } from '@neo/api';
 import { WS_BASE } from '../env';
 import { PinModal } from '../components/PinModal';
 
@@ -29,6 +29,8 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [zone, setZone] = useState<string | undefined>();
   const [order, setOrder] = useState<string[]>([]);
+  const { data: license } = useLicenseStatus();
+  const expired = license?.status === 'EXPIRED';
 
   const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
   const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
@@ -49,6 +51,19 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
       }),
     [tickets, statusFilter, searchQuery, zone]
   );
+
+  const columnTickets = useMemo(() => {
+    const groups: Record<Status, Ticket[]> = {
+      NEW: [],
+      PREPARING: [],
+      READY: [],
+      PICKED: [],
+    };
+    for (const t of filteredTickets) {
+      groups[t.status].push(t);
+    }
+    return groups;
+  }, [filteredTickets]);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -106,7 +121,10 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   };
 
   const action = async (id: string, next: Status, endpoint: string) => {
-    if (offline) return;
+    if (offline || expired) {
+      if (expired) window.alert('License expired');
+      return;
+    }
     if (!sessionStorage.getItem('token')) {
       setShowPin(true);
       return;
@@ -165,7 +183,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
       } else if (e.key === 'z' || e.key === 'Z') {
         if (t.status === 'PICKED') action(t.id, 'READY', `/kds/tickets/${t.id}/undo`);
       } else if (e.key === 'Enter') {
-        window.alert(`Table ${t.table}`);
+        window.location.assign(`/kds/tickets/${t.id}`);
       }
     },
     [columns, filteredTickets, focused, tickets]

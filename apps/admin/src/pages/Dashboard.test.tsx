@@ -1,7 +1,20 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { Dashboard } from './Dashboard';
 import { useAuth } from '../auth';
+
+vi.mock(
+  '@neo/api',
+  () => ({
+    useSSE: (url: string, opts: any) => {
+      const es = new EventSource(url);
+      if (opts?.onMessage) es.onmessage = opts.onMessage;
+      if (opts?.onOpen) es.onopen = opts.onOpen;
+      return { close: () => es.close() };
+    },
+  }),
+  { virtual: true }
+);
 
 const sources: any[] = [];
 class MockEventSource {

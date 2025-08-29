@@ -1,8 +1,10 @@
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './Layout';
 import { useAuth } from '../auth';
+
+vi.mock('@neo/api', () => ({ useLicenseStatus: () => ({}) }));
 
 describe('Layout', () => {
   beforeEach(() => {

@@ -1,6 +1,7 @@
 export * from './api';
 export * from './hooks/sse';
 export * from './hooks/ws';
+export * from './hooks/useLicenseStatus';
 export { usePageview } from './hooks/usePageview';
 export {
   loginPin,
@@ -18,5 +19,6 @@ export {
   deleteItem,
   uploadImage,
   exportMenuI18n,
-  importMenuI18n
+  importMenuI18n,
+  getLicenseStatus
 } from './endpoints';

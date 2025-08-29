@@ -6,6 +6,9 @@ import { I18nextProvider } from 'react-i18next';
 import i18n, { setLanguage } from '../i18n';
 import { CartPage } from '../pages/CartPage';
 import { useCartStore } from '../store/cart';
+import { Routes, Route } from 'react-router-dom';
+import { Layout } from '../components/Layout';
+import { useLicenseStatus } from '@neo/api';
 
 jest.mock(
   '@neo/ui',
@@ -14,6 +17,15 @@ jest.mock(
     ShoppingCart: () => null,
     SkeletonList: () => null,
     toast: { error: jest.fn() },
+    LicenseBanner: () => <div data-testid="license-banner" />,
+  }),
+  { virtual: true }
+);
+
+jest.mock(
+  '@neo/api',
+  () => ({
+    useLicenseStatus: jest.fn(),
   }),
   { virtual: true }
 );
@@ -24,7 +36,11 @@ function renderCart() {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={qc}>
         <BrowserRouter>
-          <CartPage />
+          <Routes>
+            <Route element={<Layout />}> 
+              <Route path="/" element={<CartPage />} />
+            </Route>
+          </Routes>
         </BrowserRouter>
       </QueryClientProvider>
     </I18nextProvider>
@@ -33,23 +49,23 @@ function renderCart() {
 
 describe('guest flows', () => {
   beforeEach(() => {
-    // @ts-ignore
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ status: 'EXPIRED' }),
-    });
+    (useLicenseStatus as jest.Mock).mockReturnValue({ data: { status: 'EXPIRED' } });
     useCartStore.setState({ items: [] });
   });
 
   test('shows license banner and disables order', async () => {
     useCartStore.setState({ items: [{ id: '1', name: 'Test', qty: 1 }] });
     renderCart();
-    await waitFor(() =>
-      expect(screen.getByTestId('license-banner')).toBeInTheDocument()
-    );
-    expect(
-      screen.getByRole('button', { name: /place order/i })
-    ).toBeDisabled();
+    await waitFor(() => expect(screen.getByTestId('license-banner')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /place order/i })).toBeDisabled();
+  });
+
+  test('grace allows ordering but shows banner', async () => {
+    (useLicenseStatus as jest.Mock).mockReturnValue({ data: { status: 'GRACE', days_left: 3 } });
+    useCartStore.setState({ items: [{ id: '1', name: 'Test', qty: 1 }] });
+    renderCart();
+    await waitFor(() => expect(screen.getByTestId('license-banner')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /place order/i })).toBeEnabled();
   });
 
   test('i18n fallback and cookie', async () => {

@@ -1,10 +1,13 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
+import { useLicenseStatus } from '@neo/api';
+import { LicenseBanner } from '@neo/ui';
 
 export function Layout() {
   const { tenants, tenantId, setTenant, logout, roles } = useAuth();
   const navigate = useNavigate();
   const current = tenants.find((t) => t.id === tenantId);
+  const { data: license } = useLicenseStatus();
   return (
     <div className="flex h-screen">
       <aside className="w-48 bg-gray-100 p-4 space-y-2">
@@ -16,6 +19,7 @@ export function Layout() {
         </nav>
       </aside>
       <div className="flex-1 flex flex-col">
+        <LicenseBanner status={license?.status} daysLeft={license?.days_left} renewUrl={license?.renew_url} />
         <header className="flex justify-between items-center p-2 border-b">
           <div className="flex items-center space-x-2">
             <div

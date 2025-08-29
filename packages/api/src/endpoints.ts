@@ -16,6 +16,16 @@ export function loginPin(body: LoginPinRequest) {
   });
 }
 
+export interface LicenseStatus {
+  status: 'ACTIVE' | 'GRACE' | 'EXPIRED';
+  days_left?: number;
+  renew_url?: string;
+}
+
+export function getLicenseStatus() {
+  return apiFetch<LicenseStatus>('/license');
+}
+
 export interface MenuItem {
   id: string;
   name: string;
