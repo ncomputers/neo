@@ -82,6 +82,60 @@ export function changeBillingPlan(body: PlanChangeRequest) {
   });
 }
 
+export interface Invoice {
+  id: string;
+  date: string;
+  number: string;
+  period: { from: string; to: string };
+  amount: number;
+  gst: number;
+  status: 'PAID' | 'OPEN' | 'REFUNDED';
+}
+
+export function listInvoices(params: {
+  from?: string;
+  to?: string;
+  status?: string;
+}) {
+  const qs = new URLSearchParams();
+  if (params.from) qs.set('from', params.from);
+  if (params.to) qs.set('to', params.to);
+  if (params.status) qs.set('status', params.status);
+  const q = qs.toString();
+  return apiFetch<Invoice[]>(
+    `/admin/billing/invoices${q ? `?${q}` : ''}`
+  );
+}
+
+export function downloadInvoice(id: string) {
+  return apiFetch<void>(`/admin/billing/invoice/${id}.pdf`);
+}
+
+export interface Credits {
+  balance: number;
+  referrals: number;
+  adjustments: number;
+}
+
+export function getCredits() {
+  return apiFetch<Credits>('/admin/billing/credits');
+}
+
+export interface Subscription {
+  plan_id: string;
+  table_cap: number;
+  active_tables: number;
+  status: 'ACTIVE' | 'GRACE' | 'EXPIRED';
+  current_period_end: string;
+  grace_ends_at?: string;
+  trial_ends_at?: string;
+  scheduled_change?: { to_plan_id: string; scheduled_for: string };
+}
+
+export function getSubscription() {
+  return apiFetch<Subscription>('/admin/billing/subscription');
+}
+
 export interface Category {
   id: string;
   name: string;

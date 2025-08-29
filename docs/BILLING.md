@@ -41,3 +41,19 @@ Examples:
   issued only if the downgrade policy is set to immediate credits.
 
 ![Proration preview](img/billing-proration-preview.png)
+
+## Owner UI
+
+Screens under `/admin/billing` allow owners to review invoices, manage their plan and monitor credit balance.
+
+![Invoices Tab](img/billing-owner-invoices.png)
+![Plan Tab](img/billing-owner-plan.png)
+
+### Subscription States
+
+| Status | Banner | CTA |
+|--------|--------|-----|
+| ACTIVE | – | Change plan |
+| EXPIRING_SOON | Warning banner | Renew now |
+| GRACE | Grace banner | Renew now |
+| EXPIRED | Expired banner | Renew now (plan changes disabled) |
