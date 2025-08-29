@@ -127,4 +127,53 @@ describe('Expo', () => {
     expect(screen.queryByTestId('ticket-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('ticket-2')).toBeInTheDocument();
   });
+
+  test('Arrow keys move focus between tickets', async () => {
+    apiFetch.mockResolvedValueOnce({
+      tickets: [
+        { id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 },
+        { id: '2', table: 'T2', items: [], status: 'NEW', age_s: 0, promise_s: 300 },
+        { id: '3', table: 'T3', items: [], status: 'PREPARING', age_s: 0, promise_s: 300 },
+        { id: '4', table: 'T4', items: [], status: 'PREPARING', age_s: 0, promise_s: 300 }
+      ]
+    });
+    render(<Expo />);
+    await screen.findByTestId('ticket-4');
+    const t1 = screen.getByTestId('ticket-1');
+    await userEvent.click(t1);
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'ArrowDown' });
+    });
+    expect(screen.getByTestId('ticket-2')).toHaveClass('ring-2');
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+    });
+    expect(screen.getByTestId('ticket-4')).toHaveClass('ring-2');
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'ArrowUp' });
+    });
+    expect(screen.getByTestId('ticket-3')).toHaveClass('ring-2');
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    });
+    expect(screen.getByTestId('ticket-1')).toHaveClass('ring-2');
+  });
+
+  test('Enter key opens ticket detail', async () => {
+    apiFetch.mockResolvedValueOnce({
+      tickets: [{ id: '1', table: 'T1', items: [], status: 'NEW', age_s: 0, promise_s: 300 }]
+    });
+    const original = window.location;
+    const assign = vi.fn();
+    Object.defineProperty(window, 'location', {
+      value: { ...original, assign },
+      writable: true,
+    });
+    render(<Expo />);
+    await screen.findByTestId('ticket-1');
+    await userEvent.click(screen.getByTestId('ticket-1'));
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(assign).toHaveBeenCalledWith('/kds/tickets/1');
+    Object.defineProperty(window, 'location', { value: original });
+  });
 });
