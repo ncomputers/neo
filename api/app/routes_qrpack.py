@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 from io import BytesIO
 from math import ceil
+from pathlib import Path
 from typing import Literal
 
 import qrcode
@@ -119,6 +120,10 @@ async def qrpack_pdf(
     )
 
     content = content.replace(b' aria-label="QR codes"', b"")
+
+    pdf_dir = Path("storage/qr") / tenant_id
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+    (pdf_dir / "qr_pack.pdf").write_bytes(content)
 
     await redis.hset(
         cache_key,
