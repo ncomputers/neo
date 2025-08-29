@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Toaster, toast, Button } from '@neo/ui';
 import { unstable_useBlocker as useBlocker } from 'react-router-dom';
-import { exportMenuI18n } from '@neo/api';
+import { exportMenuI18n, importMenuI18n, updateItem as updateItemApi, uploadImage } from '@neo/api';
 
 interface Category {
   id: string;
@@ -48,6 +48,8 @@ export function MenuEditor() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
   const [exportLangs, setExportLangs] = useState<string[]>([]);
+  const saveTimers = useRef<Record<string, number>>({});
+  const importRef = useRef<HTMLInputElement>(null);
 
   const items = itemsMap[selectedCat] || [];
 
@@ -67,6 +69,29 @@ export function MenuEditor() {
     setExportLangs((prev) =>
       prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
     );
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      await importMenuI18n(file);
+      toast.success('Imported');
+    } catch {
+      toast.error('Import failed');
+    }
+    e.target.value = '';
+  };
+
+  const doExport = async () => {
+    const csv = await exportMenuI18n(exportLangs);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'menu-i18n.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const addCategory = () => {
@@ -113,6 +138,10 @@ export function MenuEditor() {
     const next = items.map((it) => (it.id === id ? { ...it, ...data } : it));
     setItemsMap({ ...itemsMap, [selectedCat]: next });
     setDirty(true);
+    if (saveTimers.current[id]) window.clearTimeout(saveTimers.current[id]);
+    saveTimers.current[id] = window.setTimeout(() => {
+      updateItemApi(id, data);
+    }, 500);
   };
 
   const deleteItem = (id: string) => {
@@ -186,7 +215,23 @@ export function MenuEditor() {
                   }}
                   className="flex-1 mr-2 border p-1"
                 />
-                <Button onClick={() => removeCategory(cat.id)}>×</Button>
+                <div className="space-x-1">
+                  <Button
+                    aria-label="Move Up"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (idx > 0) moveCategory(idx, idx - 1);
+                    }}
+                  >↑</Button>
+                  <Button
+                    aria-label="Move Down"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (idx < categories.length - 1) moveCategory(idx, idx + 1);
+                    }}
+                  >↓</Button>
+                  <Button onClick={(e) => { e.stopPropagation(); removeCategory(cat.id); }}>×</Button>
+                </div>
               </div>
             </li>
           ))}
@@ -253,7 +298,11 @@ export function MenuEditor() {
                   </td>
                   <td className="p-1 text-center">{it.sort_order}</td>
                   <td className="p-1 text-center">
-                    <Button onClick={() => deleteItem(it.id)}>Delete</Button>
+                    <div className="space-x-1">
+                      <Button aria-label="Move Up" onClick={() => idx > 0 && moveItem(idx, idx - 1)}>↑</Button>
+                      <Button aria-label="Move Down" onClick={() => idx < items.length - 1 && moveItem(idx, idx + 1)}>↓</Button>
+                      <Button onClick={() => deleteItem(it.id)}>Delete</Button>
+                    </div>
                   </td>
                 </tr>
                 {expanded[it.id] && (
@@ -280,9 +329,9 @@ export function MenuEditor() {
                 <span>{l.toUpperCase()}</span>
               </label>
             ))}
-            <Button onClick={() => exportMenuI18n(exportLangs)} disabled={!exportLangs.length}>
-              Export
-            </Button>
+            <input type="file" ref={importRef} className="hidden" accept=".csv" onChange={handleImport} />
+            <Button onClick={() => importRef.current?.click()}>Import CSV</Button>
+            <Button onClick={doExport} disabled={!exportLangs.length}>Export</Button>
           </div>
         </div>
       </div>
@@ -297,6 +346,25 @@ interface ItemFormProps {
 
 function ItemForm({ item, onChange }: ItemFormProps) {
   const [lang, setLang] = useState<string>('en');
+  const [preview, setPreview] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    onChange({ image: file });
+    const reader = new FileReader();
+    reader.onload = () => setPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    setProgress(0);
+    try {
+      await uploadImage(item.id, file);
+      setProgress(100);
+    } catch {
+      toast.error('Upload failed');
+    }
+  };
+
   return (
     <div>
       <div className="mb-2 space-x-2">
@@ -327,7 +395,13 @@ function ItemForm({ item, onChange }: ItemFormProps) {
         />
       </div>
       <div className="mb-2">
-        <input type="file" onChange={(e) => onChange({ image: e.target.files?.[0] })} />
+        {preview && <img src={preview} alt="preview" className="h-20 mb-2" />}
+        {progress > 0 && progress < 100 && (
+          <div className="w-full bg-gray-200 h-2 mb-2">
+            <div className="bg-blue-600 h-2" style={{ width: `${progress}%` }} />
+          </div>
+        )}
+        <input type="file" onChange={handleImage} />
       </div>
       <div className="mb-2">
         <input
