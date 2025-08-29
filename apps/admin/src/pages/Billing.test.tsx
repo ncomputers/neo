@@ -1,31 +1,60 @@
 import { describe, test, expect, beforeEach, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { Billing } from './Billing';
 import {
-  getBillingPlan,
+  listInvoices,
+  downloadInvoice,
+  getCredits,
+  getSubscription,
   previewBillingPlan,
   changeBillingPlan
 } from '@neo/api';
 
 vi.mock('@neo/api', () => ({
-  getBillingPlan: vi.fn(),
+  listInvoices: vi.fn(),
+  downloadInvoice: vi.fn(),
+  getCredits: vi.fn(),
+  getSubscription: vi.fn(),
   previewBillingPlan: vi.fn(),
   changeBillingPlan: vi.fn()
 }));
 
 describe('Billing page', () => {
   beforeEach(() => {
-    (getBillingPlan as any).mockResolvedValue({
+    (getCredits as any).mockResolvedValue({
+      balance: 0,
+      referrals: 0,
+      adjustments: 0
+    });
+    (getSubscription as any).mockResolvedValue({
       plan_id: 'starter',
-      active_tables: 2
-    });
-    (previewBillingPlan as any).mockResolvedValue({
-      delta: 100,
-      gst: 18,
       table_cap: 5,
-      effective: '2023-01-01T00:00:00Z'
+      active_tables: 1,
+      status: 'ACTIVE',
+      current_period_end: '2099-01-01T00:00:00Z'
     });
+    (listInvoices as any).mockResolvedValue([
+      {
+        id: 'inv1',
+        date: '2024-01-01',
+        number: '1',
+        period: { from: '2024-01-01', to: '2024-01-31' },
+        amount: 100,
+        gst: 18,
+        status: 'PAID'
+      },
+      {
+        id: 'inv2',
+        date: '2024-02-01',
+        number: '2',
+        period: { from: '2024-02-01', to: '2024-02-28' },
+        amount: 100,
+        gst: 18,
+        status: 'OPEN'
+      }
+    ]);
   });
 
   afterEach(() => {
@@ -33,50 +62,79 @@ describe('Billing page', () => {
     vi.clearAllMocks();
   });
 
-  test('Preview renders Δ₹ and GST lines', async () => {
-    render(<Billing />);
-    await userEvent.click(screen.getByText('Change Plan'));
-    await userEvent.click(screen.getByText('Pro'));
-    await screen.findByText('Δ₹100');
-    expect(screen.getByText('GST ₹18')).toBeInTheDocument();
+  test('Filters change query params and table rows', async () => {
+    render(
+      <MemoryRouter>
+        <Billing />
+      </MemoryRouter>
+    );
+    await screen.findByTestId('download-inv1');
+    expect(screen.getAllByRole('row')).toHaveLength(3);
+
+    (listInvoices as any).mockResolvedValueOnce([
+      {
+        id: 'inv2',
+        date: '2024-02-01',
+        number: '2',
+        period: { from: '2024-02-01', to: '2024-02-28' },
+        amount: 100,
+        gst: 18,
+        status: 'OPEN'
+      }
+    ]);
+    await userEvent.selectOptions(screen.getByTestId('status-filter'), 'OPEN');
+    const table = screen.getByTestId('invoice-table');
+    await within(table).findByText('OPEN');
+    expect(listInvoices).toHaveBeenLastCalledWith({ from: '', to: '', status: 'OPEN' });
+    expect(screen.getAllByRole('row')).toHaveLength(2);
   });
 
-  test('Upgrade now posts and shows invoice link', async () => {
-    (changeBillingPlan as any).mockResolvedValue({ invoice_id: 'inv1' });
-    render(<Billing />);
-    await userEvent.click(screen.getByText('Change Plan'));
-    await userEvent.click(screen.getByText('Pro'));
-    await userEvent.click(screen.getByText('Upgrade now'));
-    const link = await screen.findByTestId('invoice-link');
-    expect(link).toHaveAttribute('href', '/invoice/inv1/pdf');
-    expect(changeBillingPlan).toHaveBeenCalledWith({
-      to_plan_id: 'pro',
-      change_type: 'upgrade',
-      when: 'now'
-    });
+  test('PDF download called with right id', async () => {
+    render(
+      <MemoryRouter>
+        <Billing />
+      </MemoryRouter>
+    );
+    const btn = await screen.findByTestId('download-inv1');
+    await userEvent.click(btn);
+    expect(downloadInvoice).toHaveBeenCalledWith('inv1');
   });
 
-  test('Downgrade schedules and renders chip', async () => {
-    (previewBillingPlan as any).mockResolvedValue({
-      delta: -50,
-      gst: -9,
-      table_cap: 1,
-      effective: '2023-01-01T00:00:00Z'
+  test('GRACE banner renders with CTA', async () => {
+    (getSubscription as any).mockResolvedValueOnce({
+      plan_id: 'starter',
+      table_cap: 5,
+      active_tables: 1,
+      status: 'GRACE',
+      current_period_end: '2024-01-01T00:00:00Z',
+      grace_ends_at: '2099-01-01T00:00:00Z'
     });
-    (changeBillingPlan as any).mockResolvedValue({
-      scheduled_for: '2024-05-01T00:00:00Z'
+    render(
+      <MemoryRouter>
+        <Billing />
+      </MemoryRouter>
+    );
+    await userEvent.click(screen.getByText('Plan & Usage'));
+    await screen.findByText(/Subscription in grace period/);
+    expect(screen.getByText('Renew now')).toBeInTheDocument();
+  });
+
+  test('EXPIRED banner renders with CTA', async () => {
+    (getSubscription as any).mockResolvedValueOnce({
+      plan_id: 'starter',
+      table_cap: 5,
+      active_tables: 1,
+      status: 'EXPIRED',
+      current_period_end: '2024-01-01T00:00:00Z'
     });
-    render(<Billing />);
-    await userEvent.click(screen.getByText('Change Plan'));
-    await userEvent.click(screen.getByText('Starter'));
-    await userEvent.click(screen.getByText('Schedule downgrade'));
-    const chip = await screen.findByTestId('schedule-chip');
-    expect(chip.textContent).toContain('Scheduled for');
-    expect(changeBillingPlan).toHaveBeenCalledWith({
-      to_plan_id: 'starter',
-      change_type: 'downgrade',
-      when: 'period_end'
-    });
+    render(
+      <MemoryRouter>
+        <Billing />
+      </MemoryRouter>
+    );
+    await userEvent.click(screen.getByText('Plan & Usage'));
+    await screen.findByText(/Subscription expired/);
+    expect(screen.getByText('Renew now')).toBeInTheDocument();
   });
 });
 
