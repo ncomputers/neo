@@ -1,7 +1,10 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, useRef, lazy, Suspense } from 'react';
 import { capturePageView } from '@neo/utils';
-import { Layout } from './components/Layout';
+
+const Layout = lazy(() =>
+  import('./components/Layout').then((m) => ({ default: m.Layout }))
+);
 
 const QrPage = lazy(() => import('./pages/QrPage').then(m => ({ default: m.QrPage })));
 const MenuPage = lazy(() => import('./pages/MenuPage').then(m => ({ default: m.MenuPage })));

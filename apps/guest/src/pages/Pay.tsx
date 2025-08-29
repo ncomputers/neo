@@ -88,13 +88,14 @@ export function PayPage() {
         </ul>
         <p>Tax: {invoice.tax}</p>
         <p>Total: {invoice.total}</p>
-        <div data-testid="cashier-qr">
-          <p>Show this screen to cashier</p>
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${orderId}`}
-            alt="qr"
-          />
-        </div>
+          <div data-testid="cashier-qr">
+            <p>Show this screen to cashier</p>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${orderId}`}
+              alt="order QR code"
+              loading="lazy"
+            />
+          </div>
       </div>
     );
   }
@@ -119,25 +120,26 @@ export function PayPage() {
           <a href={upiLink}>Paytm</a>
           <button onClick={() => setShowUtr(true)}>I've paid</button>
         </>
-      ) : (
-        <div data-testid="cashier-qr">
-          <p>Show this screen to cashier</p>
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${orderId}`}
-            alt="qr"
-          />
-          <p style={{ color: status === 'success' ? 'green' : undefined }}>
-            {status === 'success'
-              ? 'Payment successful'
+        ) : (
+          <div data-testid="cashier-qr">
+            <p>Show this screen to cashier</p>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${orderId}`}
+              alt="order QR code"
+              loading="lazy"
+            />
+            <p style={{ color: status === 'success' ? 'green' : undefined }}>
+              {status === 'success'
+                ? 'Payment successful'
               : 'Waiting for verification'}
           </p>
         </div>
       )}
-      {showUtr && (
-        <div role="dialog">
-          <label>
-            UTR
-            <input
+        {showUtr && (
+          <div role="dialog" aria-modal="true">
+            <label>
+              UTR
+              <input
               value={utr}
               onChange={(e) => setUtr(e.target.value)}
             />
