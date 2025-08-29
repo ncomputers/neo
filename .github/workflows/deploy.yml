@@ -22,10 +22,9 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git push origin HEAD:deploy --force
-
-    deploy-staging:
-      needs: build-and-push
-      if: ${{ secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+  deploy-staging:
+    needs: build-and-push
+    if: ${{ secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     environment: staging
     env:
@@ -98,9 +97,9 @@ jobs:
       - name: Awaiting approval
         run: echo "Manual approval required to deploy to production"
 
-    deploy-prod:
-      needs: manual-approval
-      if: ${{ secrets.KUBE_CONFIG_PROD != '' && secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+  deploy-prod:
+    needs: manual-approval
+    if: ${{ secrets.KUBE_CONFIG_PROD != '' && secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     environment: prod
     env:
