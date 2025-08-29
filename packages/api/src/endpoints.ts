@@ -60,3 +60,108 @@ export interface AdminBilling {
 export function adminBilling() {
   return apiFetch<AdminBilling>('/admin/billing');
 }
+
+export interface Category {
+  id: string;
+  name: string;
+}
+
+export interface CategoryRequest {
+  name: string;
+}
+
+export function getCategories(tenant?: string) {
+  return apiFetch<Category[]>('/menu/categories', { tenant });
+}
+
+export function createCategory(body: CategoryRequest, tenant?: string) {
+  return apiFetch<Category>('/menu/categories', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    tenant,
+    idempotencyKey: idempotency()
+  });
+}
+
+export function deleteCategory(id: string, tenant?: string) {
+  return apiFetch<void>(`/menu/categories/${id}`, {
+    method: 'DELETE',
+    tenant
+  });
+}
+
+export interface Item {
+  id: string;
+  name: string;
+  price: number;
+  categoryId: string;
+  imageUrl?: string;
+}
+
+export interface ItemRequest {
+  name: string;
+  price: number;
+  categoryId: string;
+}
+
+export type ItemUpdate = Partial<ItemRequest>;
+
+export function getItems(tenant?: string) {
+  return apiFetch<Item[]>('/menu/items', { tenant });
+}
+
+export function createItem(body: ItemRequest, tenant?: string) {
+  return apiFetch<Item>('/menu/items', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    tenant,
+    idempotencyKey: idempotency()
+  });
+}
+
+export function updateItem(id: string, body: ItemUpdate, tenant?: string) {
+  return apiFetch<Item>(`/menu/items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    tenant
+  });
+}
+
+export function deleteItem(id: string, tenant?: string) {
+  return apiFetch<void>(`/menu/items/${id}`, {
+    method: 'DELETE',
+    tenant
+  });
+}
+
+export function uploadImage(itemId: string, file: File, tenant?: string) {
+  const form = new FormData();
+  form.append('file', file);
+  return apiFetch(`/menu/items/${itemId}/image`, {
+    method: 'POST',
+    body: form,
+    tenant
+  });
+}
+
+export function exportMenuI18n(langs: string[], tenant?: string) {
+  return apiFetch(`/menu/i18n/export`, {
+    method: 'POST',
+    body: JSON.stringify({ langs }),
+    headers: { 'Content-Type': 'application/json' },
+    tenant
+  });
+}
+
+export function importMenuI18n(file: File, tenant?: string) {
+  const form = new FormData();
+  form.append('file', file);
+  return apiFetch(`/menu/i18n/import`, {
+    method: 'POST',
+    body: form,
+    tenant
+  });
+}
