@@ -1,3 +1,4 @@
+/// <reference lib="webworker" />
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkOnly } from 'workbox-strategies';
@@ -10,10 +11,12 @@ precacheAndRoute([...self.__WB_MANIFEST, { url: '/offline', revision: null }]);
 registerRoute(
   ({ request }) => request.mode === 'navigate',
   async ({ event }) => {
+    const fetchEvent = event as FetchEvent;
     try {
-      return await fetch(event.request);
+      return await fetch(fetchEvent.request);
     } catch {
-      return caches.match('/offline');
+      const cached = await caches.match('/offline');
+      return (cached ?? new Response('Offline', { status: 503 })) as Response;
     }
   }
 );
@@ -39,8 +42,8 @@ const bgSyncPlugin = new BackgroundSyncPlugin('orders', {
       try {
         const res = await fetch(entry.request);
         const data = await res.json();
-        const clients = await self.clients.matchAll();
-        clients.forEach((client) =>
+        const clients = await (self as any).clients.matchAll();
+        clients.forEach((client: any) =>
           client.postMessage({ type: 'ORDER_SYNCED', orderId: data.id })
         );
       } catch (err) {
