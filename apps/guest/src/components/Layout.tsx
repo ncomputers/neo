@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useLicense } from '@neo/api';
 import { LicenseBanner } from '@neo/ui';
 import { PoorConnectionBanner } from './PoorConnectionBanner';
+import { CookieBanner } from './CookieBanner';
 
 export function Layout() {
   const { data } = useLicense();
@@ -18,6 +19,7 @@ export function Layout() {
       <main id="main">
         <Outlet />
       </main>
+      <CookieBanner />
     </>
   );
 }
