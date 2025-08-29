@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -8,6 +9,7 @@ from sqlalchemy import func, select
 from .auth import User, role_required
 from .db import SessionLocal
 from .models_master import SupportMessage, SupportTicket
+from .providers import email_stub
 from .utils.responses import ok
 
 router = APIRouter()
@@ -102,6 +104,11 @@ async def staff_reply_ticket(
         session.add(msg)
         ticket.updated_at = func.now()
         session.commit()
+    email_stub.send(
+        "support.email_agent_reply",
+        {"subject": ticket.subject, "body": payload.message},
+        "ops@",
+    )
     return ok({"status": "sent"})
 
 
