@@ -13,10 +13,12 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 from api.app.auth import create_access_token  # noqa: E402
 from api.app.db import SessionLocal  # noqa: E402
 from api.app.models_master import SupportTicket  # noqa: E402
+from api.app.routes_staff_support import router as staff_router  # noqa: E402
 from api.app.routes_support import router as support_router  # noqa: E402
 
 app = FastAPI()
 app.include_router(support_router)
+app.include_router(staff_router)
 
 
 def owner_headers(tenant: str = "demo") -> dict:
@@ -45,6 +47,7 @@ def test_ticket_creation_redaction() -> None:
             "diagnostics": {
                 "log": "Bearer SECRET",
                 "utr": "1234567890",
+                "token": "token=abc",
             },
         },
     )
@@ -53,8 +56,9 @@ def test_ticket_creation_redaction() -> None:
     with SessionLocal() as session:
         t = session.get(SupportTicket, uuid.UUID(ticket_id))
         assert t is not None
-        assert t.diagnostics["log"] == "[REDACTED]"
-        assert t.diagnostics["utr"] == "[REDACTED]"
+        assert t.diagnostics["log"] == "****"
+        assert t.diagnostics["utr"] == "****"
+        assert t.diagnostics["token"] == "****"
 
 
 def test_listing_and_reply_updates() -> None:
@@ -93,3 +97,5 @@ def test_rbac_owner_and_staff() -> None:
     assert len(resp_demo.json()["data"]) == 1
     resp_other = client.get("/support/tickets", headers=owner_headers("other"))
     assert len(resp_other.json()["data"]) == 1
+    resp_forbidden = client.get("/staff/support", headers=owner_headers())
+    assert resp_forbidden.status_code == 403

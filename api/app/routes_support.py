@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
+
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -51,15 +52,15 @@ class FeedbackIn(BaseModel):
     feature_request: bool = Field(default=False)
 
 
-token_re = re.compile(r"bearer\s+[A-Za-z0-9\._-]+", re.I)
-utr_re = re.compile(r"\b\d{10}\b")
+secret_re = re.compile(
+    r"((bearer|token|authorization)[\s=]+[A-Za-z0-9\._-]+|\b(utr|upi|card)\b\s*[A-Za-z0-9\._-]*|\b\d{10}\b)",
+    re.I,
+)
 
 
 def _redact(data):  # pragma: no cover - simple recursion
     if isinstance(data, str):
-        data = token_re.sub("[REDACTED]", data)
-        data = utr_re.sub("[REDACTED]", data)
-        return data
+        return secret_re.sub("****", data)
     if isinstance(data, list):
         return [_redact(v) for v in data]
     if isinstance(data, dict):
@@ -90,7 +91,7 @@ async def create_ticket(
         ticket_id = str(ticket.id)
     errors = getattr(request.app.state, "last_errors", [])
     email_stub.send(
-        "support_ticket",
+        "support.email_new_ticket",
         {
             "subject": f"[{tenant}] {payload.subject}",
             "body": payload.message,
@@ -124,6 +125,43 @@ async def list_my_tickets(
             for r in rows
         ]
     return ok(tickets)
+
+
+@router.get("/support/tickets/{ticket_id}")
+async def get_my_ticket(
+    ticket_id: str,
+    request: Request,
+    user: User = Depends(role_required("owner", "super_admin")),
+) -> dict:
+    tenant = request.headers.get("X-Tenant-ID", "unknown")
+    with SessionLocal() as session:
+        ticket = session.get(SupportTicket, uuid.UUID(ticket_id))
+        if not ticket or ticket.tenant != tenant:
+            return ok(None)
+        msgs = (
+            session.execute(
+                select(SupportMessage).where(SupportMessage.ticket_id == ticket.id)
+            )
+            .scalars()
+            .all()
+        )
+        messages = [
+            {
+                "id": str(m.id),
+                "author": m.author,
+                "body": m.body,
+                "attachments": m.attachments,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in msgs
+        ]
+        data = {
+            "id": str(ticket.id),
+            "subject": ticket.subject,
+            "status": ticket.status,
+            "messages": messages,
+        }
+    return ok(data)
 
 
 @router.post("/support/tickets/{ticket_id}/reply")

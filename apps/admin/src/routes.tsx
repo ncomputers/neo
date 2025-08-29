@@ -7,6 +7,7 @@ import { Onboarding } from './pages/Onboarding';
 import { Support } from './pages/Support';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { StaffSupport } from './pages/StaffSupport';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <Login /> },
@@ -33,6 +34,16 @@ export const routes: RouteObject[] = [
         { path: 'support', element: <Support /> }
       ]
     }
-  ];
+  },
+  {
+    path: '/staff',
+    element: (
+      <ProtectedRoute roles={['super_admin', 'support']}>
+        <Layout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: 'support', element: <StaffSupport /> }],
+  }
+];
 
 export const router = createBrowserRouter(routes);
