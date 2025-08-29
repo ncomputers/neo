@@ -265,3 +265,24 @@ export function importMenuI18n(file: File, tenant?: string) {
     tenant
   });
 }
+
+export interface AuditLog {
+  id: number;
+  actor: string;
+  action: string;
+  entity: string;
+  created_at: string;
+}
+
+export function listAuditLogs(params: {
+  actor?: string;
+  event?: string;
+  date?: string;
+}) {
+  const qs = new URLSearchParams();
+  if (params.actor) qs.set('actor', params.actor);
+  if (params.event) qs.set('event', params.event);
+  if (params.date) qs.set('date', params.date);
+  const q = qs.toString();
+  return apiFetch<AuditLog[]>(`/admin/audit${q ? `?${q}` : ''}`);
+}

@@ -33,7 +33,8 @@ export {
   deleteItem,
   uploadImage,
   exportMenuI18n,
-  importMenuI18n
+  importMenuI18n,
+  listAuditLogs
 } from './endpoints';
-export type { PlanPreview, Invoice, Credits, Subscription } from './endpoints';
+export type { PlanPreview, Invoice, Credits, Subscription, AuditLog } from './endpoints';
 export type { Referral, ReferralCredit } from './endpoints';

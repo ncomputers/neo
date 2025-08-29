@@ -6,6 +6,7 @@ import { Billing } from './pages/Billing';
 import { Referrals } from './pages/Referrals';
 import { Onboarding } from './pages/Onboarding';
 import { Support } from './pages/Support';
+import { Audit } from './pages/Audit';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { StaffSupport } from './pages/StaffSupport';
@@ -50,6 +51,7 @@ export const routes: RouteObject[] = [
       },
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'support', element: <Support /> },
+      { path: 'audit', element: <Audit /> },
       { path: 'changelog', element: <Flag name="changelog"><Changelog /></Flag> }
     ]
 
