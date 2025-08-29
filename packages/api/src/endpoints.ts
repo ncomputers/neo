@@ -240,3 +240,29 @@ export function importMenuI18n(file: File, tenant?: string) {
     tenant
   });
 }
+
+export interface ExportJob {
+  job: string;
+}
+
+export function requestExport(body: {
+  type: string;
+  from?: string;
+  to?: string;
+}) {
+  return apiFetch<ExportJob>('/admin/export', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+export interface ExportStatus {
+  status: string;
+  url?: string;
+  type?: string;
+}
+
+export function exportStatus(job: string) {
+  return apiFetch<ExportStatus>(`/admin/export/${job}`);
+}

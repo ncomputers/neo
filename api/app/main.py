@@ -289,6 +289,7 @@ except Exception:  # pragma: no cover - fallback when Redis is unreachable
     logging.warning("Redis unavailable; using fakeredis")
     app.state.redis = fakeredis.aioredis.FakeRedis()
 app.state.export_progress = {}
+app.state.export_jobs = {}
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)

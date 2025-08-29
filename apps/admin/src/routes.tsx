@@ -11,6 +11,7 @@ import { StaffSupport } from './pages/StaffSupport';
 import { Changelog } from './pages/Changelog';
 import { Flags } from './pages/Flags';
 import { Flag } from '@neo/ui';
+import { Export } from './pages/Export';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <Login /> },
@@ -30,6 +31,14 @@ export const routes: RouteObject[] = [
           element: (
             <ProtectedRoute roles={['owner']}>
               <Billing />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'export',
+          element: (
+            <ProtectedRoute roles={['owner']}>
+              <Export />
             </ProtectedRoute>
           )
         },
