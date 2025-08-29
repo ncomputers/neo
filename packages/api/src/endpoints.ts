@@ -45,6 +45,43 @@ export function adminBilling() {
   return apiFetch<AdminBilling>('/admin/billing');
 }
 
+export interface BillingPlan {
+  plan_id: string;
+  active_tables: number;
+  table_cap: number;
+  scheduled_change?: { to_plan_id: string; scheduled_for: string };
+}
+export function getBillingPlan() {
+  return apiFetch<BillingPlan>('/admin/billing/plan');
+}
+
+export interface PlanPreview {
+  delta: number;
+  gst: number;
+  table_cap: number;
+  effective: string;
+}
+export function previewBillingPlan(to_plan_id: string) {
+  return apiFetch<PlanPreview>(`/admin/billing/plan/preview?to_plan_id=${to_plan_id}`);
+}
+
+export interface PlanChangeRequest {
+  to_plan_id: string;
+  change_type: 'upgrade' | 'downgrade';
+  when: 'now' | 'period_end';
+}
+export interface PlanChangeResponse {
+  invoice_id?: string;
+  scheduled_for?: string;
+}
+export function changeBillingPlan(body: PlanChangeRequest) {
+  return apiFetch<PlanChangeResponse>('/admin/billing/plan/change', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
 export interface Category {
   id: string;
   name: string;
