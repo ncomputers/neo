@@ -95,6 +95,10 @@ async def get_table_map(tenant: str, include_deleted: bool = False) -> dict:
                 "x": t.pos_x,
                 "y": t.pos_y,
                 "state": t.state,
+                "zone": t.zone,
+                "width": t.width,
+                "height": t.height,
+                "shape": t.shape,
             }
             for t in records
         ]

@@ -99,6 +99,10 @@ async def stream_table_map(
                         "x": t.pos_x,
                         "y": t.pos_y,
                         "state": t.state,
+                        "zone": t.zone,
+                        "width": t.width,
+                        "height": t.height,
+                        "shape": t.shape,
                     }
                     for t in records
                 ]
