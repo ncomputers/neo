@@ -11,6 +11,7 @@ import { StaffSupport } from './pages/StaffSupport';
 import { Changelog } from './pages/Changelog';
 import { Flags } from './pages/Flags';
 import { Flag } from '@neo/ui';
+import { QRPack } from './pages/QRPack';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <Login /> },
@@ -25,19 +26,19 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'floor', element: <Floor /> },
-        {
-          path: 'billing',
-          element: (
-            <ProtectedRoute roles={['owner']}>
-              <Billing />
-            </ProtectedRoute>
-          )
-        },
-        { path: 'onboarding', element: <Onboarding /> },
-        { path: 'support', element: <Support /> },
-        { path: 'changelog', element: <Flag name="changelog"><Changelog /></Flag> }
-      ]
-    }
+      { path: 'qr', element: <QRPack /> },
+      {
+        path: 'billing',
+        element: (
+          <ProtectedRoute roles={['owner']}>
+            <Billing />
+          </ProtectedRoute>
+        )
+      },
+      { path: 'onboarding', element: <Onboarding /> },
+      { path: 'support', element: <Support /> },
+      { path: 'changelog', element: <Flag name="changelog"><Changelog /></Flag> }
+    ],
   },
   {
     path: '/staff',
