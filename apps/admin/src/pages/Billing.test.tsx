@@ -87,6 +87,10 @@ describe('Billing page', () => {
     await within(table).findByText('OPEN');
     expect(listInvoices).toHaveBeenLastCalledWith({ from: '', to: '', status: 'OPEN' });
     expect(screen.getAllByRole('row')).toHaveLength(2);
+    expect(screen.getByTestId('csv-export')).toHaveAttribute(
+      'href',
+      '/admin/billing/invoices.csv?status=OPEN'
+    );
   });
 
   test('PDF download called with right id', async () => {
@@ -98,6 +102,33 @@ describe('Billing page', () => {
     const btn = await screen.findByTestId('download-inv1');
     await userEvent.click(btn);
     expect(downloadInvoice).toHaveBeenCalledWith('inv1');
+  });
+
+  test('Plan & Usage shows credits and status chips', async () => {
+    (getCredits as any).mockResolvedValueOnce({
+      balance: 50,
+      referrals: 20,
+      adjustments: 30
+    });
+    (getSubscription as any).mockResolvedValueOnce({
+      plan_id: 'starter',
+      table_cap: 5,
+      active_tables: 6,
+      status: 'ACTIVE',
+      current_period_end: '2099-01-01T00:00:00Z',
+      scheduled_change: { to_plan_id: 'starter', scheduled_for: '2099-02-01T00:00:00Z' }
+    });
+
+    render(
+      <MemoryRouter>
+        <Billing />
+      </MemoryRouter>
+    );
+    await userEvent.click(screen.getByText('Plan & Usage'));
+    await screen.findByText('Credits ₹50');
+    expect(screen.getByText('Tables 6/5')).toBeInTheDocument();
+    expect(screen.getByTestId('schedule-chip')).toBeInTheDocument();
+    expect(screen.getByTestId('overcap-chip')).toBeInTheDocument();
   });
 
   test('GRACE banner renders with CTA', async () => {

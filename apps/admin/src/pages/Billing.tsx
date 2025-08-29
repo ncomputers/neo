@@ -130,6 +130,12 @@ export function Billing() {
         )
       : 0;
 
+  const csvParams = new URLSearchParams();
+  if (from) csvParams.set('from', from);
+  if (to) csvParams.set('to', to);
+  if (status) csvParams.set('status', status);
+  const csvHref = `/admin/billing/invoices.csv${csvParams.toString() ? `?${csvParams.toString()}` : ''}`;
+
   return (
     <div className="p-4 space-y-4">
       <div className="space-x-4">
@@ -173,7 +179,7 @@ export function Billing() {
               <option value="REFUNDED">REFUNDED</option>
             </select>
             <a
-              href={`/admin/billing/invoices.csv?from=${from}&to=${to}`}
+              href={csvHref}
               data-testid="csv-export"
               className="underline text-blue-600"
             >
