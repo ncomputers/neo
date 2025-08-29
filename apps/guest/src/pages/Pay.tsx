@@ -142,21 +142,31 @@ export function PayPage() {
               onChange={(e) => setUtr(e.target.value)}
             />
           </label>
-          <button
-            onClick={async () => {
-              const res = await fetch(`/api/orders/${orderId}/utr`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId, utr }),
-              });
-              if (res.ok) {
+          <div>
+            <button
+              onClick={async () => {
+                const res = await fetch(`/api/orders/${orderId}/utr`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ orderId, utr }),
+                });
+                if (res.ok) {
+                  setShowUtr(false);
+                  setShowQr(true);
+                }
+              }}
+            >
+              Submit
+            </button>
+            <button
+              onClick={() => {
                 setShowUtr(false);
                 setShowQr(true);
-              }
-            }}
-          >
-            Submit
-          </button>
+              }}
+            >
+              Skip
+            </button>
+          </div>
         </div>
       )}
     </div>
