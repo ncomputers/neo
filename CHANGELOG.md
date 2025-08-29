@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Reference `ASSETLINKS_HOST` secret via env in TWA workflow to fix invalid conditional.
 
 - Correct sales register and GST summary exports to emit expected CSV headers and values.
+- Replace `/telemetry/error` fetch with SSR-safe `captureError` in the global error boundary.
 
 ## v1.0.0 - 2025-08-26
 
