@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, useRef, lazy, Suspense } from 'react';
 import { capturePageView } from '@neo/utils';
+
 import { Layout } from './components/Layout';
 import { hasAnalyticsConsent } from './analytics';
 

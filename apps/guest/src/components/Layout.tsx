@@ -16,10 +16,10 @@ export function Layout() {
       {status && (
         <LicenseBanner status={status} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
       )}
-      <main id="main">
-        <Outlet />
-      </main>
-      <CookieBanner />
+        <main id="main" role="main" tabIndex={-1}>
+          <Outlet />
+        </main>
+        <CookieBanner />
     </>
   );
 }
