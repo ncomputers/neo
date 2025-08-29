@@ -22,7 +22,8 @@ export function ThemeProvider({ theme, children }: PropsWithChildren<{ theme: Th
     const root = document.documentElement
     root.style.setProperty('--color-primary', theme.primary)
     root.style.setProperty('--color-accent', theme.accent)
-    root.style.setProperty('--logo-url', theme.logoURL)
+    root.style.setProperty('--color-secondary', theme.accent)
+    root.style.setProperty('--logo-url', theme.logoURL ? `url(${theme.logoURL})` : '')
   }, [theme])
 
   return <>{children}</>
