@@ -3,6 +3,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Floor } from './pages/Floor';
 import { Billing } from './pages/Billing';
+import { Referrals } from './pages/Referrals';
 import { Onboarding } from './pages/Onboarding';
 import { Support } from './pages/Support';
 import { Layout } from './components/Layout';
@@ -29,6 +30,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'floor', element: <Floor /> },
+
       { path: 'qr', element: <QRPack /> },
       {
         path: 'billing',
@@ -36,20 +38,21 @@ export const routes: RouteObject[] = [
           <ProtectedRoute roles={['owner']}>
             <Billing />
           </ProtectedRoute>
-        ),
+        )
+      },
+      {
+        path: 'referrals',
+        element: (
+          <ProtectedRoute roles={['owner']}>
+            <Referrals />
+          </ProtectedRoute>
+        )
       },
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'support', element: <Support /> },
-      {
-        path: 'changelog',
-        element: (
-          <FeatureFlag name="changelog">
-            <Changelog />
-          </FeatureFlag>
-        ),
-      },
+      { path: 'changelog', element: <Flag name="changelog"><Changelog /></Flag> }
+    ]
 
-    ],
   },
   {
     path: '/staff',

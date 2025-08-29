@@ -34,7 +34,12 @@ export function Layout() {
         <nav className="flex flex-col space-y-2" aria-label="Primary">
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/floor">Floor</Link>
-          {roles.includes('owner') && <Link to="/billing">Billing</Link>}
+          {roles.includes('owner') && (
+            <>
+              <Link to="/billing">Billing</Link>
+              <Link to="/referrals">Referrals</Link>
+            </>
+          )}
           <Link to="/onboarding">Onboarding</Link>
         </nav>
       </aside>
