@@ -1,10 +1,10 @@
 :root {
   --color-primary: #2563eb;
-  --color-accent: #64748b;
-  --color-secondary: #64748b;
+  --color-accent: #475569;
+  --color-secondary: #334155;
   --color-success: #15803d;
-  --color-warn: #b45309;
-  --color-danger: #b91c1c;
-  --color-error: #b91c1c;
+  --color-warn: #92400e;
+  --color-danger: #991b1b;
+  --color-error: #991b1b;
   --logo-url: url('');
 }

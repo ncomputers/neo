@@ -53,22 +53,27 @@ export function MenuPage() {
         />
       ) : (
         data?.categories?.map((cat) => (
-          <div key={cat.id}>
-            <h2>{cat.name_i18n[lang] || cat.name_i18n.en}</h2>
-            {cat.items.map((item) => (
-              <div key={item.id}>
-                <span>{item.name_i18n[lang] || item.name_i18n.en}</span>
-                <button
-                  aria-label={`add ${item.name_i18n[lang] || item.name_i18n.en} to cart`}
-                  onClick={() =>
-                    add({ id: item.id, name: item.name_i18n.en, qty: 1 })
-                  }
+          <section key={cat.id} aria-labelledby={`cat-${cat.id}`}>
+            <h2 id={`cat-${cat.id}`}>{cat.name_i18n[lang] || cat.name_i18n.en}</h2>
+            <ul>
+              {cat.items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between"
                 >
-                  +
-                </button>
-              </div>
-            ))}
-          </div>
+                  <span>{item.name_i18n[lang] || item.name_i18n.en}</span>
+                  <button
+                    aria-label={`add ${item.name_i18n[lang] || item.name_i18n.en} to cart`}
+                    onClick={() =>
+                      add({ id: item.id, name: item.name_i18n.en, qty: 1 })
+                    }
+                  >
+                    +
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))
       )}
     </div>
