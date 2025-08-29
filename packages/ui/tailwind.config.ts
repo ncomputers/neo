@@ -1,11 +1,16 @@
 import type { Config } from 'tailwindcss';
-import { colors } from './src/tokens';
 
 export default {
   content: ['../**/*.{ts,tsx}'],
   theme: {
     extend: {
-      colors
+      colors: {
+        primary: 'var(--color-primary)',
+        secondary: 'var(--color-secondary)',
+        success: 'var(--color-success)',
+        warn: 'var(--color-warn)',
+        error: 'var(--color-error)'
+      }
     }
   },
   plugins: []
