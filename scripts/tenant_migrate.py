@@ -15,11 +15,16 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import sys
+from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
 from sqlalchemy.ext.asyncio import create_async_engine
 
+# Ensure project root is on the import path so ``api`` resolves when invoked
+# as ``python scripts/tenant_migrate.py``.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api.app.db.tenant import build_dsn, TEMPLATE_ENV
 
 
