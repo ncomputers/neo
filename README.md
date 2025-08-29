@@ -234,6 +234,13 @@ cd ..
 pytest -q
 ```
 
+To perform environment setup, install dependencies, start Docker services, run tests,
+and launch the app with a single command, use:
+
+```bash
+python run_all.py --all
+```
+
 The Alembic environment now pulls metadata from both `MasterBase` and `TenantBase`
 so migrations cover the master schema as well as tenant-specific tables.
 
