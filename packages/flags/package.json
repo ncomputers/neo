@@ -1,5 +1,5 @@
 {
-  "name": "@neo/utils",
+  "name": "@neo/flags",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,6 +13,12 @@
     "lint": "echo lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "echo 'no tests'"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "dependencies": {
+    "@neo/api": "workspace:*"
   },
   "devDependencies": {
     "@neo/config": "workspace:*"

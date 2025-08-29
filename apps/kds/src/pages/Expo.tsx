@@ -4,6 +4,8 @@ import { WS_BASE } from '../env';
 import { SettingsDrawer } from '../components/SettingsDrawer';
 import { useKdsPrefs } from '../state/kdsPrefs';
 import sounds from '../sounds.json';
+import { Flag } from '@neo/ui';
+import { getFlag } from '@neo/flags';
 
 interface Item {
   qty: number;
@@ -190,6 +192,7 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   };
 
   const print = (id: string) => {
+    if (!getFlag('kds_print')) return;
     apiFetch('/print/notify', {
       method: 'POST',
       body: JSON.stringify({ order_id: id, layout }),
@@ -370,12 +373,14 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
                       ))}
                     </ul>
                     {printer && (
-                      <button
-                        onClick={() => print(t.id)}
-                        className="mt-2 border px-1 py-0.5 rounded text-sm"
-                      >
-                        Print KOT
-                      </button>
+                      <Flag name="kds_print">
+                        <button
+                          onClick={() => print(t.id)}
+                          className="mt-2 border px-1 py-0.5 rounded text-sm"
+                        >
+                          Print KOT
+                        </button>
+                      </Flag>
                     )}
                   </li>
                 ))}

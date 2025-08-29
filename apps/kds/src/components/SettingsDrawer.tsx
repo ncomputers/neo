@@ -1,5 +1,6 @@
 import { apiFetch } from '@neo/api';
 import { useKdsPrefs } from '../state/kdsPrefs';
+import { Flag } from '@neo/ui';
 
 interface Props {
   open: boolean;
@@ -80,39 +81,43 @@ export function SettingsDrawer({ open, onClose }: Props) {
           />
           <span>{fontScale}%</span>
         </label>
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={printer}
-            onChange={(e) => set({ printer: e.target.checked })}
-          />
-          <span>Print KOT</span>
-        </label>
-        {printer && (
-          <div className="flex items-center space-x-2">
-            <span>Layout</span>
-            <select
-              value={layout}
-              onChange={(e) => set({ layout: e.target.value as 'compact' | 'full' })}
-              className="border p-1 rounded"
-            >
-              <option value="compact">Compact</option>
-              <option value="full">Full</option>
-            </select>
-          </div>
-        )}
-        {printer && import.meta.env.MODE !== 'production' && (
-          <button
-            onClick={() =>
-              apiFetch('/print/test').catch(() => {
-                /* ignore */
-              })
-            }
-            className="border px-2 py-1 rounded"
-          >
-            Test Print
-          </button>
-        )}
+        <Flag name="kds_print">
+          <>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={printer}
+                onChange={(e) => set({ printer: e.target.checked })}
+              />
+              <span>Print KOT</span>
+            </label>
+            {printer && (
+              <div className="flex items-center space-x-2">
+                <span>Layout</span>
+                <select
+                  value={layout}
+                  onChange={(e) => set({ layout: e.target.value as 'compact' | 'full' })}
+                  className="border p-1 rounded"
+                >
+                  <option value="compact">Compact</option>
+                  <option value="full">Full</option>
+                </select>
+              </div>
+            )}
+            {printer && import.meta.env.MODE !== 'production' && (
+              <button
+                onClick={() =>
+                  apiFetch('/print/test').catch(() => {
+                    /* ignore */
+                  })
+                }
+                className="border px-2 py-1 rounded"
+              >
+                Test Print
+              </button>
+            )}
+          </>
+        </Flag>
       </div>
     </div>
   );

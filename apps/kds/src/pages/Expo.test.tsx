@@ -33,6 +33,7 @@ vi.mock('@neo/api', async () => {
 import { Expo } from './Expo';
 import { apiFetch } from '@neo/api';
 import { useKdsPrefs } from '../state/kdsPrefs';
+import { refreshFlags } from '@neo/flags';
 
 beforeEach(async () => {
   (global as any).WebSocket = MockWebSocket as any;
@@ -45,6 +46,13 @@ beforeEach(async () => {
     permission: 'granted',
     requestPermission: vi.fn().mockResolvedValue('granted'),
   });
+  (global as any).fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({ kds_print: true }),
+    headers: new Headers(),
+  });
+  await refreshFlags();
 });
 
 afterEach(() => {

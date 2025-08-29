@@ -1,1 +1,1 @@
-export * from 'lucide-react';
+export { Utensils, ShoppingCart } from 'lucide-react';

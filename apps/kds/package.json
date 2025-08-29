@@ -15,6 +15,7 @@
     "@hookform/resolvers": "^5.2.1",
     "@neo/api": "workspace:*",
     "@neo/ui": "workspace:*",
+    "@neo/flags": "workspace:*",
     "@neo/utils": "workspace:*",
     "@tanstack/react-query": "^5.40.1",
     "i18next": "^23.8.2",

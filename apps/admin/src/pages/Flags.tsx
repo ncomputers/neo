@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { loadFlags, setFlag } from '@neo/api';
+import { refreshFlags } from '@neo/flags';
+import { setFlag } from '@neo/api';
+import { useAuth } from '../auth';
 
 export function Flags() {
   const [flags, setFlags] = useState<Record<string, boolean>>({});
+  const roles = useAuth();
+  const canToggle = roles.includes('super_admin');
 
   useEffect(() => {
-    loadFlags().then(setFlags);
+    refreshFlags().then(setFlags).catch(() => setFlags({}));
   }, []);
 
   async function toggle(name: string) {
+    if (!canToggle) return;
     const next = !flags[name];
     setFlags({ ...flags, [name]: next });
     await setFlag(name, next);
+    await refreshFlags().then(setFlags);
   }
 
   return (
@@ -20,18 +26,19 @@ export function Flags() {
       <ul>
         {Object.entries(flags).map(([name, value]) => (
           <li key={name} className="mb-2">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={value}
-                onChange={() => toggle(name)}
-              />
-              {name}
-            </label>
+            {canToggle ? (
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={value} onChange={() => toggle(name)} />
+                {name}
+              </label>
+            ) : (
+              <span>
+                {name}: {value ? 'on' : 'off'}
+              </span>
+            )}
           </li>
         ))}
       </ul>
     </div>
   );
 }
-

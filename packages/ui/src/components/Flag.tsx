@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { getFlag } from '@neo/api';
+import { useFlag } from '@neo/flags';
 
 interface FlagProps extends PropsWithChildren {
   name: string;
@@ -7,6 +7,5 @@ interface FlagProps extends PropsWithChildren {
 }
 
 export function Flag({ name, children, fallback = null }: FlagProps) {
-  return getFlag(name) ? <>{children}</> : <>{fallback}</>;
+  return useFlag(name) ? <>{children}</> : <>{fallback}</>;
 }
-
