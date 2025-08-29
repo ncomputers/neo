@@ -13,7 +13,11 @@ export function Header() {
   };
 
   return (
-    <header className="p-2 flex justify-end">
+    <header className="p-2 flex items-center justify-between">
+      <div
+        className="h-8 w-24 bg-contain bg-no-repeat"
+        style={{ backgroundImage: 'var(--logo-url)' }}
+      />
       <select aria-label="language" value={lang} onChange={change}>
         <option value="en">EN</option>
         <option value="es">ES</option>

@@ -346,9 +346,15 @@ importers:
       '@neo/config':
         specifier: workspace:*
         version: link:../config
+      '@testing-library/react':
+        specifier: ^14.0.0
+        version: 14.3.1(@types/react@18.3.24)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       autoprefixer:
         specifier: ^10.4.0
         version: 10.4.21(postcss@8.5.6)
+      jsdom:
+        specifier: ^20.0.3
+        version: 20.0.3
       postcss:
         specifier: ^8.4.0
         version: 8.5.6
@@ -358,6 +364,12 @@ importers:
       tailwindcss:
         specifier: ^3.4.0
         version: 3.4.17
+      vite:
+        specifier: ^5.1.4
+        version: 5.4.19(@types/node@24.3.0)
+      vitest:
+        specifier: ^1.3.0
+        version: 1.6.1(@types/node@24.3.0)(jsdom@20.0.3)
 
   packages/utils:
     devDependencies:

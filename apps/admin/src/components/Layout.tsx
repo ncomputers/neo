@@ -17,7 +17,11 @@ export function Layout() {
       </aside>
       <div className="flex-1 flex flex-col">
         <header className="flex justify-between items-center p-2 border-b">
-          <div>
+          <div className="flex items-center space-x-2">
+            <div
+              className="h-8 w-24 bg-contain bg-no-repeat"
+              style={{ backgroundImage: 'var(--logo-url)' }}
+            />
             {tenants.length > 1 ? (
               <select
                 value={tenantId ?? undefined}
