@@ -16,6 +16,7 @@ def _setup_app(monkeypatch):
     monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     from api.app import main as app_main
+
     importlib.reload(app_main)
     app_main.app.state.redis = fakeredis.aioredis.FakeRedis()
     return app_main.app
@@ -28,6 +29,7 @@ def test_csp_header(monkeypatch):
     csp = resp.headers.get("Content-Security-Policy")
     assert csp is not None
     assert "script-src 'self' 'nonce-" in csp
+    assert "connect-src 'self' https://API https://WS" in csp
 
 
 def test_cors_blocks_unknown_origin(monkeypatch):
@@ -42,12 +44,13 @@ def test_login_rate_limit(monkeypatch):
     client = TestClient(app)
     for _ in range(3):
         resp = client.post(
-            "/login/email",
-            json={"username": "admin@example.com", "password": "wrong"},
+            "/login/pin",
+            json={"username": "cashier1", "pin": "bad"},
         )
         assert resp.status_code == 400
     resp = client.post(
-        "/login/email",
-        json={"username": "admin@example.com", "password": "wrong"},
+        "/login/pin",
+        json={"username": "cashier1", "pin": "bad"},
     )
-    assert resp.status_code == 403
+    assert resp.status_code == 429
+    assert resp.headers.get("Retry-After")
