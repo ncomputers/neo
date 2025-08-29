@@ -8,7 +8,12 @@ on:
 
 jobs:
   staging:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    if: >
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
+      secrets.API_BASE_URL_STAGING != '' &&
+      secrets.SYN_TENANT_ID_STAGING != '' &&
+      secrets.SYN_TABLE_CODE_STAGING != '' &&
+      secrets.AUTH_TOKEN_STAGING != ''
     runs-on: ubuntu-latest
     env:
       API_BASE_URL: ${{ secrets.API_BASE_URL_STAGING }}
@@ -101,7 +106,12 @@ jobs:
     if: >
       (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
       github.ref == 'refs/heads/main' &&
-      !github.event.pull_request.head.repo.fork
+      !github.event.pull_request.head.repo.fork &&
+      secrets.API_BASE_URL != '' &&
+      secrets.SYN_TENANT_ID != '' &&
+      secrets.SYN_TABLE_CODE != '' &&
+      secrets.AUTH_TOKEN != '' &&
+      secrets.SYN_ENABLED_PROD != ''
     runs-on: ubuntu-latest
     environment: prod
     env:

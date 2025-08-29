@@ -18,11 +18,13 @@ export default function Integrations() {
     const url = urls[type] || ''
     apiFetch(`/admin/integrations/${type}/probe`, {
       method: 'POST',
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url }),
     })
       .then((res) => res.json())
       .then((json) => setReports({ ...reports, [type]: json.data }))
-      .catch((err) => setReports({ ...reports, [type]: { error: err.message } }))
+      .catch((err) =>
+        setReports({ ...reports, [type]: { error: err.message } }),
+      )
   }
 
   if (error) return <p className="text-danger">{error}</p>
@@ -43,7 +45,9 @@ export default function Integrations() {
                 type="url"
                 placeholder="Webhook URL"
                 value={urls[item.type] || ''}
-                onChange={(e) => setUrls({ ...urls, [item.type]: e.target.value })}
+                onChange={(e) =>
+                  setUrls({ ...urls, [item.type]: e.target.value })
+                }
                 className="flex-1 border p-1 text-sm"
               />
               <button

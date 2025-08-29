@@ -31,7 +31,7 @@ export default function OwnerOnboardingWizard() {
   function persist(nextStep, nextData) {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ step: nextStep, data: nextData })
+      JSON.stringify({ step: nextStep, data: nextData }),
     )
   }
 

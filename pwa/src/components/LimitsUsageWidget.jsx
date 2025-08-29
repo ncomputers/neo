@@ -6,11 +6,7 @@ function Bar({ label, usage }) {
   const used = usage.used
   const percent = limit ? Math.min((used / limit) * 100, 100) : 0
   const color =
-    percent >= 100
-      ? 'bg-danger'
-      : percent >= 80
-        ? 'bg-warning'
-        : 'bg-success'
+    percent >= 100 ? 'bg-danger' : percent >= 80 ? 'bg-warning' : 'bg-success'
   return (
     <div className="mb-4">
       <div className="flex justify-between text-sm mb-1">

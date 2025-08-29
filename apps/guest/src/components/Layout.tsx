@@ -7,12 +7,17 @@ export function Layout() {
   const { data } = useLicense();
   const status = data?.status;
   return (
-    <div>
+    <>
+      <a href="#main" className="sr-only focus:not-sr-only">
+        Skip to content
+      </a>
       <PoorConnectionBanner />
       {status && (
         <LicenseBanner status={status} daysLeft={data?.daysLeft} renewUrl={data?.renewUrl} />
       )}
-      <Outlet />
-    </div>
+      <main id="main">
+        <Outlet />
+      </main>
+    </>
   );
 }

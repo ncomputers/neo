@@ -66,10 +66,7 @@ export default function GuestOrder() {
         {ops.map((op) => (
           <li key={op.op_id} className="mb-1">
             {op.items[0].item_id} x {op.items[0].qty}{' '}
-            <span
-              className={op.synced ? 'text-success' : 'text-warning'}
-            >
-
+            <span className={op.synced ? 'text-success' : 'text-warning'}>
               {op.synced ? 'synced' : 'pending'}
             </span>
           </li>

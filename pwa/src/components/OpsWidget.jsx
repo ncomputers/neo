@@ -22,10 +22,26 @@ export default function OpsWidget() {
     <div className="mb-6">
       <h3 className="text-lg font-semibold mb-2">Ops</h3>
       <div className="text-sm space-y-1">
-        <div className="flex justify-between"><span>Uptime</span><span>{data.uptime}</span></div>
-        <div className="flex justify-between"><span>Webhook Success</span><span>{pct(data.webhook_success_rate)}%</span></div>
-        <div className="flex justify-between"><span>Breaker Open Time</span><span>{seconds(data.breaker_open_time)}</span></div>
-        <div className="flex justify-between"><span>Median KOT Prep</span><span>{data.median_kot_prep_time ? seconds(data.median_kot_prep_time) : 'N/A'}</span></div>
+        <div className="flex justify-between">
+          <span>Uptime</span>
+          <span>{data.uptime}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Webhook Success</span>
+          <span>{pct(data.webhook_success_rate)}%</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Breaker Open Time</span>
+          <span>{seconds(data.breaker_open_time)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Median KOT Prep</span>
+          <span>
+            {data.median_kot_prep_time
+              ? seconds(data.median_kot_prep_time)
+              : 'N/A'}
+          </span>
+        </div>
       </div>
     </div>
   )
