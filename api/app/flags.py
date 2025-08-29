@@ -33,6 +33,9 @@ def _load_defaults() -> Dict[str, bool]:
 
 _CONFIG_DEFAULTS = _load_defaults()
 
+# In-memory overrides toggled at runtime via admin APIs.
+_OVERRIDES: Dict[str, bool] = {}
+
 # Metadata about supported feature flags.
 # ``tenant_attr`` indicates the attribute on the Tenant model used for
 # per-tenant overrides.
@@ -45,6 +48,7 @@ REGISTRY: Dict[str, Dict[str, Any]] = {
     "analytics": {"default": False},
     "ab_tests": {"default": False},
     "marketplace": {"default": False},
+    "changelog": {"default": False},
 }
 
 for name, value in _CONFIG_DEFAULTS.items():
@@ -57,6 +61,11 @@ def _env_override(name: str) -> bool | None:
     if val is None:
         return None
     return val.lower() in {"1", "true", "yes", "on"}
+
+
+def set_override(name: str, value: bool) -> None:
+    """Set a runtime override for ``name``."""
+    _OVERRIDES[name] = bool(value)
 
 
 def get(name: str, tenant: Any | None = None) -> bool:
@@ -72,10 +81,6 @@ def get(name: str, tenant: Any | None = None) -> bool:
     meta = REGISTRY.get(name, {})
     value = bool(meta.get("default", False))
 
-    env_val = _env_override(name)
-    if env_val is not None:
-        value = env_val
-
     if tenant is not None:
         attr = meta.get("tenant_attr")
         if attr and hasattr(tenant, attr):
@@ -84,7 +89,14 @@ def get(name: str, tenant: Any | None = None) -> bool:
         if isinstance(features, dict) and name in features:
             value = bool(features[name])
 
+    if name in _OVERRIDES:
+        value = _OVERRIDES[name]
+
+    env_val = _env_override(name)
+    if env_val is not None:
+        value = env_val
+
     return value
 
 
-__all__ = ["get", "REGISTRY"]
+__all__ = ["get", "set_override", "REGISTRY"]

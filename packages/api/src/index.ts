@@ -1,4 +1,5 @@
 export * from './api';
+export * from './flags';
 export * from './hooks/sse';
 export * from './hooks/ws';
 export * from './hooks/useLicense';
