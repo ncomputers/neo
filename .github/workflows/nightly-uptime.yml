@@ -1,0 +1,15 @@
+name: nightly-uptime
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run uptime probe
+        run: |
+          python scripts/uptime_probe.py --base-url https://example.com

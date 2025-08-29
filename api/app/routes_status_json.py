@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Literal
 
@@ -8,8 +10,10 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
+from sqlalchemy import text
 
 from .auth import role_required
+from .db import SessionLocal
 from .utils.responses import ok
 
 router = APIRouter()
@@ -44,6 +48,23 @@ async def get_status(request: Request):
                 data = json.load(f)
         except FileNotFoundError:
             data = {"state": "outage", "message": None, "components": []}
+
+    # enrich with health info
+    db_ok = True
+    try:
+        with SessionLocal() as session:
+            session.execute(text("SELECT 1"))
+    except Exception:  # pragma: no cover - best effort
+        db_ok = False
+    data.update(
+        {
+            "app": "api",
+            "version": os.getenv("GIT_SHA", "dev"),
+            "db": "ok" if db_ok else "error",
+            "queue": "ok",
+            "time": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        }
+    )
     return JSONResponse(data)
 
 
