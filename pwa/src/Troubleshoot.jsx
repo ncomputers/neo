@@ -32,12 +32,12 @@ export default function Troubleshoot() {
             {results.printer.ok ? 'Pass' : 'Fail'} {results.printer.next}
           </li>
           <li>
-            <strong>Time skew:</strong>{' '}
-            {results.time.ok ? 'Pass' : 'Fail'} {results.time.next}
+            <strong>Time skew:</strong> {results.time.ok ? 'Pass' : 'Fail'}{' '}
+            {results.time.next}
           </li>
           <li>
-            <strong>DNS/latency:</strong>{' '}
-            {results.dns.ok ? 'Pass' : 'Fail'} {results.dns.next}
+            <strong>DNS/latency:</strong> {results.dns.ok ? 'Pass' : 'Fail'}{' '}
+            {results.dns.next}
           </li>
           <li>
             <strong>Software version:</strong>{' '}

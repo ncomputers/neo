@@ -41,7 +41,6 @@ export default function ExpoDashboard() {
       const idx = parseInt(e.key, 10)
       if (!isNaN(idx) && idx > 0 && idx <= orders.length) {
         markPicked(orders[idx - 1].order_id)
-
       }
     }
     window.addEventListener('keydown', handler)
@@ -62,7 +61,6 @@ export default function ExpoDashboard() {
                 <span className="font-semibold">
                   Table {o.table}
                   {o.allergen_badges.length > 0 && (
-
                     <span className="ml-2 rounded bg-red-100 px-1 text-red-800 text-xs">
                       Allergy
                     </span>
@@ -70,13 +68,11 @@ export default function ExpoDashboard() {
                 </span>
                 <span className="text-sm text-gray-600">
                   {Math.round(o.age_s / 60)}m
-
                 </span>
               </div>
               <button
                 className="mt-2 bg-blue-600 text-white px-2 py-1 rounded"
                 onClick={() => markPicked(o.order_id)}
-
               >
                 Picked
               </button>

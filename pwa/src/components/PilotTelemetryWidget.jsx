@@ -22,14 +22,38 @@ export default function PilotTelemetryWidget() {
     <div className="mb-6">
       <h3 className="text-lg font-semibold mb-2">Pilot Telemetry</h3>
       <div className="text-sm space-y-1">
-        <div className="flex justify-between"><span>Orders/min</span><span>{data.orders_per_min.toFixed(1)}</span></div>
-        <div className="flex justify-between"><span>Avg Prep</span><span>{secs(data.avg_prep_s)}</span></div>
-        <div className="flex justify-between"><span>Breaker Open</span><span>{pct(data.webhook_breaker_open_pct)}</span></div>
-        <div className="flex justify-between"><span>Oldest KOT</span><span>{secs(data.kot_queue_oldest_s)}</span></div>
-        <div className="flex justify-between"><span>95p Latency</span><span>{Math.round(data.p95_latency_ms)}ms</span></div>
-        <div className="flex justify-between"><span>Error Rate (5m)</span><span>{pct(data.error_rate_5m * 100)}</span></div>
-        <div className="flex justify-between"><span>SSE Clients</span><span>{data.sse_clients}</span></div>
-        <div className="flex justify-between"><span>Timestamp</span><span>{new Date(data.timestamp * 1000).toLocaleTimeString()}</span></div>
+        <div className="flex justify-between">
+          <span>Orders/min</span>
+          <span>{data.orders_per_min.toFixed(1)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Avg Prep</span>
+          <span>{secs(data.avg_prep_s)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Breaker Open</span>
+          <span>{pct(data.webhook_breaker_open_pct)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Oldest KOT</span>
+          <span>{secs(data.kot_queue_oldest_s)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>95p Latency</span>
+          <span>{Math.round(data.p95_latency_ms)}ms</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Error Rate (5m)</span>
+          <span>{pct(data.error_rate_5m * 100)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>SSE Clients</span>
+          <span>{data.sse_clients}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Timestamp</span>
+          <span>{new Date(data.timestamp * 1000).toLocaleTimeString()}</span>
+        </div>
       </div>
     </div>
   )

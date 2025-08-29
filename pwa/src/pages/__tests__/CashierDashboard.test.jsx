@@ -9,7 +9,7 @@ import * as api from '../../api'
 describe('CashierDashboard', () => {
   beforeEach(() => {
     global.fetch = jest.fn(() =>
-      Promise.resolve({ json: () => Promise.resolve({ state: 'ok' }) })
+      Promise.resolve({ json: () => Promise.resolve({ state: 'ok' }) }),
     )
     global.crypto = { randomUUID: () => 'test-key' }
     api.apiFetch.mockImplementation((url) => {
@@ -17,7 +17,9 @@ describe('CashierDashboard', () => {
         return Promise.resolve({ json: () => Promise.resolve({ orders: [] }) })
       }
       if (url.startsWith('/invoices')) {
-        return Promise.resolve({ json: () => Promise.resolve({ invoices: [{ invoice_id: 1 }] }) })
+        return Promise.resolve({
+          json: () => Promise.resolve({ invoices: [{ invoice_id: 1 }] }),
+        })
       }
       return Promise.resolve({ json: () => Promise.resolve({}) })
     })
@@ -33,7 +35,7 @@ describe('CashierDashboard', () => {
     render(
       <ThemeProvider>
         <CashierDashboard />
-      </ThemeProvider>
+      </ThemeProvider>,
     )
     await screen.findByText(/Cashier Dashboard/)
     expect(screen.getByRole('link', { name: /terms/i })).toBeInTheDocument()
@@ -47,10 +49,14 @@ describe('CashierDashboard', () => {
         return Promise.resolve({ json: () => Promise.resolve({ orders: [] }) })
       }
       if (url.startsWith('/invoices')) {
-        return Promise.resolve({ json: () => Promise.resolve({ invoices: [{ invoice_id: 1 }] }) })
+        return Promise.resolve({
+          json: () => Promise.resolve({ invoices: [{ invoice_id: 1 }] }),
+        })
       }
       if (url === '/payments/1/refund') {
-        return Promise.resolve({ json: () => Promise.resolve({ data: { refunded: true } }) })
+        return Promise.resolve({
+          json: () => Promise.resolve({ data: { refunded: true } }),
+        })
       }
       return Promise.resolve({ json: () => Promise.resolve({}) })
     })
@@ -60,7 +66,7 @@ describe('CashierDashboard', () => {
     render(
       <ThemeProvider>
         <CashierDashboard />
-      </ThemeProvider>
+      </ThemeProvider>,
     )
 
     const refundButton = await screen.findByRole('button', { name: /refund/i })
@@ -73,12 +79,13 @@ describe('CashierDashboard', () => {
         '/payments/1/refund',
         expect.objectContaining({
           method: 'POST',
-          headers: expect.objectContaining({ 'Idempotency-Key': expect.any(String) }),
-        })
+          headers: expect.objectContaining({
+            'Idempotency-Key': expect.any(String),
+          }),
+        }),
       )
     })
 
     expect(await screen.findByText(/Key:/i)).toBeInTheDocument()
   })
 })
-

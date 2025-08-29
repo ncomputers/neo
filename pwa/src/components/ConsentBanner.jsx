@@ -19,10 +19,7 @@ export default function ConsentBanner() {
 
   const save = () => {
     try {
-      localStorage.setItem(
-        'guestConsent',
-        JSON.stringify({ analytics, wa })
-      )
+      localStorage.setItem('guestConsent', JSON.stringify({ analytics, wa }))
     } catch (e) {
       /* ignore */
     }
@@ -30,7 +27,7 @@ export default function ConsentBanner() {
       apiFetch('/g/consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ allow_analytics: analytics, allow_wa: wa })
+        body: JSON.stringify({ allow_analytics: analytics, allow_wa: wa }),
       })
     } catch (e) {
       /* ignore */
@@ -61,10 +58,7 @@ export default function ConsentBanner() {
         />
         Allow WhatsApp notifications
       </label>
-      <button
-        className="bg-blue-600 px-2 py-1 rounded"
-        onClick={save}
-      >
+      <button className="bg-blue-600 px-2 py-1 rounded" onClick={save}>
         Save
       </button>
     </div>
