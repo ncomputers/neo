@@ -13,7 +13,9 @@ const KitchenDashboard = React.lazy(() => import('./pages/KitchenDashboard'))
 const CleanerDashboard = React.lazy(() => import('./pages/CleanerDashboard'))
 const Billing = React.lazy(() => import('./pages/Billing'))
 const ExpoDashboard = React.lazy(() => import('./pages/ExpoDashboard'))
-const OwnerOnboardingWizard = React.lazy(() => import('./pages/OwnerOnboardingWizard'))
+const OwnerOnboardingWizard = React.lazy(
+  () => import('./pages/OwnerOnboardingWizard'),
+)
 
 function Home() {
   return (
