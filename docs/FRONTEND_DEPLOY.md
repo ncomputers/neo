@@ -31,6 +31,10 @@ Static assets (`.js`, `.css`, images, fonts) are fingerprinted and served with a
 clients fetch the latest assets, while HTML files are served with `no-store` to
 always load the newest manifest.
 
+Fonts are not committed to the repository. Run `scripts/download_fonts.py` to
+populate `static/fonts/` before building so the preloaded assets resolve
+correctly at runtime.
+
 ## Changing roots
 Nginx reads its runtime configuration from `deploy/nginx/nginx.conf`, where the
 `root` is set to `/usr/share/nginx/html`. Built apps are copied into
