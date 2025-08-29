@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiFetch, useWS } from '@neo/api';
 import { WS_BASE } from '../env';
 import { PinModal } from '../components/PinModal';
@@ -122,16 +122,23 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   };
   const allStatuses: Status[] = ['NEW', 'PREPARING', 'READY', 'PICKED'];
   const columns: Status[] = statusFilter === 'ALL' ? allStatuses : [statusFilter];
-  const zones = Array.from(new Set(tickets.map((t) => t.zone).filter(Boolean))) as string[];
-  const filteredTickets = tickets.filter((t) => {
-    const matchStatus = statusFilter === 'ALL' ? true : t.status === statusFilter;
-    const q = searchQuery.toLowerCase();
-    const matchSearch = q
-      ? t.table.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q))
-      : true;
-    const matchZone = zone ? t.zone === zone : true;
-    return matchStatus && matchSearch && matchZone;
-  });
+  const zones = useMemo(
+    () => Array.from(new Set(tickets.map((t) => t.zone).filter(Boolean))) as string[],
+    [tickets]
+  );
+  const filteredTickets = useMemo(
+    () =>
+      tickets.filter((t) => {
+        const matchStatus = statusFilter === 'ALL' ? true : t.status === statusFilter;
+        const q = searchQuery.toLowerCase();
+        const matchSearch = q
+          ? t.table.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q))
+          : true;
+        const matchZone = zone ? t.zone === zone : true;
+        return matchStatus && matchSearch && matchZone;
+      }),
+    [tickets, statusFilter, searchQuery, zone]
+  );
   return (
     <div className="p-4 space-y-4">
       {offline && (
