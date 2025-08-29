@@ -19,7 +19,7 @@ class HTMLErrorPagesMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         accept = request.headers.get("accept", "")
-        if "text/html" in accept and response.status_code in {403, 404, 500}:
+        if "text/html" in accept and response.status_code in {401, 403, 404, 500}:
             error_file = self.static_dir / "errors" / f"{response.status_code}.html"
             if error_file.is_file():
                 return FileResponse(error_file, status_code=response.status_code)
