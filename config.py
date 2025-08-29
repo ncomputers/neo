@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     eta_confidence: str = "p50"
     max_queue_factor: float = 1.6
     eta_enabled: bool = False
+    use_gstreamer: bool = False
 
 
 # Cached singleton to avoid repeated file reads
