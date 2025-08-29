@@ -26,3 +26,32 @@ jobs:
         with:
           name: apps-dist
           path: apps/*/dist
+
+  e2e:
+    needs: build
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Install browsers
+        run: npx playwright install --with-deps
+      - name: Run E2E tests
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          TENANT_ID: ${{ secrets.STAGING_TENANT }}
+          TABLE_CODE: ${{ secrets.STAGING_TABLE }}
+        run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
