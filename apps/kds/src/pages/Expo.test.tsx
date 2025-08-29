@@ -252,6 +252,7 @@ describe('Expo', () => {
     useKdsPrefs.getState().set({ printer: true, layout: 'compact' });
     render(<Expo />);
     await screen.findByTestId('ticket-1');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     await userEvent.click(screen.getByRole('button', { name: 'Print KOT' }));
     expect(apiFetch).toHaveBeenCalledWith(
       '/print/notify',
@@ -260,6 +261,8 @@ describe('Expo', () => {
         body: JSON.stringify({ order_id: '1', layout: 'compact' }),
       })
     );
+    expect(log).toHaveBeenCalledWith('stub print', { id: '1', layout: 'compact' });
+    log.mockRestore();
   });
 
   test('Test Print hits endpoint in dev', async () => {
