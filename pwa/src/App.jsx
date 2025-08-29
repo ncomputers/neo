@@ -1,9 +1,10 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, lazy } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
-import RequireRole from './components/RequireRole'
-import ConsentBanner from './components/ConsentBanner'
 import { useAuth } from './contexts/AuthContext'
-import Loading from './components/Loading'
+
+const RequireRole = lazy(() => import('./components/RequireRole'))
+const ConsentBanner = lazy(() => import('./components/ConsentBanner'))
+const Loading = lazy(() => import('./components/Loading'))
 
 const GuestOrder = React.lazy(() => import('./pages/GuestOrder'))
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'))
@@ -28,7 +29,9 @@ export default function App() {
 
   return (
     <div className="p-4">
-      <ConsentBanner />
+      <Suspense fallback={null}>
+        <ConsentBanner />
+      </Suspense>
       <nav aria-label="Primary" className="mb-4 space-x-2">
         <Link to="/">Home</Link>
         <Link to="/guest">Guest</Link>
@@ -59,8 +62,8 @@ export default function App() {
           <option value="cleaner">cleaner</option>
         </select>
       </nav>
-      <main id="main">
-        <Suspense fallback={<Loading />}>
+      <main id="main-content" role="main">
+        <Suspense fallback={<div className="p-4">Loading...</div>}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/guest" element={<GuestOrder />} />
