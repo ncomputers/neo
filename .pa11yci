@@ -2,6 +2,9 @@
   "urls": [
     "http://localhost:8000/help/qr",
     "http://localhost:8000/help/network",
-    "http://localhost:8000/help/printing"
+    "http://localhost:8000/help/printing",
+    "http://localhost:8000/guest",
+    "http://localhost:8000/admin",
+    "http://localhost:8000/kds"
   ]
 }

@@ -71,11 +71,11 @@ from .auth import (
 )
 from .config.validate import validate_on_boot
 from .db import SessionLocal, replica
+from .dunning import build_renew_url
 from .events import alerts_sender, ema_updater, event_bus, report_aggregator
 from .hooks import order_rejection
 from .hooks.table_map import publish_table_state
 from .i18n import get_msg, resolve_lang
-from .dunning import build_renew_url
 
 template_globals = {"build_renew_url": build_renew_url}
 
@@ -87,9 +87,9 @@ from .middlewares import (
     GuestRateLimitMiddleware,
     HTMLErrorPagesMiddleware,
     HttpErrorCounterMiddleware,
+    I18nMiddleware,
     IdempotencyMetricsMiddleware,
     IdempotencyMiddleware,
-    I18nMiddleware,
     LicensingMiddleware,
     LoggingMiddleware,
     MaintenanceMiddleware,
@@ -99,9 +99,9 @@ from .middlewares import (
     TableStateGuardMiddleware,
     realtime_guard,
 )
+from .middlewares.license_gate import LicenseGate, license_required
 from .middlewares.room_state_guard import RoomStateGuard
 from .middlewares.security import SecurityMiddleware
-from .middlewares.license_gate import LicenseGate, license_required
 from .models_tenant import Table
 from .obs import capture_exception, init_sentry
 from .obs.logging import configure_logging
@@ -163,8 +163,8 @@ from .routes_legal import router as legal_router
 from .routes_limits_usage import router as limits_router
 from .routes_maintenance import router as maintenance_router
 from .routes_media import router as media_router
-from .routes_menu_import import router as menu_import_router
 from .routes_menu_i18n import router as menu_i18n_router
+from .routes_menu_import import router as menu_import_router
 from .routes_metrics import router as metrics_router
 from .routes_metrics import ws_messages_total
 from .routes_onboarding import router as onboarding_router
@@ -251,6 +251,15 @@ app = FastAPI(
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
+
+# Serve built front-end SPAs
+root_dir = Path(__file__).resolve().parent.parent.parent / "apps"
+guest_spa = root_dir / "guest" / "dist"
+admin_spa = root_dir / "admin" / "dist"
+kds_spa = root_dir / "kds" / "dist"
+app.mount("/guest", StaticFiles(directory=guest_spa, html=True), name="guest")
+app.mount("/admin", StaticFiles(directory=admin_spa, html=True), name="admin")
+app.mount("/kds", StaticFiles(directory=kds_spa, html=True), name="kds")
 
 
 init_tracing(app)
