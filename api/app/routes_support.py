@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from .auth import User, role_required
 from .db import SessionLocal
-from .models_master import SupportTicket
+from .models_master import FeedbackNPS, SupportTicket
 from .providers import email_stub
 from .utils.audit import audit
 from .utils.responses import ok
@@ -33,6 +33,12 @@ class TicketIn(BaseModel):
     subject: str = Field(..., description="Short summary")
     body: str = Field(..., description="Detailed description")
     screenshots: list[str] = Field(default_factory=list)
+
+
+class FeedbackIn(BaseModel):
+    score: int = Field(..., ge=0, le=10)
+    comment: str | None = Field(default=None)
+    feature_request: bool = Field(default=False)
 
 
 @router.post("/support/ticket")
@@ -88,3 +94,24 @@ async def list_my_tickets(
             for r in rows
         ]
     return ok(tickets)
+
+
+@router.post("/support/feedback")
+@audit("support.feedback")
+async def submit_feedback(
+    payload: FeedbackIn,
+    request: Request,
+    user: User = Depends(role_required("owner", "super_admin")),
+) -> dict:
+    tenant = request.headers.get("X-Tenant-ID", "unknown")
+    fb = FeedbackNPS(
+        tenant=tenant,
+        user=user.username,
+        score=payload.score,
+        comment=payload.comment,
+        feature_request=payload.feature_request,
+    )
+    with SessionLocal() as session:
+        session.add(fb)
+        session.commit()
+    return ok({"status": "thanks"})
