@@ -121,6 +121,31 @@ export function getCredits() {
   return apiFetch<Credits>('/admin/billing/credits');
 }
 
+export interface ReferralCredit {
+  id: string;
+  amount_inr: number;
+  applied_invoice_id?: string;
+  created_at: string;
+}
+
+export interface Referral {
+  code: string;
+  landing_url: string;
+  clicks: number;
+  signups: number;
+  converted: number;
+  max_credit_inr: number;
+  credits: ReferralCredit[];
+}
+
+export function getReferral() {
+  return apiFetch<Referral | null>('/admin/referrals');
+}
+
+export function createReferral() {
+  return apiFetch<Referral>('/admin/referrals/new', { method: 'POST' });
+}
+
 export interface Subscription {
   plan_id: string;
   table_cap: number;
