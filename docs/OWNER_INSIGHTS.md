@@ -1,6 +1,8 @@
 # Weekly Owner Insights
 
 This report provides a week over week summary of key restaurant metrics.
+Every Monday at 09:00 IST an email is sent to opted-in owners with a
+brief HTML summary alongside CSV and PDF attachments for deeper analysis.
 
 ## Metrics
 
