@@ -112,7 +112,11 @@ class Table(Base):
     name = Column(String, nullable=False)
     code = Column(String, nullable=True)
     qr_token = Column(String, unique=True, nullable=True)
-    status = Column(Enum(TableStatus), nullable=False, default=TableStatus.AVAILABLE)
+    status = Column(
+        Enum(TableStatus, native_enum=False),
+        nullable=False,
+        default=TableStatus.AVAILABLE,
+    )
     state = Column(String, nullable=False, default="AVAILABLE")
     pos_x = Column(Integer, nullable=True)
     pos_y = Column(Integer, nullable=True)
@@ -190,7 +194,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True)
     table_id = Column(Integer, ForeignKey("tables.id"), nullable=False)
-    status = Column(Enum(OrderStatus), nullable=False)
+    status = Column(Enum(OrderStatus, native_enum=False), nullable=False)
     placed_at = Column(DateTime(timezone=True), nullable=True)
     accepted_at = Column(DateTime(timezone=True), nullable=True)
     ready_at = Column(DateTime(timezone=True), nullable=True)
@@ -312,7 +316,7 @@ class CounterOrder(Base):
 
     id = Column(Integer, primary_key=True)
     counter_id = Column(Integer, ForeignKey("counters.id"), nullable=False)
-    status = Column(Enum(CounterOrderStatus), nullable=False)
+    status = Column(Enum(CounterOrderStatus, native_enum=False), nullable=False)
     placed_at = Column(DateTime(timezone=True), nullable=True)
     delivered_at = Column(DateTime(timezone=True), nullable=True)
 
