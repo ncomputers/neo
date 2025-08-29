@@ -1,13 +1,30 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from '../auth';
-import { clearToken, useLicense } from '@neo/api';
-import { LicenseBanner } from '@neo/ui';
+import { clearToken, useLicense, useVersion } from '@neo/api';
+import { LicenseBanner, toast } from '@neo/ui';
+import pkg from '../../package.json';
 
 export function Layout() {
   const roles = useAuth();
   const navigate = useNavigate();
   const { data } = useLicense();
+  const { data: api } = useVersion();
   const status = data?.status;
+  const uiVersion = pkg.version;
+
+  useEffect(() => {
+    const seen = localStorage.getItem('uiVersion');
+    if (seen !== uiVersion) {
+      toast("What's new", {
+        action: {
+          label: 'View',
+          onClick: () => navigate('/changelog'),
+        },
+      });
+      localStorage.setItem('uiVersion', uiVersion);
+    }
+  }, [navigate, uiVersion]);
   return (
     <div className="flex h-screen">
       <a href="#main" className="sr-only focus:not-sr-only">
@@ -47,6 +64,10 @@ export function Layout() {
         <main id="main" className="flex-1 overflow-auto p-4">
           <Outlet />
         </main>
+        <footer className="p-2 border-t text-xs flex justify-between">
+          <span>UI v{uiVersion}</span>
+          <span>API {api?.sha?.slice(0,7) ?? 'unknown'}</span>
+        </footer>
       </div>
     </div>
   );

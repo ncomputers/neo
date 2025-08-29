@@ -8,6 +8,7 @@ import { Support } from './pages/Support';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { StaffSupport } from './pages/StaffSupport';
+import { Changelog } from './pages/Changelog';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <Login /> },
@@ -31,7 +32,8 @@ export const routes: RouteObject[] = [
           )
         },
         { path: 'onboarding', element: <Onboarding /> },
-        { path: 'support', element: <Support /> }
+        { path: 'support', element: <Support /> },
+        { path: 'changelog', element: <Changelog /> }
       ]
     }
   },
