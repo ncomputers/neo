@@ -45,6 +45,8 @@ jobs:
         run: corepack enable && corepack prepare pnpm@latest --activate
       - name: Verify pnpm installation
         run: pnpm --version
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
