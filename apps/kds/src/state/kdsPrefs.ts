@@ -6,6 +6,8 @@ export interface KdsPrefs {
   desktopNotify: boolean;
   darkMode: boolean;
   fontScale: number; // percent
+  printer: boolean;
+  layout: 'compact' | 'full';
   set: (prefs: Partial<KdsPrefs>) => void;
 }
 
@@ -33,6 +35,8 @@ export const useKdsPrefs = create<KdsPrefs>((set) => {
     desktopNotify: stored.desktopNotify ?? false,
     darkMode: stored.darkMode ?? prefersDark,
     fontScale: stored.fontScale ?? 100,
+    printer: stored.printer ?? false,
+    layout: stored.layout ?? 'compact',
     set: (prefs) =>
       set((state) => {
         const next = { ...state, ...prefs } as KdsPrefs;
@@ -44,6 +48,8 @@ export const useKdsPrefs = create<KdsPrefs>((set) => {
             desktopNotify: next.desktopNotify,
             darkMode: next.darkMode,
             fontScale: next.fontScale,
+            printer: next.printer,
+            layout: next.layout,
           })
         );
         return next;
