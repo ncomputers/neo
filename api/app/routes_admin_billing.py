@@ -9,21 +9,23 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-from fastapi import APIRouter, Header, HTTPException, Request, Response, Query
+from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 
 from .billing import (
     PLANS,
     PROCESSED_EVENTS,
+    REFERRAL_CREDITS,
     SUBSCRIPTION_EVENTS,
+    SUBSCRIPTIONS,
     MockGateway,
     SubscriptionEvent,
 )
 from .billing.invoice_service import create_invoice
-from .utils.responses import ok
-from .middlewares.license_gate import billing_always_allowed
 from .db import SessionLocal
-from sqlalchemy import text
+from .middlewares.license_gate import billing_always_allowed
+from .utils.responses import ok
 
 router = APIRouter(prefix="/admin/billing")
 webhook_router = APIRouter()
@@ -73,6 +75,24 @@ async def checkout(payload: dict, x_tenant_id: str = Header(...)) -> dict:
         raise HTTPException(status_code=404, detail="Plan not found")
     session = _gateway.create_checkout_session(x_tenant_id, plan)
     return ok(session)
+
+
+@router.get("/credits")
+@billing_always_allowed
+async def credits(x_tenant_id: str = Header(...)) -> dict:
+    sub = SUBSCRIPTIONS.get(x_tenant_id)
+    balance = sub.credit_balance_inr if sub else 0
+    referrals = sum(
+        c.amount_inr
+        for c in REFERRAL_CREDITS
+        if c.tenant_id == x_tenant_id and c.reason == "referral"
+    )
+    adjustments = sum(
+        c.amount_inr
+        for c in REFERRAL_CREDITS
+        if c.tenant_id == x_tenant_id and c.reason != "referral"
+    )
+    return ok({"balance": balance, "referrals": referrals, "adjustments": adjustments})
 
 
 @router.get("/invoice/{invoice_id}.pdf")
