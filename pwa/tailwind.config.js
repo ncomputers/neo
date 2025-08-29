@@ -6,7 +6,7 @@ export default {
         primary: '#1d4ed8',
         success: '#15803d',
         danger: '#b91c1c',
-        warning: '#ca8a04',
+        warning: '#a16207',
       },
     },
   },

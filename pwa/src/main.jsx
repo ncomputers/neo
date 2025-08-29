@@ -1,12 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import App from './App'
-import Login from './Login'
-import Dashboard from './Dashboard'
-import Admin from './Admin'
-import Troubleshoot from './Troubleshoot'
-import ProtectedRoute from './ProtectedRoute'
+const App = React.lazy(() => import('./App'))
+const Login = React.lazy(() => import('./Login'))
+const Dashboard = React.lazy(() => import('./Dashboard'))
+const Admin = React.lazy(() => import('./Admin'))
+const Troubleshoot = React.lazy(() => import('./Troubleshoot'))
+const ProtectedRoute = React.lazy(() => import('./ProtectedRoute'))
 import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -19,37 +19,78 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
-          <App />
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <App />
+          </React.Suspense>
         </ThemeProvider>
       </AuthProvider>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <Login />
+            </React.Suspense>
+          }
+        />
         <Route
           element={
-            <ProtectedRoute
-              roles={[
-                'super_admin',
-                'outlet_admin',
-                'manager',
-                'cashier',
-                'kitchen',
-                'cleaner',
-              ]}
-            />
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <ProtectedRoute
+                roles={[
+                  'super_admin',
+                  'outlet_admin',
+                  'manager',
+                  'cashier',
+                  'kitchen',
+                  'cleaner',
+                ]}
+              />
+            </React.Suspense>
           }
         >
-          <Route path="/" element={<App />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/"
+            element={
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <App />
+              </React.Suspense>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <Dashboard />
+              </React.Suspense>
+            }
+          />
         </Route>
         <Route
           element={
-            <ProtectedRoute
-              roles={['super_admin', 'outlet_admin', 'manager']}
-            />
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <ProtectedRoute
+                roles={['super_admin', 'outlet_admin', 'manager']}
+              />
+            </React.Suspense>
           }
         >
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/troubleshoot" element={<Troubleshoot />} />
+          <Route
+            path="/admin"
+            element={
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <Admin />
+              </React.Suspense>
+            }
+          />
+          <Route
+            path="/admin/troubleshoot"
+            element={
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <Troubleshoot />
+              </React.Suspense>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

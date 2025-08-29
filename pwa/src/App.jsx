@@ -1,14 +1,17 @@
+import React from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
-import GuestOrder from './pages/GuestOrder'
-import AdminDashboard from './pages/AdminDashboard'
-import CashierDashboard from './pages/CashierDashboard'
-import KitchenDashboard from './pages/KitchenDashboard'
-import CleanerDashboard from './pages/CleanerDashboard'
-import Billing from './pages/Billing'
-import ExpoDashboard from './pages/ExpoDashboard'
-import OwnerOnboardingWizard from './pages/OwnerOnboardingWizard'
-import RequireRole from './components/RequireRole'
-import ConsentBanner from './components/ConsentBanner'
+const GuestOrder = React.lazy(() => import('./pages/GuestOrder'))
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'))
+const CashierDashboard = React.lazy(() => import('./pages/CashierDashboard'))
+const KitchenDashboard = React.lazy(() => import('./pages/KitchenDashboard'))
+const CleanerDashboard = React.lazy(() => import('./pages/CleanerDashboard'))
+const Billing = React.lazy(() => import('./pages/Billing'))
+const ExpoDashboard = React.lazy(() => import('./pages/ExpoDashboard'))
+const OwnerOnboardingWizard = React.lazy(
+  () => import('./pages/OwnerOnboardingWizard'),
+)
+const RequireRole = React.lazy(() => import('./components/RequireRole'))
+const ConsentBanner = React.lazy(() => import('./components/ConsentBanner'))
 import { useAuth } from './contexts/AuthContext'
 
 function Home() {
@@ -24,9 +27,11 @@ export default function App() {
   const { user, loginAs } = useAuth()
 
   return (
-    <div className="p-4">
-      <ConsentBanner />
-      <nav className="mb-4 space-x-2">
+    <main id="main-content" role="main" className="p-4">
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <ConsentBanner />
+      </React.Suspense>
+      <nav aria-label="Primary" className="mb-4 space-x-2">
         <Link to="/">Home</Link>
         <Link to="/guest">Guest</Link>
         <Link to="/admin">Admin</Link>
@@ -40,7 +45,11 @@ export default function App() {
         <Link to="/expo">Expo</Link>
         <Link to="/kitchen">Kitchen</Link>
         <Link to="/cleaner">Cleaner</Link>
+        <label htmlFor="role-select" className="sr-only">
+          Role
+        </label>
         <select
+          id="role-select"
           className="ml-4 border"
           value={user.role}
           onChange={(e) => loginAs(e.target.value)}
@@ -54,64 +63,85 @@ export default function App() {
       </nav>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/guest" element={<GuestOrder />} />
+        <Route
+          path="/guest"
+          element={
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <GuestOrder />
+            </React.Suspense>
+          }
+        />
         <Route
           path="/admin"
           element={
-            <RequireRole roles={['admin']}>
-              <AdminDashboard />
-            </RequireRole>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <RequireRole roles={['admin']}>
+                <AdminDashboard />
+              </RequireRole>
+            </React.Suspense>
           }
         />
         <Route
           path="/admin/onboarding"
           element={
-            <RequireRole roles={['admin']}>
-              <OwnerOnboardingWizard />
-            </RequireRole>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <RequireRole roles={['admin']}>
+                <OwnerOnboardingWizard />
+              </RequireRole>
+            </React.Suspense>
           }
         />
         <Route
           path="/billing"
           element={
-            <RequireRole roles={['admin']}>
-              <Billing />
-            </RequireRole>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <RequireRole roles={['admin']}>
+                <Billing />
+              </RequireRole>
+            </React.Suspense>
           }
         />
         <Route
           path="/cashier"
           element={
-            <RequireRole roles={['cashier']}>
-              <CashierDashboard />
-            </RequireRole>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <RequireRole roles={['cashier']}>
+                <CashierDashboard />
+              </RequireRole>
+            </React.Suspense>
           }
         />
         <Route
           path="/expo"
           element={
-            <RequireRole roles={['cashier']}>
-              <ExpoDashboard />
-            </RequireRole>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <RequireRole roles={['cashier']}>
+                <ExpoDashboard />
+              </RequireRole>
+            </React.Suspense>
           }
         />
         <Route
           path="/kitchen"
           element={
-            <RequireRole roles={['kitchen']}>
-              <KitchenDashboard />
-            </RequireRole>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <RequireRole roles={['kitchen']}>
+                <KitchenDashboard />
+              </RequireRole>
+            </React.Suspense>
           }
         />
         <Route
           path="/cleaner"
           element={
-            <RequireRole roles={['cleaner']}>
-              <CleanerDashboard />
-            </RequireRole>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <RequireRole roles={['cleaner']}>
+                <CleanerDashboard />
+              </RequireRole>
+            </React.Suspense>
           }
         />
       </Routes>
-    </div>
+    </main>
   )
 }

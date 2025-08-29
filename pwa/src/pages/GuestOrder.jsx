@@ -44,7 +44,9 @@ export default function GuestOrder() {
 
   return (
     <div className="p-4">
-      {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
+      {logo && (
+        <img src={logo} alt="Logo" className="h-16 mb-4" loading="lazy" />
+      )}
       <h2 className="text-xl font-bold">Guest Ordering</h2>
       <p className="mt-2">Status: {status}</p>
       <p className="mt-1">ETA: {eta}</p>

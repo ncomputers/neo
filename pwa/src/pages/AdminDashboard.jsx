@@ -25,7 +25,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-4">
-      {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
+      {logo && (
+        <img src={logo} alt="Logo" className="h-16 mb-4" loading="lazy" />
+      )}
       <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
       <Link
         to="/admin/onboarding"

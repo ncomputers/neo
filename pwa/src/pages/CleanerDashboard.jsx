@@ -29,7 +29,9 @@ export default function CleanerDashboard() {
 
   return (
     <div className="p-4">
-      {logo && <img src={logo} alt="Logo" className="h-16 mb-4" />}
+      {logo && (
+        <img src={logo} alt="Logo" className="h-16 mb-4" loading="lazy" />
+      )}
       <h2 className="text-xl font-bold mb-4">Cleaner Dashboard</h2>
       {loading && <p>Loading...</p>}
       {error && <p className="text-danger">{error}</p>}
