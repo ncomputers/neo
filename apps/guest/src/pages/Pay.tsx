@@ -19,15 +19,21 @@ interface Invoice {
 export function PayPage() {
   const { orderId } = useParams();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [showUtr, setShowUtr] = useState(false);
   const [utr, setUtr] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [status, setStatus] = useState<'waiting' | 'success'>('waiting');
 
   useEffect(() => {
+    setError(null);
     fetch(`/api/orders/${orderId}`)
-      .then((r) => r.json())
-      .then(setInvoice);
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to fetch');
+        return r.json();
+      })
+      .then(setInvoice)
+      .catch(() => setError('Failed to load invoice'));
   }, [orderId]);
 
   const upiLink = invoice?.upi
@@ -50,6 +56,14 @@ export function PayPage() {
     }
     return () => clearInterval(int);
   }, [showQr, orderId, status]);
+
+  if (error)
+    return (
+      <div>
+        <Header />
+        <p>Failed to load invoice.</p>
+      </div>
+    );
 
   if (!invoice) return (
     <div>

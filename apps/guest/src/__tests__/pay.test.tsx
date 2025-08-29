@@ -36,6 +36,16 @@ describe('pay page', () => {
     global.fetch = jest.fn();
   });
 
+  test('shows error message when invoice fetch fails', async () => {
+    // @ts-ignore
+    global.fetch.mockRejectedValueOnce(new Error('Network'));
+
+    renderPay();
+
+    const msg = await screen.findByText(/failed to load invoice/i);
+    expect(msg).toBeInTheDocument();
+  });
+
   test('UPI URL contains pa/pn/am', async () => {
     // @ts-ignore
     global.fetch.mockResolvedValueOnce({
