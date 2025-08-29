@@ -15,7 +15,7 @@ RUN pnpm install --frozen-lockfile \
     && mv apps/admin/dist /dist/admin
 
 FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY deploy/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /dist/guest /usr/share/nginx/html/guest
 COPY --from=build /dist/kds /usr/share/nginx/html/kds
 COPY --from=build /dist/admin /usr/share/nginx/html/admin
