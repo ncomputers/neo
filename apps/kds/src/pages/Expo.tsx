@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch, useWS, useLicense } from '@neo/api';
 import { WS_BASE } from '../env';
 
@@ -27,6 +27,15 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [zone, setZone] = useState<string | undefined>();
   const [order, setOrder] = useState<string[]>([]);
+
+  const [playSound, setPlaySound] = useState(() => localStorage.getItem('kdsSound') === '1');
+  const [notify, setNotify] = useState(() => localStorage.getItem('kdsNotify') === '1');
+  const [dark, setDark] = useState(() => localStorage.getItem('kdsDark') === '1');
+  const [font, setFont] = useState(() => parseInt(localStorage.getItem('kdsFont') || '100'));
+  const [showSettings, setShowSettings] = useState(false);
+  const [fullscreen, setFullscreen] = useState(() => localStorage.getItem('kdsFullscreen') === '1');
+
+  const prevTickets = useRef<Ticket[]>([]);
   const { data: license } = useLicense();
   const expired = license?.status === 'EXPIRED';
 
@@ -62,6 +71,41 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
     }
     return map;
   }, [filteredTickets]);
+
+  useEffect(() => {
+    localStorage.setItem('kdsSound', playSound ? '1' : '0');
+  }, [playSound]);
+
+  useEffect(() => {
+    localStorage.setItem('kdsNotify', notify ? '1' : '0');
+    if (notify && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, [notify]);
+
+  useEffect(() => {
+    localStorage.setItem('kdsDark', dark ? '1' : '0');
+    document.documentElement.classList.toggle('dark', dark);
+  }, [dark]);
+
+  useEffect(() => {
+    localStorage.setItem('kdsFont', String(font));
+  }, [font]);
+
+  useEffect(() => {
+    if (fullscreen && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => setFullscreen(false));
+    } else if (!fullscreen && document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+    localStorage.setItem('kdsFullscreen', fullscreen ? '1' : '0');
+  }, [fullscreen]);
+
+  useEffect(() => {
+    const handler = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -99,6 +143,21 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
       return [...existing, ...newIds];
     });
   }, [tickets]);
+
+  useEffect(() => {
+    for (const t of tickets) {
+      const prev = prevTickets.current.find((p) => p.id === t.id);
+      if (!prev && t.status === 'NEW') {
+        if (playSound) new Audio('/static/sounds/new.mp3').play();
+        if (notify && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          new Notification(`New order ${t.table}`);
+        }
+      } else if (prev && prev.status !== 'READY' && t.status === 'READY') {
+        if (playSound) new Audio('/static/sounds/ready.mp3').play();
+      }
+    }
+    prevTickets.current = tickets;
+  }, [tickets, playSound, notify]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
@@ -197,10 +256,75 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div
+      className="p-4 space-y-4 dark:bg-gray-900 dark:text-white"
+      style={{ fontSize: `${font}%` }}
+    >
+      <div className="flex justify-end space-x-2">
+        <button
+          aria-label="Fullscreen"
+          onClick={() => setFullscreen(!fullscreen)}
+          className="border px-2 py-1 rounded"
+        >
+          {fullscreen ? '🡼' : '⛶'}
+        </button>
+        <button
+          data-testid="settings-btn"
+          aria-label="Settings"
+          onClick={() => setShowSettings((s) => !s)}
+          className="border px-2 py-1 rounded"
+        >
+          ⚙️
+        </button>
+      </div>
       {offline && (
-        <div data-testid="offline" className="bg-red-600 text-white p-2 text-center">
+        <div
+          data-testid="offline"
+          className="fixed top-2 right-2 bg-red-600 text-white px-2 py-1 rounded"
+        >
           Offline
+        </div>
+      )}
+      {showSettings && (
+        <div
+          data-testid="settings"
+          className="absolute top-12 right-2 bg-white dark:bg-gray-700 border p-4 space-y-2 z-10"
+        >
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={playSound}
+              onChange={(e) => setPlaySound(e.target.checked)}
+            />
+            <span>Sound</span>
+          </label>
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={notify}
+              onChange={(e) => setNotify(e.target.checked)}
+            />
+            <span>Notifications</span>
+          </label>
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={dark}
+              onChange={(e) => setDark(e.target.checked)}
+            />
+            <span>Dark mode</span>
+          </label>
+          <label className="flex items-center space-x-2">
+            <span>Font</span>
+            <input
+              type="range"
+              min={90}
+              max={130}
+              value={font}
+              onChange={(e) => setFont(parseInt(e.target.value))}
+            />
+            <span>{font}%</span>
+          </label>
         </div>
       )}
       <div className="flex space-x-2">
