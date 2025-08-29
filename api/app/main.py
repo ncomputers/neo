@@ -114,6 +114,7 @@ from .routes_ab_report import router as ab_report_router
 from .routes_ab_tests import router as ab_tests_router
 from .routes_accounting import router as accounting_router
 from .routes_accounting_exports import router as accounting_exports_router
+from .routes_admin_audit import router as admin_audit_router
 from .routes_admin_billing import router as admin_billing_router
 from .routes_admin_billing import webhook_router as billing_webhook_router
 from .routes_admin_devices import router as admin_devices_router
@@ -962,6 +963,7 @@ app.include_router(kds_expo_router)
 app.include_router(counter_admin_router)
 app.include_router(staff_router)
 app.include_router(admin_menu_router)
+app.include_router(admin_audit_router)
 app.include_router(menu_i18n_router)
 app.include_router(admin_onboarding_router)
 app.include_router(slo_router)

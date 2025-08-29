@@ -15,6 +15,7 @@ import { FeatureFlag } from '@neo/ui';
 import { Flag } from '@neo/ui';
 import { QRPack } from './pages/QRPack';
 import { Status } from './pages/Status';
+import { Audit } from './pages/Audit';
 
 export const routes: RouteObject[] = [
   { path: '/status', element: <Status /> },
@@ -49,6 +50,7 @@ export const routes: RouteObject[] = [
         )
       },
       { path: 'onboarding', element: <Onboarding /> },
+      { path: 'audit', element: <Audit /> },
       { path: 'support', element: <Support /> },
       { path: 'changelog', element: <Flag name="changelog"><Changelog /></Flag> }
     ]

@@ -141,13 +141,11 @@ def test_audit_log_pagination_and_limit(tmp_path):
         for i in range(120):
             session.add(audit.Audit(actor="a", action="x", entity=str(i)))
         session.commit()
-    resp = client.get(
-        "/api/admin/audit/logs", params={"limit": 1000}, headers=_admin_headers()
-    )
+    resp = client.get("/admin/audit", params={"limit": 1000}, headers=_admin_headers())
     data = resp.json()["data"]
     assert len(data) == 100
     cursor = data[-1]["id"]
     resp = client.get(
-        "/api/admin/audit/logs", params={"cursor": cursor}, headers=_admin_headers()
+        "/admin/audit", params={"cursor": cursor}, headers=_admin_headers()
     )
     assert len(resp.json()["data"]) == 20
