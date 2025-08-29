@@ -1,5 +1,21 @@
 {
   "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:5173/",
+        "http://localhost:5174/",
+        "http://localhost:5175/"
+      ],
+      "startServerCommand": "pnpm --filter pwa build && pnpm --filter pwa preview --port 5173",
+      "numberOfRuns": 1,
+      "output": ["html"],
+      "reportFilenamePattern": "%%PATHNAME%%-lighthouse.%%EXTENSION%%",
+      "chromeFlags": "--no-sandbox",
+      "settings": {
+        "budgetsPath": "budgets.json"
+      }
+    },
+
     "assert": {
       "assertMatrix": [
         {
