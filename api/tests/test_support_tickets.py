@@ -105,6 +105,8 @@ def test_rbac_owner_and_staff() -> None:
     assert len(resp_other.json()["data"]) == 1
     resp_forbidden = client.get("/staff/support", headers=owner_headers())
     assert resp_forbidden.status_code == 403
+    resp_staff = client.get("/staff/support", headers=staff_headers())
+    assert len(resp_staff.json()["data"]) == 2
 
 
 def test_staff_filters() -> None:
