@@ -24,7 +24,6 @@ import json
 import shutil
 import socket
 import subprocess
-import time
 from pathlib import Path
 import uuid
 
@@ -245,13 +244,19 @@ def main():
         log("✅ All done.")
         return
     if "--env-only" in args:
-        write_env(); ensure_db(); return
+        write_env()
+        ensure_db()
+        return
     if "--seed-only" in args:
-        run_seed_and_qr(); return
+        run_seed_and_qr()
+        return
     if "--build-only" in args:
-        patch_flags_tsconfig(); pnpm_install_build(); return
+        patch_flags_tsconfig()
+        pnpm_install_build()
+        return
     if "--docker" in args:
-        docker_build(); return
+        docker_build()
+        return
     print(__doc__)
 
 if __name__ == "__main__":
