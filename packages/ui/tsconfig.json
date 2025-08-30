@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@neo/utils": ["../utils/src"],
-      "@neo/api": ["../api/src"]
+      "@neo/api": ["../api/src"],
+      "@neo/flags": ["../flags/src"]
     }
   }
 }

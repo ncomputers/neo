@@ -7,7 +7,8 @@
     "paths": {
       "@neo/api": ["../../packages/api/src"],
       "@neo/ui": ["../../packages/ui/src"],
-      "@neo/utils": ["../../packages/utils/src"]
+      "@neo/utils": ["../../packages/utils/src"],
+      "@neo/flags": ["../../packages/flags/src"]
     },
     "resolveJsonModule": true
   }
