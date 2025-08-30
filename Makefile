@@ -27,7 +27,7 @@ analyze-hot:
 > python scripts/auto_analyze_hot_tables.py
 
 ui-build:
-> pnpm -r --filter "./apps/*" build
+> pnpm -r --filter "./apps/*..." build
 
 ui-image:
 > docker build -f Dockerfile.ui -t neo-ui .
