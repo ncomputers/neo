@@ -33,6 +33,14 @@ if str(ROOT) not in sys.path:
 from api.app.bi_dump import build_manifest
 
 
+def _required_env(name: str) -> str:
+    """Return required environment variable or raise a helpful error."""
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"{name} environment variable is required")
+    return value
+
+
 def _daterange(day: date) -> tuple[datetime, datetime]:
     start = datetime.combine(day, time.min, timezone.utc)
     end = start + timedelta(days=1)
@@ -63,7 +71,7 @@ def _upload(client: boto3.client, bucket: str, path: Path, key: str) -> str:
 
 
 def main(day: date) -> dict:
-    dsn = os.environ["DWH_DB_DSN"]
+    dsn = _required_env("DWH_DB_DSN")
     engine = create_engine(dsn)
 
     s3 = boto3.client(
@@ -72,7 +80,7 @@ def main(day: date) -> dict:
         aws_access_key_id=os.getenv("DWH_S3_KEY"),
         aws_secret_access_key=os.getenv("DWH_S3_SECRET"),
     )
-    bucket = os.environ["DWH_S3_BUCKET"]
+    bucket = _required_env("DWH_S3_BUCKET")
     prefix = os.getenv("DWH_PREFIX", "").strip("/")
     if prefix:
         prefix = f"{prefix}/"
