@@ -174,19 +174,35 @@ def main(tenant: str, week_start: str) -> None:
     send_email(tenant, metrics, insights)
 
 
+def _parse_week_start(value: str) -> date:
+    if value == "last_mon":
+        today = date.today()
+        return today - timedelta(days=today.weekday() + 7)
+    return datetime.strptime(value, "%Y-%m-%d").date()
+
+
 def _cli() -> None:
     parser = argparse.ArgumentParser(description="Generate weekly owner insights")
     parser.add_argument(
-        "--week_start", required=True, help="ISO date for week start (Monday)"
+        "--week_start",
+        default="last_mon",
+        help="ISO date for week start (Monday) or 'last_mon'",
     )
-    parser.add_argument("--tenant", default="all", help="Tenant identifier or 'all'")
+    parser.add_argument(
+        "--tenants",
+        nargs="+",
+        default=["all"],
+        help="Tenant identifiers (space/comma separated) or 'all'",
+    )
     args = parser.parse_args()
 
-    week_start = datetime.strptime(args.week_start, "%Y-%m-%d").date()
-    week_end = week_start + timedelta(days=6)
-    print(
-        f"Generating insights for {args.tenant} from {week_start.isoformat()} to {week_end.isoformat()}"
-    )
+    week_start = _parse_week_start(args.week_start)
+    tenants: List[str] = []
+    for item in args.tenants:
+        tenants.extend(t for t in item.split(",") if t)
+
+    for tenant in tenants:
+        main(tenant, week_start.isoformat())
 
 
 if __name__ == "__main__":
