@@ -97,7 +97,8 @@ primary database, encrypting the SQL with `age`, restoring it into a temporary
 Postgres database, and running a basic tenant count query. It reports the
 encrypted size, timings, and row count. The `backup-smoke` GitHub workflow runs
 this weekly against the staging cluster and posts a summary to the workflow
-run.
+run. If the required environment variables are missing, the script exits
+without error and prints a skip message.
 
 To run the script manually, set `POSTGRES_URL`, `BACKUP_PUBLIC_KEY`, and
 `BACKUP_PRIVATE_KEY` in the environment and invoke:

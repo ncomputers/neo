@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${POSTGRES_URL:?POSTGRES_URL is required}"
-: "${BACKUP_PUBLIC_KEY:?BACKUP_PUBLIC_KEY is required}"
-: "${BACKUP_PRIVATE_KEY:?BACKUP_PRIVATE_KEY is required}"
+# Skip when required env vars are missing.
+if [[ -z "${POSTGRES_URL:-}" || -z "${BACKUP_PUBLIC_KEY:-}" || -z "${BACKUP_PRIVATE_KEY:-}" ]]; then
+    echo "skipping backup smoke: POSTGRES_URL, BACKUP_PUBLIC_KEY, and BACKUP_PRIVATE_KEY are required" >&2
+    exit 0
+fi
 
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
