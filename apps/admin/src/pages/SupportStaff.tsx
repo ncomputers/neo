@@ -1,4 +1,5 @@
 import { useState, useEffect, ChangeEvent } from 'react';
+import DOMPurify from 'dompurify';
 
 interface Ticket {
   id: string;
@@ -171,12 +172,17 @@ export function SupportStaff() {
           <button onClick={close}>Close</button>
           <button onClick={reopen}>Reopen</button>
           <ul className="my-2 space-y-1">
-            {current.messages.map((m: Message) => (
-              <li key={m.id}>
-                <b>{m.author}:</b> {m.body}{' '}
-                {m.internal ? '(internal)' : ''}
-              </li>
-            ))}
+              {current.messages.map((m: Message) => (
+                <li key={m.id}>
+                  <b>{m.author}:</b>{' '}
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(m.body || ''),
+                    }}
+                  />{' '}
+                  {m.internal ? '(internal)' : ''}
+                </li>
+              ))}
           </ul>
           <textarea
             className="w-full border"

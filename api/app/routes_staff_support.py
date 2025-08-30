@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 
 from .auth import User, role_required
 from .db import SessionLocal
+from .middlewares.sanitize import sanitize_html
 from .models_master import SupportMessage, SupportTicket
 from .providers import email_stub
 from .utils.responses import ok
@@ -69,7 +70,7 @@ async def staff_get_ticket(
             {
                 "id": str(m.id),
                 "author": m.author,
-                "body": m.body,
+                "body": sanitize_html(m.body),
                 "attachments": m.attachments,
                 "internal": m.internal,
                 "created_at": m.created_at.isoformat() if m.created_at else None,
@@ -105,7 +106,7 @@ async def staff_reply_ticket(
         msg = SupportMessage(
             ticket_id=ticket.id,
             author=user.role,
-            body=payload.message,
+            body=sanitize_html(payload.message),
             attachments=payload.attachments,
             internal=payload.internal,
         )

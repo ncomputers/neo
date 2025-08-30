@@ -11,6 +11,7 @@ from sqlalchemy import func, select
 
 from .auth import User, role_required
 from .db import SessionLocal
+from .middlewares.sanitize import sanitize_html
 from .models_master import FeedbackNPS, SupportMessage, SupportTicket
 from .providers import email_stub
 from .utils.audit import audit
@@ -80,7 +81,7 @@ async def create_ticket(
     ticket = SupportTicket(
         tenant=tenant,
         subject=payload.subject,
-        body=_redact(payload.message),
+        body=sanitize_html(_redact(payload.message)),
         screenshots=payload.attachments,
         diagnostics=diagnostics,
         channel=payload.channel,
@@ -149,7 +150,7 @@ async def get_my_ticket(
             {
                 "id": str(m.id),
                 "author": m.author,
-                "body": m.body,
+                "body": sanitize_html(m.body),
                 "attachments": m.attachments,
                 "created_at": m.created_at.isoformat() if m.created_at else None,
             }
@@ -179,7 +180,7 @@ async def reply_ticket(
         msg = SupportMessage(
             ticket_id=ticket.id,
             author=user.role,
-            body=_redact(payload.message),
+            body=sanitize_html(_redact(payload.message)),
             attachments=payload.attachments,
         )
         session.add(msg)
