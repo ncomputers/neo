@@ -30,10 +30,12 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
+
 # Removing unused FileResponse
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
 
 class _LoopPolicy(asyncio.DefaultEventLoopPolicy):
     def get_event_loop(self):
@@ -216,7 +218,6 @@ from .routes_whatsapp_status import router as whatsapp_status_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
-
 
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)

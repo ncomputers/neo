@@ -16,6 +16,7 @@ from config import get_settings
 from .db.replica import read_only
 from .i18n import get_msg, resolve_lang
 from .menu.dietary import filter_items
+from .middlewares.sanitize import sanitize_html
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.i18n import get_text
 from .utils.responses import ok
@@ -73,9 +74,8 @@ async def fetch_menu(
     for item in items:
         item["name"] = get_text(item.get("name"), lang, item.get("name_i18n"))
         if item.get("description") or item.get("desc_i18n"):
-            item["description"] = get_text(
-                item.get("description"), lang, item.get("desc_i18n")
-            )
+            desc = get_text(item.get("description"), lang, item.get("desc_i18n"))
+            item["description"] = sanitize_html(desc)
     data["items"] = items
 
     resp_data = {**data, "items": items}

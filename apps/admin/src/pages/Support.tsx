@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { collectDiagnostics } from '../diagnostics';
 
 const secretRe = /(bearer|token|authorization)[\s=]+[A-Za-z0-9\._-]+|\b(utr|upi|card)\b\s*[A-Za-z0-9\._-]*/gi;
@@ -129,14 +130,16 @@ export function Support() {
             {faqs.length === 0 ? (
               <p>Loading...</p>
             ) : (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: faqs[selected]?.content
-                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                    .replace(/\n/g, '<br/>'),
-                }}
-              />
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(
+                      faqs[selected]?.content
+                        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                        .replace(/\n/g, '<br/>') || ''
+                    ),
+                  }}
+                />
             )}
           </div>
         </div>
@@ -185,11 +188,16 @@ export function Support() {
               </button>
               <h3>{current.subject}</h3>
               <ul>
-                {current.messages.map((m: any) => (
-                  <li key={m.id}>
-                    <b>{m.author}:</b> {m.body}
-                  </li>
-                ))}
+                  {current.messages.map((m: any) => (
+                    <li key={m.id}>
+                      <b>{m.author}:</b>{' '}
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(m.body || ''),
+                        }}
+                      />
+                    </li>
+                  ))}
               </ul>
               <textarea
                 placeholder="Reply"
