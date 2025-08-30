@@ -10,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ZAP Baseline Scan
+        if: ${{ secrets.STAGING_URL != '' }}
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: ${{ secrets.STAGING_URL }}
-          allowlist: |
-            /auth
-            /callback
-          cmd_options: '-r zap_report.html'
+          cmd_options: '--allowlist /auth --allowlist /callback -r zap_report.html'
           artifact_name: zap-baseline-report
