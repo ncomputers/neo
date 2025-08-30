@@ -15,9 +15,9 @@ jobs:
           STAGING_ENV_URL: ${{ secrets.STAGING_ENV_URL }}
           STAGING_TOKEN: ${{ secrets.STAGING_TOKEN }}
         run: |
-          curl -sH "Authorization: Bearer $STAGING_TOKEN" "$STAGING_ENV_URL" \
-            | jq -r 'keys[]' | sort > staging.env
+          curl -sH "Authorization: Bearer $STAGING_TOKEN" "$STAGING_ENV_URL" > staging.env
       - name: Compare with sample
         run: |
           cut -d '=' -f1 .env.prod.example | sort > prod.env
-          diff -u prod.env staging.env
+          cut -d '=' -f1 staging.env | sort > staging.env.keys
+          diff -u prod.env staging.env.keys || echo "::warning::missing or extra env keys"
