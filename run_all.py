@@ -24,6 +24,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -156,12 +157,32 @@ def start_processes():
         print("ℹ️ Skipping PWA (missing package.json or npm).")
 
     try:
-        # Stream logs; wait until Ctrl+C
         for p in procs:
             print(f"▶️ PID {p.pid} started.")
         print("\nPress Ctrl+C to stop both services.\n")
-        for p in procs:
-            p.wait()
+
+        while procs:
+            for p in list(procs):
+                code = p.poll()
+                if code is None:
+                    continue
+                if code != 0:
+                    print(
+                        f"❌ Process {p.pid} exited with code {code}. Stopping others..."
+                    )
+                    for other in procs:
+                        if other is not p and other.poll() is None:
+                            other.terminate()
+                    for other in procs:
+                        if other.poll() is None:
+                            try:
+                                other.wait(timeout=10)
+                            except subprocess.TimeoutExpired:
+                                other.kill()
+                    raise SystemExit(code)
+                else:
+                    procs.remove(p)
+            time.sleep(0.5)
     except KeyboardInterrupt:
         print("\n🛑 Stopping services ...")
         for p in procs:
@@ -209,7 +230,9 @@ def main():
     parser.add_argument(
         "--all",
         action="store_true",
-        help="Run env setup, install deps, start Docker, run tests, and launch services",
+        help=(
+            "Run env setup, install deps, start Docker, run tests, and launch services"
+        ),
     )
     args = parser.parse_args()
     if args.all:

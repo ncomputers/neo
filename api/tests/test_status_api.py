@@ -5,7 +5,7 @@ import sys
 from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
-os.environ.setdefault("POSTGRES_MASTER_URL", "sqlite://")
+os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("REDIS_URL", "redis://localhost")
 from api.app.main import app  # noqa: E402
 

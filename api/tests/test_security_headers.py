@@ -4,7 +4,6 @@ import sys
 import time
 
 import fakeredis.aioredis
-import pytest
 from fastapi.testclient import TestClient
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
@@ -15,7 +14,7 @@ def _setup_app(monkeypatch):
     monkeypatch.setenv("RATE_LIMIT_LOGIN", "2/1s")
     monkeypatch.setenv("RATE_LIMIT_REFRESH", "60/5m")
     monkeypatch.setenv("DB_URL", "postgresql://localhost/test")
-    monkeypatch.setenv("POSTGRES_MASTER_URL", "postgresql://localhost/test")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
     monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     from api.app import main as app_main

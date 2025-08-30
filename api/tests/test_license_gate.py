@@ -14,7 +14,7 @@ sys.modules.setdefault("qrcode", types.ModuleType("qrcode"))
 sys.modules.setdefault("jwt", types.ModuleType("jwt"))
 
 os.environ.setdefault("ALLOWED_ORIGINS", "*")
-os.environ.setdefault("POSTGRES_MASTER_URL", "postgresql://localhost")
+os.environ.setdefault("DATABASE_URL", "postgresql://localhost")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 
 import api.app.main as app_main  # noqa: E402

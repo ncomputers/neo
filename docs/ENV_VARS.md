@@ -5,7 +5,7 @@ The application relies on the following environment variables:
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `DB_URL` | Primary database DSN. | `postgresql+asyncpg://postgres:postgres@localhost:5432/master` |
-| `POSTGRES_MASTER_URL` | Async connection string for the master database. | `postgresql+asyncpg://user:password@postgres:5432/app` |
+| `DATABASE_URL` | Async connection string for the master database. | `postgresql+asyncpg://postgres:postgres@localhost:5432/master` |
 | `POSTGRES_TENANT_DSN_TEMPLATE` | Template DSN for tenant databases, with `{tenant_id}` placeholder. | `postgresql+asyncpg://tenant:tenant@localhost:5432/tenant_{tenant_id}` |
 | `POSTGRES_SUPER_URL` (optional) | Superuser connection URL used when creating databases. Not required for SQLite. |  |
 | `SYNC_DATABASE_URL` | Sync DSN used by Alembic migrations and scripts. | `postgresql://postgres:postgres@localhost:5432/master` |
@@ -59,7 +59,7 @@ They must remain disabled in production; `validate_on_boot` enforces this when
 Four environment variables control how the application talks to Postgres:
 
 - `DB_URL` – primary database DSN.
-- `POSTGRES_MASTER_URL` – async DSN for the shared "master" database.
+- `DATABASE_URL` – async DSN for the shared "master" database. (`POSTGRES_MASTER_URL` is accepted for backward compatibility.)
 - `POSTGRES_TENANT_DSN_TEMPLATE` – async DSN template for per‑tenant databases; must include `{tenant_id}`.
 - `SYNC_DATABASE_URL` – sync DSN used by Alembic migrations and other scripts.
 
@@ -67,7 +67,7 @@ Sample local values assume Postgres on `localhost:5432`:
 
 ```bash
 DB_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master
-POSTGRES_MASTER_URL=postgresql+asyncpg://user:password@postgres:5432/app
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master
 POSTGRES_TENANT_DSN_TEMPLATE=postgresql+asyncpg://tenant:tenant@localhost:5432/tenant_{tenant_id}
 SYNC_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/master
 ```
@@ -81,7 +81,7 @@ docker run --name neo-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=po
 createdb -h localhost -U postgres master
 ```
 
-Use the connection strings above in your `.env` file, adjusting credentials as needed.
+Use the connection strings above in your `.env` file, adjusting credentials as needed. In development, `validate_on_boot` will fall back to `DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master` and `REDIS_URL=redis://localhost:6379/0` when unset. These defaults are for local Docker only and should not be used in production.
 
 ## JWT/JOSE
 

@@ -10,21 +10,21 @@ os.environ.setdefault("BILL_SUPPLIER_GSTIN", "27ABCDE1234F2Z5")
 os.environ.setdefault("BILL_SAC_CODE", "998313")
 os.environ.setdefault("BILL_INVOICE_SERIES", "SaaS")
 os.environ.setdefault("BILL_CN_SERIES", "CN")
-os.environ.setdefault("POSTGRES_MASTER_URL", "sqlite://")
+os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from sqlalchemy import text
+from fastapi import FastAPI  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy import text  # noqa: E402
 
-from api.app.tax.billing_gst import split_tax
-from api.app.billing.invoice_service import (
+from api.app.tax.billing_gst import split_tax  # noqa: E402
+from api.app.billing.invoice_service import (  # noqa: E402
     allocate_number,
     create_credit_note,
     create_invoice,
 )
-from api.app.db import SessionLocal
-from api.app.routes_admin_billing import router as billing_router
+from api.app.db import SessionLocal  # noqa: E402
+from api.app.routes_admin_billing import router as billing_router  # noqa: E402
 
 test_app = FastAPI()
 test_app.include_router(billing_router)

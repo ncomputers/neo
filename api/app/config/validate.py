@@ -7,8 +7,10 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
+import yaml
+
 REQUIRED_ENVS = [
-    "POSTGRES_MASTER_URL",
+    "DATABASE_URL",
     "REDIS_URL",
     "SECRET_KEY",
     "ALLOWED_ORIGINS",
@@ -19,22 +21,30 @@ logger = logging.getLogger("api.config")
 DEV_DEFAULTS = {
     "ALLOWED_ORIGINS": "http://localhost",
     "SECRET_KEY": "test-secret",
+    "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/master",
+    "REDIS_URL": "redis://localhost:6379/0",
 }
 
 
 def _load_flag_config() -> dict[str, bool]:
     """Read ``config/feature_flags.yaml`` into a mapping."""
 
-    path = Path(__file__).resolve().parents[2] / "config" / "feature_flags.yaml"
+    path = Path(__file__).resolve().parents[3] / "config" / "feature_flags.yaml"
     if not path.exists():
         return {}
+    try:
+        raw = yaml.safe_load(path.read_text()) or {}
+    except yaml.YAMLError as exc:
+        logger.error("Invalid feature flag YAML: %s", exc)
+        return {}
     data: dict[str, bool] = {}
-    for line in path.read_text().splitlines():
-        line = line.split("#", 1)[0].strip()
-        if not line:
-            continue
-        key, _, val = line.partition(":")
-        data[key.strip()] = val.strip().lower() in {"1", "true", "yes", "on"}
+    for key, val in raw.items():
+        if isinstance(val, bool):
+            data[key] = val
+        elif isinstance(val, str):
+            data[key] = val.strip().lower() in {"1", "true", "yes", "on"}
+        else:
+            data[key] = bool(val)
     return data
 
 
@@ -53,12 +63,19 @@ def validate_on_boot() -> None:
     """
 
     env = os.getenv("ENV", "dev")
+
+    legacy = os.getenv("POSTGRES_MASTER_URL")
+    if legacy and not os.getenv("DATABASE_URL"):
+        os.environ["DATABASE_URL"] = legacy
+        logger.warning("POSTGRES_MASTER_URL is deprecated; use DATABASE_URL instead")
     missing: list[str] = []
     for name in REQUIRED_ENVS:
         value = os.getenv(name)
         if not value and env != "prod" and name in DEV_DEFAULTS:
             value = DEV_DEFAULTS[name]
             os.environ.setdefault(name, value)
+        if name == "DATABASE_URL" and not os.getenv("POSTGRES_MASTER_URL"):
+            os.environ.setdefault("POSTGRES_MASTER_URL", value)
         if not value:
             missing.append(name)
             continue

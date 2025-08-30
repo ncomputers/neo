@@ -6,7 +6,7 @@ This document locks down the production environment contract.
 
 | Variable | Purpose |
 |----------|---------|
-| `POSTGRES_MASTER_URL` | Master database DSN |
+| `DATABASE_URL` | Master database DSN |
 | `POSTGRES_TENANT_DSN_TEMPLATE` | Template DSN for tenant databases |
 | `JWT_SECRET` | JWT signing key (or set `JWKS_URL`) |
 | `REDIS_URL` | Redis connection URL |
