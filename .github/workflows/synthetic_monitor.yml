@@ -8,17 +8,17 @@ on:
 
 jobs:
   staging:
-    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
-            secrets.API_BASE_URL_STAGING != '' &&
-            secrets.SYN_TENANT_ID_STAGING != '' &&
-            secrets.SYN_TABLE_CODE_STAGING != '' &&
-            secrets.AUTH_TOKEN_STAGING != '' }}
     runs-on: ubuntu-latest
     env:
       API_BASE_URL: ${{ secrets.API_BASE_URL_STAGING }}
       SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_STAGING }}
       SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_STAGING }}
       AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_STAGING }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
+            env.API_BASE_URL != '' &&
+            env.SYN_TENANT_ID != '' &&
+            env.SYN_TABLE_CODE != '' &&
+            env.AUTH_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -102,14 +102,6 @@ jobs:
         run: exit 1
 
   prod:
-    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
-            github.ref == 'refs/heads/main' &&
-            !github.event.pull_request.head.repo.fork &&
-            secrets.API_BASE_URL != '' &&
-            secrets.SYN_TENANT_ID != '' &&
-            secrets.SYN_TABLE_CODE != '' &&
-            secrets.AUTH_TOKEN != '' &&
-            secrets.SYN_ENABLED_PROD != '' }}
     runs-on: ubuntu-latest
     environment: prod
     env:
@@ -118,6 +110,14 @@ jobs:
       SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE }}
       AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
       SYN_ENABLED_PROD: ${{ secrets.SYN_ENABLED_PROD }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
+            github.ref == 'refs/heads/main' &&
+            !github.event.pull_request.head.repo.fork &&
+            env.API_BASE_URL != '' &&
+            env.SYN_TENANT_ID != '' &&
+            env.SYN_TABLE_CODE != '' &&
+            env.AUTH_TOKEN != '' &&
+            env.SYN_ENABLED_PROD != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
