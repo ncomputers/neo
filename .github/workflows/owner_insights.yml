@@ -2,7 +2,7 @@ name: Owner insights
 
 on:
   schedule:
-    - cron: '30 3 * * 1'
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -14,5 +14,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Run weekly owner insights
+        env:
+          OWNER_INSIGHTS_EMAIL: owner@sandbox.example.com
         run: |
-          python scripts/owner_insights.py --week_start $(date -u -d 'last monday' +%F) --tenant all
+          python scripts/owner_insights.py --week_start last_mon --tenants demo
