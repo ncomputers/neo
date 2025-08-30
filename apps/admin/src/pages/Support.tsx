@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { collectDiagnostics } from '../diagnostics';
 
+const secretRe = /(bearer|token|authorization)[\s=]+[A-Za-z0-9\._-]+|\b(utr|upi|card)\b\s*[A-Za-z0-9\._-]*/gi;
+
+function redact(data: any): any {
+  if (typeof data === 'string') return data.replace(secretRe, '****');
+  if (Array.isArray(data)) return data.map(redact);
+  if (data && typeof data === 'object') {
+    const out: any = {};
+    for (const k in data) out[k] = redact(data[k]);
+    return out;
+  }
+  return data;
+}
+
 interface FaqEntry {
   title: string;
   content: string;
@@ -13,7 +26,7 @@ export function Support() {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [channel, setChannel] = useState<'email' | 'whatsapp'>('email');
-  const [includeDiag, setIncludeDiag] = useState(false);
+  const [includeDiag, setIncludeDiag] = useState(true);
   const [tickets, setTickets] = useState<any[]>([]);
   const [current, setCurrent] = useState<any | null>(null);
   const [reply, setReply] = useState('');
@@ -43,8 +56,10 @@ export function Support() {
   }, [tab]);
 
   const submitTicket = async () => {
-    const payload: any = { subject, message, channel, attachments: [] };
-    if (includeDiag) payload.includeDiagnostics = true, payload.diagnostics = collectDiagnostics(window.location.pathname);
+    const payload: any = { subject, message: redact(message), channel, attachments: [] };
+    if (includeDiag)
+      payload.includeDiagnostics = true,
+        (payload.diagnostics = redact(collectDiagnostics(window.location.pathname)));
     await fetch('/support/tickets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -64,13 +79,17 @@ export function Support() {
 
   const sendReply = async () => {
     if (!current) return;
+    setCurrent({
+      ...current,
+      messages: [...current.messages, { id: 'tmp', author: 'owner', body: reply }],
+    });
+    const body = JSON.stringify({ message: redact(reply) });
+    setReply('');
     await fetch(`/support/tickets/${current.id}/reply`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: reply }),
+      body,
     });
-    setReply('');
-    openTicket(current.id);
   };
 
   const submitFeedback = async () => {
@@ -150,7 +169,7 @@ export function Support() {
         </div>
       )}
       {tab === 'tickets' && (
-        <div className="flex">
+        <div>
           <ul className="w-48 mr-4">
             {tickets.map((t) => (
               <li key={t.id}>
@@ -159,28 +178,27 @@ export function Support() {
             ))}
             {tickets.length === 0 && <li>No tickets</li>}
           </ul>
-          <div className="flex-1">
-            {current ? (
-              <div>
-                <h3>{current.subject}</h3>
-                <ul>
-                  {current.messages.map((m: any) => (
-                    <li key={m.id}>
-                      <b>{m.author}:</b> {m.body}
-                    </li>
-                  ))}
-                </ul>
-                <textarea
-                  placeholder="Reply"
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
-                />
-                <button onClick={sendReply}>Send</button>
-              </div>
-            ) : (
-              <p>Select a ticket</p>
-            )}
-          </div>
+          {current && (
+            <div className="fixed top-0 right-0 w-1/3 h-full bg-white border-l p-4 overflow-y-auto">
+              <button className="float-right" onClick={() => setCurrent(null)}>
+                ×
+              </button>
+              <h3>{current.subject}</h3>
+              <ul>
+                {current.messages.map((m: any) => (
+                  <li key={m.id}>
+                    <b>{m.author}:</b> {m.body}
+                  </li>
+                ))}
+              </ul>
+              <textarea
+                placeholder="Reply"
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+              />
+              <button onClick={sendReply}>Send</button>
+            </div>
+          )}
         </div>
       )}
       {tab === 'feedback' && (
