@@ -35,6 +35,9 @@ importers:
       '@neo/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@neo/flags':
+        specifier: workspace:*
+        version: link:../../packages/flags
       '@neo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -232,6 +235,9 @@ importers:
       '@neo/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@neo/flags':
+        specifier: workspace:*
+        version: link:../../packages/flags
       '@neo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -343,11 +349,23 @@ importers:
         specifier: ^13.24.0
         version: 13.24.0
 
+  packages/flags:
+    devDependencies:
+      '@neo/config':
+        specifier: workspace:*
+        version: link:../config
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+
   packages/ui:
     dependencies:
       '@neo/api':
         specifier: workspace:*
         version: link:../api
+      '@neo/flags':
+        specifier: workspace:*
+        version: link:../flags
       '@neo/utils':
         specifier: workspace:*
         version: link:../utils

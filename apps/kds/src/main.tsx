@@ -10,6 +10,7 @@ import { Workbox } from 'workbox-window';
 import { AppRoutes } from './routes';
 import { AuthProvider } from './auth';
 import { withInterceptors } from '@neo/api';
+import { refreshFlags } from '@neo/flags';
 
 const qc = new QueryClient();
 
@@ -24,7 +25,10 @@ if ('serviceWorker' in navigator) {
 }
 
 async function init() {
-  const outlet = await fetch('/api/outlet/theme').then(r => r.json()).catch(() => ({}));
+  const [outlet] = await Promise.all([
+    fetch('/api/outlet/theme').then(r => r.json()).catch(() => ({})),
+    refreshFlags(),
+  ]);
   const tokens = tokensFromOutlet(outlet);
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

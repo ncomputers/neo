@@ -14,6 +14,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@neo/api": "workspace:*",
+    "@neo/flags": "workspace:*",
     "@neo/ui": "workspace:*",
     "@neo/utils": "workspace:*",
     "@tanstack/react-query": "^5.40.1",
