@@ -1,0 +1,39 @@
+name: pilot-checklist
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt
+          npx playwright install --with-deps
+      - name: Seed pilot tenant
+        env:
+          PYTHONPATH: .
+        run: python scripts/seed_pilot.py --tenant pilot
+      - name: Run smoke tests
+        run: bash scripts/smoke_e2e.sh
+      - name: Notify on failure
+        if: failure()
+        env:
+          WEBHOOK: ${{ secrets.PILOT_ALERT_WEBHOOK }}
+        run: bash scripts/notify.sh staging pilot_checklist

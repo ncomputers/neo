@@ -1,33 +1,23 @@
-# Incident Response Runbook
+# Pilot Operations Runbook
 
-## Common failures
-- Order service timeout or degraded performance
-- Database connection errors
-- Queue backlog causing delayed notifications
+## Start / Stop
+- `docker-compose up -d` starts API, worker and web assets
+- `docker-compose down` stops all services
 
-## Dashboards to check
-- API latency and error-rate dashboard
-- Database health dashboard
-- Worker queue depth dashboard
+## Blue / Green Rollout
+1. Build images for the new release
+2. Deploy using `scripts/rollout_blue_green.py` with the target color
+3. Verify health and switch traffic
 
-## SLIs
-- Request success rate
-- P95 latency
-- Queue processing time
+## Rollback
+- `python scripts/rollback_blue_green.py` restores the previous color
+- Confirm metrics and user flows before marking incident resolved
 
-## Rollback steps
-1. Identify the offending deployment version
-2. Trigger rollback via the deployment pipeline
-3. Verify services stabilize and metrics recover
+## CDN Invalidation
+- Purge cached assets via `scripts/deploy_assetlinks.sh --purge`
+- For manual purge hit the CDN provider console with the tenant domain
 
-## Communications template
-```
-**Incident**: <summary>
-**Impact**: <what users experience>
-**Timeline**:
-- Start: <timestamp>
-- Resolution: <timestamp>
-**Root cause**: <cause>
-**Mitigation**: <actions taken>
-**Next steps**: <follow-up tasks>
-```
+## Logs & Metrics
+- Application logs: `/var/log/neo/*.log`
+- Metrics dashboard: `https://grafana.example.com`
+- Access logs: cloud provider "load balancer" panel
