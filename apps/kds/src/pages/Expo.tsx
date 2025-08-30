@@ -4,6 +4,7 @@ import { WS_BASE } from '../env';
 import { SettingsDrawer } from '../components/SettingsDrawer';
 import { useKdsPrefs } from '../state/kdsPrefs';
 import { PrintKOTButton } from '../components/PrintKOTButton';
+import { Flag } from '@neo/ui';
 import sounds from '../sounds.json';
 
 interface Item {
@@ -357,7 +358,9 @@ export function Expo({ offlineMs = 10000 }: { offlineMs?: number } = {}) {
                         </li>
                       ))}
                     </ul>
-                    <PrintKOTButton ticket={t} />
+                    <Flag name="kds_print">
+                      <PrintKOTButton ticket={t} />
+                    </Flag>
                   </li>
                 ))}
               </ul>

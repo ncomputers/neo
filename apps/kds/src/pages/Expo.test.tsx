@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -28,6 +29,11 @@ vi.mock('@neo/api', async () => {
     useLicense: vi.fn(),
     getToken: () => 't'
   };
+});
+
+vi.mock('@neo/ui', async () => {
+  const actual = await vi.importActual<any>('../../../../packages/ui/src/index.ts');
+  return { ...actual, Flag: ({ children }: any) => <>{children}</> };
 });
 
 import { Expo } from './Expo';

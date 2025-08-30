@@ -4,3 +4,4 @@ export * from './Skeleton';
 export * from './empty-state';
 export * from './LicenseBanner';
 export * from './FeatureFlag';
+export * from './Flag';

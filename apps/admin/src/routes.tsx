@@ -11,7 +11,6 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { StaffSupport } from './pages/StaffSupport';
 import { Changelog } from './pages/Changelog';
 import { Flags } from './pages/Flags';
-import { FeatureFlag } from '@neo/ui';
 import { Flag } from '@neo/ui';
 import { QRPack } from './pages/QRPack';
 import { Status } from './pages/Status';

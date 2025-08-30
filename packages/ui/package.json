@@ -21,7 +21,8 @@
     "lucide-react": "^0.364.0",
     "sonner": "^1.4.0",
     "@neo/api": "workspace:*",
-    "@neo/utils": "workspace:*"
+    "@neo/utils": "workspace:*",
+    "@neo/flags": "workspace:*"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.0",

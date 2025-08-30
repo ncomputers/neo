@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { getFlag } from '@neo/api';
+import { getFlag } from '@neo/flags';
 
 interface FeatureFlagProps extends PropsWithChildren {
   name: string;
