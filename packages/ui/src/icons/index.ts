@@ -1,1 +1,1 @@
-export * from 'lucide-react';
+export { Flag as FlagIcon, ShoppingCart, Utensils } from 'lucide-react';
