@@ -16,12 +16,12 @@ sys.modules.setdefault("opentelemetry.trace", types.ModuleType("trace"))
 sys.modules.setdefault("qrcode", types.ModuleType("qrcode"))
 
 os.environ.setdefault("ALLOWED_ORIGINS", "*")
-os.environ.setdefault("POSTGRES_MASTER_URL", "postgresql://localhost")
+os.environ.setdefault("DATABASE_URL", "postgresql://localhost")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 
-from api.app import billing
-from api.app.billing import MockGateway
-from api.app.main import TENANTS, app
+from api.app import billing  # noqa: E402
+from api.app.billing import MockGateway  # noqa: E402
+from api.app.main import TENANTS, app  # noqa: E402
 
 
 @pytest.fixture

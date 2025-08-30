@@ -9,7 +9,10 @@ from sqlalchemy.orm import sessionmaker
 
 from api.app.obs import add_query_logger
 
-DATABASE_URL = os.getenv("POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    os.getenv("POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db"),
+)
 
 _engine: AsyncEngine | None = None
 _sessionmaker: sessionmaker[AsyncSession] | None = None
@@ -30,7 +33,6 @@ def get_engine() -> AsyncEngine:
 @asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Yield a session and ensure it is closed afterwards."""
-    global _sessionmaker
     if _sessionmaker is None:
         get_engine()
     assert _sessionmaker is not None  # for type checkers

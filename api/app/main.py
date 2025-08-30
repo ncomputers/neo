@@ -1,6 +1,5 @@
 # main.py
-
-# flake8: noqa
+# flake8: noqa: E402
 
 """In-memory FastAPI application for demo guest ordering and billing."""
 
@@ -31,10 +30,10 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from fastapi.responses import FileResponse, JSONResponse
+# Removing unused FileResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-
 
 class _LoopPolicy(asyncio.DefaultEventLoopPolicy):
     def get_event_loop(self):
@@ -50,7 +49,6 @@ asyncio.set_event_loop_policy(_LoopPolicy())
 from redis.asyncio import from_url
 from sqlalchemy import func
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from config import get_settings
@@ -62,7 +60,6 @@ from . import repos_sqlalchemy as app_repos_sqlalchemy
 from . import utils as app_utils
 from .audit import log_event
 from .auth import (
-    Token,
     User,
     authenticate_pin,
     authenticate_user,
@@ -112,7 +109,6 @@ from .obs.logging import configure_logging
 from .otel import init_tracing
 from .routes_ab_report import router as ab_report_router
 from .routes_ab_tests import router as ab_tests_router
-from .routes_accounting import router as accounting_router
 from .routes_accounting_exports import router as accounting_exports_router
 from .routes_admin_audit import router as admin_audit_router
 from .routes_admin_billing import router as admin_billing_router
@@ -123,8 +119,6 @@ from .routes_admin_flags import router as admin_flags_router
 from .routes_admin_menu import router as admin_menu_router
 from .routes_admin_onboarding import router as admin_onboarding_router
 from .routes_admin_ops import router as admin_ops_router
-from .routes_admin_pilot import router as admin_pilot_router
-from .routes_admin_print import router as admin_print_router
 from .routes_admin_privacy import router as admin_privacy_router
 from .routes_admin_qrpack import router as admin_qrpack_router
 from .routes_admin_qrposter_pack import router as admin_qrposter_router
@@ -218,11 +212,11 @@ from .routes_troubleshoot import router as troubleshoot_router
 from .routes_vapid import router as vapid_router
 from .routes_version import router as version_router
 from .routes_webhook_tools import router as webhook_tools_router
-from .routes_webhooks import router as webhooks_router
 from .routes_whatsapp_status import router as whatsapp_status_router
 from .services import notifications
 from .utils import PrepTimeTracker
 from .utils.responses import err, ok
+
 
 sys.modules.setdefault("db", app_db)
 sys.modules.setdefault("domain", app_domain)

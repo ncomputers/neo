@@ -10,7 +10,7 @@ A Lighthouse CI workflow enforces performance budgets for the guest, admin, and 
 
 ### Lighthouse workflow
 
-The workflow requires a PostgreSQL DSN for migrations. Set `POSTGRES_MASTER_URL`
+The workflow requires a PostgreSQL DSN for migrations. Set `DATABASE_URL`
 to this DSN (or `DATABASE_URL` for compatibility) and provide
 `SQLALCHEMY_DATABASE_URI` for tools needing a synchronous connection string.
 Migrations run once before the server starts and the workflow launches
@@ -215,7 +215,7 @@ cp .env.example .env
 
 See [Database URLs](docs/ENV_VARS.md#database-urls) for connection settings and a local Postgres quickstart.
 
-At startup the API validates that critical variables like `POSTGRES_MASTER_URL`,
+At startup the API validates that critical variables like `DATABASE_URL`,
 `REDIS_URL`, and `SECRET_KEY` are present. CI runs `scripts/env_audit.py` during linting to
 keep `.env.example` in sync, and you can run the script locally to compare
 `.env.example` against the required list and spot missing keys.

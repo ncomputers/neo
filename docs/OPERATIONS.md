@@ -21,7 +21,7 @@ python ops/scripts/status_page.py resolve "<title>"
 ## Data Purge
 
 The `scripts/purge_data.py` helper removes expired customer PII and delivered
-notification outbox entries for a tenant. It expects the `POSTGRES_MASTER_URL`
+notification outbox entries for a tenant. It expects the `DATABASE_URL`
 for the master database and `POSTGRES_TENANT_DSN_TEMPLATE` for tenant databases
 to be set in the environment.
 

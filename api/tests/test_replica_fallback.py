@@ -10,21 +10,24 @@ os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 os.environ.setdefault("DB_URL", "postgresql://localhost/db")
 os.environ.setdefault("REDIS_URL", "redis://localhost/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
-os.environ.setdefault("POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./dev_master.db")
 os.environ.setdefault(
     "POSTGRES_TENANT_DSN_TEMPLATE", "sqlite+aiosqlite:///./tenant_{tenant_id}.db"
 )
 
-import fakeredis.aioredis
-from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine
+import fakeredis.aioredis  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy.ext.asyncio import create_async_engine  # noqa: E402
 
-from api.app.db import SessionLocal, replica
-from api.app.models_tenant import Category as CategoryModel, MenuItem as MenuItemModel
-from api.app.models_master import Base as MasterBase, Tenant
-from api.app.models_tenant import Base as TenantBase
-from api.app.main import app
-from api.app.routes_metrics import db_replica_healthy
+from api.app.db import SessionLocal, replica  # noqa: E402
+from api.app.models_tenant import (  # noqa: E402
+    Category as CategoryModel,
+    MenuItem as MenuItemModel,
+)
+from api.app.models_master import Base as MasterBase, Tenant  # noqa: E402
+from api.app.models_tenant import Base as TenantBase  # noqa: E402
+from api.app.main import app  # noqa: E402
+from api.app.routes_metrics import db_replica_healthy  # noqa: E402
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -35,13 +38,16 @@ def setup_module() -> None:
 
 def _setup_databases(tenant_id: str) -> None:
     async def setup_async() -> None:
-        master_url = os.environ["POSTGRES_MASTER_URL"]
+        master_url = os.environ["DATABASE_URL"]
         master_engine = create_async_engine(master_url, future=True)
         async with master_engine.begin() as conn:
             await conn.run_sync(MasterBase.metadata.create_all)
             await conn.execute(Tenant.__table__.delete())
             await conn.execute(
-                Tenant.__table__.insert().values(id=uuid.UUID(hex=tenant_id), name="Tenant")
+                Tenant.__table__.insert().values(
+                    id=uuid.UUID(hex=tenant_id),
+                    name="Tenant",
+                )
             )
         await master_engine.dispose()
 

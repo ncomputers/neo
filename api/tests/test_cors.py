@@ -12,7 +12,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 def test_allowed_origins_env(monkeypatch):
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("DB_URL", "postgresql://localhost/test")
-    monkeypatch.setenv("POSTGRES_MASTER_URL", "postgresql://localhost/test")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
     monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     from api.app import main as app_main
@@ -36,7 +36,7 @@ def test_security_headers(monkeypatch):
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("ENABLE_HSTS", "1")
     monkeypatch.setenv("DB_URL", "postgresql://localhost/test")
-    monkeypatch.setenv("POSTGRES_MASTER_URL", "postgresql://localhost/test")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
     monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     from api.app import main as app_main
@@ -76,6 +76,6 @@ def test_security_headers(monkeypatch):
 
     monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
     monkeypatch.delenv("ENABLE_HSTS", raising=False)
-    monkeypatch.delenv("POSTGRES_MASTER_URL", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(RuntimeError):
         importlib.reload(app_main)
