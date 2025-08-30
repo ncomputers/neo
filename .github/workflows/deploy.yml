@@ -24,7 +24,7 @@ jobs:
           git push origin HEAD:deploy --force
   deploy-staging:
     needs: build-and-push
-    if: ${{ env.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+    if: ${{ secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     environment: staging
     env:
@@ -99,7 +99,7 @@ jobs:
 
   deploy-prod:
     needs: manual-approval
-    if: ${{ env.KUBE_CONFIG_PROD != '' && env.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+    if: ${{ secrets.KUBE_CONFIG_PROD != '' && secrets.KUBE_CONFIG_STAGING != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     environment: prod
     env:
