@@ -5,6 +5,11 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 import os
+import sys
+
+# Ensure `api` package is importable when running as a standalone script
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
 
 from api.app.dunning import Tenant, schedule_dunning
 from api.app.main import TENANTS
