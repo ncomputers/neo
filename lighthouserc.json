@@ -6,7 +6,7 @@
         "http://localhost:5174/",
         "http://localhost:5175/"
       ],
-      "startServerCommand": "pnpm --filter @neo/guest build && pnpm --filter @neo/kds build && pnpm --filter @neo/admin build && pnpm --filter @neo/guest preview --port 5173 & pnpm --filter @neo/kds preview --port 5174 & pnpm --filter @neo/admin preview --port 5175 & wait",
+      "startServerCommand": "pnpm --filter @neo/guest build && pnpm --filter @neo/kds build && pnpm --filter @neo/admin build && (pnpm --filter @neo/guest preview --port 5173 & pnpm --filter @neo/kds preview --port 5174 & pnpm --filter @neo/admin preview --port 5175 & wait)",
       "startServerReadyPattern": "http://localhost:5175/",
       "numberOfRuns": 1,
       "output": [
