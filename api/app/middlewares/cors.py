@@ -29,10 +29,11 @@ class CORSMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 err("FORBIDDEN_ORIGIN", "ForbiddenOrigin"),
                 status_code=HTTP_403_FORBIDDEN,
+                headers={"Vary": "Origin"},
             )
         response = await call_next(request)
+        response.headers.setdefault("Vary", "Origin")
         if origin and (not self.allowed or origin in self.allowed):
             response.headers.setdefault("Access-Control-Allow-Origin", origin)
-            response.headers.setdefault("Vary", "Origin")
             response.headers.setdefault("Access-Control-Max-Age", str(self.max_age))
         return response
