@@ -48,9 +48,23 @@ def get_msg(lang: str, key: str, **vars: Any) -> str:
 def resolve_lang(accept_language: str | None, tenant_default: str | None = None) -> str:
     """Pick the best supported language from headers or tenant default."""
     if accept_language:
-        candidate = accept_language.split(",")[0].split("-")[0].lower()
-        if candidate in _SUPPORTED_LANGS:
-            return candidate
+        prefs = []
+        for idx, part in enumerate(accept_language.split(",")):
+            part = part.strip()
+            if not part:
+                continue
+            token = part.split(";")
+            lang = token[0].split("-")[0].lower()
+            q = 1.0
+            if len(token) > 1 and token[1].strip().startswith("q="):
+                try:
+                    q = float(token[1].strip()[2:])
+                except ValueError:
+                    q = 0.0
+            prefs.append((-q, idx, lang))
+        for _, _, lang in sorted(prefs):
+            if lang in _SUPPORTED_LANGS:
+                return lang
     if tenant_default and tenant_default in _SUPPORTED_LANGS:
         return tenant_default
     return _DEFAULT_LANG
