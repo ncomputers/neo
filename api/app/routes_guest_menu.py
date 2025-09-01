@@ -71,14 +71,24 @@ async def fetch_menu(
     if filter_str:
         items = filter_items(items, filter_str)
     lang = getattr(request.state, "lang", resolve_lang(accept_language))
+    items_out = []
     for item in items:
-        item["name"] = get_text(item.get("name"), lang, item.get("name_i18n"))
+        item_out = {
+            "id": item["id"],
+            "out_of_stock": bool(item.get("out_of_stock", False)),
+        }
+        if "name" in item and item["name"] is not None:
+            item_out["name"] = get_text(item.get("name"), lang, item.get("name_i18n"))
+        elif item.get("name_i18n"):
+            item_out["name"] = get_text(item.get("name"), lang, item.get("name_i18n"))
         if item.get("description") or item.get("desc_i18n"):
             desc = get_text(item.get("description"), lang, item.get("desc_i18n"))
-            item["description"] = sanitize_html(desc)
-    data["items"] = items
+            if desc:
+                item_out["description"] = sanitize_html(desc)
+        items_out.append(item_out)
+    data["items"] = items_out
 
-    resp_data = {**data, "items": items}
+    resp_data = {**data, "items": items_out}
     resp_data["labels"] = {
         name: get_msg(lang, f"labels.{name}")
         for name in ("menu", "order", "pay", "get_bill")
