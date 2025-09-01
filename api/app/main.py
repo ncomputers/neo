@@ -291,6 +291,7 @@ except Exception:  # pragma: no cover - fallback when Redis is unreachable
     logging.warning("Redis unavailable; using fakeredis")
     app.state.redis = fakeredis.aioredis.FakeRedis()
 app.state.export_progress = {}
+app.state.pubsubs = set()
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(HttpErrorCounterMiddleware)
@@ -383,6 +384,13 @@ async def start_event_consumers() -> None:
 async def start_replica_monitor() -> None:
     await replica.check_replica(app)
     asyncio.create_task(replica.monitor(app))
+
+
+# Gracefully close any lingering Redis PubSub connections on shutdown
+@app.on_event("shutdown")
+async def stop_pubsubs() -> None:
+    for pubsub in list(app.state.pubsubs):
+        await pubsub.aclose()
 
 
 # Auth Routes
@@ -633,6 +641,7 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
     await websocket.accept()
     channel = f"rt:update:{table_code}"
     pubsub = redis_client.pubsub()
+    websocket.app.state.pubsubs.add(pubsub)
     await pubsub.subscribe(channel)
     tracker = _tracker(table_code)
     queue: asyncio.Queue[dict | None] = realtime_guard.queue()
@@ -678,6 +687,9 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
         reader_task.cancel()
         hb_task.cancel()
         await pubsub.unsubscribe(channel)
+        await pubsub.aclose()
+        websocket.app.state.pubsubs.discard(pubsub)
+
         realtime_guard.unregister(ip)
 
 

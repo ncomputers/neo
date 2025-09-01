@@ -44,6 +44,11 @@ async def stream_table_map(
 
     channel = f"rt:table_map:{tenant}"
     pubsub = redis_client.pubsub()
+    from .main import app as fastapi_app  # local import to avoid circular deps
+    app_state = (
+        request.app.state if request and "app" in request.scope else fastapi_app.state
+    )
+    app_state.pubsubs.add(pubsub)
     await pubsub.subscribe(channel)
 
     seq = (
@@ -119,6 +124,9 @@ async def stream_table_map(
         finally:
             reader_task.cancel()
             await pubsub.unsubscribe(channel)
+            await pubsub.aclose()
+            app_state.pubsubs.discard(pubsub)
+
             sse_clients_gauge.dec()
             unregister(ip)
 
