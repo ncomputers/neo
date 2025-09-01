@@ -16,6 +16,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
+from contextlib import asynccontextmanager
 
 import redis as redis_sync
 import redis.asyncio as redis
@@ -241,6 +242,20 @@ class SWStaticFiles(StaticFiles):
         return response
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(alerts_sender(event_bus.subscribe("order.placed")))
+    asyncio.create_task(ema_updater(event_bus.subscribe("payment.verified")))
+    asyncio.create_task(report_aggregator(event_bus.subscribe("table.cleaned")))
+    await replica.check_replica(app)
+    asyncio.create_task(replica.monitor(app))
+    try:
+        yield
+    finally:
+        redis_conn = getattr(app.state, "redis", None)
+        if redis_conn:
+            await redis_conn.close()
+
 validate_on_boot()
 settings = get_settings()
 app = FastAPI(
@@ -248,6 +263,7 @@ app = FastAPI(
     version="1.0.0-rc",
     servers=[{"url": "/"}],
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
@@ -359,23 +375,6 @@ async def general_error_handler(request: Request, exc: Exception):
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 prep_trackers: dict[str, PrepTimeTracker] = {}
-
-
-@app.on_event("startup")
-async def start_event_consumers() -> None:
-    """Launch background tasks for event processing."""
-
-    asyncio.create_task(alerts_sender(event_bus.subscribe("order.placed")))
-    asyncio.create_task(ema_updater(event_bus.subscribe("payment.verified")))
-    asyncio.create_task(report_aggregator(event_bus.subscribe("table.cleaned")))
-
-
-# Replica health monitoring
-@app.on_event("startup")
-async def start_replica_monitor() -> None:
-    await replica.check_replica(app)
-    asyncio.create_task(replica.monitor(app))
-
 
 # Auth Routes
 
@@ -547,7 +546,7 @@ async def create_order(request: OrderRequest) -> dict:
             pass
         else:
             await notifications.enqueue(
-                request.tenant_id, "order.accepted", request.dict()
+                request.tenant_id, "order.accepted", request.model_dump()
             )
     return ok({"status": "order accepted"})
 
