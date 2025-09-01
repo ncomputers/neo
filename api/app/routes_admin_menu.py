@@ -114,8 +114,9 @@ async def toggle_out_of_stock(
     repo = MenuRepoSQL()
     async with _session(tenant_id) as session:
         await repo.toggle_out_of_stock(session, item_id, payload.flag)
+        items = await repo.list_items(session, include_hidden=True)
     await request.app.state.redis.delete(f"menu:{tenant_id}")
-    return ok(None)
+    return ok(items)
 
 
 @router.patch("/api/outlet/{tenant_id}/menu/items/{item_id}/delete")
