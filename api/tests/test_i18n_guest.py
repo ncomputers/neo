@@ -97,6 +97,27 @@ async def test_accept_language_gujarati_returns_gujarati_labels(monkeypatch):
 
 
 @pytest.mark.anyio
+async def test_accept_language_quality_factors(monkeypatch):
+    monkeypatch.setattr(
+        menu_repo_sql.MenuRepoSQL, "list_categories", _fake_list_categories
+    )
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", _fake_list_items)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "menu_etag", _fake_menu_etag)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(
+            "/g/T-001/menu",
+            headers={
+                "X-Tenant-ID": "demo",
+                "Accept-Language": "fr,gu;q=0.9,en;q=0.8",
+            },
+        )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["data"]["labels"]["order"] == "ઓર્ડર કરો"
+
+
+@pytest.mark.anyio
 async def test_table_locked_error_hindi(monkeypatch):
     class DummySession:
         def __enter__(self):
