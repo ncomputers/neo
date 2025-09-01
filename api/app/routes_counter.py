@@ -56,8 +56,11 @@ async def get_tenant_session(
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    async with sessionmaker() as session:
-        yield session
+    try:
+        async with sessionmaker() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 async def get_session_from_path(
@@ -67,8 +70,11 @@ async def get_session_from_path(
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    async with sessionmaker() as session:
-        yield session
+    try:
+        async with sessionmaker() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @router.get("/{counter_token}/menu")

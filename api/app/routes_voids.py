@@ -39,8 +39,11 @@ async def get_session_from_path(tenant_id: str) -> AsyncGenerator[AsyncSession, 
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    async with sessionmaker() as session:
-        yield session
+    try:
+        async with sessionmaker() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @router.post("/api/outlet/{tenant_id}/orders/{order_id}/void/request")
