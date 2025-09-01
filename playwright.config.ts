@@ -6,7 +6,8 @@ const kdsBaseURL = process.env.KDS_BASE_URL || baseURL;
 const adminBaseURL = process.env.ADMIN_BASE_URL || baseURL;
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: '.',
+  testMatch: ['tests/e2e/**/*.spec.ts', 'tests/a11y/**/*.spec.ts'],
   reporter: [['html', { open: 'never' }]],
   use: {
     headless: true,
