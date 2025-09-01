@@ -119,7 +119,6 @@ async def stream_table_map(
         finally:
             reader_task.cancel()
             await pubsub.unsubscribe(channel)
-            await pubsub.close()
             sse_clients_gauge.dec()
             unregister(ip)
 

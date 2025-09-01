@@ -16,6 +16,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
+from contextlib import asynccontextmanager
 
 import redis as redis_sync
 import redis.asyncio as redis
@@ -243,11 +244,20 @@ class SWStaticFiles(StaticFiles):
 
 validate_on_boot()
 settings = get_settings()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    pubsub = getattr(app.state, "pubsub", None)
+    if pubsub and hasattr(pubsub, "aclose"):
+        await pubsub.aclose()
+
+
 app = FastAPI(
     title="Neo API",
     version="1.0.0-rc",
     servers=[{"url": "/"}],
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
@@ -655,7 +665,6 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
         reader_task.cancel()
         hb_task.cancel()
         await pubsub.unsubscribe(channel)
-        await pubsub.close()
         realtime_guard.unregister(ip)
 
 
