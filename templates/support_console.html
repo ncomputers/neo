@@ -19,7 +19,7 @@
   <option value="{{ text|e }}">{{ name }}</option>
   {% endfor %}
 </select>
-<script>
+<script nonce="{{ csp_nonce }}">
 document.getElementById('macro').addEventListener('change', function() {
   if (this.value) {
     const ta = document.getElementById('reply');

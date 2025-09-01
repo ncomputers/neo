@@ -57,7 +57,7 @@ async def console_page(
     return templates.TemplateResponse(
         request,
         "support_console.html",
-        {"macros": macros, "is_admin": is_admin},
+        {"macros": macros, "is_admin": is_admin, "csp_nonce": request.state.csp_nonce},
     )
 
 

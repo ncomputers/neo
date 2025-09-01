@@ -8,7 +8,7 @@ from typing import Literal
 from zipfile import ZipFile
 
 import qrcode
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from .pdf.render import render_template
 from .routes_onboarding import TENANTS
@@ -31,7 +31,7 @@ def _qr_data_url(url: str) -> str:
 
 @router.get("/api/admin/outlets/{tenant_id}/qrposters.zip")
 async def qr_poster_pack(
-    tenant_id: str, size: Literal["A4", "A5"] = "A4"
+    tenant_id: str, request: Request, size: Literal["A4", "A5"] = "A4"
 ) -> Response:
     tenant = TENANTS.get(tenant_id)
     if not tenant:
@@ -50,6 +50,7 @@ async def qr_poster_pack(
                     "size": size,
                     "instructions": "Scan to order & pay",
                 },
+                nonce=request.state.csp_nonce,
             )
             zf.writestr(f"{t['code']}.pdf", content)
     buffer.seek(0)

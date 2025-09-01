@@ -39,7 +39,7 @@
     </form>
   </section>
   <div id="toaster"></div>
-  <script>
+  <script nonce="{{ csp_nonce }}">
     function showToast(msg){
       const t=document.getElementById('toaster');
       t.textContent=msg;

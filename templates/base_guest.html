@@ -20,7 +20,7 @@
       </select>
     </header>
     {% block content %}{% endblock %}
-    <script>
+    <script nonce="{{ csp_nonce }}">
       const sel = document.getElementById('lang-switcher');
       sel.addEventListener('change', () => {
         const code = sel.value;

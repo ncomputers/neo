@@ -14,6 +14,7 @@ app.include_router(routes_refunds.router)
 
 @app.get("/checkout")
 async def checkout(request: Request, order_id: int):
+    request.state.csp_nonce = "nonce"
     return templates.TemplateResponse(
         "checkout.html",
         {
@@ -22,6 +23,7 @@ async def checkout(request: Request, order_id: int):
             "tip_enabled": False,
             "payment_methods": ["cash"],
             "payment_id": 1,
+            "csp_nonce": request.state.csp_nonce,
         },
     )
 
@@ -66,6 +68,7 @@ def test_checkout_links_and_refund_confirm(client):
     assert resp.status_code == 200
     for path in ("terms", "refund", "contact"):
         assert f"/legal/{path}" in resp.text
+    assert 'nonce="nonce"' in resp.text
 
     resp = client.post("/payments/1/refund")
     assert resp.status_code == 400
