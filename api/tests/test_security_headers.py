@@ -10,7 +10,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 
 def _setup_app(monkeypatch):
-    monkeypatch.setenv("ORIGINS", "https://allowed.com")
+    monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("RATE_LIMIT_LOGIN", "2/1s")
     monkeypatch.setenv("RATE_LIMIT_REFRESH", "60/5m")
     monkeypatch.setenv("DB_URL", "postgresql://localhost/test")
@@ -35,6 +35,13 @@ def test_csp_header_blocks_inline(monkeypatch):
         if part.strip().startswith("script-src"):
             assert "'unsafe-inline'" not in part
             break
+    assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+    assert resp.headers.get("X-Content-Type-Options") == "nosniff"
+    assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
+    assert (
+        resp.headers.get("Permissions-Policy")
+        == "geolocation=(), microphone=(), camera=(), notifications=(self)"
+    )
 
 
 def test_cors_rejects_unknown_origin(monkeypatch):

@@ -81,7 +81,7 @@ template_globals = {"build_renew_url": build_renew_url}
 
 from .menu import router as menu_router
 from .middleware.cors import CORSMiddleware
-from .middleware.csp import CSPMiddleware
+from .middlewares.csp import CSPMiddleware
 from .middleware.rate_limit import SlidingWindowRateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
