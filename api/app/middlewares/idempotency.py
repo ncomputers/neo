@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 
@@ -43,23 +44,28 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
             cached = await redis.get(cache_key)
             if cached:
                 data = json.loads(cached)
+                body = base64.b64decode(data["body"])
                 return Response(
-                    content=data["body"],
+                    content=body,
                     status_code=data["status"],
-                    media_type="application/json",
+                    headers=data.get("headers"),
+                    media_type=data.get("media_type", "application/json"),
                 )
 
             response = await call_next(request)
             body = b"".join([section async for section in response.body_iterator])
-            await redis.set(
-                cache_key,
-                json.dumps({"status": response.status_code, "body": body.decode()}),
-                ex=86400,
-            )
+            headers = dict(response.headers)
+            payload = {
+                "status": response.status_code,
+                "body": base64.b64encode(body).decode(),
+                "headers": headers,
+                "media_type": response.media_type,
+            }
+            await redis.set(cache_key, json.dumps(payload), ex=86400)
             return Response(
                 content=body,
                 status_code=response.status_code,
-                headers=dict(response.headers),
+                headers=headers,
                 media_type=response.media_type,
             )
 
