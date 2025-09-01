@@ -7,7 +7,7 @@ from typing import Any
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_403_FORBIDDEN, HTTP_429_TOO_MANY_REQUESTS
 
 from ..audit import log_event
 from ..security.pin_lockout import is_locked
@@ -79,6 +79,9 @@ class PinSecurityMiddleware(BaseHTTPMiddleware):
 
         request._receive = receive  # type: ignore[attr-defined]
         response = await call_next(request)
+
+        if response.status_code == HTTP_429_TOO_MANY_REQUESTS:
+            return response
 
         if response.status_code != 200:
             locked = await register_failure(redis, tenant, username, ip)

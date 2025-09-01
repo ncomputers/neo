@@ -32,6 +32,7 @@ class MenuRepoSQL(MenuRepo):
         """Return menu items with optional hidden or deleted ones."""
         sort_col = getattr(MenuItem, "sort_order", MenuItem.id)
         stmt = select(MenuItem).order_by(MenuItem.category_id, sort_col)
+
         if not include_deleted:
             stmt = stmt.where(MenuItem.deleted_at.is_(None))
         if not include_hidden:
@@ -52,6 +53,7 @@ class MenuRepoSQL(MenuRepo):
                     "hsn_sac": item.hsn_sac,
                     "show_fssai": item.show_fssai,
                     "out_of_stock": item.out_of_stock,
+                    "is_out_of_stock": item.out_of_stock,
                     "modifiers": item.modifiers or [],
                     "combos": item.combos or [],
                     "dietary": item.dietary or [],

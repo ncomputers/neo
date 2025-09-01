@@ -27,9 +27,14 @@ async def get_tenant_session(
     tenant_id: str = Depends(get_tenant_id),
 ) -> AsyncGenerator[AsyncSession, None]:
     engine = get_engine(tenant_id)
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    async with sessionmaker() as session:
-        yield session
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
+    try:
+        async with sessionmaker() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @router.post("/consent")
@@ -40,9 +45,7 @@ async def save_consent(
 ) -> dict:
     if payload.phone:
         res = await session.execute(
-            text(
-                "UPDATE customers SET allow_analytics=:a, allow_wa=:w WHERE phone=:p"
-            ),
+            text("UPDATE customers SET allow_analytics=:a, allow_wa=:w WHERE phone=:p"),
             {"a": payload.allow_analytics, "w": payload.allow_wa, "p": payload.phone},
         )
         if res.rowcount == 0:
@@ -50,7 +53,11 @@ async def save_consent(
                 text(
                     "INSERT INTO customers (name, phone, allow_analytics, allow_wa) VALUES ('', :p, :a, :w)"
                 ),
-                {"p": payload.phone, "a": payload.allow_analytics, "w": payload.allow_wa},
+                {
+                    "p": payload.phone,
+                    "a": payload.allow_analytics,
+                    "w": payload.allow_wa,
+                },
             )
         await session.commit()
     return ok({})

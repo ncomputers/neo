@@ -9,10 +9,10 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from .auth import User
 from .db.tenant import get_engine
 from .domain import OrderStatus
 from .models_tenant import Invoice, Order, OrderItem
-from .auth import User
 from .routes_auth_2fa import stepup_guard
 from .utils.audit import audit
 from .utils.responses import ok
@@ -39,8 +39,11 @@ async def get_session_from_path(tenant_id: str) -> AsyncGenerator[AsyncSession, 
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    async with sessionmaker() as session:
-        yield session
+    try:
+        async with sessionmaker() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @router.post("/api/outlet/{tenant_id}/orders/{order_id}/void/request")

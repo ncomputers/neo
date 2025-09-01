@@ -7,7 +7,7 @@ import hashlib
 import json
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from sqlalchemy import func
 
 from .db import SessionLocal
@@ -27,8 +27,21 @@ router = APIRouter(prefix="/h")
 
 
 class OrderLine(BaseModel):
-    item_id: int
+    item_id: int | str
     qty: int
+
+    @validator("item_id", pre=True)
+    def _coerce_item_id(cls, v: int | str) -> int:  # noqa: N805 - pydantic validator
+        try:
+            return int(v)
+        except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+            raise ValueError("item_id must be an integer") from exc
+
+    @validator("qty")
+    def _validate_qty(cls, v: int) -> int:  # noqa: N805 - pydantic validator
+        if v <= 0:
+            raise ValueError("qty must be greater than 0")
+        return v
 
 
 class OrderPayload(BaseModel):
@@ -83,7 +96,7 @@ def fetch_menu(
             ]
         data = {"categories": categories, "items": items}
         asyncio.run(redis.set(cache_key, json.dumps(data), ex=60))
-    lang = getattr(request.state, "lang", resolve_lang(accept_language))
+    lang = resolve_lang(accept_language)
     for item in data["items"]:
         item["name"] = get_text(item.get("name"), lang, item.get("name_i18n"))
         if item.get("description") or item.get("desc_i18n"):
@@ -100,7 +113,7 @@ def fetch_menu(
 
 @router.post("/{room_token}/order")
 def create_order(room_token: str, payload: OrderPayload) -> dict:
-    lines = [line.model_dump() for line in payload.items]
+    lines = [{"item_id": line.item_id, "qty": line.qty} for line in payload.items]
     with SessionLocal() as session:
         room = session.query(Room).filter_by(code=room_token).one_or_none()
         if room is None:

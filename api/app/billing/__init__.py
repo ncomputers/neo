@@ -220,8 +220,12 @@ class MockGateway:
                 current_period_end=period_end,
             )
             SUBSCRIPTIONS[tenant_id] = sub
-        TENANTS[tenant_id]["plan"] = plan.id
-        TENANTS[tenant_id]["subscription_expires_at"] = period_end
+        tenant = TENANTS.get(tenant_id)
+        if tenant is None:
+            tenant = {}
+            TENANTS[tenant_id] = tenant
+        tenant["plan"] = plan.id
+        tenant["subscription_expires_at"] = period_end
         amount = apply_credit_to_invoice(tenant_id, plan.price_inr)
         inv = BillingInvoice(
             id=str(uuid.uuid4()),

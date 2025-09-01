@@ -15,15 +15,24 @@ def test_guest_page_headers(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
 
     import api.app.config.cors as cors
-
-    importlib.reload(cors)
+    import api.app.middleware.cors as cors_mw
+    import api.app.middlewares.csp as csp
     import api.app.middlewares.security as security
 
+    importlib.reload(cors)
+    importlib.reload(cors_mw)
+    importlib.reload(csp)
     importlib.reload(security)
+    CORSMiddleware = cors_mw.CORSMiddleware
+    CSPMiddleware = csp.CSPMiddleware
     SecurityMiddleware = security.SecurityMiddleware
 
     app = FastAPI()
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    app.add_middleware(
+        CORSMiddleware, allowed_origins=["https://allowed.com"]
+    )
+    app.add_middleware(CSPMiddleware)
     app.add_middleware(SecurityMiddleware)
 
     @app.get("/g/test")

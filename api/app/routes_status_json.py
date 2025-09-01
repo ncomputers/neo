@@ -70,7 +70,7 @@ async def get_status(request: Request):
 
 @router.post("/admin/status", dependencies=[Depends(role_required("super_admin"))])
 async def set_status(payload: StatusPayload, request: Request):
-    data = payload.dict()
+    data = payload.model_dump()
     redis: Redis | None = getattr(request.app.state, "redis", None)
     if redis:
         await redis.set(STATUS_KEY, json.dumps(data))
