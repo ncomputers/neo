@@ -51,7 +51,7 @@
     {% set L = _labels.get(_lang, _labels['en']) %}
     <h1>{{ L.invoice }} #{{ invoice['number'] }}</h1>
     {% if invoice['gst_mode'] != 'unreg' and invoice.get('gstin') %}
-      <p>GSTIN: {{ invoice['gstin'] }}{% if invoice['gst_mode'] == 'comp' %} (Composition Scheme){% endif %}</p>
+      <p>GSTIN: {{ invoice['gstin'] }}{% if composition_scheme or invoice['gst_mode'] == 'comp' %} (Composition Scheme){% endif %}</p>
     {% endif %}
     {% if invoice.get('fssai') %}
       <!-- Optional FSSAI license number -->

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime, time
 from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
 from typing import Iterable, Literal, Mapping, Sequence
@@ -29,6 +30,38 @@ ROUNDING_MAP = {
 }
 
 
+@dataclass(frozen=True)
+class CouponInfo:
+    code: str
+    type: str | None = None
+    percent: object | None = None
+    flat: object | None = None
+    is_stackable: bool = False
+    max_discount: object | None = None
+
+
+def _normalize_coupon(c: Mapping[str, object] | object) -> CouponInfo:
+    if isinstance(c, CouponInfo):
+        return c
+    if isinstance(c, Mapping):
+        return CouponInfo(
+            code=str(c.get("code", "")),
+            type=c.get("type"),
+            percent=c.get("percent"),
+            flat=c.get("flat"),
+            is_stackable=bool(c.get("is_stackable")),
+            max_discount=c.get("max_discount"),
+        )
+    return CouponInfo(
+        code=str(getattr(c, "code", "")),
+        type=getattr(c, "type", None),
+        percent=getattr(c, "percent", None),
+        flat=getattr(c, "flat", None),
+        is_stackable=bool(getattr(c, "is_stackable", False)),
+        max_discount=getattr(c, "max_discount", None),
+    )
+
+
 def _round_nearest_1(amount: Decimal, mode: str) -> Decimal:
     """Round to nearest rupee using the given rounding ``mode``."""
 
@@ -44,7 +77,7 @@ def compute_bill(
     gst_mode: GSTMode,
     rounding: str = "nearest_1",
     tip: float | Decimal | None = 0,
-    coupons: Sequence[Mapping[str, object]] | None = None,
+    coupons: Sequence[Mapping[str, object] | CouponInfo] | None = None,
     gst_rounding: str = "invoice-total",
     rounding_mode: str = "half-up",
     happy_hour_windows: Sequence[Mapping[str, object]] | None = None,
@@ -111,6 +144,8 @@ def compute_bill(
             "Coupons cannot be used during happy hour",
             hint="Try again outside happy hour",
         )
+    if coupons:
+        coupons = [_normalize_coupon(c) for c in coupons]
     for item in items:
         qty = Decimal(str(item.get("qty", 1)))
         price = Decimal(str(item["price"]))
@@ -139,8 +174,8 @@ def compute_bill(
     applied_coupons: list[str] = []
     effective_discount = Decimal("0")
     if coupons:
-        if len(coupons) > 1 and any(not c.get("is_stackable") for c in coupons):
-            bad = next(c["code"] for c in coupons if not c.get("is_stackable"))
+        if len(coupons) > 1 and any(not c.is_stackable for c in coupons):
+            bad = next(c.code for c in coupons if not c.is_stackable)
             raise CouponError(
                 "NON_STACKABLE",
                 f"Coupon {bad} cannot be stacked",
@@ -150,17 +185,17 @@ def compute_bill(
         percent_total = Decimal("0")
         flat_total = Decimal("0")
         for c in coupons:
-            applied_coupons.append(str(c.get("code", "")))
-            if c.get("percent"):
-                percent_total += total * Decimal(str(c["percent"])) / Decimal("100")
-            if c.get("flat"):
-                flat_total += Decimal(str(c["flat"]))
+            applied_coupons.append(str(c.code))
+            if c.percent is not None:
+                percent_total += total * Decimal(str(c.percent)) / Decimal("100")
+            if c.flat is not None:
+                flat_total += Decimal(str(c.flat))
         discount = percent_total + flat_total
 
         caps = [
-            Decimal(str(c["max_discount"]))
+            Decimal(str(c.max_discount))
             for c in coupons
-            if c.get("max_discount") is not None
+            if c.max_discount is not None
         ]
         if caps:
             cap = min(caps)
