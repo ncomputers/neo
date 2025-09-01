@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import AsyncGenerator, List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db import SessionLocal
@@ -26,8 +26,21 @@ router = APIRouter(prefix="/g")
 class OrderLine(BaseModel):
     """Single line item for a guest order."""
 
-    item_id: str
+    item_id: int | str
     qty: int
+
+    @validator("item_id", pre=True)
+    def _coerce_item_id(cls, v: int | str) -> int:  # noqa: N805 - pydantic validator
+        try:
+            return int(v)
+        except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+            raise ValueError("item_id must be an integer") from exc
+
+    @validator("qty")
+    def _validate_qty(cls, v: int) -> int:  # noqa: N805 - pydantic validator
+        if v <= 0:
+            raise ValueError("qty must be greater than 0")
+        return v
 
 
 class OrderPayload(BaseModel):
@@ -62,7 +75,7 @@ async def create_guest_order(
 ) -> dict:
     """Create a new order for ``table_token`` within the tenant context."""
     await abuse_guard.guard(request, tenant_id, request.app.state.redis)
-    lines = [line.model_dump() for line in payload.items]
+    lines = [{"item_id": line.item_id, "qty": line.qty} for line in payload.items]
     try:
         order_id = await orders_repo_sql.create_order(session, table_token, lines)
     except HTTPException as exc:

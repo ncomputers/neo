@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import List, Set
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.tenant import get_engine
@@ -22,8 +22,21 @@ _processed_ops: Set[str] = set()
 class OrderLine(BaseModel):
     """Single line item for an order."""
 
-    item_id: str
+    item_id: int | str
     qty: int
+
+    @validator("item_id", pre=True)
+    def _coerce_item_id(cls, v: int | str) -> int:  # noqa: N805 - pydantic validator
+        try:
+            return int(v)
+        except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+            raise ValueError("item_id must be an integer") from exc
+
+    @validator("qty")
+    def _validate_qty(cls, v: int) -> int:  # noqa: N805 - pydantic validator
+        if v <= 0:
+            raise ValueError("qty must be greater than 0")
+        return v
 
 
 class QueuedOrder(BaseModel):
@@ -74,3 +87,4 @@ async def ingest_orders_batch(tenant_id: str, payload: BatchPayload) -> dict:
         return ok({"order_ids": order_ids})
     finally:
         await engine.dispose()
+

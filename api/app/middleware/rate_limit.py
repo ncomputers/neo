@@ -9,8 +9,9 @@ from typing import Callable
 from redis.asyncio import Redis
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS
+from starlette.responses import Response
+
+from ..utils.rate_limit import rate_limited
 
 _TIME_UNITS = {"s": 1, "m": 60, "h": 3600}
 
@@ -53,10 +54,8 @@ class SlidingWindowRateLimitMiddleware(BaseHTTPMiddleware):
         _, _, count, _ = await pipe.execute()
         if count and count > limit:
             retry = await redis.ttl(key)
-            headers = {"Retry-After": str(retry if retry > 0 else window)}
-            return JSONResponse(
-                {"error": "Rate limit exceeded"},
-                status_code=HTTP_429_TOO_MANY_REQUESTS,
-                headers=headers,
-            )
+            retry_after = retry if retry and retry > 0 else window
+            response = rate_limited(retry_after)
+            response.headers["Retry-After"] = str(retry_after)
+            return response
         return await call_next(request)

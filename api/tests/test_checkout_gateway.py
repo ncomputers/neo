@@ -131,6 +131,9 @@ def test_webhook_signature_validation(provider, secret_env, client, monkeypatch)
             async def commit(self):
                 pass
 
+            async def scalar(self, stmt):
+                return 1 if any(p.mode == "gateway_refund" for p in payments) else None
+
         return _Session()
 
     app.dependency_overrides[
@@ -189,6 +192,9 @@ def test_refund_requires_idempotency_key(client, monkeypatch):
             async def commit(self):
                 pass
 
+            async def scalar(self, stmt):
+                return 1 if any(p.mode == "gateway_refund" for p in payments) else None
+
         return _Session()
 
     app.dependency_overrides[
@@ -214,6 +220,73 @@ def test_refund_requires_idempotency_key(client, monkeypatch):
     assert payments == []
 
 
+def test_refund_duplicate_no_new_payment(client, monkeypatch):
+    monkeypatch.setenv("ENABLE_GATEWAY", "true")
+    monkeypatch.setenv("GATEWAY_SANDBOX", "true")
+    monkeypatch.setenv("RAZORPAY_SECRET_TEST", "secret")
+    monkeypatch.setattr(
+        routes_checkout_gateway, "get_session", _master_session("razorpay", True)
+    )
+
+    payments: list = []
+    invoice = types.SimpleNamespace(settled=True, settled_at=None)
+
+    order_id = "o1"
+
+    async def _tenant_session(tenant: str):
+        class _Session:
+            async def get(self, model, pk):
+                return invoice
+
+            def add(self, obj):
+                payments.append(obj)
+
+            async def commit(self):
+                pass
+
+            async def scalar(self, stmt):
+                return 1 if payments else None
+
+        return _Session()
+
+    app.dependency_overrides[
+        routes_checkout_gateway.get_tenant_session
+    ] = _tenant_session
+
+    sig_refund = hmac.new(
+        b"secret", f"{order_id}|1|10.0|refund".encode(), hashlib.sha256
+    ).hexdigest()
+
+    resp1 = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={
+            "order_id": order_id,
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "refund",
+            "signature": sig_refund,
+        },
+        headers={"Idempotency-Key": "key1"},
+    )
+    assert resp1.status_code == 200
+    assert payments and payments[0].amount == -10
+
+    resp2 = client.post(
+        "/api/outlet/demo/checkout/webhook",
+        json={
+            "order_id": order_id,
+            "invoice_id": 1,
+            "amount": 10,
+            "status": "refund",
+            "signature": sig_refund,
+        },
+        headers={"Idempotency-Key": "key2"},
+    )
+    assert resp2.status_code == 200
+    assert resp2.json() == resp1.json()
+    assert len(payments) == 1
+
+
 def test_e2e_start_webhook_flow(client, monkeypatch):
     monkeypatch.setenv("ENABLE_GATEWAY", "true")
     monkeypatch.setenv("GATEWAY_SANDBOX", "true")
@@ -234,6 +307,9 @@ def test_e2e_start_webhook_flow(client, monkeypatch):
 
             async def commit(self):
                 pass
+
+            async def scalar(self, stmt):
+                return 1 if any(p.mode == "gateway_refund" for p in payments) else None
 
         return _Session()
 
