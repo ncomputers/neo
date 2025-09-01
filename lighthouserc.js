@@ -20,9 +20,9 @@ module.exports = {
       numberOfRuns: 1,
       output: ['html'],
       reportFilenamePattern: '%%PATHNAME%%-lighthouse.%%EXTENSION%%',
-      chromeFlags: '--no-sandbox',
       settings: {
         budgetsPath: 'budgets.json',
+        chromeFlags: ['--no-sandbox'],
       },
     },
     assert: {
