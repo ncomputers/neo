@@ -41,6 +41,8 @@ def _ensure_worker() -> None:
     global _worker_started
     if _worker_started:
         return
+    if os.getenv("DEBUG") or os.getenv("TESTING"):
+        return
     loop = asyncio.get_event_loop()
     loop.create_task(_worker())
     _worker_started = True

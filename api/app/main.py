@@ -200,9 +200,9 @@ from .routes_security import router as security_router
 from .routes_slo import router as slo_router
 from .routes_staff import router as staff_router
 from .routes_staff_support import router as staff_support_router
+from .routes_stats import router as stats_router
 from .routes_status import router as status_router
 from .routes_status_json import router as status_json_router
-from .routes_stats import router as stats_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
 from .routes_support_console import router as support_console_router
@@ -364,6 +364,8 @@ prep_trackers: dict[str, PrepTimeTracker] = {}
 @app.on_event("startup")
 async def start_event_consumers() -> None:
     """Launch background tasks for event processing."""
+    if os.getenv("DEBUG") or os.getenv("TESTING"):
+        return
 
     asyncio.create_task(alerts_sender(event_bus.subscribe("order.placed")))
     asyncio.create_task(ema_updater(event_bus.subscribe("payment.verified")))
@@ -374,6 +376,8 @@ async def start_event_consumers() -> None:
 @app.on_event("startup")
 async def start_replica_monitor() -> None:
     await replica.check_replica(app)
+    if os.getenv("DEBUG") or os.getenv("TESTING"):
+        return
     asyncio.create_task(replica.monitor(app))
 
 
