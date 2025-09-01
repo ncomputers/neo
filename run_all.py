@@ -21,6 +21,7 @@ Examples:
 import argparse
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -68,6 +69,18 @@ def python_exe():
 
 def which(cmd):
     return shutil.which(cmd)
+
+
+def vite_port():
+    port = os.environ.get("VITE_PORT")
+    if port:
+        return port
+    cfg = ROOT / "packages" / "config" / "vite.cjs"
+    if cfg.exists():
+        match = re.search(r"port:\s*(\d+)", cfg.read_text())
+        if match:
+            return match.group(1)
+    return "5173"
 
 
 def install_backend():
@@ -168,8 +181,9 @@ def start_processes():
     print("🚀 Starting FastAPI on http://localhost:8000 ...")
     procs.append(subprocess.Popen(uvicorn, cwd=ROOT))
 
+    vite_port_num = vite_port()
     if (PWA_DIR / "package.json").exists() and which("npm"):
-        print("🌐 Starting PWA (Vite) on http://localhost:5173 ...")
+        print(f"🌐 Starting PWA (Vite) on http://localhost:{vite_port_num} ...")
         procs.append(subprocess.Popen(vite_cmd, cwd=PWA_DIR))
     else:
         print("ℹ️ Skipping PWA (missing package.json or npm).")
