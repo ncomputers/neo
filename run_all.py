@@ -34,6 +34,8 @@ OPS_DIR = ROOT / "ops"
 ENV_FILE = ROOT / ".env"
 ENV_EXAMPLE = ROOT / ".env.example"
 VENV_DIR = ROOT / ".venv"
+APPS_DIR = ROOT / "apps"
+SPA_APPS = ["guest", "admin", "kds"]
 
 
 def run(cmd, cwd=None, env=None, check=True):
@@ -95,6 +97,21 @@ def install_frontend():
     print("✅ PWA deps installed.")
 
 
+def build_spas():
+    pnpm = which("pnpm")
+    if not pnpm:
+        print("⚠️ pnpm not found. Skipping SPA build.")
+        return
+    for app in SPA_APPS:
+        dist = APPS_DIR / app / "dist"
+        if dist.exists():
+            print(f"✅ {app} SPA already built.")
+            continue
+        print(f"🏗️ Building {app} SPA ...")
+        run([pnpm, "--filter", f"@neo/{app}", "build"])
+    print("✅ SPA builds complete.")
+
+
 def copy_env_if_needed():
     if ENV_FILE.exists():
         print("✅ .env already exists.")
@@ -130,6 +147,7 @@ def run_docker_compose():
 
 
 def start_processes():
+    build_spas()
     # Backend: uvicorn api.app.main:app
     uvicorn = [
         python_exe(),
