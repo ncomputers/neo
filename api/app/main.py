@@ -580,11 +580,38 @@ async def renew_subscription(tenant_id: str, months: int = 1) -> dict:
     if tenant_id not in TENANTS:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    tenant = TENANTS[tenant_id]
+    payment_id = str(uuid.uuid4())
+    uploads = Path(__file__).resolve().parent / "payments"
+    uploads.mkdir(exist_ok=True)
+    file_path = uploads / f"{payment_id}_{screenshot.filename}"
+    with file_path.open("wb") as buffer:
+        buffer.write(await screenshot.read())
+
+    PAYMENTS[payment_id] = {
+        "tenant_id": tenant_id,
+        "screenshot": str(file_path),
+        "verified": False,
+    }
+    return ok({"payment_id": payment_id})
+
+
+@app.post("/tenants/{tenant_id}/subscription/payments/{payment_id}/verify")
+async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> dict:
+    payment = PAYMENTS.get(payment_id)
+    if payment is None or payment["tenant_id"] != tenant_id:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    payment["verified"] = True
+    tenant = TENANTS.get(tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="Tenant not found")
     expiry = tenant.get("subscription_expires_at") or datetime.utcnow()
     tenant["subscription_expires_at"] = expiry + timedelta(days=30 * months)
-    await event_bus.publish("payment.verified", {"tenant_id": tenant_id})
-    return {"ok": True}
+    await event_bus.publish(
+        "payment.verified", {"tenant_id": tenant_id, "payment_id": payment_id}
+    )
+    return ok({"status": "verified"})
+
 
 
 @app.get("/health")

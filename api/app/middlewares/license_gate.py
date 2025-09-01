@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
-from typing import Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable
 
 from fastapi import Depends, HTTPException, Request
 from redis.asyncio import Redis
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 
 def license_required(allow_in_grace: bool = True) -> Depends:
@@ -23,6 +23,7 @@ def license_required(allow_in_grace: bool = True) -> Depends:
                 status_code=402,
                 detail={"code": "SUBSCRIPTION_EXPIRED", "renew_url": "/admin/billing"},
             )
+
     return Depends(checker)
 
 
@@ -37,7 +38,9 @@ class LicenseGate(BaseHTTPMiddleware):
         super().__init__(app)
         self.ttl = ttl
 
-    async def _status_from_cache(self, redis: Redis, key: str) -> tuple[str, int | None] | None:
+    async def _status_from_cache(
+        self, redis: Redis, key: str
+    ) -> tuple[str, int | None] | None:
         cached = await redis.get(key)
         if not cached:
             return None
@@ -47,7 +50,9 @@ class LicenseGate(BaseHTTPMiddleware):
         except Exception:  # pragma: no cover
             return None
 
-    async def _compute_status(self, tenant: dict[str, Any] | None) -> tuple[str, int | None]:
+    async def _compute_status(
+        self, tenant: dict[str, Any] | None
+    ) -> tuple[str, int | None]:
         status = "ACTIVE"
         days_left: int | None = None
         if not tenant:
@@ -68,8 +73,11 @@ class LicenseGate(BaseHTTPMiddleware):
             days_left = (expiry - now).days
         return status, days_left
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]):
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ):
         tenant_id = request.headers.get("X-Tenant-ID")
+        path = request.url.path
         redis: Redis | None = getattr(request.app.state, "redis", None)
         status = "ACTIVE"
         days_left: int | None = None
@@ -82,13 +90,19 @@ class LicenseGate(BaseHTTPMiddleware):
             from ..main import TENANTS  # inline import
 
             tenant = TENANTS.get(tenant_id) if tenant_id else None
-            status, days_left = await self._compute_status(tenant)
-            if tenant_id and redis and cache_key:
-                await redis.set(
-                    cache_key,
-                    json.dumps({"status": status, "days_left": days_left}),
-                    ex=self.ttl,
-                )
+            if tenant is None:
+                if tenant_id and "/menu" not in path and "/billing" not in path:
+                    return JSONResponse(
+                        {"detail": "Subscription expired"}, status_code=403
+                    )
+            else:
+                status, days_left = await self._compute_status(tenant)
+                if tenant_id and redis and cache_key:
+                    await redis.set(
+                        cache_key,
+                        json.dumps({"status": status, "days_left": days_left}),
+                        ex=self.ttl,
+                    )
 
         request.state.license_status = status
         request.state.license_days_left = days_left
