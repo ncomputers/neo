@@ -14,8 +14,9 @@ module.exports = {
       ],
       startServerCommand: useExternal
         ? undefined
-        : "npx pnpm --filter @neo/guest build && npx pnpm --filter @neo/kds build && npx pnpm --filter @neo/admin build && (npx pnpm --filter @neo/guest preview --port 5173 --strictPort </dev/null & npx pnpm --filter @neo/kds preview --port 5174 --strictPort </dev/null & npx pnpm --filter @neo/admin preview --port 5175 --strictPort </dev/null & wait)",
+        : "(npx pnpm --filter @neo/guest preview --port 5173 --strictPort </dev/null & npx pnpm --filter @neo/kds preview --port 5174 --strictPort </dev/null & npx pnpm --filter @neo/admin preview --port 5175 --strictPort </dev/null & wait)",
       startServerReadyPattern: useExternal ? undefined : 'http://localhost:5175/',
+      startServerReadyTimeout: 120000,
       numberOfRuns: 1,
       output: ['html'],
       reportFilenamePattern: '%%PATHNAME%%-lighthouse.%%EXTENSION%%',
