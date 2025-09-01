@@ -388,6 +388,8 @@ prep_trackers: dict[str, PrepTimeTracker] = {}
 @app.on_event("startup")
 async def start_event_consumers() -> None:
     """Launch background tasks for event processing."""
+    if os.getenv("DEBUG") or os.getenv("TESTING"):
+        return
 
     asyncio.create_task(alerts_sender(event_bus.subscribe("order.placed")))
     asyncio.create_task(ema_updater(event_bus.subscribe("payment.verified")))
@@ -398,6 +400,8 @@ async def start_event_consumers() -> None:
 @app.on_event("startup")
 async def start_replica_monitor() -> None:
     await replica.check_replica(app)
+    if os.getenv("DEBUG") or os.getenv("TESTING"):
+        return
     asyncio.create_task(replica.monitor(app))
 
 
