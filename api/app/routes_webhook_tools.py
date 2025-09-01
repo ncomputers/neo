@@ -2,12 +2,14 @@ from __future__ import annotations
 
 """Routes for testing and replaying outbound webhooks."""
 
+import base64
 import json
 import os
 import time
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 from pydantic import AnyHttpUrl, BaseModel
 
 from .auth import User, role_required
@@ -22,6 +24,29 @@ from .utils.rate_limit import rate_limited
 from .utils.webhook_signing import sign
 
 router = APIRouter()
+
+
+def _log_snippet(body: bytes, content_type: str | None) -> str:
+    """Return a log-friendly representation of ``body`` based on ``content_type``."""
+    if content_type and content_type.startswith("application/json"):
+        try:
+            text = body.decode("utf-8")
+            json.loads(text)
+            return text[:100]
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            pass
+    return f"<binary:{len(body)}>"
+
+
+def replay_response(body_b64: str, content_type: str | None, content_encoding: str | None) -> Response:
+    """Reconstruct a ``Response`` from stored body and headers."""
+    data = base64.b64decode(body_b64)
+    headers = {}
+    if content_type:
+        headers["Content-Type"] = content_type
+    if content_encoding:
+        headers["Content-Encoding"] = content_encoding
+    return Response(content=data, headers=headers)
 
 
 class WebhookTestRequest(BaseModel):
@@ -64,11 +89,18 @@ async def webhook_test(
     status = "error"
     http_code: int | None = None
     snippet = ""
+    body_b64: str | None = None
+    content_type: str | None = None
+    content_encoding: str | None = None
     try:
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.post(str(body.url), content=data, headers=headers)
         http_code = resp.status_code
-        snippet = resp.text[:100]
+        content_type = resp.headers.get("Content-Type")
+        content_encoding = resp.headers.get("Content-Encoding")
+        body = resp.content
+        body_b64 = base64.b64encode(body).decode()
+        snippet = _log_snippet(body, content_type)
         status = "success" if resp.is_success else "error"
     except httpx.HTTPError as exc:
         snippet = str(exc)[:100]
@@ -79,6 +111,9 @@ async def webhook_test(
             "http_code": http_code,
             "latency_ms": latency_ms,
             "response_snippet": snippet,
+            "body_b64": body_b64,
+            "content_type": content_type,
+            "content_encoding": content_encoding,
         }
     )
 

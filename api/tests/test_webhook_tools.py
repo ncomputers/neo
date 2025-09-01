@@ -2,6 +2,7 @@ import asyncio
 import pathlib
 import sys
 from contextlib import asynccontextmanager
+import base64
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))  # noqa: E402
 
@@ -19,6 +20,8 @@ os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 sys.modules.setdefault("PIL", types.ModuleType("PIL"))
 sys.modules.setdefault("PIL.Image", types.ModuleType("Image"))
 sys.modules.setdefault("PIL.ImageOps", types.ModuleType("ImageOps"))
+sys.modules.setdefault("PIL.ImageDraw", types.ModuleType("ImageDraw"))
+sys.modules.setdefault("PIL.ImageFont", types.ModuleType("ImageFont"))
 menu_pkg = importlib.import_module("api.app.menu")
 setattr(menu_pkg, "router", APIRouter())
 
@@ -61,10 +64,11 @@ def test_webhook_test_endpoint(monkeypatch):
             called["url"] = url
             called["body"] = content
             called["headers"] = headers
-            return httpx.Response(200, text="ok")
+            return httpx.Response(200, json={"msg": "ok"})
 
     class FakeHttpx:
         AsyncClient = DummyClient
+        HTTPError = httpx.HTTPError
 
     monkeypatch.setattr(routes_webhook_tools, "httpx", FakeHttpx)
     monkeypatch.setattr(routes_webhook_tools, "is_allowed_url", lambda url: True)
@@ -89,8 +93,64 @@ def test_webhook_test_endpoint(monkeypatch):
     assert data["status"] == "success"
     assert data["http_code"] == 200
     assert "latency_ms" in data
-    assert data["response_snippet"] == "ok"
+    assert data["response_snippet"] == '{"msg":"ok"}'
+    assert data["body_b64"] == base64.b64encode(b'{"msg":"ok"}').decode()
+    assert data["content_type"].startswith("application/json")
+    assert data["content_encoding"] is None
 
+
+def test_webhook_test_endpoint_binary(monkeypatch):
+    class DummyClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        async def post(self, url, content=None, headers=None):
+            return httpx.Response(
+                200,
+                content=b"\x00\x01",
+                headers={"Content-Type": "application/octet-stream"},
+            )
+
+    class FakeHttpx:
+        AsyncClient = DummyClient
+        HTTPError = httpx.HTTPError
+
+    monkeypatch.setattr(routes_webhook_tools, "httpx", FakeHttpx)
+    monkeypatch.setattr(routes_webhook_tools, "is_allowed_url", lambda url: True)
+
+    token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
+
+    async def _run():
+        async with AsyncClient(
+            transport=ASGITransport(app), base_url="http://test"
+        ) as client:
+            app.state.redis = fakeredis.aioredis.FakeRedis()
+            return await client.post(
+                "/api/outlet/t1/webhooks/test",
+                json={"url": "http://example.com/hook", "event": "ping"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+    resp = asyncio.run(_run())
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["response_snippet"] == "<binary:2>"
+    assert data["body_b64"] == base64.b64encode(b"\x00\x01").decode()
+    assert data["content_type"] == "application/octet-stream"
+    assert data["content_encoding"] is None
+
+    replay = routes_webhook_tools.replay_response(
+        data["body_b64"], data["content_type"], data["content_encoding"]
+    )
+    assert replay.body == b"\x00\x01"
+    assert replay.headers["Content-Type"] == "application/octet-stream"
+    assert "Content-Encoding" not in replay.headers
 
 def test_webhook_test_blocked(monkeypatch):
     token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
