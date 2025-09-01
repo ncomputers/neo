@@ -20,9 +20,7 @@ sys.modules.setdefault("api.app.services.printer_watchdog", types.SimpleNamespac
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DB_URL", "postgresql://localhost/test")
-os.environ.setdefault(
-    "POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db"
-)
+os.environ.setdefault("POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db")
 os.environ.setdefault("REDIS_URL", "redis://redis:6379/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
@@ -33,10 +31,51 @@ except Exception:  # pragma: no cover
     app = FastAPI()
 
 
+class DummyPipeline:
+    def __init__(self, redis: "DummyRedis") -> None:
+        self.redis = redis
+        self.commands: list[tuple] = []
+
+    def zadd(self, key, mapping):
+        self.commands.append(("zadd", key, mapping))
+        return self
+
+    def zremrangebyscore(self, key, min_score, max_score):
+        self.commands.append(("zremrangebyscore", key, min_score, max_score))
+        return self
+
+    def zcard(self, key):
+        self.commands.append(("zcard", key))
+        return self
+
+    def expire(self, key, seconds):
+        self.commands.append(("expire", key, seconds))
+        return self
+
+    async def execute(self):
+        results = []
+        for cmd in self.commands:
+            name = cmd[0]
+            if name == "zadd":
+                await self.redis.zadd(cmd[1], cmd[2])
+                results.append(None)
+            elif name == "zremrangebyscore":
+                await self.redis.zremrangebyscore(cmd[1], cmd[2], cmd[3])
+                results.append(None)
+            elif name == "zcard":
+                results.append(await self.redis.zcard(cmd[1]))
+            elif name == "expire":
+                await self.redis.expire(cmd[1], cmd[2])
+                results.append(None)
+        self.commands.clear()
+        return results
+
+
 class DummyRedis:
     def __init__(self):
         self.store: dict[str, tuple[Any, float | None]] = {}
         self.sets: dict[str, set] = {}
+        self.zsets: dict[str, list[tuple[int, str]]] = {}
 
     def _cleanup(self, key: str):
         val = self.store.get(key)
@@ -99,6 +138,25 @@ class DummyRedis:
         for key in list(self.store.keys()):
             if fnmatch.fnmatch(key, pattern):
                 yield key
+
+    async def zadd(self, key, mapping):
+        zset = self.zsets.setdefault(key, [])
+        for member, score in mapping.items():
+            zset.append((score, member))
+        return True
+
+    async def zremrangebyscore(self, key, min_score, max_score):
+        zset = self.zsets.get(key, [])
+        self.zsets[key] = [
+            item for item in zset if not (min_score <= item[0] <= max_score)
+        ]
+        return True
+
+    async def zcard(self, key):
+        return len(self.zsets.get(key, []))
+
+    def pipeline(self):
+        return DummyPipeline(self)
 
     def __getattr__(self, name):
         async def _dummy(*args, **kwargs):
