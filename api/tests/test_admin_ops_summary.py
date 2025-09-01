@@ -60,5 +60,6 @@ def test_admin_ops_summary(tmp_path, monkeypatch):
     data = resp.json()["data"]
     assert data["uptime"] == "ok"
     assert round(data["webhook_success_rate"], 1) == 0.8
-    assert data["breaker_open_time"] >= 30
+    # Account for small delays between setting and reading the breaker TTL
+    assert data["breaker_open_time"] >= 29
     assert data["median_kot_prep_time"] == 30.0
