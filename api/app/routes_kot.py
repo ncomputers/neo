@@ -105,7 +105,9 @@ async def kot_pdf(
                 for name, qty, mods in item_rows.all():
                     items.append({"name": name, "qty": qty, "notes": ""})
                     for mod in mods or []:
-                        items.append({"name": f"- {mod['label']}", "qty": qty, "notes": ""})
+                        items.append(
+                            {"name": f"- {mod['label']}", "qty": qty, "notes": ""}
+                        )
             else:
                 raise HTTPException(status_code=404, detail="order not found")
 
@@ -120,4 +122,6 @@ async def kot_pdf(
     content, mimetype = render_template(
         "kot_80mm.html", {"kot": kot}, nonce=request.state.csp_nonce
     )
-    return Response(content, media_type=mimetype)
+    response = Response(content, media_type=mimetype)
+    response.headers["Content-Type"] = mimetype
+    return response

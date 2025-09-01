@@ -6,7 +6,7 @@ This module centralises GST/HSN handling with precise ₹0.01 rounding.
 """
 
 from collections import defaultdict
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Iterable, Mapping
 
 GSTMode = str  # "reg", "comp" or "unreg"
@@ -64,13 +64,19 @@ def generate_invoice(
         for rate, amount in tax_acc.items():
             amount = amount.quantize(ROUND, rounding=ROUND_HALF_UP)
             if is_interstate:
-                tax_lines.append({"label": f"IGST {int(rate)}%", "amount": float(amount)})
+                tax_lines.append(
+                    {"label": f"IGST {int(rate)}%", "amount": float(amount)}
+                )
                 total_tax += amount
             else:
                 half_rate = float(rate) / 2
                 half_amount = (amount / 2).quantize(ROUND, rounding=ROUND_HALF_UP)
-                tax_lines.append({"label": f"CGST {half_rate}%", "amount": float(half_amount)})
-                tax_lines.append({"label": f"SGST {half_rate}%", "amount": float(half_amount)})
+                tax_lines.append(
+                    {"label": f"CGST {half_rate}%", "amount": float(half_amount)}
+                )
+                tax_lines.append(
+                    {"label": f"SGST {half_rate}%", "amount": float(half_amount)}
+                )
                 total_tax += half_amount * 2
 
     grand_total = (subtotal + total_tax).quantize(ROUND, rounding=ROUND_HALF_UP)
@@ -82,6 +88,6 @@ def generate_invoice(
         "tax_lines": tax_lines,
         "grand_total": float(grand_total),
     }
-    if gstin and gst_mode == "reg":
+    if gstin and gst_mode != "unreg":
         invoice["gstin"] = gstin
     return invoice

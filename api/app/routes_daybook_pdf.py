@@ -2,19 +2,19 @@ from __future__ import annotations
 
 """Route for owner daybook PDF with HTML fallback."""
 
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone, time
 import os
-
-from fastapi import APIRouter, Response, HTTPException
-from sqlalchemy import select, func, desc
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from contextlib import asynccontextmanager
+from datetime import datetime, time, timezone
 from zoneinfo import ZoneInfo
 
+from fastapi import APIRouter, HTTPException, Response
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from .db.tenant import get_engine
-from .models_tenant import OrderItem, Order
-from .repos_sqlalchemy import invoices_repo_sql
+from .models_tenant import Order, OrderItem
 from .pdf.render import render_template
+from .repos_sqlalchemy import invoices_repo_sql
 
 router = APIRouter()
 
@@ -82,6 +82,7 @@ async def owner_daybook_pdf(tenant_id: str, date: str) -> Response:
         },
     )
     response = Response(content=content, media_type=mimetype)
+    response.headers["Content-Type"] = mimetype
     ext = "pdf" if mimetype == "application/pdf" else "html"
     response.headers["Content-Disposition"] = f"attachment; filename=daybook.{ext}"
     return response
