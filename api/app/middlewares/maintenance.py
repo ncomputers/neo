@@ -13,6 +13,19 @@ from ..db.master import get_session
 from ..models_master import Tenant
 
 
+def _is_readonly_allowed(path: str, method: str) -> bool:
+    """Return True if ``path`` is allowlisted for closed tenants."""
+    if method not in {"GET", "HEAD"}:
+        return False
+    if path.startswith("/guest"):
+        return True
+    if path.endswith("/menu") and (
+        path.startswith("/g/") or path.startswith("/c/") or path.startswith("/h/")
+    ):
+        return True
+    return False
+
+
 class MaintenanceMiddleware(BaseHTTPMiddleware):
     """Block requests during global or per-tenant maintenance windows."""
 
@@ -35,7 +48,7 @@ class MaintenanceMiddleware(BaseHTTPMiddleware):
 
             if tenant:
                 closed_at = getattr(tenant, "closed_at", None)
-                if closed_at:
+                if closed_at and not _is_readonly_allowed(path, request.method):
                     return JSONResponse({"code": "TENANT_CLOSED"}, status_code=403)
                 maintenance_until = getattr(tenant, "maintenance_until", None)
                 if maintenance_until and datetime.utcnow() < maintenance_until:
