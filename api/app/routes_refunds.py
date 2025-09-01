@@ -23,8 +23,11 @@ async def get_tenant_session(
 
     engine = get_engine(tenant_id)
     Session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    async with Session() as session:  # pragma: no cover - simple generator
-        yield session
+    try:
+        async with Session() as session:  # pragma: no cover - simple generator
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @router.post("/payments/{payment_id}/refund")

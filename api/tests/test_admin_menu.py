@@ -43,9 +43,8 @@ async def test_etag_changes_after_item_toggle(monkeypatch) -> None:
         return []
 
     async def fake_list_items(self, session, include_hidden=False):
-        if include_hidden:
-            return items
-        return [i for i in items if not i["out_of_stock"]]
+        data = items if include_hidden else [i for i in items if not i["out_of_stock"]]
+        return [{**i, "is_out_of_stock": i["out_of_stock"]} for i in data]
 
     async def fake_toggle_out_of_stock(self, session, item_id, flag):
         items[0]["out_of_stock"] = flag
@@ -125,9 +124,8 @@ async def test_toggle_hides_item(monkeypatch) -> None:
         return []
 
     async def fake_list_items(self, session, include_hidden=False):
-        if include_hidden:
-            return items
-        return [i for i in items if not i["out_of_stock"]]
+        data = items if include_hidden else [i for i in items if not i["out_of_stock"]]
+        return [{**i, "is_out_of_stock": i["out_of_stock"]} for i in data]
 
     async def fake_toggle_out_of_stock(self, session, item_id, flag):
         items[0]["out_of_stock"] = flag
@@ -168,7 +166,9 @@ async def test_toggle_hides_item(monkeypatch) -> None:
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         headers = {"X-Tenant-ID": "demo"}
         resp = await client.get("/g/T-1/menu", headers=headers)
-        assert resp.json()["data"]["items"] == [{"id": item_id, "out_of_stock": False}]
+        assert resp.json()["data"]["items"] == [
+            {"id": item_id, "out_of_stock": False}
+        ]
 
         toggle = await client.post(
             f"/api/outlet/demo/menu/item/{item_id}/out_of_stock",
@@ -176,6 +176,9 @@ async def test_toggle_hides_item(monkeypatch) -> None:
             json={"flag": True},
         )
         assert toggle.status_code == 200
+        assert toggle.json()["data"] == [
+            {"id": item_id, "out_of_stock": True, "is_out_of_stock": True}
+        ]
 
         resp2 = await client.get("/g/T-1/menu", headers=headers)
         assert resp2.json()["data"]["items"] == []
@@ -233,9 +236,8 @@ async def test_menu_cache_invalidation_after_toggle(monkeypatch) -> None:
 
     async def fake_list_items(self, session, include_hidden=False):
         calls["list_items"] += 1
-        if include_hidden:
-            return items
-        return [i for i in items if not i["out_of_stock"]]
+        data = items if include_hidden else [i for i in items if not i["out_of_stock"]]
+        return [{**i, "is_out_of_stock": i["out_of_stock"]} for i in data]
 
     async def fake_toggle_out_of_stock(self, session, item_id, flag):
         items[0]["out_of_stock"] = flag
@@ -280,7 +282,7 @@ async def test_menu_cache_invalidation_after_toggle(monkeypatch) -> None:
             json={"flag": True},
         )
         resp3 = await client.get("/g/T-1/menu", headers=headers)
-        assert calls["list_items"] == 2
+        assert calls["list_items"] == 3
         assert resp3.json()["data"]["items"] == []
 
     app.dependency_overrides.clear()

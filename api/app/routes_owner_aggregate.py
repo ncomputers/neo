@@ -156,6 +156,7 @@ async def owner_daybook_pdf(owner_id: str, request: Request, date: str) -> Respo
         nonce=request.state.csp_nonce,
     )
     response = Response(content=content, media_type=mimetype)
+    response.headers["Content-Type"] = mimetype
     ext = "pdf" if mimetype == "application/pdf" else "html"
     response.headers["Content-Disposition"] = f"attachment; filename=daybook.{ext}"
     return response

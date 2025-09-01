@@ -423,9 +423,10 @@ A guest-facing router exposes menu data for a specific table:
 
 This router relies on tenant-specific databases and is not wired into the
 application yet.
-Guest endpoints honor the `Accept-Language` header and return localized UI labels
-for menu actions such as **Order**, **Pay**, and **Get Bill**. English is the
-default with Hindi and Gujarati stubs included.
+Guest endpoints honor the `Accept-Language` header and return localized UI
+labels for menu actions such as **Order**, **Pay**, and **Get Bill**. The
+resolver respects comma-separated values with quality factors and selects the
+best match among English, Hindi, and Gujarati, defaulting to English.
 
 ### Admin Menu
 

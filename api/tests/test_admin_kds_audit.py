@@ -79,8 +79,12 @@ def _call_out_of_stock(monkeypatch):
     async def fake_toggle(self, session, item_id, flag):
         return None
 
+    async def fake_list_items(self, session, include_hidden=False, include_deleted=False):
+        return []
+
     monkeypatch.setattr(routes_admin_menu, "_session", fake_session)
     monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "toggle_out_of_stock", fake_toggle)
+    monkeypatch.setattr(menu_repo_sql.MenuRepoSQL, "list_items", fake_list_items)
 
     token = create_access_token({"sub": "admin@example.com", "role": "super_admin"})
     resp = client.post(

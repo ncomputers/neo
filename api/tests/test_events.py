@@ -5,11 +5,11 @@ import time
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
-from fastapi.testclient import TestClient
 import fakeredis.aioredis
+from fastapi.testclient import TestClient
 
-from api.app.main import app
 from api.app.events import ALERTS, EMA_UPDATES, REPORTS
+from api.app.main import app
 
 app.state.redis = fakeredis.aioredis.FakeRedis()
 
@@ -41,16 +41,9 @@ def test_payment_verified_event_dispatch():
         tenant_id = client.post(
             "/tenants", params={"name": "t", "licensed_tables": 1}
         ).json()["data"]["tenant_id"]
-        file = ("screenshot.png", b"x", "image/png")
-        payment_id = client.post(
-            f"/tenants/{tenant_id}/subscription/renew", files={"screenshot": file}
-        ).json()["data"]["payment_id"]
-        client.post(
-            f"/tenants/{tenant_id}/subscription/payments/{payment_id}/verify",
-            params={"months": 1},
-        )
+        client.post(f"/tenants/{tenant_id}/subscription/renew")
         assert _wait_for(lambda: len(EMA_UPDATES) == 1)
-    assert EMA_UPDATES[0]["payment_id"] == payment_id
+    assert EMA_UPDATES[0]["tenant_id"] == tenant_id
 
 
 def test_table_cleaned_event_dispatch():

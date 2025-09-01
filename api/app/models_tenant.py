@@ -48,6 +48,7 @@ class MenuItem(Base):
 
     id = Column(Integer, primary_key=True)
     category_id = Column(Integer, ForeignKey("menu_categories.id"), nullable=False)
+    sort = Column(Integer, nullable=False, default=0)
     name = Column(String, nullable=False)
     name_i18n = Column(JSON, nullable=True)
     price = Column(Numeric(10, 2), nullable=False)

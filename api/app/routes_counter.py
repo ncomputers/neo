@@ -6,7 +6,7 @@ import json
 from typing import AsyncGenerator, List
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .auth import User, role_required
@@ -24,8 +24,21 @@ router_admin = APIRouter(prefix="/api/outlet/{tenant_id}/counters")
 
 
 class OrderLine(BaseModel):
-    item_id: str
+    item_id: int | str
     qty: int
+
+    @validator("item_id", pre=True)
+    def _coerce_item_id(cls, v: int | str) -> int:  # noqa: N805 - pydantic validator
+        try:
+            return int(v)
+        except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+            raise ValueError("item_id must be an integer") from exc
+
+    @validator("qty")
+    def _validate_qty(cls, v: int) -> int:  # noqa: N805 - pydantic validator
+        if v <= 0:
+            raise ValueError("qty must be greater than 0")
+        return v
 
 
 class OrderPayload(BaseModel):
@@ -43,8 +56,11 @@ async def get_tenant_session(
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    async with sessionmaker() as session:
-        yield session
+    try:
+        async with sessionmaker() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 async def get_session_from_path(
@@ -54,8 +70,11 @@ async def get_session_from_path(
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    async with sessionmaker() as session:
-        yield session
+    try:
+        async with sessionmaker() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @router.get("/{counter_token}/menu")
@@ -101,7 +120,7 @@ async def create_order(
     tenant_id: str = Depends(get_tenant_id),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict:
-    lines = [line.model_dump() for line in payload.items]
+    lines = [{"item_id": line.item_id, "qty": line.qty} for line in payload.items]
     try:
         order_id = await counter_orders_repo_sql.create_order(
             session, counter_token, lines

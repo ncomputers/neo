@@ -232,8 +232,19 @@ def run_tests():
     pip = pip_exe()
     # Ensure pytest present (api/requirements.txt already includes it, but be safe)
     run([pip, "install", "pytest"])
+
+    env = os.environ.copy()
+    if "PGDATABASE" not in env:
+        env["PGDATABASE"] = "testdb"
+        print("ℹ️ PGDATABASE not set, defaulting to 'testdb'")
+
+    bootstrap = ROOT / ".ci" / "scripts" / "bootstrap_test_db.sh"
+    bootstrap.chmod(bootstrap.stat().st_mode | 0o111)
+    print("📦 Bootstrapping test database ...")
+    run([str(bootstrap)], env=env)
+
     print("🧪 Running backend tests ...")
-    run([python_exe(), "-m", "pytest", "-q"], cwd=API_DIR)
+    run([python_exe(), "-m", "pytest", "-q"], cwd=API_DIR, env=env)
 
 
 def main():

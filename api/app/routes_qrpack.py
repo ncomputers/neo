@@ -97,7 +97,9 @@ async def qrpack_pdf(
     if cached:
         content = base64.b64decode(cached.get("content", ""))
         mimetype = cached.get("mimetype", "application/pdf")
-        return Response(content, media_type=mimetype)
+        response = Response(content, media_type=mimetype)
+        response.headers["Content-Type"] = mimetype
+        return response
 
     tables = []
     for idx, t in enumerate(tenant.get("tables", [])):
@@ -135,7 +137,9 @@ async def qrpack_pdf(
     )
     await redis.expire(cache_key, 600)
 
-    return Response(content, media_type=mimetype)
+    response = Response(content, media_type=mimetype)
+    response.headers["Content-Type"] = mimetype
+    return response
 
 
 __all__ = ["router"]
