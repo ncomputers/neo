@@ -14,11 +14,7 @@ jobs:
       SYN_TENANT_ID: ${{ secrets.SYN_TENANT_ID_STAGING }}
       SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE_STAGING }}
       AUTH_TOKEN: ${{ secrets.AUTH_TOKEN_STAGING }}
-    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
-            secrets.API_BASE_URL_STAGING != '' &&
-            secrets.SYN_TENANT_ID_STAGING != '' &&
-            secrets.SYN_TABLE_CODE_STAGING != '' &&
-            secrets.AUTH_TOKEN_STAGING != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -110,14 +106,7 @@ jobs:
       SYN_TABLE_CODE: ${{ secrets.SYN_TABLE_CODE }}
       AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
       SYN_ENABLED_PROD: ${{ secrets.SYN_ENABLED_PROD }}
-    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') &&
-            github.ref == 'refs/heads/main' &&
-            !github.event.pull_request.head.repo.fork &&
-            secrets.API_BASE_URL != '' &&
-            secrets.SYN_TENANT_ID != '' &&
-            secrets.SYN_TABLE_CODE != '' &&
-            secrets.AUTH_TOKEN != '' &&
-            secrets.SYN_ENABLED_PROD != '' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && github.ref == 'refs/heads/main' && !github.event.pull_request.head.repo.fork }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
