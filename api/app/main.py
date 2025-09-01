@@ -202,6 +202,7 @@ from .routes_staff import router as staff_router
 from .routes_staff_support import router as staff_support_router
 from .routes_status import router as status_router
 from .routes_status_json import router as status_json_router
+from .routes_stats import router as stats_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
 from .routes_support_console import router as support_console_router
@@ -996,6 +997,7 @@ app.include_router(time_skew_router)
 app.include_router(pwa_version_router)
 app.include_router(status_json_router)
 app.include_router(status_router)
+app.include_router(stats_router)
 app.include_router(version_router)
 app.include_router(ready_router)
 app.include_router(eta_router)

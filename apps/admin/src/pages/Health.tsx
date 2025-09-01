@@ -5,7 +5,7 @@ export function Health() {
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE}/status.json`)
+    fetch(`${API_BASE}/stats`)
       .then((r) => setOk(r.ok))
       .catch(() => setOk(false));
   }, []);
