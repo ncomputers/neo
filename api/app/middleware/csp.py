@@ -35,6 +35,9 @@ class CSPMiddleware(BaseHTTPMiddleware):
             "frame-ancestors 'self'"
         )
         response.headers.setdefault("Content-Security-Policy", csp)
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
         if response.headers.get("content-type", "").startswith("text/html"):
             body = b"".join([chunk async for chunk in response.body_iterator])
             content = body.decode("utf-8").replace("{{ csp_nonce }}", nonce)

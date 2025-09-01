@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 from .fonts import FONTS_DIR, ensure_fonts
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -82,6 +83,7 @@ def render_template(
         )
         return pdf_bytes, "application/pdf"
     except Exception:
+        ensure_fonts()
         return html.encode("utf-8"), "text/html"
 
 
@@ -98,7 +100,11 @@ def render_invoice(
     """
     template_name = _TEMPLATE_MAP.get(size, _TEMPLATE_MAP["80mm"])
     template = _env.get_template(template_name)
-    html = template.render(invoice=invoice_json, csp_nonce=nonce)
+    html = template.render(
+        invoice=invoice_json,
+        csp_nonce=nonce,
+        composition_scheme=invoice_json.get("composition_scheme"),
+    )
     try:
         weasyprint = importlib.import_module("weasyprint")
         font_config = weasyprint.text.fonts.FontConfiguration()
@@ -108,4 +114,5 @@ def render_invoice(
         )
         return pdf_bytes, "application/pdf"
     except Exception:
+        ensure_fonts()
         return html.encode("utf-8"), "text/html"

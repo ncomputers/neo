@@ -70,7 +70,7 @@ async def fetch_menu(
     filter_str = request.query_params.get("filter")
     if filter_str:
         items = filter_items(items, filter_str)
-    lang = getattr(request.state, "lang", resolve_lang(accept_language))
+    lang = resolve_lang(accept_language)
     items_out = []
     for item in items:
         item_out = {

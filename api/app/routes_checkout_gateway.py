@@ -124,13 +124,23 @@ async def checkout_webhook(
     if payload.status == "refund":
         if not request.headers.get("Idempotency-Key"):
             raise HTTPException(status_code=400, detail="missing idempotency key")
+        utr = payload.event_id or payload.order_id
+        existing = await session.scalar(
+            select(Payment.id).where(
+                Payment.invoice_id == payload.invoice_id,
+                Payment.mode == "gateway_refund",
+                Payment.utr == utr,
+            )
+        )
+        if existing:
+            return ok({"refunded": True})
         if not getattr(invoice, "settled", False):
             return ok({"refunded": False})
         payment = Payment(
             invoice_id=payload.invoice_id,
             mode="gateway_refund",
             amount=-payload.amount,
-            utr=payload.event_id or payload.order_id,
+            utr=utr,
             verified=True,
         )
         session.add(payment)

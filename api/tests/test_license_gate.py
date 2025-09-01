@@ -65,6 +65,20 @@ def test_billing_route_bypass(client, monkeypatch):
     assert resp.status_code == 200
 
 
+def test_unknown_tenant_blocks_orders(client):
+    payload = {"tenant_id": "missing", "open_tables": 0}
+    headers = {"X-Tenant-ID": "missing"}
+    resp = client.post("/orders", json=payload, headers=headers)
+    assert resp.status_code == 403
+    assert resp.json() == {"detail": "Subscription expired"}
+
+
+def test_unknown_tenant_allowed_on_billing_route(client):
+    headers = {"X-Tenant-ID": "missing"}
+    resp = client.get("/admin/billing/subscription", headers=headers)
+    assert resp.status_code == 404
+
+
 def test_cache_refresh_after_renewal(client):
     tid = _create_tenant(client)
     TENANTS[tid]["subscription_expires_at"] = datetime.utcnow() - timedelta(days=8)
