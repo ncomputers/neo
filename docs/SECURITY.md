@@ -1,7 +1,7 @@
 # Security
 
 ## HTTP Headers
-- `Content-Security-Policy`: `default-src 'self'; script-src 'self' 'nonce-{RANDOM}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://YOUR_API https://YOUR_WS; frame-ancestors 'self'`
+- `Content-Security-Policy`: `default-src 'self'; script-src 'self' 'nonce-{RANDOM}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.example.com https://ws.example.com wss://ws.example.com; frame-ancestors 'self'`
 - `Strict-Transport-Security`: `max-age=31536000; includeSubDomains; preload`
 - `X-Content-Type-Options`: `nosniff`
 - `Referrer-Policy`: `strict-origin-when-cross-origin`

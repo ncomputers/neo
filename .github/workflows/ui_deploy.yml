@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CSP_CONNECT_SRC: "https://api.your.com https://ws.your.com wss://ws.your.com"
     steps:
       - uses: actions/checkout@v4
       - name: Set up Docker Buildx

@@ -11,7 +11,14 @@ Builds read backend endpoints from the following variables:
 - `VITE_API_BASE`
 - `VITE_WS_BASE`
 
-Pass them at build time, e.g.
+At runtime, `CSP_CONNECT_SRC` configures the CSP `connect-src` directive. It should contain a space-separated list of API and WebSocket origins, for example:
+
+```bash
+docker run -e CSP_CONNECT_SRC="https://api.example.com https://ws.example.com wss://ws.example.com" \
+  -p 80:80 neo-ui
+```
+
+Pass the build-time variables when building the image:
 
 ```bash
 docker build -f Dockerfile.ui \
@@ -36,9 +43,22 @@ populate `static/fonts/` before building so the preloaded assets resolve
 correctly at runtime.
 
 ## Changing roots
-Nginx reads its runtime configuration from `deploy/nginx/nginx.conf`, where the
-`root` is set to `/usr/share/nginx/html`. Built apps are copied into
-subdirectories of that root by `Dockerfile.ui`. To serve the apps from different
-paths or to point to a different root, update the `location` blocks or the
-`root` directive in the config and adjust the copy paths in the Dockerfile.
+Nginx reads its runtime configuration from the template at
+`deploy/nginx/nginx.conf.tmpl`, rendered on container start by
+`/entrypoint.sh`. The `root` defaults to `/usr/share/nginx/html`. Built apps are
+copied into subdirectories of that root by `Dockerfile.ui`. To serve the apps
+from different paths or to point to a different root, update the `location`
+blocks or the `root` directive in the template and adjust the copy paths in the
+Dockerfile.
+
+## Validation
+
+Verify the CSP header exposes the expected connect sources:
+
+```bash
+curl -I /guest/ | grep -i content-security-policy
+```
+
+The `connect-src` directive should list both API and WebSocket endpoints. Inline
+scripts without the generated nonce must be blocked by the browser.
 

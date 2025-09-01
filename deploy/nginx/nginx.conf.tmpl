@@ -10,7 +10,7 @@ http {
     add_header Permissions-Policy "geolocation=(), microphone=(), camera=(), notifications=(self)";
     add_header X-Frame-Options SAMEORIGIN;
     # CSP with nonces; connect-src must include API & WS bases
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'nonce-$csp_nonce'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://YOUR_API https://YOUR_WS; frame-ancestors 'self'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'nonce-$csp_nonce'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' $CSP_CONNECT_SRC; frame-ancestors 'self'" always;
 
     root /usr/share/nginx/html;
 
