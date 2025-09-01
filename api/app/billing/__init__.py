@@ -200,7 +200,7 @@ class MockGateway:
     secret = "mock_secret"
 
     def create_checkout_session(self, tenant_id: str, plan: Plan) -> Dict[str, Any]:
-        from .main import TENANTS  # inline import to avoid circular deps
+        from ..main import TENANTS  # TENANTS is defined in api.app.main
 
         now = datetime.utcnow()
         period_end = now + timedelta(days=30)

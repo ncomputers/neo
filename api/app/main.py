@@ -251,6 +251,10 @@ app = FastAPI(
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
+allowed_origins = [
+    o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
+]
+app.add_middleware(CORSMiddleware, allowed_origins=allowed_origins)
 
 # Serve built front-end SPAs
 root_dir = Path(__file__).resolve().parent.parent.parent / "apps"
@@ -258,20 +262,14 @@ guest_spa = root_dir / "guest" / "dist"
 admin_spa = root_dir / "admin" / "dist"
 kds_spa = root_dir / "kds" / "dist"
 
-if guest_spa.exists():
+if guest_spa.exists() and not os.getenv("SKIP_SPA_MOUNT"):
     app.mount("/guest", StaticFiles(directory=guest_spa, html=True), name="guest")
-else:
-    logging.warning("Guest SPA not found at %s; skipping mount", guest_spa)
 
-if admin_spa.exists():
+if admin_spa.exists() and not os.getenv("SKIP_SPA_MOUNT"):
     app.mount("/admin", StaticFiles(directory=admin_spa, html=True), name="admin")
-else:
-    logging.warning("Admin SPA not found at %s; skipping mount", admin_spa)
 
-if kds_spa.exists():
+if kds_spa.exists() and not os.getenv("SKIP_SPA_MOUNT"):
     app.mount("/kds", StaticFiles(directory=kds_spa, html=True), name="kds")
-else:
-    logging.warning("KDS SPA not found at %s; skipping mount", kds_spa)
 
 
 init_tracing(app)
@@ -300,8 +298,6 @@ app.add_middleware(LicensingMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 app.add_middleware(IdempotencyMetricsMiddleware)
 app.add_middleware(MaintenanceMiddleware)
-allowed_origins = [o.strip() for o in os.getenv("ORIGINS", "").split(",") if o.strip()]
-app.add_middleware(CORSMiddleware, allowed_origins=allowed_origins)
 app.add_middleware(CSPMiddleware)
 app.add_middleware(SecurityMiddleware)
 app.add_middleware(PinSecurityMiddleware)

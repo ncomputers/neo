@@ -2,6 +2,8 @@ from __future__ import annotations
 
 """Readiness probe endpoints."""
 
+import os
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -15,6 +17,9 @@ router = APIRouter()
 @router.get("/ready")
 async def ready() -> dict:
     """Return readiness status after verifying DB and Redis connectivity."""
+
+    if os.getenv("DISABLE_DB_READY_CHECK") == "1":
+        return {"ok": True}
 
     try:
         with SessionLocal() as session:

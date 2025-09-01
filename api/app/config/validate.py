@@ -19,7 +19,6 @@ REQUIRED_ENVS = [
 logger = logging.getLogger("api.config")
 
 DEV_DEFAULTS = {
-    "ALLOWED_ORIGINS": "http://localhost",
     "SECRET_KEY": "test-secret",
     "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/master",
     "REDIS_URL": "redis://localhost:6379/0",
