@@ -13,11 +13,13 @@ from api.app.pdf.render import render_template  # noqa: E402
 from api.app.routes_onboarding import TENANTS  # noqa: E402
 from api.app.routes_onboarding import router as onboarding_router  # noqa: E402
 from api.app.routes_qrpack import router as qrpack_router  # noqa: E402
+from api.app.middleware.csp import CSPMiddleware  # noqa: E402
 
 
 def _setup_app():
     app = FastAPI()
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    app.add_middleware(CSPMiddleware)
     app.include_router(onboarding_router)
     app.include_router(qrpack_router)
     return app

@@ -13,6 +13,7 @@ from api.app import audit  # noqa: E402
 from api.app.audit import Base  # noqa: E402
 from api.app.routes_onboarding import router as onboarding_router  # noqa: E402
 from api.app.routes_qrpack import router as qrpack_router  # noqa: E402
+from api.app.middleware.csp import CSPMiddleware  # noqa: E402
 
 
 def _setup_app(tmp_path, monkeypatch):
@@ -27,11 +28,16 @@ def _setup_app(tmp_path, monkeypatch):
     import api.app.auth as auth  # noqa: E402
 
     monkeypatch.setattr(auth, "role_required", lambda *roles: lambda: object())
+    monkeypatch.setattr(auth, "get_current_user", lambda: object())
 
-    from api.app import routes_admin_qrpack  # noqa: E402
+    import importlib
+    routes_admin_qrpack = importlib.reload(
+        __import__("api.app.routes_admin_qrpack", fromlist=["router"])
+    )
 
     app = FastAPI()
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    app.add_middleware(CSPMiddleware)
     app.include_router(onboarding_router)
     app.include_router(qrpack_router)
     app.include_router(routes_admin_qrpack.router)

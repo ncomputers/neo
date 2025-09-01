@@ -7,8 +7,9 @@ from contextlib import asynccontextmanager
 from datetime import datetime, time, timezone
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Response
-from sqlalchemy import desc, func, select
+from fastapi import APIRouter, Request, Response, HTTPException
+from sqlalchemy import select, func, desc
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .db.tenant import get_engine
@@ -34,7 +35,7 @@ async def _session(tenant_id: str):
 
 
 @router.get("/api/outlet/{tenant_id}/reports/daybook.pdf")
-async def owner_daybook_pdf(tenant_id: str, date: str) -> Response:
+async def owner_daybook_pdf(tenant_id: str, request: Request, date: str) -> Response:
     """Return a daily owner daybook in PDF or HTML format."""
 
     tz = os.getenv("DEFAULT_TZ", "UTC")
@@ -80,6 +81,7 @@ async def owner_daybook_pdf(tenant_id: str, date: str) -> Response:
             "payments": payments,
             "top_items": top_items,
         },
+        nonce=request.state.csp_nonce,
     )
     response = Response(content=content, media_type=mimetype)
     response.headers["Content-Type"] = mimetype

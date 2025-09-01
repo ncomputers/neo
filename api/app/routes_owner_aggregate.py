@@ -153,6 +153,7 @@ async def owner_daybook_pdf(owner_id: str, request: Request, date: str) -> Respo
             "payments": payments,
             "top_outlets": top_outlets,
         },
+        nonce=request.state.csp_nonce,
     )
     response = Response(content=content, media_type=mimetype)
     response.headers["Content-Type"] = mimetype

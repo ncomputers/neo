@@ -11,6 +11,7 @@ import fakeredis.aioredis
 
 from api.app.routes_onboarding import router as onboarding_router, TENANTS
 from api.app.routes_qrpack import router as qrpack_router
+from api.app.middleware.csp import CSPMiddleware  # noqa: E402
 
 
 
@@ -20,6 +21,7 @@ def _setup_app() -> FastAPI:
     app.include_router(onboarding_router)
     app.include_router(qrpack_router)
     app.state.redis = fakeredis.aioredis.FakeRedis()
+    app.add_middleware(CSPMiddleware)
     return app
 
 

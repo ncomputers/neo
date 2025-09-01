@@ -119,6 +119,7 @@ async def qrpack_pdf(
             "pages": pages,
             "size": size,
         },
+        nonce=request.state.csp_nonce,
     )
 
     content = content.replace(b' aria-label="QR codes"', b"")

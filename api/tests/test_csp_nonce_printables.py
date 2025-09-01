@@ -10,6 +10,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from api.app import routes_kot  # noqa: E402
 from api.app.middlewares.security import SecurityMiddleware  # noqa: E402
+from api.app.middleware.csp import CSPMiddleware  # noqa: E402
 from api.app.routes_invoice_pdf import router as invoice_router  # noqa: E402
 
 
@@ -23,6 +24,7 @@ def _extract_nonce(resp):
 def test_invoice_csp_nonce():
     app = FastAPI()
     app.add_middleware(SecurityMiddleware)
+    app.add_middleware(CSPMiddleware)
     app.include_router(invoice_router)
     client = TestClient(app)
     resp = client.get("/invoice/123/pdf?size=80mm")
@@ -34,6 +36,7 @@ def test_invoice_csp_nonce():
 def test_kot_csp_nonce():
     app = FastAPI()
     app.add_middleware(SecurityMiddleware)
+    app.add_middleware(CSPMiddleware)
     app.include_router(routes_kot.router)
 
     class DummyResult1:
