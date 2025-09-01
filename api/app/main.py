@@ -383,15 +383,19 @@ async def start_replica_monitor() -> None:
 class EmailLogin(BaseModel):
     """Email/password login payload."""
 
-    username: str = Field(..., example="alice@example.com")
-    password: str = Field(..., example="secret123")
+    username: str = Field(
+        ..., json_schema_extra={"example": "alice@example.com"}
+    )
+    password: str = Field(
+        ..., json_schema_extra={"example": "secret123"}
+    )
 
 
 class PinLogin(BaseModel):
     """PIN login payload."""
 
-    username: str = Field(..., example="alice")
-    pin: str = Field(..., example="1234")
+    username: str = Field(..., json_schema_extra={"example": "alice"})
+    pin: str = Field(..., json_schema_extra={"example": "1234"})
 
 
 @app.post("/login/email", tags=["Auth"], summary="Login with email")
@@ -460,11 +464,15 @@ async def staff_area(
 class CartItem(BaseModel):
     """An item added by a guest to the cart."""
 
-    item: str = Field(..., example="Coffee")
-    price: float = Field(..., example=2.5)
-    quantity: int = Field(..., example=1)
-    guest_id: Optional[str] = Field(None, example="guest-1")
-    status: str = Field("pending", example="pending")
+    item: str = Field(..., json_schema_extra={"example": "Coffee"})
+    price: float = Field(..., json_schema_extra={"example": 2.5})
+    quantity: int = Field(..., json_schema_extra={"example": 1})
+    guest_id: Optional[str] = Field(
+        None, json_schema_extra={"example": "guest-1"}
+    )
+    status: str = Field(
+        "pending", json_schema_extra={"example": "pending"}
+    )
 
 
 class UpdateQuantity(BaseModel):
@@ -474,16 +482,18 @@ class UpdateQuantity(BaseModel):
     soft-cancel.
     """
 
-    quantity: int = Field(..., example=0)
-    admin: bool = Field(False, example=True)
+    quantity: int = Field(..., json_schema_extra={"example": 0})
+    admin: bool = Field(
+        False, json_schema_extra={"example": True}
+    )
 
 
 class StaffOrder(BaseModel):
     """Order item placed directly by staff."""
 
-    item: str = Field(..., example="Tea")
-    price: float = Field(..., example=1.5)
-    quantity: int = Field(..., example=1)
+    item: str = Field(..., json_schema_extra={"example": "Tea"})
+    price: float = Field(..., json_schema_extra={"example": 1.5})
+    quantity: int = Field(..., json_schema_extra={"example": 1})
 
 
 tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
