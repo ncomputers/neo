@@ -7,7 +7,6 @@ import { capturePageView } from '@neo/utils';
 import './index.css';
 import './i18n';
 import { router } from './routes';
-import { Workbox } from 'workbox-window';
 import { AuthProvider } from './auth';
 import { withInterceptors } from '@neo/api';
 import { refreshFlags } from '@neo/flags';
@@ -22,10 +21,6 @@ router.subscribe((state) => {
   capturePageView(state.location.pathname);
 });
 
-if ('serviceWorker' in navigator) {
-  const wb = new Workbox('/sw.js');
-  wb.register();
-}
 
 async function init() {
   const [outlet] = await Promise.all([

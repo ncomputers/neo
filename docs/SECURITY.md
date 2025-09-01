@@ -26,3 +26,8 @@ Our security contact is published at `/.well-known/security.txt`.
 1. Rotate credentials.
 2. Invalidate active sessions.
 3. Review audit logs.
+
+## SW hygiene
+- Only the guest app registers a service worker.
+- The worker script lives at `/guest/sw.js` and is served with `Cache-Control: no-store`.
+- Other apps such as `/admin` and `/kds` serve no service worker.

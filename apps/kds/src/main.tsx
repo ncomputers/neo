@@ -6,7 +6,6 @@ import { Toaster, GlobalErrorBoundary, ThemeProvider, tokensFromOutlet, toast } 
 import { capturePageView } from '@neo/utils';
 import './index.css';
 import './i18n';
-import { Workbox } from 'workbox-window';
 import { AppRoutes } from './routes';
 import { AuthProvider } from './auth';
 import { withInterceptors } from '@neo/api';
@@ -19,10 +18,6 @@ window.addEventListener('unauthorized', () => toast.error('Session expired'));
 
 capturePageView(window.location.pathname);
 
-if ('serviceWorker' in navigator) {
-  const wb = new Workbox('/sw.js');
-  wb.register();
-}
 
 async function init() {
   const [outlet] = await Promise.all([
