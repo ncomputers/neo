@@ -30,7 +30,9 @@ class MenuRepoSQL(MenuRepo):
         include_deleted: bool = False,
     ) -> list[dict]:
         """Return menu items with optional hidden or deleted ones."""
-        stmt = select(MenuItem).order_by(MenuItem.sort, MenuItem.id)
+        sort_col = getattr(MenuItem, "sort_order", MenuItem.id)
+        stmt = select(MenuItem).order_by(MenuItem.category_id, sort_col)
+
         if not include_deleted:
             stmt = stmt.where(MenuItem.deleted_at.is_(None))
         if not include_hidden:

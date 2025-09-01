@@ -8,15 +8,20 @@ import hashlib
 import json
 
 import httpx
-from fastapi import APIRouter, Depends, Header, Request, Response
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from typing import AsyncGenerator
 
 from config import get_settings
 
+from .db import SessionLocal
 from .db.replica import read_only
+from .db.tenant import get_engine
 from .i18n import get_msg, resolve_lang
 from .menu.dietary import filter_items
 from .middlewares.sanitize import sanitize_html
+from .models_tenant import Table
 from .repos_sqlalchemy.menu_repo_sql import MenuRepoSQL
 from .utils.i18n import get_text
 from .utils.responses import ok
@@ -25,19 +30,33 @@ router = APIRouter()
 
 
 async def get_tenant_id(table_token: str) -> str:
-    """Return the tenant identifier for ``table_token``.
+    """Resolve and return the tenant identifier for ``table_token``.
 
-    This is a placeholder dependency to be implemented with real lookup logic.
+    The ``table_token`` corresponds to :attr:`Table.qr_token`. The lookup is
+    performed against the shared ``SessionLocal`` database which stores tables
+    for all tenants. A ``404`` is raised if the token cannot be resolved.
     """
-    raise NotImplementedError
+    with SessionLocal() as session:
+        result = session.execute(
+            select(Table.tenant_id).where(Table.qr_token == table_token)
+        )
+        tenant_id = result.scalar_one_or_none()
+    if tenant_id is None:
+        raise HTTPException(status_code=404, detail="table not found")
+    return str(tenant_id)
 
 
-async def get_tenant_session(tenant_id: str) -> AsyncSession:
-    """Return an ``AsyncSession`` bound to ``tenant_id``'s database.
+async def get_tenant_session(
+    tenant_id: str,
+) -> AsyncGenerator[AsyncSession, None]:
+    """Yield an :class:`~sqlalchemy.ext.asyncio.AsyncSession` for ``tenant_id``."""
 
-    This stub will be replaced with logic that opens a tenant-specific session.
-    """
-    raise NotImplementedError
+    engine = get_engine(tenant_id)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
+    async with sessionmaker() as session:
+        yield session
 
 
 @router.get("/g/{table_token}/menu")

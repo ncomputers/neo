@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from typing import AsyncGenerator
 
 from config import get_settings
 
@@ -13,27 +15,39 @@ from .routes_metrics import record_ab_conversion
 from .services import billing_service, notifications
 from .services.receipt_vault import ReceiptVault
 from .utils.responses import ok
+from .db import SessionLocal
+from .db.tenant import get_engine
+from .models_tenant import Table
 
 
-async def get_tenant_id() -> str:  # pragma: no cover - placeholder dependency
-    """Resolve and return the current tenant identifier.
+async def get_tenant_id(table_token: str) -> str:
+    """Resolve and return the tenant identifier for ``table_token``.
 
-    This stub is a placeholder until multi-tenant plumbing is wired up.
+    ``table_token`` is the QR token assigned to a table. The lookup is
+    performed synchronously against ``SessionLocal``. If the token is unknown a
+    ``404`` is raised.
     """
-    raise NotImplementedError
+    with SessionLocal() as session:
+        result = session.execute(
+            select(Table.tenant_id).where(Table.qr_token == table_token)
+        )
+        tenant_id = result.scalar_one_or_none()
+    if tenant_id is None:
+        raise HTTPException(status_code=404, detail="table not found")
+    return str(tenant_id)
 
 
 async def get_tenant_session(
     tenant_id: str,
-) -> AsyncSession:  # pragma: no cover - placeholder
-    """Yield an ``AsyncSession`` bound to the tenant database.
+) -> AsyncGenerator[AsyncSession, None]:
+    """Yield an :class:`~sqlalchemy.ext.asyncio.AsyncSession` for ``tenant_id``."""
 
-    Parameters
-    ----------
-    tenant_id:
-        Identifier of the tenant obtained from :func:`get_tenant_id`.
-    """
-    raise NotImplementedError
+    engine = get_engine(tenant_id)
+    sessionmaker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
+    async with sessionmaker() as session:
+        yield session
 
 
 router = APIRouter()
