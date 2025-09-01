@@ -20,7 +20,7 @@ if (hasAnalyticsConsent()) {
 }
 
 if ('serviceWorker' in navigator) {
-  const wb = new Workbox('/sw.js');
+  const wb = new Workbox('/guest/sw.js', { scope: '/guest/' });
   navigator.serviceWorker.addEventListener('message', handleSwMessage);
   wb.register();
 }

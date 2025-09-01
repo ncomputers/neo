@@ -65,3 +65,11 @@ def test_login_rate_limit_resets(monkeypatch):
         json={"username": "cashier1", "pin": "bad"},
     )
     assert resp.status_code == 400
+
+
+def test_sw_not_served_on_admin(monkeypatch):
+    app = _setup_app(monkeypatch)
+    client = TestClient(app)
+    resp = client.get('/admin/')
+    assert 'Service-Worker' not in resp.headers
+    assert 'Service-Worker-Allowed' not in resp.headers
