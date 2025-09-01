@@ -19,10 +19,7 @@ if ! npx playwright test -c playwright.vr.config.ts --reporter=line; then
 fi
 
 echo 'Running Lighthouse CI checks'
-if ! npx lhci autorun --config=lighthouserc.json \
-  --collect.url=http://localhost:5173/guest/menu \
-  --collect.url=http://localhost:5174/kds/expo \
-  --collect.url=http://localhost:5175/admin/dashboard; then
+if ! npx lhci autorun --config=lighthouserc.js; then
   status=1
 fi
 
