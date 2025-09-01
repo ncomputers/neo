@@ -8,6 +8,7 @@ import json
 import logging
 import os
 from typing import Any, Dict, List
+from urllib.parse import urlencode
 
 import httpx
 
@@ -102,8 +103,13 @@ async def _send(batch: List[Dict[str, Any]]) -> None:
                             },
                         }
                         data = base64.b64encode(json.dumps(payload).encode()).decode()
+                        encoded_bytes = urlencode({"data": data}).encode()
                         await client.post(
-                            "https://api.mixpanel.com/track", data={"data": data}
+                            "https://api.mixpanel.com/track",
+                            content=encoded_bytes,
+                            headers={
+                                "Content-Type": "application/x-www-form-urlencoded"
+                            },
                         )
             break
         except httpx.HTTPError as exc:  # network issue
