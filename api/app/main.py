@@ -22,11 +22,9 @@ import redis.asyncio as redis
 from fastapi import (
     Depends,
     FastAPI,
-    File,
     Header,
     HTTPException,
     Request,
-    UploadFile,
     WebSocket,
     WebSocketDisconnect,
     status,
@@ -200,9 +198,9 @@ from .routes_security import router as security_router
 from .routes_slo import router as slo_router
 from .routes_staff import router as staff_router
 from .routes_staff_support import router as staff_support_router
+from .routes_stats import router as stats_router
 from .routes_status import router as status_router
 from .routes_status_json import router as status_json_router
-from .routes_stats import router as stats_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
 from .routes_support_console import router as support_console_router
@@ -511,7 +509,6 @@ class OrderRequest(BaseModel):
 
 
 TENANTS: dict[str, dict] = {}  # tenant_id -> tenant info
-PAYMENTS: dict[str, dict] = {}  # payment_id -> payment metadata
 
 
 @app.post("/tenants")
@@ -553,42 +550,21 @@ async def create_order(request: OrderRequest) -> dict:
 
 
 @app.post("/tenants/{tenant_id}/subscription/renew")
-async def renew_subscription(
-    tenant_id: str, screenshot: UploadFile = File(...)
-) -> dict:
+async def renew_subscription(tenant_id: str, months: int = 1) -> dict:
+    """Extend a tenant's subscription in-memory.
+
+    This mock endpoint avoids external billing calls and simply pushes the
+    expiration forward ``months`` times 30 days. A ``payment.verified`` event is
+    emitted for internal consumers.
+    """
     if tenant_id not in TENANTS:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    payment_id = str(uuid.uuid4())
-    uploads = Path(__file__).resolve().parent / "payments"
-    uploads.mkdir(exist_ok=True)
-    file_path = uploads / f"{payment_id}_{screenshot.filename}"
-    with file_path.open("wb") as buffer:
-        buffer.write(await screenshot.read())
-
-    PAYMENTS[payment_id] = {
-        "tenant_id": tenant_id,
-        "screenshot": str(file_path),
-        "verified": False,
-    }
-    return ok({"payment_id": payment_id})
-
-
-@app.post("/tenants/{tenant_id}/subscription/payments/{payment_id}/verify")
-async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> dict:
-    payment = PAYMENTS.get(payment_id)
-    if payment is None or payment["tenant_id"] != tenant_id:
-        raise HTTPException(status_code=404, detail="Payment not found")
-
-    payment["verified"] = True
     tenant = TENANTS[tenant_id]
-    tenant["subscription_expires_at"] = tenant["subscription_expires_at"] + timedelta(
-        days=30 * months
-    )
-    await event_bus.publish(
-        "payment.verified", {"tenant_id": tenant_id, "payment_id": payment_id}
-    )
-    return ok({"status": "verified"})
+    expiry = tenant.get("subscription_expires_at") or datetime.utcnow()
+    tenant["subscription_expires_at"] = expiry + timedelta(days=30 * months)
+    await event_bus.publish("payment.verified", {"tenant_id": tenant_id})
+    return {"ok": True}
 
 
 @app.get("/health")
