@@ -54,6 +54,16 @@ def test_render_unregistered():
     assert "Composition Scheme" not in html
 
 
+def test_render_composition_scheme_flag():
+    invoice = billing_service.build_invoice_context(ITEMS, "reg", gstin=GSTIN)
+    invoice["number"] = "INV-1"
+    invoice["composition_scheme"] = True
+    html_bytes, mimetype = render_invoice(invoice, size="80mm")
+    assert mimetype == "text/html"
+    html = html_bytes.decode("utf-8")
+    assert "GSTIN: 22AAAAA0000A1Z5 (Composition Scheme)" in html
+
+
 def test_comp_invoice_no_gst_lines():
     invoice = billing_service.build_invoice_context(ITEMS, "comp", gstin=GSTIN)
     assert invoice["tax_lines"] == []

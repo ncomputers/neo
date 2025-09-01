@@ -11,6 +11,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 def _setup_app(monkeypatch):
     monkeypatch.setenv("ORIGINS", "https://allowed.com")
+
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("RATE_LIMIT_LOGIN", "2/1s")
     monkeypatch.setenv("RATE_LIMIT_REFRESH", "60/5m")
@@ -44,6 +45,7 @@ def test_referrer_policy_on_other_routes(monkeypatch):
     client = TestClient(app)
     resp = client.get("/ready", headers={"Origin": "https://allowed.com"})
     assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+
 
 
 def test_cors_rejects_unknown_origin(monkeypatch):

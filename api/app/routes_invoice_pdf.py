@@ -31,4 +31,6 @@ async def invoice_pdf(
         invoice, size=size, nonce=request.state.csp_nonce
     )
     invoices_generated_total.inc()
-    return Response(content, media_type=mimetype)
+    response = Response(content, media_type=mimetype)
+    response.headers["Content-Type"] = mimetype
+    return response

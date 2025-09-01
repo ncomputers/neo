@@ -16,17 +16,16 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
+from contextlib import asynccontextmanager
 
 import redis as redis_sync
 import redis.asyncio as redis
 from fastapi import (
     Depends,
     FastAPI,
-    File,
     Header,
     HTTPException,
     Request,
-    UploadFile,
     WebSocket,
     WebSocketDisconnect,
     status,
@@ -83,7 +82,7 @@ template_globals = {"build_renew_url": build_renew_url}
 
 from .menu import router as menu_router
 from .middleware.cors import CORSMiddleware
-from .middleware.csp import CSPMiddleware
+from .middlewares.csp import CSPMiddleware
 from .middleware.rate_limit import SlidingWindowRateLimitMiddleware
 from .middlewares import (
     APIKeyAuthMiddleware,
@@ -200,9 +199,9 @@ from .routes_security import router as security_router
 from .routes_slo import router as slo_router
 from .routes_staff import router as staff_router
 from .routes_staff_support import router as staff_support_router
+from .routes_stats import router as stats_router
 from .routes_status import router as status_router
 from .routes_status_json import router as status_json_router
-from .routes_stats import router as stats_router
 from .routes_support import router as support_router
 from .routes_support_bundle import router as support_bundle_router
 from .routes_support_console import router as support_console_router
@@ -243,11 +242,20 @@ class SWStaticFiles(StaticFiles):
 
 validate_on_boot()
 settings = get_settings()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    pubsub = getattr(app.state, "pubsub", None)
+    if pubsub and hasattr(pubsub, "aclose"):
+        await pubsub.aclose()
+
+
 app = FastAPI(
     title="Neo API",
     version="1.0.0-rc",
     servers=[{"url": "/"}],
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 app.mount("/static", SWStaticFiles(directory=static_dir), name="static")
@@ -383,15 +391,19 @@ async def start_replica_monitor() -> None:
 class EmailLogin(BaseModel):
     """Email/password login payload."""
 
-    username: str = Field(..., example="alice@example.com")
-    password: str = Field(..., example="secret123")
+    username: str = Field(
+        ..., json_schema_extra={"example": "alice@example.com"}
+    )
+    password: str = Field(
+        ..., json_schema_extra={"example": "secret123"}
+    )
 
 
 class PinLogin(BaseModel):
     """PIN login payload."""
 
-    username: str = Field(..., example="alice")
-    pin: str = Field(..., example="1234")
+    username: str = Field(..., json_schema_extra={"example": "alice"})
+    pin: str = Field(..., json_schema_extra={"example": "1234"})
 
 
 @app.post("/login/email", tags=["Auth"], summary="Login with email")
@@ -460,11 +472,15 @@ async def staff_area(
 class CartItem(BaseModel):
     """An item added by a guest to the cart."""
 
-    item: str = Field(..., example="Coffee")
-    price: float = Field(..., example=2.5)
-    quantity: int = Field(..., example=1)
-    guest_id: Optional[str] = Field(None, example="guest-1")
-    status: str = Field("pending", example="pending")
+    item: str = Field(..., json_schema_extra={"example": "Coffee"})
+    price: float = Field(..., json_schema_extra={"example": 2.5})
+    quantity: int = Field(..., json_schema_extra={"example": 1})
+    guest_id: Optional[str] = Field(
+        None, json_schema_extra={"example": "guest-1"}
+    )
+    status: str = Field(
+        "pending", json_schema_extra={"example": "pending"}
+    )
 
 
 class UpdateQuantity(BaseModel):
@@ -474,16 +490,18 @@ class UpdateQuantity(BaseModel):
     soft-cancel.
     """
 
-    quantity: int = Field(..., example=0)
-    admin: bool = Field(False, example=True)
+    quantity: int = Field(..., json_schema_extra={"example": 0})
+    admin: bool = Field(
+        False, json_schema_extra={"example": True}
+    )
 
 
 class StaffOrder(BaseModel):
     """Order item placed directly by staff."""
 
-    item: str = Field(..., example="Tea")
-    price: float = Field(..., example=1.5)
-    quantity: int = Field(..., example=1)
+    item: str = Field(..., json_schema_extra={"example": "Tea"})
+    price: float = Field(..., json_schema_extra={"example": 1.5})
+    quantity: int = Field(..., json_schema_extra={"example": 1})
 
 
 tables: Dict[str, Dict[str, List[CartItem]]] = {}  # table_id -> cart and orders
@@ -511,7 +529,6 @@ class OrderRequest(BaseModel):
 
 
 TENANTS: dict[str, dict] = {}  # tenant_id -> tenant info
-PAYMENTS: dict[str, dict] = {}  # payment_id -> payment metadata
 
 
 @app.post("/tenants")
@@ -553,42 +570,21 @@ async def create_order(request: OrderRequest) -> dict:
 
 
 @app.post("/tenants/{tenant_id}/subscription/renew")
-async def renew_subscription(
-    tenant_id: str, screenshot: UploadFile = File(...)
-) -> dict:
+async def renew_subscription(tenant_id: str, months: int = 1) -> dict:
+    """Extend a tenant's subscription in-memory.
+
+    This mock endpoint avoids external billing calls and simply pushes the
+    expiration forward ``months`` times 30 days. A ``payment.verified`` event is
+    emitted for internal consumers.
+    """
     if tenant_id not in TENANTS:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    payment_id = str(uuid.uuid4())
-    uploads = Path(__file__).resolve().parent / "payments"
-    uploads.mkdir(exist_ok=True)
-    file_path = uploads / f"{payment_id}_{screenshot.filename}"
-    with file_path.open("wb") as buffer:
-        buffer.write(await screenshot.read())
-
-    PAYMENTS[payment_id] = {
-        "tenant_id": tenant_id,
-        "screenshot": str(file_path),
-        "verified": False,
-    }
-    return ok({"payment_id": payment_id})
-
-
-@app.post("/tenants/{tenant_id}/subscription/payments/{payment_id}/verify")
-async def verify_payment(tenant_id: str, payment_id: str, months: int = 1) -> dict:
-    payment = PAYMENTS.get(payment_id)
-    if payment is None or payment["tenant_id"] != tenant_id:
-        raise HTTPException(status_code=404, detail="Payment not found")
-
-    payment["verified"] = True
     tenant = TENANTS[tenant_id]
-    tenant["subscription_expires_at"] = tenant["subscription_expires_at"] + timedelta(
-        days=30 * months
-    )
-    await event_bus.publish(
-        "payment.verified", {"tenant_id": tenant_id, "payment_id": payment_id}
-    )
-    return ok({"status": "verified"})
+    expiry = tenant.get("subscription_expires_at") or datetime.utcnow()
+    tenant["subscription_expires_at"] = expiry + timedelta(days=30 * months)
+    await event_bus.publish("payment.verified", {"tenant_id": tenant_id})
+    return {"ok": True}
 
 
 @app.get("/health")
@@ -655,7 +651,6 @@ async def table_ws(websocket: WebSocket, table_code: str) -> None:
         reader_task.cancel()
         hb_task.cancel()
         await pubsub.unsubscribe(channel)
-        await pubsub.close()
         realtime_guard.unregister(ip)
 
 
