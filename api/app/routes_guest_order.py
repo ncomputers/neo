@@ -13,12 +13,12 @@ from .db.tenant import get_engine
 from .deps.tenant import get_tenant_id
 from .events import event_bus
 from .hooks import order_rejection
+from .middlewares.license_gate import license_required
 from .models_tenant import AuditTenant
 from .repos_sqlalchemy import orders_repo_sql
 from .routes_metrics import orders_created_total
 from .security import abuse_guard
 from .utils.responses import ok
-from .middlewares.license_gate import license_required
 
 router = APIRouter(prefix="/g")
 
@@ -45,8 +45,11 @@ async def get_tenant_session(
     sessionmaker = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    async with sessionmaker() as session:  # pragma: no cover - simple generator
-        yield session
+    try:
+        async with sessionmaker() as session:  # pragma: no cover - simple generator
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @router.post("/{table_token}/order", dependencies=[license_required()])
