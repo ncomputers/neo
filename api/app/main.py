@@ -240,6 +240,20 @@ class SWStaticFiles(StaticFiles):
         return response
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(alerts_sender(event_bus.subscribe("order.placed")))
+    asyncio.create_task(ema_updater(event_bus.subscribe("payment.verified")))
+    asyncio.create_task(report_aggregator(event_bus.subscribe("table.cleaned")))
+    await replica.check_replica(app)
+    asyncio.create_task(replica.monitor(app))
+    try:
+        yield
+    finally:
+        redis_conn = getattr(app.state, "redis", None)
+        if redis_conn:
+            await redis_conn.close()
+
 validate_on_boot()
 settings = get_settings()
 @asynccontextmanager
@@ -368,6 +382,7 @@ async def general_error_handler(request: Request, exc: Exception):
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 prep_trackers: dict[str, PrepTimeTracker] = {}
+
 
 
 @app.on_event("startup")
@@ -572,7 +587,7 @@ async def create_order(request: OrderRequest) -> dict:
             pass
         else:
             await notifications.enqueue(
-                request.tenant_id, "order.accepted", request.dict()
+                request.tenant_id, "order.accepted", request.model_dump()
             )
     return ok({"status": "order accepted"})
 
