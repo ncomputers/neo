@@ -7,7 +7,7 @@ export function Health() {
   const [sse, setSse] = useState<'pending' | 'ok' | 'unsupported'>('pending');
 
   useEffect(() => {
-    fetch(`${API_BASE}/status.json`)
+    fetch(`${API_BASE}/stats`)
       .then((r) => setOk(r.ok))
       .catch(() => setOk(false));
   }, []);
