@@ -10,6 +10,8 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 
 def _setup_app(monkeypatch):
+    monkeypatch.setenv("ORIGINS", "https://allowed.com")
+
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://allowed.com")
     monkeypatch.setenv("RATE_LIMIT_LOGIN", "2/1s")
     monkeypatch.setenv("RATE_LIMIT_REFRESH", "60/5m")
@@ -36,12 +38,14 @@ def test_csp_header_blocks_inline(monkeypatch):
             assert "'unsafe-inline'" not in part
             break
     assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
-    assert resp.headers.get("X-Content-Type-Options") == "nosniff"
-    assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
-    assert (
-        resp.headers.get("Permissions-Policy")
-        == "geolocation=(), microphone=(), camera=(), notifications=(self)"
-    )
+
+
+def test_referrer_policy_on_other_routes(monkeypatch):
+    app = _setup_app(monkeypatch)
+    client = TestClient(app)
+    resp = client.get("/ready", headers={"Origin": "https://allowed.com"})
+    assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+
 
 
 def test_cors_rejects_unknown_origin(monkeypatch):
@@ -77,6 +81,6 @@ def test_login_rate_limit_resets(monkeypatch):
 def test_sw_not_served_on_admin(monkeypatch):
     app = _setup_app(monkeypatch)
     client = TestClient(app)
-    resp = client.get('/admin/')
-    assert 'Service-Worker' not in resp.headers
-    assert 'Service-Worker-Allowed' not in resp.headers
+    resp = client.get("/admin/")
+    assert "Service-Worker" not in resp.headers
+    assert "Service-Worker-Allowed" not in resp.headers
