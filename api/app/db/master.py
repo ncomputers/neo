@@ -9,10 +9,15 @@ from sqlalchemy.orm import sessionmaker
 
 from api.app.obs import add_query_logger
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    os.getenv("POSTGRES_MASTER_URL", "sqlite+aiosqlite:///./dev_master.db"),
-)
+DEV_SQLITE_ENV = "DEV_SQLITE"
+
+url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_MASTER_URL")
+if not url:
+    if os.getenv(DEV_SQLITE_ENV):
+        url = "sqlite+aiosqlite:///:memory:"
+    else:
+        raise RuntimeError("DATABASE_URL or POSTGRES_MASTER_URL must be set")
+DATABASE_URL = url
 
 _engine: AsyncEngine | None = None
 _sessionmaker: sessionmaker[AsyncSession] | None = None
