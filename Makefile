@@ -1,5 +1,7 @@
 .RECIPEPREFIX := >
-.PHONY: release-rc stage pilot release-ga prod analyze-hot ui-build ui-image ui-run
+.PHONY: release-rc stage pilot release-ga prod analyze-hot ui-build ui-image ui-run up down logs ps migrate seed psql redis-cli health smoke
+
+TENANT ?= 1
 
 release-rc:
 > python scripts/release_tag.py --rc
@@ -34,3 +36,33 @@ ui-image:
 
 ui-run:
 > docker run --rm -p 8080:80 neo-ui
+
+up:
+> docker compose up -d
+
+down:
+> docker compose down
+
+logs:
+> docker compose logs -f
+
+ps:
+> docker compose ps
+
+migrate:
+> docker compose run --rm api python scripts/tenant_migrate.py --tenant $(TENANT)
+
+seed:
+> docker compose run --rm api python scripts/tenant_seed.py --tenant $(TENANT)
+
+psql:
+> docker compose exec postgres psql -U postgres
+
+redis-cli:
+> docker compose exec redis redis-cli
+
+health:
+> bash scripts/ci_wait_ready.sh
+
+smoke:
+> bash scripts/smoke_e2e.sh
