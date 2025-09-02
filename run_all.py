@@ -229,6 +229,7 @@ def start_processes():
 
 def run_tests():
     ensure_python_venv()
+    install_backend()
     pip = pip_exe()
     # Ensure pytest present (api/requirements.txt already includes it, but be safe)
     run([pip, "install", "pytest"])
@@ -238,10 +239,13 @@ def run_tests():
         env["PGDATABASE"] = "testdb"
         print("ℹ️ PGDATABASE not set, defaulting to 'testdb'")
 
-    bootstrap = ROOT / ".ci" / "scripts" / "bootstrap_test_db.sh"
-    bootstrap.chmod(bootstrap.stat().st_mode | 0o111)
-    print("📦 Bootstrapping test database ...")
-    run([str(bootstrap)], env=env)
+    if not which("docker"):
+        print("⚠️ Docker not installed or not on PATH. Skipping test DB bootstrap.")
+    else:
+        bootstrap = ROOT / ".ci" / "scripts" / "bootstrap_test_db.sh"
+        bootstrap.chmod(bootstrap.stat().st_mode | 0o111)
+        print("📦 Bootstrapping test database ...")
+        run([str(bootstrap)], env=env)
 
     print("🧪 Running backend tests ...")
     run([python_exe(), "-m", "pytest", "-q"], cwd=API_DIR, env=env)
