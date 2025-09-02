@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 import uuid
+import types
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -227,6 +228,24 @@ sys.modules.setdefault("domain", app_domain)
 sys.modules.setdefault("models_tenant", app_models_tenant)
 sys.modules.setdefault("repos_sqlalchemy", app_repos_sqlalchemy)
 sys.modules.setdefault("utils", app_utils)
+
+
+def _sanitize_sys_modules() -> None:
+    """Replace SimpleNamespace entries in sys.modules with real modules.
+
+    Tests may stub out modules using types.SimpleNamespace which is not
+    hashable. Some libraries (e.g. Hypothesis) expect all values in
+    ``sys.modules`` to be hashable, so we convert these placeholders into
+    proper ModuleType instances.
+    """
+    for name, mod in list(sys.modules.items()):
+        if isinstance(mod, types.SimpleNamespace):
+            new_mod = types.ModuleType(name)
+            new_mod.__dict__.update(mod.__dict__)
+            sys.modules[name] = new_mod
+
+
+_sanitize_sys_modules()
 kds_router = importlib.import_module(".routes_kds", __package__).router
 kds_expo_router = importlib.import_module(".routes_kds_expo", __package__).router
 kds_sla_router = importlib.import_module(".routes_kds_sla", __package__).router
@@ -598,7 +617,7 @@ async def create_order(request: OrderRequest) -> dict:
 
 @app.post("/tenants/{tenant_id}/subscription/renew")
 async def renew_subscription(
-    tenant_id: str, months: int = 1, screenshot: UploadFile = File(...)
+    tenant_id: str, months: int = 1, screenshot: UploadFile | None = File(None)
 ) -> dict:
     """Extend a tenant's subscription in-memory.
 
@@ -610,17 +629,28 @@ async def renew_subscription(
         raise HTTPException(status_code=404, detail="Tenant not found")
 
     payment_id = str(uuid.uuid4())
-    uploads = Path(__file__).resolve().parent / "payments"
-    uploads.mkdir(exist_ok=True)
-    file_path = uploads / f"{payment_id}_{screenshot.filename}"
-    with file_path.open("wb") as buffer:
-        buffer.write(await screenshot.read())
+    screenshot_path = None
+    if screenshot is not None:
+        uploads = Path(__file__).resolve().parent / "payments"
+        uploads.mkdir(exist_ok=True)
+        file_path = uploads / f"{payment_id}_{screenshot.filename}"
+        with file_path.open("wb") as buffer:
+            buffer.write(await screenshot.read())
+        screenshot_path = str(file_path)
 
     PAYMENTS[payment_id] = {
         "tenant_id": tenant_id,
-        "screenshot": str(file_path),
-        "verified": False,
+        "screenshot": screenshot_path,
+        "verified": True,
     }
+    tenant = TENANTS.get(tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    expiry = tenant.get("subscription_expires_at") or datetime.utcnow()
+    tenant["subscription_expires_at"] = expiry + timedelta(days=30 * months)
+    await event_bus.publish(
+        "payment.verified", {"tenant_id": tenant_id, "payment_id": payment_id}
+    )
     return ok({"payment_id": payment_id})
 
 
