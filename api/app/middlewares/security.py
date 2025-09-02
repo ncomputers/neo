@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-import uuid
+import re
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_413_REQUEST_ENTITY_TOO_LARGE
 
 from ..utils.responses import err
 from .guest_utils import _is_guest_post
+
+
+# allow simple ASCII tokens up to 128 chars (letters, numbers and hyphen)
+IDEMPOTENCY_KEY_RE = re.compile(r"^[A-Za-z0-9-]{1,128}$")
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
@@ -28,18 +32,21 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 )
 
             key = request.headers.get("Idempotency-Key")
-            if key:
-                try:
-                    uuid.UUID(key)
-                except ValueError:
-                    return JSONResponse(
-                        err("BAD_IDEMPOTENCY_KEY", "BadIdempotencyKey"),
-                        status_code=HTTP_400_BAD_REQUEST,
-                    )
+            if key and not IDEMPOTENCY_KEY_RE.fullmatch(key):
+                return JSONResponse(
+                    err("BAD_IDEMPOTENCY_KEY", "BadIdempotencyKey"),
+                    status_code=HTTP_400_BAD_REQUEST,
+                )
 
             async def receive() -> dict:
                 return {"type": "http.request", "body": body}
 
             request._receive = receive
 
-        return await call_next(request)
+        response: Response = await call_next(request)
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers.setdefault(
+                "Content-Security-Policy-Report-Only",
+                "default-src 'self'; report-uri /csp/report",
+            )
+        return response
