@@ -1,42 +1,45 @@
 version: '3.9'
 
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    environment:
-      POSTGRES_MASTER_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/master
-      POSTGRES_TENANT_DSN_TEMPLATE: postgresql+asyncpg://tenant:tenant@postgres:5432/tenant_{tenant_id}
-      REDIS_URL: redis://redis:6379/0
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
-      - redis
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-    environment:
-      POSTGRES_MASTER_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/master
-      POSTGRES_TENANT_DSN_TEMPLATE: postgresql+asyncpg://tenant:tenant@postgres:5432/tenant_{tenant_id}
-      REDIS_URL: redis://redis:6379/0
-    depends_on:
-      - postgres
-      - redis
-
   postgres:
     image: postgres:15
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: master
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
 
   redis:
     image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
