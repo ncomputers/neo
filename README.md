@@ -719,14 +719,28 @@ npm run dev
 
 ## Docker Compose
 
-From the `ops` directory you can launch the full development stack:
+Copy the example environment and launch the stack:
 
 ```bash
-cd ops
+cp .env.example .env
 make up
+make migrate
 ```
 
-The stack includes FastAPI, two Postgres databases (master and tenant), Redis, MinIO for S3-compatible storage, and an Nginx reverse proxy. Shut it down with:
+Optionally seed demo data and run a quick smoke test:
+
+```bash
+python scripts/tenant_seed.py --tenant demo  # optional
+python scripts/smoke_check.py
+```
+
+The API is available at <http://localhost:8000>. View container logs with:
+
+```bash
+docker-compose logs -f api
+```
+
+Shut down the stack with:
 
 ```bash
 make down
