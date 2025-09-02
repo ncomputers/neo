@@ -37,7 +37,8 @@ The application relies on the following environment variables:
 | `OTEL_SAMPLER_RATIO` (optional) | Sampling ratio between 0 and 1. Defaults to `0.1`. | `0.25` |
 | `GIT_SHA` (optional) | Git commit SHA exposed by the `/version` endpoint. | `c0ffee` |
 | `BUILT_AT` (optional) | Build timestamp exposed by the `/version` endpoint. | `2024-01-01T00:00:00Z` |
-| `ENV` (optional) | Deployment environment (`prod`, `staging`, or `dev`). | `prod` |
+| `APP_ENV` (optional) | Deployment environment (`prod`, `staging`, or `dev`). | `prod` |
+| `DEV_SQLITE` (optional) | Boot with in-memory SQLite when `DATABASE_URL` is unset (non-prod only). | `1` |
 | `TENANT_ANALYTICS_ENABLED` | Enable optional product analytics. | `1` |
 | `ANALYTICS_TENANTS` | Comma-separated tenant IDs that have opted into analytics. | `tenant_a,tenant_b` |
 | `POSTHOG_API_KEY` (optional) | API key for PostHog analytics. | `phc_xxx` |
@@ -52,7 +53,7 @@ The application relies on the following environment variables:
 
 Defaults for these experimental flags are maintained in `config/feature_flags.yaml`.
 They must remain disabled in production; `validate_on_boot` enforces this when
-`ENV=prod`.
+`APP_ENV=prod`.
 
 ## Database URLs
 
@@ -81,7 +82,7 @@ docker run --name neo-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=po
 createdb -h localhost -U postgres master
 ```
 
-Use the connection strings above in your `.env` file, adjusting credentials as needed. In development, `validate_on_boot` will fall back to `DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/master` and `REDIS_URL=redis://localhost:6379/0` when unset. These defaults are for local Docker only and should not be used in production.
+Use the connection strings above in your `.env` file, adjusting credentials as needed. `validate_on_boot` requires `DATABASE_URL` and `REDIS_URL`. For quick tests without Postgres, set `DEV_SQLITE=1` to start with an in-memory SQLite database.
 
 ## JWT/JOSE
 

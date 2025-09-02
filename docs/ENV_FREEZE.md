@@ -18,7 +18,7 @@ This document locks down the production environment contract.
 | `MAX_CONN_PER_IP` | Max concurrent real-time connections per IP |
 | `QUEUE_MAX` | Pending realtime messages before dropping client |
 | `EXPORT_MAX_ROWS` | Max rows allowed in export jobs |
-| `ENV` | Deployment environment (`prod`) |
+| `APP_ENV` | Deployment environment (`prod`) |
 | `HEARTBEAT_TIMEOUT_SEC` | WebSocket ping interval and timeout |
 | `TENANT_ANALYTICS_ENABLED` | Toggle per-tenant analytics |
 | `ANALYTICS_TENANTS` | Comma-separated tenant IDs for analytics |

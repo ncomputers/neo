@@ -18,12 +18,6 @@ REQUIRED_ENVS = [
 
 logger = logging.getLogger("api.config")
 
-DEV_DEFAULTS = {
-    "SECRET_KEY": "test-secret",
-    "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/master",
-    "REDIS_URL": "redis://localhost:6379/0",
-}
-
 
 def _load_flag_config() -> dict[str, bool]:
     """Read ``config/feature_flags.yaml`` into a mapping."""
@@ -61,7 +55,13 @@ def validate_on_boot() -> None:
     required variable is missing or malformed.
     """
 
-    env = os.getenv("ENV", "dev")
+    env = os.getenv("APP_ENV", "dev")
+    dev_sqlite = env != "prod" and os.getenv("DEV_SQLITE", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
     legacy = os.getenv("POSTGRES_MASTER_URL")
     if legacy and not os.getenv("DATABASE_URL"):
@@ -69,11 +69,12 @@ def validate_on_boot() -> None:
         logger.warning("POSTGRES_MASTER_URL is deprecated; use DATABASE_URL instead")
     missing: list[str] = []
     for name in REQUIRED_ENVS:
-        value = os.getenv(name)
-        if not value and env != "prod" and name in DEV_DEFAULTS:
-            value = DEV_DEFAULTS[name]
-            os.environ.setdefault(name, value)
-        if name == "DATABASE_URL" and not os.getenv("POSTGRES_MASTER_URL"):
+        if name == "DATABASE_URL" and dev_sqlite:
+            os.environ.setdefault(name, "sqlite+aiosqlite://")
+            value = os.environ[name]
+        else:
+            value = os.getenv(name)
+        if name == "DATABASE_URL" and not os.getenv("POSTGRES_MASTER_URL") and value:
             os.environ.setdefault("POSTGRES_MASTER_URL", value)
         if not value:
             missing.append(name)
