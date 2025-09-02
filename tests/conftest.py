@@ -25,6 +25,10 @@ os.environ.setdefault("REDIS_URL", "redis://redis:6379/0")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 os.environ.setdefault("ALLOWED_ORIGINS", "http://example.com")
 
+import api.app.db as app_db
+
+app_db.SessionLocal, app_db.engine = app_db.create_test_session()
+
 try:  # pragma: no cover - fallback for broken app imports
     from api.app.main import app  # noqa: E402
 except Exception:  # pragma: no cover
