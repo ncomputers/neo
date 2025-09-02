@@ -23,9 +23,11 @@ import redis.asyncio as redis
 from fastapi import (
     Depends,
     FastAPI,
+    File,
     Header,
     HTTPException,
     Request,
+    UploadFile,
     WebSocket,
     WebSocketDisconnect,
     status,
@@ -253,15 +255,12 @@ async def lifespan(app: FastAPI):
         redis_conn = getattr(app.state, "redis", None)
         if redis_conn:
             await redis_conn.close()
+        pubsub = getattr(app.state, "pubsub", None)
+        if pubsub and hasattr(pubsub, "aclose"):
+            await pubsub.aclose()
 
 validate_on_boot()
 settings = get_settings()
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    yield
-    pubsub = getattr(app.state, "pubsub", None)
-    if pubsub and hasattr(pubsub, "aclose"):
-        await pubsub.aclose()
 
 
 app = FastAPI(
@@ -556,6 +555,7 @@ class OrderRequest(BaseModel):
 
 
 TENANTS: dict[str, dict] = {}  # tenant_id -> tenant info
+PAYMENTS: dict[str, dict] = {}  # payment_id -> payment info
 
 
 @app.post("/tenants")
@@ -597,7 +597,9 @@ async def create_order(request: OrderRequest) -> dict:
 
 
 @app.post("/tenants/{tenant_id}/subscription/renew")
-async def renew_subscription(tenant_id: str, months: int = 1) -> dict:
+async def renew_subscription(
+    tenant_id: str, months: int = 1, screenshot: UploadFile = File(...)
+) -> dict:
     """Extend a tenant's subscription in-memory.
 
     This mock endpoint avoids external billing calls and simply pushes the
