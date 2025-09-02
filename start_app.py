@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import os
 import subprocess
 import sys
@@ -27,6 +28,20 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     load_dotenv()  # load environment variables from a .env file
+
+    for module, package in [
+        ("asyncpg", "asyncpg"),
+        ("psycopg2", "psycopg2-binary"),
+        ("redis", "redis"),
+    ]:
+        try:
+            importlib.import_module(module)
+        except ModuleNotFoundError:
+            print(
+                f"Missing dependency: {package}. Install it with 'pip install {package}'",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
 
     env_flag = os.getenv("SKIP_DB_MIGRATIONS")
     skip = args.skip_db_migrations or (

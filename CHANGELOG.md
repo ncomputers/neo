@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 
 - Correct sales register and GST summary exports to emit expected CSV headers and values.
 - Replace `/telemetry/error` fetch with SSR-safe `captureError` in the global error boundary.
+- Verify Redis and Postgres dependencies during startup to surface missing packages early.
 
 ## v1.0.0 - 2025-08-26
 
